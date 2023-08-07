@@ -10,6 +10,8 @@ export const handle = (async ({ event, resolve }) => {
     )
     const userRecord = await adminAuth.getUser(decodedClaims.uid)
     event.locals.user = {
+      uid: userRecord.uid,
+      email: userRecord.email as string,
       emailVerified: userRecord.emailVerified,
     }
   } catch (err) {

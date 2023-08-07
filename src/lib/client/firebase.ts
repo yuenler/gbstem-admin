@@ -7,6 +7,7 @@ import {
   PUBLIC_FIREBASE_APP_ID,
   PUBLIC_FIREBASE_MEASUREMENT_ID,
 } from '$env/static/public'
+import type { Role } from '$lib/server/firebase'
 import { initializeApp } from 'firebase/app'
 import { getAuth, onAuthStateChanged, type User } from 'firebase/auth'
 import {
@@ -23,10 +24,12 @@ export type UserProfile = {
   firstName: string
   lastName: string
   hhid: `HH-${number}`
-  role: 'applicant' | 'admin'
+  role: Role
 }
 
 export type UserPeek = {
+  uid: string
+  email: string
   emailVerified: boolean
 }
 

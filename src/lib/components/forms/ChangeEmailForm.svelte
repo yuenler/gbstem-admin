@@ -2,7 +2,6 @@
   import Input from '$lib/components/Input.svelte'
   import clsx from 'clsx'
   import { alert } from '$lib/stores'
-  import { verifyBeforeUpdateEmail } from 'firebase/auth'
   import Dialog from '$lib/components/Dialog.svelte'
   import ReauthenticateForm from '$lib/components/forms/ReauthenticateForm.svelte'
   import Form from '$lib/components/Form.svelte'
@@ -39,18 +38,27 @@
   function handleReauthenticate() {
     if ($user) {
       dialogEl.close()
-      verifyBeforeUpdateEmail($user.object, values.newEmail)
-        .then(() => {
-          disabled = false
-          values = {
-            newEmail: '',
-          }
+      fetch('/api/action', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'changeEmail',
+          newEmail: values.newEmail,
+        }),
+      }).then(async (res) => {
+        if (res.ok) {
           alert.trigger('info', 'A verification email was sent.')
-        })
-        .catch((err) => {
-          disabled = false
-          alert.trigger('error', err.code, true)
-        })
+        } else {
+          const { message } = await res.json()
+          alert.trigger('error', message)
+        }
+        values = {
+          newEmail: '',
+        }
+        disabled = false
+      })
     }
   }
 </script>

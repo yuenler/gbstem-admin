@@ -10,12 +10,12 @@
   import {
     createUserWithEmailAndPassword,
     deleteUser,
-    sendEmailVerification,
     updateProfile,
   } from 'firebase/auth'
   import { auth, db } from '$lib/client/firebase'
   import Link from '../Link.svelte'
   import Button from '../Button.svelte'
+  import Loading from '../Loading.svelte'
 
   let disabled = false
   let showValidation = false
@@ -75,40 +75,53 @@
                       firstName,
                       lastName,
                     }).then(() => {
-                      sendEmailVerification(user)
-                        .then(() => {
-                          user.getIdToken().then((idToken) => {
-                            fetch('/api/auth', {
+                      user.getIdToken().then((idToken) => {
+                        fetch('/api/auth', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({ idToken }),
+                        })
+                          .then(() => {
+                            fetch('/api/action', {
                               method: 'POST',
                               headers: {
                                 'Content-Type': 'application/json',
                               },
-                              body: JSON.stringify({ idToken }),
+                              body: JSON.stringify({
+                                type: 'verifyEmail',
+                              }),
+                            }).then(async (res) => {
+                              if (!res.ok) {
+                                const { message } = await res.json()
+                                console.log(message)
+                              }
+                              disabled = false
+                              goto('/profile')
                             })
-                              .then(() => {
-                                goto('/profile')
-                              })
-                              .catch((err) =>
-                                console.log('Sign In Error:', err),
-                              )
                           })
-                        })
-                        .catch(() =>
-                          alert.trigger(
-                            'error',
-                            'Please manually verify email through your profile.',
-                          ),
-                        )
+                          .catch((err) => {
+                            console.log('Sign In Error:', err)
+                            disabled = false
+                          })
+                      })
                     })
                   })
-                  .catch((err) => console.log(err))
+                  .catch((err) => {
+                    console.log(err)
+                    disabled = false
+                  })
               }
             })
-            .catch((err) => console.log(err))
+            .catch((err) => {
+              console.log(err)
+              disabled = false
+            })
         })
         .catch((err) => {
-          disabled = false
           alert.trigger('error', err.code, true)
+          disabled = false
         })
     } else {
       showValidation = true
@@ -124,48 +137,56 @@
   <fieldset class="space-y-4" {disabled}>
     <Brand />
     <h1 class="text-2xl font-bold">Sign up</h1>
-    <div class="grid gap-2 sm:grid-cols-2 sm:gap-4">
+    <div class="relative space-y-4">
+      <div class="grid gap-2 sm:grid-cols-2 sm:gap-4">
+        <Input
+          type="text"
+          bind:value={values.firstName}
+          placeholder="First name"
+          floating
+          required
+        />
+        <Input
+          type="text"
+          bind:value={values.lastName}
+          placeholder="Last name"
+          floating
+          required
+        />
+      </div>
       <Input
-        type="text"
-        bind:value={values.firstName}
-        placeholder="First name"
+        type="email"
+        bind:value={values.email}
+        placeholder="Email"
         floating
         required
       />
       <Input
-        type="text"
-        bind:value={values.lastName}
-        placeholder="Last name"
+        type="password"
+        bind:value={values.password}
+        placeholder="Password"
         floating
         required
+        autocomplete="new-password"
       />
+      <Input
+        type="password"
+        bind:value={values.confirmPassword}
+        placeholder="Confirm password"
+        floating
+        required
+        autocomplete="new-password"
+        validations={[
+          [
+            values.password !== values.confirmPassword,
+            'Passwords do not match.',
+          ],
+        ]}
+      />
+      {#if disabled}
+        <Loading class="absolute -inset-2 -top-4 z-50" />
+      {/if}
     </div>
-    <Input
-      type="email"
-      bind:value={values.email}
-      placeholder="Email"
-      floating
-      required
-    />
-    <Input
-      type="password"
-      bind:value={values.password}
-      placeholder="Password"
-      floating
-      required
-      autocomplete="new-password"
-    />
-    <Input
-      type="password"
-      bind:value={values.confirmPassword}
-      placeholder="Confirm password"
-      floating
-      required
-      autocomplete="new-password"
-      validations={[
-        [values.password !== values.confirmPassword, 'Passwords do not match.'],
-      ]}
-    />
     <div class="mt-2 flex items-center justify-between">
       <div>
         <Link href="/signin">Need to sign in?</Link>

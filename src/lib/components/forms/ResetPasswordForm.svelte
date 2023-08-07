@@ -3,9 +3,7 @@
   import clsx from 'clsx'
   import { alert } from '$lib/stores'
   import Brand from '$lib/components/Brand.svelte'
-  import { sendPasswordResetEmail } from 'firebase/auth'
   import Form from '$lib/components/Form.svelte'
-  import { auth } from '$lib/client/firebase'
   import Link from '$lib/components/Link.svelte'
   import Button from '../Button.svelte'
 
@@ -18,17 +16,30 @@
     if (e.detail.error === null) {
       showValidation = false
       disabled = true
-      sendPasswordResetEmail(auth, values.email)
-        .then(() => {
+      fetch('/api/action', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'resetPassword',
+          email: values.email,
+        }),
+      }).then(async (res) => {
+        if (res.ok) {
           alert.trigger(
             'info',
             'Password reset email was sent. Please check your inbox.',
           )
-        })
-        .catch((err) => {
-          disabled = false
-          alert.trigger('error', err.code, true)
-        })
+        } else {
+          const { message } = await res.json()
+          alert.trigger('error', message)
+        }
+        values = {
+          email: '',
+        }
+        disabled = false
+      })
     } else {
       showValidation = true
       alert.trigger('error', e.detail.error)
