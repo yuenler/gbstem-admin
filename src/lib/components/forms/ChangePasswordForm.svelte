@@ -72,7 +72,7 @@
     <Input
       type="password"
       bind:value={values.newPassword}
-      placeholder="New password"
+      label="New password"
       floating
       required
     />
@@ -81,7 +81,7 @@
         class="pr-[5.25rem]"
         type="password"
         bind:value={values.confirmPassword}
-        placeholder="Confirm password"
+        label="Confirm password"
         floating
         required
         validations={[
@@ -92,7 +92,7 @@
         ]}
       />
       <div class="absolute right-2 top-0 flex h-12 items-center">
-        <Button color="blue" padding="px-2 py-1" type="submit">Update</Button>
+        <Button color="blue" class="px-2 py-1" type="submit">Update</Button>
       </div>
     </div>
   </fieldset>

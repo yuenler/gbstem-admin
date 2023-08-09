@@ -51,7 +51,7 @@
     <Input
       type="password"
       bind:value={values.password}
-      placeholder="Password"
+      label="Password"
       floating
       required
       autocomplete="current-password"

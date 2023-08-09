@@ -1,20 +1,26 @@
 <script lang="ts">
-  import clsx from 'clsx'
+  import { cn } from '$lib/utils'
   import { uniqueId, kebabCase, isArray, isBoolean } from 'lodash-es'
 
-  let className = ''
+  let className:
+    | string
+    | {
+        input?: string
+        container?: string
+      } = ''
   export { className as class }
 
   export let self: HTMLInputElement | undefined = undefined
   export let id = uniqueId('input-')
   export let type = 'text'
-  export let value: string | number | boolean | Array<string> | File
-  export let placeholder = ''
-  export let name = kebabCase(placeholder)
+  export let value: string | number | boolean | Array<string> | File = ''
+  export let label = ''
+  export let name = kebabCase(label)
   export let required = false
   export let floating = false
   export let validations: Array<Validation> = []
   export let focus = false
+  export let placeholder: string | undefined = undefined
 
   // if file input
   export let accept: Array<string> | undefined = undefined
@@ -73,11 +79,17 @@
 
 {#if type === 'checkbox'}
   {#if isArray(value)}
-    <div class="mt-2 flex">
+    <div
+      class={cn(
+        'mt-2 flex',
+        className instanceof Object && className.container,
+      )}
+    >
       <input
-        class={clsx(
+        class={cn(
           'peer mt-0.5 h-5 w-5 shrink-0 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400',
-          className,
+          typeof className === 'string' && className,
+          className instanceof Object && className.input,
         )}
         type="checkbox"
         checked={value.includes(name)}
@@ -85,6 +97,7 @@
         on:input={handleInput}
         {id}
         {name}
+        {placeholder}
         {...$$restProps}
       />
       <label
@@ -92,16 +105,22 @@
         class="ml-2 cursor-pointer peer-disabled:cursor-default peer-disabled:text-gray-400"
       >
         <span>
-          {placeholder}
+          {label}
         </span>
       </label>
     </div>
   {:else}
-    <div class="mt-2 flex">
+    <div
+      class={cn(
+        'mt-2 flex',
+        className instanceof Object && className.container,
+      )}
+    >
       <input
-        class={clsx(
+        class={cn(
           'peer mt-0.5 h-5 w-5 shrink-0 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400',
-          className,
+          typeof className === 'string' && className,
+          className instanceof Object && className.input,
         )}
         type="checkbox"
         checked={isBoolean(value) && value}
@@ -110,6 +129,7 @@
         {id}
         {name}
         {required}
+        {placeholder}
         {...$$restProps}
       />
       <label
@@ -117,22 +137,23 @@
         class="ml-2 cursor-pointer peer-disabled:cursor-default peer-disabled:text-gray-400"
       >
         <span>
-          {placeholder}<span class="text-red-500">*</span>
+          {label}<span class="text-red-500">*</span>
         </span>
       </label>
     </div>
   {/if}
 {:else if type === 'file'}
-  <div class="mt-2">
+  <div class={cn('mt-2', className instanceof Object && className.container)}>
     <label for={id}>
       <span>
-        {placeholder}<span class="text-red-500">*</span>
+        {label}<span class="text-red-500">*</span>
       </span>
     </label>
     <input
-      class={clsx(
+      class={cn(
         'mt-2 block h-12 w-full cursor-pointer appearance-none rounded-md border border-gray-400 transition-colors file:mr-4 file:h-full file:cursor-pointer file:border-none file:bg-gray-700 file:px-4 file:text-white placeholder:text-gray-500 focus:border-gray-600 focus:outline-none disabled:bg-white disabled:text-gray-400 disabled:placeholder:text-gray-400',
-        className,
+        typeof className === 'string' && className,
+        className instanceof Object && className.input,
       )}
       type="file"
       accept={accept === undefined ? undefined : accept.join(',')}
@@ -141,16 +162,23 @@
       {id}
       {name}
       {required}
+      {placeholder}
       {...$$restProps}
     />
   </div>
 {:else if floating}
-  <div class="relative mt-2 grow">
+  <div
+    class={cn(
+      'relative mt-2 grow',
+      className instanceof Object && className.container,
+    )}
+  >
     <input
-      class={clsx(
+      class={cn(
         'peer block h-12 w-full appearance-none rounded-md border border-gray-400 px-3 pt-1 transition-colors focus:border-gray-600 focus:outline-none disabled:bg-white disabled:text-gray-400',
         type === 'password' && 'pr-[2.85rem]',
-        className,
+        typeof className === 'string' && className,
+        className instanceof Object && className.input,
       )}
       type={passwordVisible ? 'text' : type}
       placeholder=" "
@@ -172,7 +200,7 @@
       for={id}
     >
       <span>
-        {placeholder}<span class="text-red-500">*</span>
+        {label}<span class="text-red-500">*</span>
       </span>
     </label>
     {#if type == 'password'}
@@ -225,18 +253,17 @@
     {/if}
   </div>
 {:else}
-  <div class="mt-2">
+  <div class={cn('mt-2', className instanceof Object && className.container)}>
     <label for={id}>
       <span>
-        {placeholder}<span class={clsx('text-red-500', !required && 'hidden')}
-          >*</span
-        >
+        {label}<span class={cn('text-red-500', !required && 'hidden')}>*</span>
       </span>
     </label>
     <input
-      class={clsx(
+      class={cn(
         'mt-1 block h-12 w-full appearance-none rounded-md border border-gray-400 px-3 transition-colors placeholder:text-gray-500 focus:border-gray-600 focus:outline-none disabled:bg-white disabled:text-gray-400 disabled:placeholder:text-gray-400',
-        className,
+        typeof className === 'string' && className,
+        className instanceof Object && className.input,
       )}
       bind:this={self}
       on:input={handleInput}
@@ -245,6 +272,7 @@
       {id}
       {name}
       {required}
+      {placeholder}
       {...$$restProps}
     />
   </div>

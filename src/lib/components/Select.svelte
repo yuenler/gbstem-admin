@@ -7,8 +7,7 @@
 </script>
 
 <script lang="ts">
-  import clsx from 'clsx'
-  import { clickOutside } from '$lib/utils'
+  import { clickOutside, cn } from '$lib/utils'
   import { uniqueId, debounce, kebabCase } from 'lodash-es'
   import { fade } from 'svelte/transition'
 
@@ -18,10 +17,11 @@
   export let self: HTMLInputElement | undefined = undefined
   export let id = uniqueId('select-')
   export let value: string
-  export let placeholder = ''
-  export let name = kebabCase(placeholder)
+  export let label = ''
+  export let name = kebabCase(label)
   export let floating = false
   export let required = false
+  export let placeholder: string | undefined = undefined
   type SelectOption = string
   type SelectOptionJson = {
     name: string
@@ -135,7 +135,7 @@
 </script>
 
 <div
-  class={clsx('relative mt-2', className)}
+  class={cn('relative mt-2', className)}
   use:clickOutside
   on:outclick={() => {
     open = false
@@ -144,7 +144,7 @@
   {#if floating}
     <div class="relative">
       <input
-        class={clsx(
+        class={cn(
           'peer block h-12 w-full appearance-none rounded-md border border-gray-400 pl-3 pr-9 pt-1 transition-colors focus:border-gray-600 focus:outline-none disabled:bg-white disabled:text-gray-400',
           className,
         )}
@@ -166,7 +166,7 @@
         for={id}
       >
         <span>
-          {placeholder}<span class="text-red-500">*</span>
+          {label}<span class="text-red-500">*</span>
         </span>
       </label>
     </div>
@@ -217,7 +217,7 @@
         {:else}
           {#each filteredOptions as name, index}
             <button
-              class={clsx(
+              class={cn(
                 'w-full px-6 py-2 text-left transition-colors duration-300',
                 index === selectedOptionIndex && 'bg-gray-100',
               )}
@@ -239,9 +239,7 @@
   {:else}
     <label for={id}>
       <span>
-        {placeholder}<span class={clsx('text-red-500', !required && 'hidden')}
-          >*</span
-        >
+        {label}<span class={cn('text-red-500', !required && 'hidden')}>*</span>
       </span>
     </label>
     <div class="relative">
@@ -272,7 +270,7 @@
         </button>
       </div>
       <input
-        class={clsx(
+        class={cn(
           'mt-1 block h-12 w-full appearance-none rounded-md border border-gray-400 pl-3 pr-9 transition-colors placeholder:text-gray-500 focus:border-gray-600 focus:outline-none disabled:bg-white disabled:text-gray-400 disabled:placeholder:text-gray-400',
           className,
         )}
@@ -286,6 +284,7 @@
         {id}
         {name}
         {required}
+        {placeholder}
         {...$$restProps}
       />
       {#if open}
@@ -309,7 +308,7 @@
           {:else}
             {#each filteredOptions as name, index}
               <button
-                class={clsx(
+                class={cn(
                   'w-full px-6 py-2 text-left transition-colors duration-300',
                   index === selectedOptionIndex && 'bg-gray-100',
                 )}

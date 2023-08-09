@@ -36,12 +36,14 @@
   },
   "type": "module",
   "dependencies": {
+    "algoliasearch": "^4.19.1",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
     "firebase": "^10.1.0",
     "firebase-admin": "^11.10.1",
     "lodash-es": "^4.17.21",
     "nanoid": "^4.0.2",
-    "nprogress": "^0.2.0"
+    "nprogress": "^0.2.0",
+    "tailwind-merge": "^1.14.0"
   }
 }

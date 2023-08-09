@@ -68,9 +68,9 @@
     >
       <div
         class={clsx(
-          'p-4 sm:p-8 bg-white grid gap-3 sm:gap-6 w-full',
+          'p-4 sm:p-8 bg-white grid gap-3 sm:gap-6 w-full rounded-lg',
           size === 'full' && 'h-full',
-          size === 'min' && 'rounded-lg max-w-2xl',
+          size === 'min' && 'max-w-2xl',
         )}
         role="dialog"
         use:trapFocus

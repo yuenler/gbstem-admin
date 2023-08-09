@@ -1,0 +1,301 @@
+<script lang="ts">
+  import Application from '$lib/components/Application.svelte'
+  import type Dialog from '$lib/components/Dialog.svelte'
+  import { format } from 'date-fns'
+  import Input from '$lib/components/Input.svelte'
+  import Form from '$lib/components/Form.svelte'
+  import Button from '$lib/components/Button.svelte'
+  import type { PageData } from './$types'
+  import { goto } from '$app/navigation'
+  import { page } from '$app/stores'
+  import Table from '$lib/components/Table.svelte'
+
+  export let data: PageData
+
+  let dialogEl: Dialog
+  let rows = 25
+  let search: string = data.query ?? ''
+  let current: number | undefined
+  let checked: Array<number> = []
+  $: application =
+    data.applications.length === 0
+      ? undefined
+      : current === undefined
+      ? undefined
+      : data.applications[current]
+  function handleCheck(
+    e: Event & { currentTarget: EventTarget & HTMLInputElement },
+    i: number,
+  ) {
+    const target = e.target as HTMLInputElement
+    if (target.checked) {
+      checked = [...checked, i]
+    } else {
+      checked = checked.filter((item) => item !== i)
+    }
+  }
+  function handleCheckAll(
+    e: Event & { currentTarget: EventTarget & HTMLInputElement },
+  ) {
+    const target = e.target as HTMLInputElement
+    if (target.checked) {
+      checked = Array.from({ length: rows }, (_, i) => i)
+    } else {
+      checked = []
+    }
+  }
+  function handleSearch(e: CustomEvent<SubmitData>) {
+    if (search === '') {
+      goto('/applications')
+    } else {
+      let base = new URLSearchParams($page.url.searchParams.toString())
+      base.set('query', search)
+      goto(`?${base.toString()}`)
+    }
+  }
+  async function handleClear() {
+    goto('/applications').then(() => {
+      search = ''
+    })
+  }
+</script>
+
+<svelte:head>
+  <title>Applications</title>
+</svelte:head>
+
+<Form class="flex gap-4" on:submit={handleSearch}>
+  <div class="relative grow">
+    <Input
+      class={{
+        container: 'mt-0',
+        input: 'mt-0 pr-20',
+      }}
+      bind:value={search}
+      placeholder="Search"
+    />
+    <div class="absolute right-2 top-0 flex h-12 items-center">
+      <Button class="uppercase px-2 py-1" on:click={handleClear}>Clear</Button>
+    </div>
+  </div>
+  <Button
+    class="shrink-0 h-12 w-12 p-0 flex items-center justify-center"
+    type="submit"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="1.5"
+      stroke="currentColor"
+      class="w-6 h-6"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+      />
+    </svg>
+  </Button>
+</Form>
+
+<Table>
+  <svelte:fragment slot="head">
+    <th scope="col" class="p-4">
+      <div class="flex items-center">
+        <input
+          id="check-all"
+          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+          type="checkbox"
+          on:input={handleCheckAll}
+        />
+        <label for="check-all" class="sr-only">checkbox</label>
+      </div>
+    </th>
+    <th scope="col" class="px-6 py-3">Submitted</th>
+    <th scope="col" class="px-6 py-3">Decision</th>
+    <th scope="col" class="px-6 py-3">Name</th>
+    <th scope="col" class="px-6 py-3">Email</th>
+    <th scope="col" class="px-6 py-3">Age</th>
+    <th scope="col" class="px-6 py-3">Underrepresented</th>
+    <th scope="col" class="px-6 py-3">Enrolled</th>
+    <th scope="col" class="px-6 py-3">Affiliated</th>
+  </svelte:fragment>
+  <svelte:fragment slot="body">
+    {#each data.applications as application, i}
+      <tr
+        class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
+        on:click={() => {
+          current = i
+          dialogEl.open()
+        }}
+      >
+        <td class="w-4 p-4">
+          <div class="flex items-center">
+            <input
+              id={`check-${i}`}
+              class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+              type="checkbox"
+              checked={checked.includes(i)}
+              on:input={(e) => handleCheck(e, i)}
+            />
+            <label for="check-all" class="sr-only">checkbox</label>
+          </div>
+        </td>
+        <td class="px-6 py-4">
+          {#if application.values.meta.submitted}
+            {format(application.values.timestamps.updated, 'yyyy.MM.dd p')}
+          {:else}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-5 h-5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          {/if}
+        </td>
+        <td class="px-6 py-4">
+          {#if application.values.meta.decision}
+            {#if application.values.meta.decision === 'accepted'}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5 text-green-300"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            {:else if application.values.meta.decision === 'waitlisted'}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5 text-yellow-300"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            {:else if application.values.meta.decision === 'rejected'}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5 text-red-300"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            {/if}
+          {:else}
+            None
+          {/if}
+        </td>
+        <th
+          scope="row"
+          class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+        >
+          {`${application.values.personal.firstName} ${application.values.personal.lastName}`}
+        </th>
+        <td class="px-6 py-4"> {application.values.personal.email} </td>
+        <td class="px-6 py-4"> {application.values.personal.age} </td>
+        <td class="px-6 py-4">{application.values.personal.underrepresented}</td
+        >
+        <td class="px-6 py-4">
+          {#if application.values.academic.enrolled}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-5 h-5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M4.5 12.75l6 6 9-13.5"
+              />
+            </svg>
+          {:else}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-5 h-5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          {/if}
+        </td>
+        <td class="px-6 py-4">
+          {#if application.values.academic.affiliated}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-5 h-5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M4.5 12.75l6 6 9-13.5"
+              />
+            </svg>
+          {:else}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-5 h-5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          {/if}
+        </td>
+      </tr>
+    {/each}
+  </svelte:fragment>
+</Table>
+
+<Application bind:dialogEl id={application?.id} />
+
+<style>
+  input:checked {
+    background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+</style>

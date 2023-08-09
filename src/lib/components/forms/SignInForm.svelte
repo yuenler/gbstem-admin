@@ -58,23 +58,20 @@
     <Input
       type="email"
       bind:value={values.email}
-      placeholder="Email"
+      label="Email"
       floating
       required
     />
     <Input
       type="password"
       bind:value={values.password}
-      placeholder="Password"
+      label="Password"
       floating
       required
       autocomplete="current-password"
     />
     <div class="flex items-center justify-between">
-      <div class="flex flex-col gap-1">
-        <Link href="/reset-password">Forgot password?</Link>
-        <Link href="/signup">Need to sign up?</Link>
-      </div>
+      <Link href="/reset-password">Forgot password?</Link>
       <Button color="blue" type="submit">Sign in</Button>
     </div>
   </fieldset>

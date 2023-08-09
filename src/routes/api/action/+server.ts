@@ -97,16 +97,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         const typedErr = err as
           | FirebaseError
           | {
-              errorInfo: {
-                code: string
-                message: string
-              }
-              codePrefix: 'auth'
+              errorInfo: FirebaseError
+              codePrefix: string
             }
         if ('errorInfo' in typedErr) {
           topError = error(
             400,
-            'Please wait a few minutes before trying again.',
+            typedErr.errorInfo.message ||
+              'Please wait a few minutes before trying again.',
           )
         } else if ('message' in typedErr) {
           topError = error(400, typedErr.message)

@@ -10,8 +10,8 @@
   export let self = undefined
   export let id = uniqueId('textarea-')
   export let value: string
-  export let placeholder = ''
-  export let name = kebabCase(placeholder)
+  export let label = ''
+  export let name = kebabCase(label)
   export let required = false
   export let rows = 5
   const calcHeight = 1.5 + 1.5 * rows
@@ -41,9 +41,7 @@
 <div class="relative mt-2">
   <label for={id}>
     <span>
-      {placeholder}<span class={clsx('text-red-500', !required && 'hidden')}
-        >*</span
-      >
+      {label}<span class={clsx('text-red-500', !required && 'hidden')}>*</span>
     </span>
   </label>
   <textarea

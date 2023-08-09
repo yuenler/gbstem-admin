@@ -2,13 +2,15 @@
   import { getDocs, collection } from 'firebase/firestore'
   import { onMount } from 'svelte'
   import { format } from 'date-fns'
-  import { db, type AnnouncementData } from '$lib/client/firebase'
+  import { db } from '$lib/client/firebase'
   import PageLayout from '$lib/components/PageLayout.svelte'
 
-  let announcements: Array<AnnouncementData> = []
+  let announcements: Array<Data.Announcement<'client'>> = []
   onMount(() => {
     getDocs(collection(db, 'announcements')).then((snapshot) => {
-      announcements = snapshot.docs.map((doc) => doc.data() as AnnouncementData)
+      announcements = snapshot.docs.map(
+        (doc) => doc.data() as Data.Announcement<'client'>,
+      )
     })
   })
 </script>

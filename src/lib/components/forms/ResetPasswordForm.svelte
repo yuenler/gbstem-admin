@@ -57,7 +57,7 @@
     <Input
       type="email"
       bind:value={values.email}
-      placeholder="Email"
+      label="Email"
       floating
       required
     />

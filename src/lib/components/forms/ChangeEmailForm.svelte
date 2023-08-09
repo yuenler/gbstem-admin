@@ -72,7 +72,7 @@
     <Input
       type="email"
       value={$user && $user.object.email ? $user.object.email : ''}
-      placeholder="Current email"
+      label="Current email"
       floating
       readonly
     />
@@ -81,12 +81,12 @@
         class="pr-[5.25rem]"
         type="email"
         bind:value={values.newEmail}
-        placeholder="New email"
+        label="New email"
         floating
         required
       />
       <div class="absolute right-2 top-0 flex h-12 items-center">
-        <Button color="blue" padding="px-2 py-1" type="submit">Update</Button>
+        <Button color="blue" class="px-2 py-1" type="submit">Update</Button>
       </div>
     </div>
   </fieldset>

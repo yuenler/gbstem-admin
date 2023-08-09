@@ -7,10 +7,9 @@
   import { navigating } from '$app/stores'
   import { fade } from 'svelte/transition'
   import AnnouncementsBell from './AnnouncementsBell.svelte'
-  import type { UserPeek } from '$lib/client/firebase'
   import { cubicInOut } from 'svelte/easing'
 
-  export let user: UserPeek
+  export let user: Data.User.Peek
 
   let shadow = false
   let open = false
@@ -28,13 +27,10 @@
       name: 'Dashboard',
       href: '/dashboard',
     },
+    { name: 'Tokens', href: '/tokens' },
     {
-      name: 'Apply',
-      href: '/apply',
-    },
-    {
-      name: 'FAQ',
-      href: '/faq',
+      name: 'Applications',
+      href: '/applications',
     },
   ]
   function updateShadow() {

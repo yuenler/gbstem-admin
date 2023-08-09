@@ -9,9 +9,7 @@
   import Dialog from '$lib/components/Dialog.svelte'
   import Form from '$lib/components/Form.svelte'
   import Input from '$lib/components/Input.svelte'
-  import { doc, deleteDoc } from 'firebase/firestore'
-  import { ref, deleteObject } from 'firebase/storage'
-  import { db, storage, user } from '$lib/client/firebase'
+  import { user } from '$lib/client/firebase'
   import Button from '../Button.svelte'
   import DialogActions from '../DialogActions.svelte'
 
@@ -51,39 +49,15 @@
           ),
         )
           .then(async () => {
-            const hhid = frozenUser.profile.hhid
-            const resumeRef = ref(
-              storage,
-              `resumes/${frozenUser.object.uid}.pdf`,
-            )
-            await Promise.all(
-              [
-                deleteObject(resumeRef),
-                deleteDoc(doc(db, 'applications', frozenUser.object.uid)),
-              ].map((p) => p.catch((e) => e)),
-            )
-            Promise.all([
-              deleteDoc(doc(db, 'hhids', hhid)),
-              deleteDoc(doc(db, 'users', frozenUser.object.uid)),
-            ])
+            deleteUser(frozenUser.object)
               .then(() => {
-                deleteUser(frozenUser.object)
-                  .then(() => {
-                    alert.trigger(
-                      'success',
-                      'Account was successfully deleted.',
-                    )
-                    window.setTimeout(() => {
-                      location.reload()
-                    }, 2000)
-                  })
-                  .catch((err) => {
-                    console.log(err)
-                    disabled = false
-                  })
+                alert.trigger('success', 'Account was successfully deleted.')
+                window.setTimeout(() => {
+                  location.reload()
+                }, 2000)
               })
               .catch((err) => {
-                console.log('HHID/User Object Deletion:', err)
+                console.log(err)
                 disabled = false
               })
           })
@@ -122,7 +96,7 @@
             <Input
               type="password"
               bind:value={values.password}
-              placeholder="Password"
+              label="Password"
               floating
               required
               autocomplete="current-password"
