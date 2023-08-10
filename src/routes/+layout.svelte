@@ -4,15 +4,15 @@
   import Footer from '$lib/components/Footer.svelte'
   import { navigating } from '$app/stores'
   import { onMount } from 'svelte'
-  import NProgress from 'nprogress'
+  import nProgress from 'nprogress'
 
   onMount(() => {
-    NProgress.configure({ showSpinner: false })
+    nProgress.configure({ showSpinner: false })
     return navigating.subscribe((navigating) => {
       if (navigating) {
-        NProgress.start()
+        nProgress.start()
       } else {
-        NProgress.done()
+        nProgress.done()
       }
     })
   })

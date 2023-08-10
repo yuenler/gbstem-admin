@@ -30,11 +30,13 @@
   export function open() {
     if (!disabled) {
       openState = true
+      dispatch('open', true)
     }
   }
   export function close() {
     if (!disabled) {
       openState = false
+      dispatch('close', true)
     }
   }
   export function cancel() {

@@ -6,23 +6,94 @@
   import Form from '$lib/components/Form.svelte'
   import Button from '$lib/components/Button.svelte'
   import type { PageData } from './$types'
-  import { goto } from '$app/navigation'
+  import { goto, invalidate } from '$app/navigation'
   import { page } from '$app/stores'
   import Table from '$lib/components/Table.svelte'
+  import { actions, alert } from '$lib/stores'
+  import { db } from '$lib/client/firebase'
+  import { doc, setDoc, updateDoc } from 'firebase/firestore'
 
   export let data: PageData
-
   let dialogEl: Dialog
-  let rows = 25
   let search: string = data.query ?? ''
   let current: number | undefined
   let checked: Array<number> = []
+  $: if (checked.length > 0) {
+    actions.set([
+      createDecisionAction('accepted'),
+      createDecisionAction('waitlisted'),
+      createDecisionAction('rejected'),
+    ])
+  } else {
+    actions.set(null)
+  }
   $: application =
     data.applications.length === 0
       ? undefined
       : current === undefined
       ? undefined
       : data.applications[current]
+  function createDecisionAction(decision: Data.Decision) {
+    let name: 'Accept' | 'Waitlist' | 'Reject'
+    let color: 'green' | 'yellow' | 'red'
+    switch (decision) {
+      case 'accepted': {
+        name = 'Accept'
+        color = 'green'
+        break
+      }
+      case 'waitlisted': {
+        name = 'Waitlist'
+        color = 'yellow'
+        break
+      }
+      case 'rejected': {
+        name = 'Reject'
+        color = 'red'
+        break
+      }
+    }
+    return {
+      name: `${name} ${checked.length} ${
+        checked.length > 1 ? 'applicants' : 'applicant'
+      }`,
+      color,
+      callback: () =>
+        new Promise<void>((resolve, reject) => {
+          Promise.all(
+            checked.map((i) => {
+              const id = data.applications[i].id
+              return new Promise<void>((resolve, reject) => {
+                setDoc(doc(db, 'decisions', id), {
+                  type: decision,
+                })
+                  .then(() => {
+                    updateDoc(doc(db, 'applications', id), {
+                      'meta.decision': doc(db, 'decisions', id),
+                    })
+                      .then(resolve)
+                      .catch(reject)
+                  })
+                  .catch(reject)
+              })
+            }),
+          )
+            .then(() => {
+              invalidate('app:applications').then(() => {
+                alert.trigger(
+                  'success',
+                  `${checked.length} ${
+                    checked.length > 1 ? 'applicants' : 'applicant'
+                  } ${decision}.`,
+                )
+                checked = []
+                resolve()
+              })
+            })
+            .catch(reject)
+        }),
+    }
+  }
   function handleCheck(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
     i: number,
@@ -39,12 +110,12 @@
   ) {
     const target = e.target as HTMLInputElement
     if (target.checked) {
-      checked = Array.from({ length: rows }, (_, i) => i)
+      checked = Array.from({ length: data.applications.length }, (_, i) => i)
     } else {
       checked = []
     }
   }
-  function handleSearch(e: CustomEvent<SubmitData>) {
+  function handleSearch() {
     if (search === '') {
       goto('/applications')
     } else {
@@ -107,6 +178,8 @@
           id="check-all"
           class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
           type="checkbox"
+          checked={checked.length === data.applications.length &&
+            checked.length > 0}
           on:input={handleCheckAll}
         />
         <label for="check-all" class="sr-only">checkbox</label>
@@ -138,6 +211,7 @@
               type="checkbox"
               checked={checked.includes(i)}
               on:input={(e) => handleCheck(e, i)}
+              on:click|stopPropagation
             />
             <label for="check-all" class="sr-only">checkbox</label>
           </div>

@@ -34,12 +34,21 @@
   import { alert } from '$lib/stores'
   import { cloneDeep } from 'lodash-es'
   import type { FirebaseError } from 'firebase/app'
+  import { invalidate } from '$app/navigation'
+  import nProgress from 'nprogress'
 
   export let dialogEl: Dialog
   export let id: string | undefined
 
   let loading = true
   let disabled = true
+  $: {
+    if (loading) {
+      nProgress.start()
+    } else {
+      nProgress.done()
+    }
+  }
   let dbValues: Data.Application<'client'>
   const defaultValues: Data.Application<'client'> = {
     personal: {
@@ -106,7 +115,7 @@
       updated: serverTimestamp() as Timestamp,
     },
   }
-  let values: Data.Application<'client'> = defaultValues
+  let values: Data.Application<'client'> = cloneDeep(defaultValues)
   let decision: Data.Decision | null
   $: if (id !== undefined) {
     loading = true
@@ -136,21 +145,31 @@
       }
     })
   }
-  function handleDecision(decision: Data.Decision) {
+  function handleDecision(newDecision: Data.Decision) {
     const frozenId = id
+    loading = true
     if (frozenId !== undefined) {
       setDoc(doc(db, 'decisions', frozenId), {
-        type: decision,
+        type: newDecision,
       })
         .then(() => {
           updateDoc(doc(db, 'applications', frozenId), {
             'meta.decision': doc(db, 'decisions', frozenId),
-          }).then(() => {
-            alert.trigger('success', 'Decision updated successfully.')
           })
+            .then(() => {
+              invalidate('app:applications').then(() => {
+                alert.trigger('success', 'Decision updated successfully.')
+                decision = newDecision
+                loading = false
+              })
+            })
+            .catch(() => {
+              loading = false
+            })
         })
         .catch(() => {
           alert.trigger('error', 'Something went wrong. Please try again.')
+          loading = false
         })
     }
   }
@@ -158,15 +177,20 @@
     disabled = false
   }
   function handleSaveChanges() {
+    loading = true
     disabled = true
     if (id !== undefined) {
       setDoc(doc(db, 'applications', id), values)
         .then(() => {
-          alert.trigger('success', 'Changes were saved successfully.')
+          invalidate('app:applications').then(() => {
+            alert.trigger('success', 'Changes were saved successfully.')
+            loading = false
+          })
         })
         .catch((err: FirebaseError) => {
           console.log(err)
           alert.trigger('error', err.code, true)
+          loading = false
         })
     }
   }

@@ -8,11 +8,15 @@
   import { fade } from 'svelte/transition'
   import AnnouncementsBell from './AnnouncementsBell.svelte'
   import { cubicInOut } from 'svelte/easing'
+  import { actions } from '$lib/stores'
+  import Button from './Button.svelte'
+  import nProgress from 'nprogress'
 
   export let user: Data.User.Peek
 
   let shadow = false
   let open = false
+  let disabled = false
   onMount(() => {
     updateShadow()
     return navigating.subscribe((navigating) => {
@@ -27,7 +31,7 @@
       name: 'Dashboard',
       href: '/dashboard',
     },
-    { name: 'Tokens', href: '/tokens' },
+    user.role === 'admin' && { name: 'Tokens', href: '/tokens' },
     {
       name: 'Applications',
       href: '/applications',
@@ -45,69 +49,97 @@
     shadow && !open ? 'shadow-b border-gray-200' : 'border-white',
   )}
 >
-  <div class="flex items-center gap-8">
+  <div class="flex items-center gap-8 w-full">
     <Brand />
     {#if user.emailVerified}
-      <div class="hidden items-center gap-3 sm:flex">
-        {#each pages as page}
-          <a
-            class={clsx(
-              'rounded-md px-4 py-2 transition-colors',
-              pathname === page.href ? 'bg-gray-200' : 'hover:bg-gray-100',
-            )}
-            href={page.href}
-          >
-            {page.name}
-          </a>
-        {/each}
-      </div>
-    {/if}
-  </div>
-  <div class="flex items-center gap-1 sm:gap-3 md:gap-4">
-    {#if user.emailVerified}
-      <AnnouncementsBell />
-    {/if}
-    <ProfileMenu class="hidden sm:block" />
-    <button
-      class="sm:hidden hover:bg-gray-200 rounded-full h-10 w-10 flex items-center justify-center transition-colors"
-      type="button"
-      on:click={() => {
-        open = !open
-      }}
-    >
-      {#if open}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.5"
-          stroke="currentColor"
-          class="h-8 w-8"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
+      {#if $actions === null}
+        <div class="hidden items-center gap-3 sm:flex">
+          {#each pages as page}
+            <a
+              class={clsx(
+                'rounded-md px-4 py-2 transition-colors',
+                pathname === page.href ? 'bg-gray-200' : 'hover:bg-gray-100',
+              )}
+              href={page.href}
+            >
+              {page.name}
+            </a>
+          {/each}
+        </div>
       {:else}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.5"
-          stroke="currentColor"
-          class="h-8 w-8"
+        <div
+          class="hidden sm:flex items-center justify-between w-full gap-3 overflow-x-auto"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M3.75 9h16.5m-16.5 6.75h16.5"
-          />
-        </svg>
+          <fieldset class="flex items-center gap-3" {disabled}>
+            {#each $actions as action}
+              <Button
+                class="rounded py-1 px-3 whitespace-nowrap"
+                color={action.color}
+                on:click={() => {
+                  nProgress.start()
+                  disabled = true
+                  action.callback().finally(() => {
+                    nProgress.done()
+                    disabled = false
+                  })
+                }}
+              >
+                {action.name}
+              </Button>
+            {/each}
+          </fieldset>
+          <Button on:click={() => ($actions = null)}>Close</Button>
+        </div>
       {/if}
-    </button>
+    {/if}
   </div>
+  {#if $actions === null}
+    <div class="flex items-center gap-1 sm:gap-3 md:gap-4">
+      {#if user.emailVerified}
+        <AnnouncementsBell />
+      {/if}
+      <ProfileMenu class="hidden sm:block" />
+      <button
+        class="sm:hidden hover:bg-gray-200 rounded-full h-10 w-10 flex items-center justify-center transition-colors"
+        type="button"
+        on:click={() => {
+          open = !open
+        }}
+      >
+        {#if open}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="h-8 w-8"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        {:else}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="h-8 w-8"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3.75 9h16.5m-16.5 6.75h16.5"
+            />
+          </svg>
+        {/if}
+      </button>
+    </div>
+  {/if}
 </nav>
 {#if open}
   <div

@@ -47,3 +47,11 @@ function createAlert() {
 export const alert = createAlert()
 
 export const dialog = writable<string | null>(null)
+
+type Action = {
+  name: string
+  color: 'red' | 'blue' | 'gray' | 'green' | 'yellow'
+  callback: () => Promise<void>
+}
+
+export const actions = writable<Array<Action> | null>(null)

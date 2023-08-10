@@ -4,7 +4,8 @@ import { adminDb } from '$lib/server/firebase'
 import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
 import algoliasearch from 'algoliasearch'
 
-export const load = (async ({ url }) => {
+export const load = (async ({ url, depends }) => {
+  depends('app:applications')
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
     try {

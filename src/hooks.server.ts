@@ -10,9 +10,11 @@ export const handle = (async ({ event, resolve }) => {
       true,
     )
     const userRecord = await adminAuth.getUser(decodedClaims.uid)
-    // event.locals.user = null
-    // topRedirect = redirect(301, 'https://portal.hackharvard.io')
-    if (userRecord.customClaims) {
+    if (
+      userRecord.customClaims &&
+      'role' in userRecord.customClaims &&
+      userRecord.customClaims.role !== 'applicant'
+    ) {
       const { role } = userRecord.customClaims as { role: Data.Role }
       event.locals.user = {
         uid: userRecord.uid,

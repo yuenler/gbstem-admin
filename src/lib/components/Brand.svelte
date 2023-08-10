@@ -1,4 +1,4 @@
-<div>
+<div class="shrink-0">
   <div
     class="inline-flex items-center gap-2 rounded-md border border-gray-200 p-2 shadow"
   >
