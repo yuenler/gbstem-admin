@@ -27,11 +27,15 @@
   })
   $: pathname = $page.url.pathname
   const pages = [
-    {
-      name: 'Dashboard',
-      href: '/dashboard',
-    },
-    user.role === 'admin' && { name: 'Tokens', href: '/tokens' },
+    ...(user.role === 'admin'
+      ? [
+          {
+            name: 'Dashboard',
+            href: '/dashboard',
+          },
+          { name: 'Tokens', href: '/tokens' },
+        ]
+      : []),
     {
       name: 'Applications',
       href: '/applications',
