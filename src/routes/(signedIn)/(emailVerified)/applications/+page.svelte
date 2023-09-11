@@ -33,6 +33,17 @@
       : current === undefined
       ? undefined
       : data.applications[current]
+  let nextHref = ''
+  $: {
+    const base = $page.url.searchParams
+    base.set(
+      'updated',
+      data.applications[
+        data.applications.length - 1
+      ].values.timestamps.updated.toString(),
+    )
+    nextHref = `?${base.toString()}`
+  }
   function createDecisionAction(decision: Data.Decision) {
     let name: 'Accept' | 'Waitlist' | 'Reject'
     let color: 'green' | 'yellow' | 'red'
@@ -128,16 +139,6 @@
     goto('/applications').then(() => {
       search = ''
     })
-  }
-  function handleNext() {
-    const base = $page.url.searchParams
-    base.set(
-      'updated',
-      data.applications[
-        data.applications.length - 1
-      ].values.timestamps.updated.toString(),
-    )
-    return `?${base.toString()}`
   }
 </script>
 
@@ -374,7 +375,7 @@
 </Table>
 
 <div class="flex justify-end mt-4">
-  <Button href={handleNext()}>Next</Button>
+  <Button href={nextHref}>Next</Button>
 </div>
 
 <Application bind:dialogEl id={application?.id} />
