@@ -51,7 +51,7 @@ declare global {
         email: string
         firstName: string
         lastName: string
-        age: string
+        age: number
         gender: string
         race: string[]
         underrepresented: string
@@ -67,7 +67,7 @@ declare global {
       academic: {
         enrolled: boolean
         currentSchool: string
-        graduationYear: string
+        graduationYear: number
         major: string
         affiliated: boolean
         levelOfStudy: string
