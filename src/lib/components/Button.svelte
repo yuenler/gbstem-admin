@@ -1,23 +1,18 @@
 <script lang="ts">
   import { cn } from '$lib/utils'
-  import { createEventDispatcher } from 'svelte'
 
   type ButtonColor = 'red' | 'blue' | 'gray' | 'green' | 'yellow'
   type ButtonType = 'button' | 'submit' | 'reset'
-
-  const dispatch = createEventDispatcher<{
-    click: MouseEvent & {
-      currentTarget: EventTarget & HTMLButtonElement
-    }
-  }>()
 
   let className = ''
   export { className as class }
   export let color: ButtonColor = 'gray'
   export let type: ButtonType = 'button'
+  export let href: string | undefined = undefined
 </script>
 
-<button
+<svelte:element
+  this={href ? 'a' : 'button'}
   class={cn(
     'rounded-md shadow-sm transition-colors duration-300 px-4 py-2',
     color === 'red' &&
@@ -32,9 +27,19 @@
       'bg-yellow-100 text-yellow-900 hover:bg-yellow-200 disabled:bg-yellow-200 disabled:text-yellow-700',
     className,
   )}
-  {type}
-  on:click={(e) => dispatch('click', e)}
+  {href}
+  type={href ? undefined : type}
+  role={href ? 'button' : undefined}
+  on:click
+  on:change
+  on:keydown
+  on:keyup
+  on:touchstart
+  on:touchend
+  on:touchcancel
+  on:mouseenter
+  on:mouseleave
   {...$$restProps}
 >
   <slot />
-</button>
+</svelte:element>
