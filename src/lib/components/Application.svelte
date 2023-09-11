@@ -35,20 +35,12 @@
   import { cloneDeep } from 'lodash-es'
   import type { FirebaseError } from 'firebase/app'
   import { invalidate } from '$app/navigation'
-  import nProgress from 'nprogress'
 
   export let dialogEl: Dialog
   export let id: string | undefined
 
   let loading = true
   let disabled = true
-  $: {
-    if (loading) {
-      nProgress.start()
-    } else {
-      nProgress.done()
-    }
-  }
   let dbValues: Data.Application<'client'>
   const defaultValues: Data.Application<'client'> = {
     personal: {

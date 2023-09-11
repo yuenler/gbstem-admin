@@ -5,14 +5,15 @@
   import { navigating } from '$app/stores'
   import { onMount } from 'svelte'
   import nProgress from 'nprogress'
+  import progress from '$lib/client/progress'
 
   onMount(() => {
     nProgress.configure({ showSpinner: false })
     return navigating.subscribe((navigating) => {
       if (navigating) {
-        nProgress.start()
+        progress.start()
       } else {
-        nProgress.done()
+        progress.done()
       }
     })
   })

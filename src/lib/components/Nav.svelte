@@ -10,7 +10,7 @@
   import { cubicInOut } from 'svelte/easing'
   import { actions } from '$lib/stores'
   import Button from './Button.svelte'
-  import nProgress from 'nprogress'
+  import progress from '$lib/client/progress'
 
   export let user: Data.User.Peek
 
@@ -80,10 +80,10 @@
                 class="rounded py-1 px-3 whitespace-nowrap"
                 color={action.color}
                 on:click={() => {
-                  nProgress.start()
+                  progress.start()
                   disabled = true
                   action.callback().finally(() => {
-                    nProgress.done()
+                    progress.done()
                     disabled = false
                   })
                 }}
