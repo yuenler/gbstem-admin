@@ -8,13 +8,19 @@ export const load = (async ({ url, depends }) => {
   depends('app:applications')
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
+    const updated = url.searchParams.get('updated')
     try {
-      const snapshot = await adminDb
-        .collection('applications')
-        .where('meta.submitted', '==', true)
-        .orderBy('timestamps.updated')
-        .limit(25)
-        .get()
+      const dbQuery = updated
+        ? adminDb
+            .collection('applications')
+            .where('meta.submitted', '==', true)
+            .orderBy('timestamps.updated')
+            .startAfter(new Date(updated))
+        : adminDb
+            .collection('applications')
+            .where('meta.submitted', '==', true)
+            .orderBy('timestamps.updated')
+      const snapshot = await dbQuery.limit(25).get()
       const decisions = (
         await Promise.all(
           snapshot.docs.map((doc) => {

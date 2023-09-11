@@ -119,7 +119,7 @@
     if (search === '') {
       goto('/applications')
     } else {
-      let base = new URLSearchParams($page.url.searchParams.toString())
+      const base = $page.url.searchParams
       base.set('query', search)
       goto(`?${base.toString()}`)
     }
@@ -128,6 +128,16 @@
     goto('/applications').then(() => {
       search = ''
     })
+  }
+  function handleNext() {
+    const base = $page.url.searchParams
+    base.set(
+      'updated',
+      data.applications[
+        data.applications.length - 1
+      ].values.timestamps.updated.toString(),
+    )
+    return `?${base.toString()}`
   }
 </script>
 
@@ -362,6 +372,10 @@
     {/each}
   </svelte:fragment>
 </Table>
+
+<div class="flex justify-end mt-4">
+  <Button href={handleNext()}>Next</Button>
+</div>
 
 <Application bind:dialogEl id={application?.id} />
 
