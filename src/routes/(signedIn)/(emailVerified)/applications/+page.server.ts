@@ -58,7 +58,6 @@ export const load = (async ({ url, depends }) => {
       }
 
       const snapshot = await dbQuery.limit(25).get()
-      console.log(snapshot.docs)
 
       const decisions = (
         await Promise.all(

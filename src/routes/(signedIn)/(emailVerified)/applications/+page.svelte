@@ -23,6 +23,31 @@
   let decisionFilter: 'all' | 'decided' | 'undecided' =
     ($page.url.searchParams.get('filter') as any) ?? 'all'
 
+  const csv = data.applications
+    .map((application) => {
+      const {
+        id,
+        values: {
+          personal: { firstName, lastName, email },
+          meta: { submitted, decision },
+        },
+      } = application
+      return [
+        id,
+        submitted ? 'Submitted' : 'Not Submitted',
+        decision ? decision : 'No Decision',
+        firstName,
+        lastName,
+        email,
+      ]
+    })
+    .join('\n')
+  // add column names
+  const csvWithHeaders = `id,submitted,decision,first name,last name,email\n${csv}`
+
+  const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+
   $: if (checked.length > 0) {
     actions.set([
       createDecisionAction('accepted'),
@@ -213,6 +238,7 @@
       Filter
     </a>
   </div>
+  <Button><a href={url}>Download</a></Button>
 </Form>
 
 <Table>
