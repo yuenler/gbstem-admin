@@ -12,12 +12,17 @@
   import { actions, alert } from '$lib/stores'
   import { db } from '$lib/client/firebase'
   import { doc, setDoc, updateDoc } from 'firebase/firestore'
+  import fi from 'date-fns/locale/fi'
+  import Select from '$lib/components/Select.svelte'
 
   export let data: PageData
   let dialogEl: Dialog
   let search: string = data.query ?? ''
   let current: number | undefined
   let checked: Array<number> = []
+  let decisionFilter: 'all' | 'decided' | 'undecided' =
+    ($page.url.searchParams.get('filter') as any) ?? 'all'
+
   $: if (checked.length > 0) {
     actions.set([
       createDecisionAction('accepted'),
@@ -34,6 +39,7 @@
       ? undefined
       : data.applications[current]
   let nextHref = ''
+  let filterRef = ''
   $: {
     const base = $page.url.searchParams
     base.set(
@@ -44,6 +50,17 @@
     )
     nextHref = `?${base.toString()}`
   }
+  $: {
+    const base = $page.url.searchParams
+    if (decisionFilter !== 'all') {
+      base.set('filter', decisionFilter)
+      base.delete('updated')
+    } else {
+      base.delete('filter')
+    }
+    filterRef = `?${base.toString()}`
+  }
+
   function createDecisionAction(decision: Data.Decision) {
     let name: 'Accept' | 'Waitlist' | 'Reject'
     let color: 'green' | 'yellow' | 'red'
@@ -160,6 +177,7 @@
       <Button class="uppercase px-2 py-1" on:click={handleClear}>Clear</Button>
     </div>
   </div>
+
   <Button
     class="shrink-0 h-12 w-12 p-0 flex items-center justify-center"
     type="submit"
@@ -179,6 +197,22 @@
       />
     </svg>
   </Button>
+
+  <div class="flex">
+    <Select
+      bind:value={decisionFilter}
+      label="Filter"
+      options={[{ name: 'all' }, { name: 'decided' }, { name: 'undecided' }]}
+      floating
+      required
+    />
+    <a
+      href={filterRef}
+      class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
+    >
+      Filter
+    </a>
+  </div>
 </Form>
 
 <Table>
@@ -295,7 +329,7 @@
         </td>
         <th
           scope="row"
-          class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+          class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
         >
           {`${application.values.personal.firstName} ${application.values.personal.lastName}`}
         </th>
