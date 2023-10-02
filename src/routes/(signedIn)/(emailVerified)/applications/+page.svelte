@@ -28,8 +28,21 @@
       const {
         id,
         values: {
-          personal: { firstName, lastName, email },
+          personal: {
+            firstName,
+            lastName,
+            email,
+            gender,
+            age,
+            underrepresented,
+            countryOfResidence,
+            race,
+          },
           meta: { submitted, decision },
+          academic: { currentSchool, graduationYear, levelOfStudy },
+          hackathon: { firstHackathon, shirtSize },
+          openResponse: { whyHh, project, predictions },
+          timestamps: { updated },
         },
       } = application
       return [
@@ -39,11 +52,25 @@
         firstName,
         lastName,
         email,
+        gender,
+        age,
+        underrepresented,
+        countryOfResidence,
+        currentSchool.replace(/,/g, ''),
+        graduationYear,
+        race.join(';'),
+        firstHackathon,
+        whyHh.replace(/,/g, '').replace(/\n/g, ''),
+        project.replace(/,/g, '').replace(/\n/g, ''),
+        predictions.replace(/,/g, '').replace(/\n/g, ''),
+        levelOfStudy.replace(/,/g, '').replace(/\n/g, ''),
+        updated,
+        shirtSize,
       ]
     })
     .join('\n')
   // add column names
-  const csvWithHeaders = `id,submitted,decision,first name,last name,email\n${csv}`
+  const csvWithHeaders = `id,submitted,decision,first name,last name,email,gender,age,underrepresented,countryOfResidence,school,gradYear,race,firstHackathon,whyHH,project,predictions,levelOfStudy,updated,shirtSize\n${csv}`
 
   const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)
