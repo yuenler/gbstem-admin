@@ -14,6 +14,7 @@
     applications: {
       total: number
       submitted: number
+      decided: number
       confirmed: number
     }
     users: {
@@ -39,6 +40,9 @@
             getCountFromServer(
               query(applicationsColl, where('meta.submitted', '==', true)),
             ),
+            getCountFromServer(
+              query(applicationsColl, where('meta.decision', '!=', null)),
+            ),
             getCountFromServer(usersColl),
             getCountFromServer(
               query(
@@ -54,6 +58,7 @@
             ([
               totalApplicationsSnapshot,
               submittedApplicationsSnapshot,
+              decidedApplicationsSnapshot,
               totalUsersSnapshot,
               totalConfirmationsSnapshot,
             ]) => {
@@ -61,6 +66,7 @@
                 applications: {
                   total: totalApplicationsSnapshot.data().count,
                   submitted: submittedApplicationsSnapshot.data().count,
+                  decided: decidedApplicationsSnapshot.data().count,
                   confirmed: totalConfirmationsSnapshot.data().count,
                 },
                 users: {
@@ -123,6 +129,7 @@
           <ol class="space-y-1">
             <li>{data.applications.total} total.</li>
             <li>{data.applications.submitted} submitted.</li>
+            <li>{data.applications.decided} decided.</li>
             <li>{data.applications.confirmed} confirmed.</li>
           </ol>
         </Card>
