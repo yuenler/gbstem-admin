@@ -77,7 +77,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
           ...data,
           app: {
             name: 'Portal',
-            link: 'https://portal.hackharvard.io',
+            link: 'https://admin.hackharvard.io',
           },
         },
       }
