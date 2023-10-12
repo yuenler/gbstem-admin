@@ -12,12 +12,69 @@
   import { actions, alert } from '$lib/stores'
   import { db } from '$lib/client/firebase'
   import { doc, setDoc, updateDoc } from 'firebase/firestore'
+  import fi from 'date-fns/locale/fi'
+  import Select from '$lib/components/Select.svelte'
 
   export let data: PageData
   let dialogEl: Dialog
   let search: string = data.query ?? ''
   let current: number | undefined
   let checked: Array<number> = []
+  let decisionFilter: 'all' | 'decided' | 'undecided' =
+    ($page.url.searchParams.get('filter') as any) ?? 'all'
+
+  const csv = data.applications
+    .map((application) => {
+      const {
+        id,
+        values: {
+          personal: {
+            firstName,
+            lastName,
+            email,
+            gender,
+            age,
+            underrepresented,
+            countryOfResidence,
+            race,
+          },
+          meta: { submitted, decision },
+          academic: { currentSchool, graduationYear, levelOfStudy },
+          hackathon: { firstHackathon, shirtSize },
+          openResponse: { whyHh, project, predictions },
+          timestamps: { updated },
+        },
+      } = application
+      return [
+        id,
+        submitted ? 'Submitted' : 'Not Submitted',
+        decision ? decision : 'No Decision',
+        firstName,
+        lastName,
+        email,
+        gender,
+        age,
+        underrepresented,
+        countryOfResidence,
+        currentSchool.replace(/,/g, ''),
+        graduationYear,
+        race.join(';'),
+        firstHackathon,
+        whyHh.replace(/,/g, '').replace(/\n/g, ''),
+        project.replace(/,/g, '').replace(/\n/g, ''),
+        predictions.replace(/,/g, '').replace(/\n/g, ''),
+        levelOfStudy.replace(/,/g, '').replace(/\n/g, ''),
+        updated,
+        shirtSize,
+      ]
+    })
+    .join('\n')
+  // add column names
+  const csvWithHeaders = `id,submitted,decision,first name,last name,email,gender,age,underrepresented,countryOfResidence,school,gradYear,race,firstHackathon,whyHH,project,predictions,levelOfStudy,updated,shirtSize\n${csv}`
+
+  const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+
   $: if (checked.length > 0) {
     actions.set([
       createDecisionAction('accepted'),
@@ -33,6 +90,29 @@
       : current === undefined
       ? undefined
       : data.applications[current]
+  let nextHref = ''
+  let filterRef = ''
+  $: {
+    const base = $page.url.searchParams
+    base.set(
+      'updated',
+      data.applications[
+        data.applications.length - 1
+      ].values.timestamps.updated.toString(),
+    )
+    nextHref = `?${base.toString()}`
+  }
+  $: {
+    const base = $page.url.searchParams
+    if (decisionFilter !== 'all') {
+      base.set('filter', decisionFilter)
+      base.delete('updated')
+    } else {
+      base.delete('filter')
+    }
+    filterRef = `?${base.toString()}`
+  }
+
   function createDecisionAction(decision: Data.Decision) {
     let name: 'Accept' | 'Waitlist' | 'Reject'
     let color: 'green' | 'yellow' | 'red'
@@ -119,7 +199,7 @@
     if (search === '') {
       goto('/applications')
     } else {
-      let base = new URLSearchParams($page.url.searchParams.toString())
+      const base = $page.url.searchParams
       base.set('query', search)
       goto(`?${base.toString()}`)
     }
@@ -149,6 +229,7 @@
       <Button class="uppercase px-2 py-1" on:click={handleClear}>Clear</Button>
     </div>
   </div>
+
   <Button
     class="shrink-0 h-12 w-12 p-0 flex items-center justify-center"
     type="submit"
@@ -168,6 +249,23 @@
       />
     </svg>
   </Button>
+
+  <div class="flex">
+    <Select
+      bind:value={decisionFilter}
+      label="Filter"
+      options={[{ name: 'all' }, { name: 'undecided' }]}
+      floating
+      required
+    />
+    <a
+      href={filterRef}
+      class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
+    >
+      Filter
+    </a>
+  </div>
+  <Button><a href={url}>Download</a></Button>
 </Form>
 
 <Table>
@@ -284,7 +382,7 @@
         </td>
         <th
           scope="row"
-          class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+          class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
         >
           {`${application.values.personal.firstName} ${application.values.personal.lastName}`}
         </th>
@@ -362,6 +460,10 @@
     {/each}
   </svelte:fragment>
 </Table>
+
+<div class="flex justify-end mt-4">
+  <Button href={nextHref}>Next</Button>
+</div>
 
 <Application bind:dialogEl id={application?.id} />
 

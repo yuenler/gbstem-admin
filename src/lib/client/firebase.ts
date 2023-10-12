@@ -41,7 +41,9 @@ function userStore() {
             const { role } = idTokenResult.claims as { role: Data.Role }
             set({
               object: userObject,
-              role,
+              profile: {
+                role,
+              },
             })
           })
         } else {

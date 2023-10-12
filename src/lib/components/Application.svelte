@@ -35,27 +35,19 @@
   import { cloneDeep } from 'lodash-es'
   import type { FirebaseError } from 'firebase/app'
   import { invalidate } from '$app/navigation'
-  import nProgress from 'nprogress'
 
   export let dialogEl: Dialog
   export let id: string | undefined
 
   let loading = true
   let disabled = true
-  $: {
-    if (loading) {
-      nProgress.start()
-    } else {
-      nProgress.done()
-    }
-  }
   let dbValues: Data.Application<'client'>
   const defaultValues: Data.Application<'client'> = {
     personal: {
       email: '',
       firstName: '',
       lastName: '',
-      age: '',
+      age: 0,
       gender: '',
       race: [],
       underrepresented: '',
@@ -71,7 +63,7 @@
     academic: {
       enrolled: false,
       currentSchool: '',
-      graduationYear: '',
+      graduationYear: new Date().getFullYear(),
       major: '',
       affiliated: false,
       levelOfStudy: '',
@@ -288,6 +280,24 @@
     <div class="mt-4 flex justify-center">
       <Form class="max-w-2xl">
         <fieldset class="space-y-14" {disabled}>
+          {#if !loading && ((!values.academic.affiliated && values.personal.age < 18) || !values.academic.enrolled || (!values.academic.levelOfStudy
+                .toLowerCase()
+                .includes('undergraduate') && !values.academic.levelOfStudy
+                  .toLowerCase()
+                  .includes('secondary')))}
+            <Card class="bg-red-200">
+              <b>Please reject this application.</b>
+              {#if !values.academic.affiliated && values.personal.age < 18}
+                Person is not a Harvard student and is under 18.
+              {:else if !values.academic.enrolled || (!values.academic.levelOfStudy
+                  .toLowerCase()
+                  .includes('undergraduate') && !values.academic.levelOfStudy
+                    .toLowerCase()
+                    .includes('secondary'))}
+                Person is not an undergraduate student.
+              {/if}
+            </Card>
+          {/if}
           <div class="grid gap-4">
             <span class="font-bold text-2xl">Personal</span>
             <Card class="space-y-3">

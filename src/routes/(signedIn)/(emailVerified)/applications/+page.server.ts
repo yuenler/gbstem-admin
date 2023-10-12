@@ -3,18 +3,68 @@ import type { PageServerLoad } from './$types'
 import { adminDb } from '$lib/server/firebase'
 import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
 import algoliasearch from 'algoliasearch'
+import { db } from '$lib/client/firebase'
 
 export const load = (async ({ url, depends }) => {
   depends('app:applications')
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
+    const updated = url.searchParams.get('updated')
+    const filter = url.searchParams.get('filter')
     try {
-      const snapshot = await adminDb
-        .collection('applications')
-        .where('meta.submitted', '==', true)
-        .orderBy('timestamps.updated')
-        .limit(25)
-        .get()
+      let dbQuery;
+      // if (filter === 'decided') {
+      //   dbQuery = updated
+      //     ? adminDb
+      //       .collection('applications')
+      //       .where('meta.submitted', '==', true)
+      //       .orderBy('timestamps.updated')
+      //       .orderBy('meta.decision')
+      //       .where('meta.decision', '!=', null)
+      //       .startAfter(new Date(updated))
+      //     : adminDb
+      //       .collection('applications')
+      //       .where('meta.submitted', '==', true)
+      //       .orderBy('meta.decision')
+      //       .where('meta.decision', '!=', false)
+      //       .orderBy('timestamps.updated')
+      // }
+      // else
+      if (filter === 'undecided') {
+        dbQuery = updated
+          ? adminDb
+            .collection('applications')
+            .where('meta.submitted', '==', true)
+            .orderBy('timestamps.updated')
+            .orderBy('meta.decision')
+            .where('meta.decision', '==', null)
+            .startAfter(new Date(updated))
+          : adminDb
+            .collection('applications')
+            .where('meta.submitted', '==', true)
+            .orderBy('meta.decision')
+            .where('meta.decision', '==', null)
+            .orderBy('timestamps.updated')
+      }
+      else {
+        dbQuery = updated
+          ? adminDb
+            .collection('applications')
+            .where('meta.submitted', '==', true)
+            .orderBy('timestamps.updated')
+            .startAfter(new Date(updated))
+          : adminDb
+            .collection('applications')
+            .where('meta.submitted', '==', true)
+            .orderBy('timestamps.updated')
+      }
+
+
+      const snapshot = await dbQuery.limit(25).get()
+
+      // const snapshot = await dbQuery.get()
+
+
       const decisions = (
         await Promise.all(
           snapshot.docs.map((doc) => {
@@ -46,6 +96,7 @@ export const load = (async ({ url, depends }) => {
         }),
       }
     } catch (err) {
+      console.log(err)
       throw error(400, 'Something went wrong. Please try again later.')
     }
   } else {

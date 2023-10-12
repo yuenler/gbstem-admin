@@ -14,6 +14,8 @@
     applications: {
       total: number
       submitted: number
+      decided: number
+      confirmed: number
     }
     users: {
       total: number
@@ -32,22 +34,40 @@
         new Promise<void>((resolve) => {
           const applicationsColl = collection(db, 'applications')
           const usersColl = collection(db, 'users')
+          const confirmationsColl = collection(db, 'confirmations')
           Promise.all([
             getCountFromServer(applicationsColl),
             getCountFromServer(
               query(applicationsColl, where('meta.submitted', '==', true)),
             ),
+            getCountFromServer(
+              query(applicationsColl, where('meta.decision', '!=', null)),
+            ),
             getCountFromServer(usersColl),
+            getCountFromServer(
+              query(
+                confirmationsColl,
+                where(
+                  'confirmed',
+                  '==',
+                  'Yes, I can attend all 3 days of HackHarvard.',
+                ),
+              ),
+            ),
           ]).then(
             ([
               totalApplicationsSnapshot,
               submittedApplicationsSnapshot,
+              decidedApplicationsSnapshot,
               totalUsersSnapshot,
+              totalConfirmationsSnapshot,
             ]) => {
               data = {
                 applications: {
                   total: totalApplicationsSnapshot.data().count,
                   submitted: submittedApplicationsSnapshot.data().count,
+                  decided: decidedApplicationsSnapshot.data().count,
+                  confirmed: totalConfirmationsSnapshot.data().count,
                 },
                 users: {
                   total: totalUsersSnapshot.data().count,
@@ -109,6 +129,8 @@
           <ol class="space-y-1">
             <li>{data.applications.total} total.</li>
             <li>{data.applications.submitted} submitted.</li>
+            <li>{data.applications.decided} decided.</li>
+            <li>{data.applications.confirmed} confirmed.</li>
           </ol>
         </Card>
         <Card class="space-y-2">
