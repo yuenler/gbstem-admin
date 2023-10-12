@@ -1,59 +1,104 @@
-<script>
-  import { onMount } from 'svelte'
+<script lang="ts">
   import { db } from '$lib/client/firebase'
-  import { doc, setDoc, updateDoc } from 'firebase/firestore'
-  import { flip } from 'svelte/animate'
+  import { doc, serverTimestamp, updateDoc } from 'firebase/firestore'
+  import type { PageData } from './$types'
+  import Button from '$lib/components/Button.svelte'
+  import { format } from 'date-fns'
+  import { invalidateAll } from '$app/navigation'
 
-  let updatedHHID = false
-  let updateFailed = false
+  export let data: PageData
 
-  onMount(() => {
-    // Get the slug from the URL
-    const hhid = window.location.pathname.split('/').pop()
+  function handleCheckIn() {
+    const hhidRef = doc(db, 'hhids', data.applicant.user.hhid)
+    updateDoc(hhidRef, {
+      checkedIn: true,
+      checkedInAt: serverTimestamp(),
+      food: {
+        '2023-10-20': {
+          dinner: false,
+        },
+        '2023-10-21': {
+          breakfast: false,
+          lunch: false,
+          dinner: false,
+        },
+        '2023-10-22': {
+          breakfast: false,
+        },
+      },
+    }).then(() => {
+      invalidateAll()
+    })
+  }
 
-    // Get the user's reference from the database using doc
-    const hhidRef = doc(db, 'hhids', hhid)
-
-    // Update the user's checkedIn field using updateDoc()
-    const updateData = { checkedIn: true }
-
-    // Update doc
-    updateDoc(hhidRef, updateData)
-      .then(() => {
-        console.log(`Successfully updated HHID ${hhid}`)
-        updatedHHID = true
-      })
-      .catch((error) => {
-        console.error(`Error updating HHID ${hhid}:`, error)
-        updateFailed = true
-      })
-  })
+  function handleMeal(date: string, meal: string, state: boolean) {
+    updateDoc(doc(db, 'hhids', data.applicant.user.hhid), {
+      [`food.${date}.${meal}`]: !state,
+    }).then(() => {
+      invalidateAll()
+    })
+  }
 </script>
 
 <svelte:head>
   <title>Check In</title>
 </svelte:head>
 
-<div class="text-center">
-  {#if updatedHHID}
-    <span
-      class="rounded-md bg-green-200 px-5 py-2 w-100 text-lg font-bold"
-      href="/"
-      >Participant successfully checked in :)
-    </span>
-  {:else if updateFailed}
-    <span
-      class="rounded-md bg-red-200 px-5 py-2 w-100 text-lg font-bold"
-      href="/"
-      >Error: participant not successfully checked in :(
-    </span>
-  {:else}
-    <span
-      class="rounded-md bg-gray-200 px-5 py-2 w-100 text-lg font-bold"
-      href="/"
-      >Attempting to check in participant.
-    </span>
-    <br /><br />
-    <small>Check your connection if this takes more than a secondg...</small
-    >{/if}
+<div>
+  <div>
+    <div>
+      {`${data.applicant.user.firstName} ${data.applicant.user.lastName}`}
+    </div>
+    <div>
+      {data.applicant.user.hhid}
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <div>Checked in:</div>
+    <div>
+      {#if data.applicant.hhid.checkedIn}
+        {format(data.applicant.hhid.checkedInAt, 'yyyy.MM.dd p')}
+      {:else}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-6 h-6"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      {/if}
+    </div>
+  </div>
+  <div>
+    {#if !data.applicant.hhid.checkedIn}
+      <Button on:click={handleCheckIn}>Check In</Button>
+    {/if}
+  </div>
+  <div class="space-y-8 mt-8">
+    {#if data.applicant.hhid.checkedIn}
+      {#each Object.keys(data.applicant.hhid.food).sort() as date}
+        <div class="font-bold">
+          {date}
+        </div>
+        {#each Object.keys(data.applicant.hhid.food[date]) as meal}
+          <div>
+            <Button
+              on:click={() =>
+                handleMeal(date, meal, data.applicant.hhid.food[date][meal])}
+              >{meal}: {data.applicant.hhid.food[date][meal]
+                ? 'already eaten'
+                : 'available'}</Button
+            >
+          </div>
+        {/each}
+      {/each}
+    {/if}
+  </div>
 </div>
