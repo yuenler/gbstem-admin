@@ -53,52 +53,57 @@
       {data.applicant.user.hhid}
     </div>
   </div>
-  <div class="flex gap-2">
-    <div>Checked in:</div>
+  {#if data.applicant.confirmed}
+    <div>Confirmation form was submitted.</div>
+    <div class="flex gap-2">
+      <div>Checked in:</div>
+      <div>
+        {#if data.applicant.hhid.checkedIn}
+          {format(data.applicant.hhid.checkedInAt, 'yyyy.MM.dd p')}
+        {:else}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="w-6 h-6"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        {/if}
+      </div>
+    </div>
     <div>
-      {#if data.applicant.hhid.checkedIn}
-        {format(data.applicant.hhid.checkedInAt, 'yyyy.MM.dd p')}
-      {:else}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.5"
-          stroke="currentColor"
-          class="w-6 h-6"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
+      {#if !data.applicant.hhid.checkedIn}
+        <Button on:click={handleCheckIn}>Check In</Button>
       {/if}
     </div>
-  </div>
-  <div>
-    {#if !data.applicant.hhid.checkedIn}
-      <Button on:click={handleCheckIn}>Check In</Button>
-    {/if}
-  </div>
-  <div class="space-y-8 mt-8">
-    {#if data.applicant.hhid.checkedIn}
-      {#each Object.keys(data.applicant.hhid.food).sort() as date}
-        <div class="font-bold">
-          {date}
-        </div>
-        {#each Object.keys(data.applicant.hhid.food[date]) as meal}
-          <div>
-            <Button
-              on:click={() =>
-                handleMeal(date, meal, data.applicant.hhid.food[date][meal])}
-              >{meal}: {data.applicant.hhid.food[date][meal]
-                ? 'already eaten'
-                : 'available'}</Button
-            >
+    <div class="space-y-8 mt-8">
+      {#if data.applicant.hhid.checkedIn}
+        {#each Object.keys(data.applicant.hhid.food).sort() as date}
+          <div class="font-bold">
+            {date}
           </div>
+          {#each Object.keys(data.applicant.hhid.food[date]) as meal}
+            <div>
+              <Button
+                on:click={() =>
+                  handleMeal(date, meal, data.applicant.hhid.food[date][meal])}
+                >{meal}: {data.applicant.hhid.food[date][meal]
+                  ? 'already eaten'
+                  : 'available'}</Button
+              >
+            </div>
+          {/each}
         {/each}
-      {/each}
-    {/if}
-  </div>
+      {/if}
+    </div>
+  {:else}
+    <div>Did not send in a confirmation form.</div>
+  {/if}
 </div>

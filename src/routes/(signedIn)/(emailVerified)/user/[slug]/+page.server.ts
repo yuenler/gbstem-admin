@@ -29,8 +29,13 @@ export const load: PageServerLoad = async ({ params }) => {
     .collection('users')
     .where('hhid', '==', params.slug)
     .get()
+  const confirmedDoc = await adminDb
+    .collection('confirmations')
+    .doc(query.docs[0].id)
+    .get()
   return {
     applicant: {
+      confirmed: confirmedDoc.exists,
       hhid: {
         checkedIn: hhidData.checkedIn,
         checkedInAt: (hhidData.checkedInAt as Timestamp)?.toDate(),
