@@ -16,6 +16,7 @@
       submitted: number
       decided: number
       confirmed: number
+      checkedIn: number
     }
     users: {
       total: number
@@ -35,6 +36,7 @@
           const applicationsColl = collection(db, 'applications')
           const usersColl = collection(db, 'users')
           const confirmationsColl = collection(db, 'confirmations')
+          const hhidsColl = collection(db, 'hhids')
           Promise.all([
             getCountFromServer(applicationsColl),
             getCountFromServer(
@@ -54,6 +56,9 @@
                 ),
               ),
             ),
+            getCountFromServer(
+              query(hhidsColl, where('checkedIn', '==', true)),
+            ),
           ]).then(
             ([
               totalApplicationsSnapshot,
@@ -61,6 +66,7 @@
               decidedApplicationsSnapshot,
               totalUsersSnapshot,
               totalConfirmationsSnapshot,
+              totalCheckedInSnapshot,
             ]) => {
               data = {
                 applications: {
@@ -68,6 +74,7 @@
                   submitted: submittedApplicationsSnapshot.data().count,
                   decided: decidedApplicationsSnapshot.data().count,
                   confirmed: totalConfirmationsSnapshot.data().count,
+                  checkedIn: totalCheckedInSnapshot.data().count,
                 },
                 users: {
                   total: totalUsersSnapshot.data().count,
@@ -131,6 +138,7 @@
             <li>{data.applications.submitted} submitted.</li>
             <li>{data.applications.decided} decided.</li>
             <li>{data.applications.confirmed} confirmed.</li>
+            <li>{data.applications.checkedIn} checked in.</li>
           </ol>
         </Card>
         <Card class="space-y-2">
