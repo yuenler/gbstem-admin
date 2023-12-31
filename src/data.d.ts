@@ -55,59 +55,97 @@ declare global {
       MessageStream: 'outbound'
     }
 
+    type Registration<T extends 'client' | 'server' | 'pojo'> = {
+      personal: {
+        email: string
+        studentFirstName: string
+        studentLastName: string
+        parentFirstName: string
+        parentLastName: string
+        secondaryEmail: string
+        dateOfBirth: string
+        gender: string
+        race: string[]
+        phoneNumber: string
+        frlp: string
+        parentEducation: string
+      }
+      academic: {
+        school: string
+        grade: string
+      }
+      program: {
+        csCourse: string
+        mathCourse: string
+        engineeringCourse: string
+        scienceCourse: string
+        timeSlots: string[]
+        reason: string
+        inPerson: boolean
+      }
+      agreements: {
+        entireProgram: boolean
+        timeCommitment: boolean
+        submitting: boolean
+      }
+      meta: {
+        id: string
+        uid: string
+        submitted: boolean
+      }
+      timestamps: {
+        created: T extends 'client'
+        ? ClientTimestamp
+        : T extends 'server'
+        ? ServerTimestamp
+        : Date
+        updated: T extends 'client'
+        ? ClientTimestamp
+        : T extends 'server'
+        ? ServerTimestamp
+        : Date
+      }
+    }
+
+
+
+
     type Application<T extends 'client' | 'server' | 'pojo'> = {
       personal: {
         email: string
         firstName: string
         lastName: string
-        age: number
+        dateOfBirth: string
         gender: string
         race: string[]
-        underrepresented: string
         phoneNumber: string
-        countryOfResidence: string
-        shippingAddress: string
-        shippingCity: string
-        shippingState: string
-        shippingCountry: string
-        shippingZipCode: string
-        dietaryRestrictions: string[]
       }
       academic: {
-        enrolled: boolean
-        currentSchool: string
-        graduationYear: number
-        major: string
-        affiliated: boolean
-        levelOfStudy: string
+        school: string
+        graduationYear: string
       }
-      hackathon: {
-        shirtSize: string
-        firstHackathon: boolean
-        previouslyParticipated: boolean
-        ableToAttend: boolean
+      program: {
+        courses: string[]
+        preferences: string
+        numClasses: string
+        timeSlots: string[]
+        notAvailable: string
+        inPerson: boolean
         reason: string
       }
-      openResponse: {
-        roles: string[]
-        otherRole: string
-        prolangs: string[]
-        otherProlang: string
-        experience: string
-        whyHh: string
-        project: string
-        predictions: string
-        resume: Resume
-        resumeShare: boolean
+      essay: {
+        taughtBefore: boolean
+        academicBackground: string
+        teachingScenario: string
+        why: string
       }
       agreements: {
-        codeOfConduct: boolean
-        sharing: boolean
-        mlhEmails: boolean
+        entireProgram: boolean
+        timeCommitment: boolean
         submitting: boolean
       }
       meta: {
-        hhid: string
+        id: string
         uid: string
         submitted: boolean
         decision:
@@ -131,6 +169,7 @@ declare global {
         : Date
       }
     }
+
 
     type Announcement<T extends 'client' | 'server' | 'pojo'> = {
       title: string

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Application from '$lib/components/Application.svelte'
+  import Registration from '$lib/components/Registration.svelte'
   import type Dialog from '$lib/components/Dialog.svelte'
   import { format } from 'date-fns'
   import Input from '$lib/components/Input.svelte'
@@ -23,36 +23,55 @@
   let decisionFilter: 'all' | 'decided' | 'undecided' =
     ($page.url.searchParams.get('filter') as any) ?? 'all'
 
-  const csv = data.applications
-    .map((application) => {
+  const mathCourseMap = {
+    'Mathematics 5a': 'mathematics-v',
+    'Mathematics 4a': 'mathematics-iv',
+    'Mathematics 3a': 'mathematics-iii',
+    'Mathematics 2a': 'mathematics-ii',
+    'Mathematics 1a': 'mathematics-i',
+  }
+
+  const csv = data.registrations
+    .map((registration) => {
       const {
         id,
         values: {
-          personal: { firstName, lastName, email },
-          academic: { school, graduationYear },
-          program: { courses, timeSlots, inPerson },
-          essay: { taughtBefore },
-          meta: { submitted, decision },
+          personal: {
+            studentFirstName,
+            studentLastName,
+            email,
+            secondaryEmail,
+          },
+          academic: { school, grade },
+          program: {
+            csCourse,
+            engineeringCourse,
+            mathCourse,
+            scienceCourse,
+            timeSlots,
+            inPerson,
+          },
         },
-      } = application
+      } = registration
       return [
         id,
-        submitted ? 'Submitted' : 'Not Submitted',
-        decision ? decision : 'No Decision',
-        firstName,
-        lastName,
+        studentFirstName,
+        studentLastName,
         email,
-        school,
-        graduationYear,
-        courses.join(';'),
+        secondaryEmail,
+        school.replace(/,/g, ''),
+        grade,
+        csCourse.toLowerCase().replace(/ /g, '-'),
+        engineeringCourse.toLowerCase().replace(/ /g, '-'),
+        mathCourseMap[mathCourse] ? mathCourseMap[mathCourse] : mathCourse,
+        scienceCourse.toLowerCase().replace(/ /g, '-'),
         timeSlots.join(';'),
-        taughtBefore ? 'Yes' : 'No',
         inPerson ? 'Yes' : 'No',
-      ]
+      ].join(',')
     })
     .join('\n')
   // add column names
-  const csvWithHeaders = `ID,Submitted,Decision,First Name,Last Name,Email,School,Graduation Year,Courses,Time Slots,Taught Before,In-person\n${csv}`
+  const csvWithHeaders = `id,firstName,lastName,email,secondaryEmail,school,grade,csCourse,engineeringCourse,mathCourse,scienceCourse,timeSlots,In-person\n${csv}`
 
   const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)
@@ -66,20 +85,20 @@
   } else {
     actions.set(null)
   }
-  $: application =
-    data.applications.length === 0
+  $: registration =
+    data.registrations.length === 0
       ? undefined
       : current === undefined
       ? undefined
-      : data.applications[current]
+      : data.registrations[current]
   let nextHref = ''
   let filterRef = ''
   $: {
     const base = $page.url.searchParams
     base.set(
       'updated',
-      data.applications[
-        data.applications.length - 1
+      data.registrations[
+        data.registrations.length - 1
       ].values.timestamps.updated.toString(),
     )
     nextHref = `?${base.toString()}`
@@ -124,13 +143,13 @@
         new Promise<void>((resolve, reject) => {
           Promise.all(
             checked.map((i) => {
-              const id = data.applications[i].id
+              const id = data.registrations[i].id
               return new Promise<void>((resolve, reject) => {
                 setDoc(doc(db, 'decisions', id), {
                   type: decision,
                 })
                   .then(() => {
-                    updateDoc(doc(db, 'applicationsSpring24', id), {
+                    updateDoc(doc(db, 'registrations', id), {
                       'meta.decision': doc(db, 'decisions', id),
                     })
                       .then(resolve)
@@ -141,7 +160,7 @@
             }),
           )
             .then(() => {
-              invalidate('app:applications').then(() => {
+              invalidate('app:registrations').then(() => {
                 alert.trigger(
                   'success',
                   `${checked.length} ${
@@ -172,14 +191,14 @@
   ) {
     const target = e.target as HTMLInputElement
     if (target.checked) {
-      checked = Array.from({ length: data.applications.length }, (_, i) => i)
+      checked = Array.from({ length: data.registrations.length }, (_, i) => i)
     } else {
       checked = []
     }
   }
   function handleSearch() {
     if (search === '') {
-      goto('/applications')
+      goto('/registrations')
     } else {
       const base = $page.url.searchParams
       base.set('query', search)
@@ -187,14 +206,14 @@
     }
   }
   async function handleClear() {
-    goto('/applications').then(() => {
+    goto('/registrations').then(() => {
       search = ''
     })
   }
 </script>
 
 <svelte:head>
-  <title>Applications</title>
+  <title>registrations</title>
 </svelte:head>
 
 <Form class="flex gap-4" on:submit={handleSearch}>
@@ -258,7 +277,7 @@
           id="check-all"
           class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
           type="checkbox"
-          checked={checked.length === data.applications.length &&
+          checked={checked.length === data.registrations.length &&
             checked.length > 0}
           on:input={handleCheckAll}
         />
@@ -266,17 +285,19 @@
       </div>
     </th>
     <th scope="col" class="px-6 py-3">Submitted</th>
-    <th scope="col" class="px-6 py-3">Decision</th>
     <th scope="col" class="px-6 py-3">Name</th>
     <th scope="col" class="px-6 py-3">Email</th>
     <th scope="col" class="px-6 py-3">School</th>
-    <th scope="col" class="px-6 py-3">Year</th>
-    <th scope="col" class="px-6 py-3">Courses</th>
+    <th scope="col" class="px-6 py-3">Grade</th>
+    <th scope="col" class="px-6 py-3">CS course</th>
+    <th scope="col" class="px-6 py-3">engineering course</th>
+    <th scope="col" class="px-6 py-3">math course</th>
+    <th scope="col" class="px-6 py-3">science course</th>
     <th scope="col" class="px-6 py-3">Timeslots</th>
-    <th scope="col" class="px-6 py-3">Taught before</th>
+    <!-- <th scope="col" class="px-6 py-3">Taught before</th> -->
   </svelte:fragment>
   <svelte:fragment slot="body">
-    {#each data.applications as application, i}
+    {#each data.registrations as registration, i}
       <tr
         class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
         on:click={() => {
@@ -298,8 +319,8 @@
           </div>
         </td>
         <td class="px-6 py-4">
-          {#if application.values.meta.submitted}
-            {format(application.values.timestamps.updated, 'yyyy.MM.dd p')}
+          {#if registration.values.meta.submitted}
+            {format(registration.values.timestamps.updated, 'yyyy.MM.dd p')}
           {:else}
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -317,67 +338,27 @@
             </svg>
           {/if}
         </td>
-        <td class="px-6 py-4">
-          {#if application.values.meta.decision}
-            {#if application.values.meta.decision === 'accepted'}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                class="w-5 h-5 text-green-300"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            {:else if application.values.meta.decision === 'waitlisted'}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                class="w-5 h-5 text-yellow-300"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            {:else if application.values.meta.decision === 'rejected'}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                class="w-5 h-5 text-red-300"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            {/if}
-          {:else}
-            None
-          {/if}
-        </td>
-        <td class="px-6 py-4">
-          {`${application.values.personal.firstName} ${application.values.personal.lastName}`}
-        </td>
-        <td class="px-6 py-4"> {application.values.personal.email} </td>
-        <td class="px-6 py-4">
-          {application.values.academic.school}
-        </td>
-        <td class="px-6 py-4">
-          {application.values.academic.graduationYear}
-        </td>
-        <td class="px-6 py-4">{application.values.program.courses}</td>
-        <td class="px-6 py-4">{application.values.program.timeSlots}</td>
 
         <td class="px-6 py-4">
-          {#if application.values.essay.taughtBefore}
+          {`${registration.values.personal.studentFirstName} ${registration.values.personal.studentLastName}`}
+        </td>
+        <td class="px-6 py-4"> {registration.values.personal.email} </td>
+        <td class="px-6 py-4">
+          {registration.values.academic.school}
+        </td>
+        <td class="px-6 py-4">
+          {registration.values.academic.grade}
+        </td>
+        <td class="px-6 py-4">{registration.values.program.csCourse}</td>
+        <td class="px-6 py-4"
+          >{registration.values.program.engineeringCourse}</td
+        >
+        <td class="px-6 py-4">{registration.values.program.mathCourse}</td>
+        <td class="px-6 py-4">{registration.values.program.scienceCourse}</td>
+        <td class="px-6 py-4">{registration.values.program.timeSlots}</td>
+
+        <td class="px-6 py-4">
+          <!-- {#if registration.values.essay.taughtBefore}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -407,7 +388,7 @@
                 d="M6 18L18 6M6 6l12 12"
               />
             </svg>
-          {/if}
+          {/if} -->
         </td>
       </tr>
     {/each}
@@ -418,7 +399,7 @@
   <Button href={nextHref}>Next</Button>
 </div>
 
-<Application bind:dialogEl id={application?.id} />
+<Registration bind:dialogEl id={registration?.id} />
 
 <style>
   input:checked {

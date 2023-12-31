@@ -1,0 +1,25 @@
+{
+  "text": {
+    "type": "text",
+    "value": "",
+    "error": false
+  },
+  "file": {
+    "type": "file",
+    "upload": {
+      "name": "",
+      "url": ""
+    },
+    "value": {},
+    "error": false
+  },
+  "checkbox": {
+    "type": "checkbox",
+    "checked": false,
+    "error": false
+  },
+  "group": {
+    "type": "group",
+    "value": []
+  }
+}

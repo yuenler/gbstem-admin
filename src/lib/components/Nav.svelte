@@ -36,6 +36,10 @@
       name: 'Applications',
       href: '/applications',
     },
+    {
+      name: 'Registrations',
+      href: '/registrations',
+    },
   ]
   function updateShadow() {
     shadow = window.scrollY !== 0

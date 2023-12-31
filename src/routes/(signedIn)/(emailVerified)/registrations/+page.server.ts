@@ -6,7 +6,7 @@ import algoliasearch from 'algoliasearch'
 // import { db } from '$lib/client/firebase'
 
 export const load = (async ({ url, depends }) => {
-  depends('app:applications')
+  depends('app:registrations')
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
     const updated = url.searchParams.get('updated')
@@ -16,14 +16,14 @@ export const load = (async ({ url, depends }) => {
       // if (filter === 'decided') {
       //   dbQuery = updated
       //     ? adminDb
-      //       .collection('applications')
+      //       .collection('registrations')
       //       .where('meta.submitted', '==', true)
       //       .orderBy('timestamps.updated')
       //       .orderBy('meta.decision')
       //       .where('meta.decision', '!=', null)
       //       .startAfter(new Date(updated))
       //     : adminDb
-      //       .collection('applications')
+      //       .collection('registrations')
       //       .where('meta.submitted', '==', true)
       //       .orderBy('meta.decision')
       //       .where('meta.decision', '!=', false)
@@ -31,7 +31,7 @@ export const load = (async ({ url, depends }) => {
       // }
       // else
 
-      const collectionName = 'applicationsSpring24'
+      const collectionName = 'registrationsSpring24'
       if (filter === 'undecided') {
         dbQuery = updated
           ? adminDb
@@ -64,31 +64,18 @@ export const load = (async ({ url, depends }) => {
 
       const snapshot = await dbQuery.limit(25).get()
 
-
       // const snapshot = await dbQuery.get()
 
 
-      const decisions = (
-        await Promise.all(
-          snapshot.docs.map((doc) => {
-            const decision = (doc.data() as Data.Application<'server'>).meta
-              .decision
-            return decision ? decision.get() : null
-          }),
-        )
-      ).map((doc) =>
-        doc ? (doc.data() as { type: Data.Decision }).type : null,
-      )
       return {
-        applications: snapshot.docs.map((doc, i) => {
-          const data = doc.data() as Data.Application<'server'>
+        registrations: snapshot.docs.map((doc) => {
+          const data = doc.data() as Data.Registration<'server'>
           return {
             id: doc.id,
             values: {
               ...data,
               meta: {
                 ...data.meta,
-                decision: decisions.at(i),
               },
               timestamps: {
                 updated: data.timestamps.updated.toDate(),
@@ -105,11 +92,11 @@ export const load = (async ({ url, depends }) => {
   } else {
     try {
       const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY)
-      const index = client.initIndex('portal_applications')
+      const index = client.initIndex('portal_registrations')
       const { hits } = await index.search<
-        Omit<Data.Application<'server'>, 'meta' | 'timestamps'> & {
+        Omit<Data.Registration<'server'>, 'meta' | 'timestamps'> & {
           meta: {
-            id: string
+            hhid: string
             uid: string
             submitted: boolean
             decision: string | null
@@ -132,14 +119,13 @@ export const load = (async ({ url, depends }) => {
       )
       return {
         query,
-        applications: hits.map((hit, i) => {
+        registrations: hits.map((hit, i) => {
           return {
             id: hit.objectID,
             values: {
               personal: hit.personal,
               academic: hit.academic,
               program: hit.program,
-              essay: hit.essay,
               agreements: hit.agreements,
               meta: {
                 ...hit.meta,
