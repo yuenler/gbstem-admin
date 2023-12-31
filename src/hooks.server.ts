@@ -24,7 +24,7 @@ export const handle = (async ({ event, resolve }) => {
       }
     } else {
       event.locals.user = null
-      topRedirect = redirect(301, 'https://portal.hackharvard.io')
+      topRedirect = redirect(301, 'https://portal.gbstem.org')
     }
   } catch (err) {
     event.locals.user = null

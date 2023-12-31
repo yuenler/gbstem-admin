@@ -52,7 +52,7 @@
                 where(
                   'confirmed',
                   '==',
-                  'Yes, I can attend all 3 days of HackHarvard.',
+                  'Yes, I can attend all 3 days of gbSTEM.',
                 ),
               ),
             ),

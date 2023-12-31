@@ -20,12 +20,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
           )
           to = locals.user.email
           data = {
-            subject: 'Verify Email for HackHarvard Account',
+            subject: 'Verify Email for gbSTEM Account',
             action: {
               link,
               name: 'Verify Email',
               description:
-                'Please verify your email for your HackHarvard account by clicking the button below.',
+                'Please verify your email for your gbSTEM account by clicking the button below.',
             },
           }
           break
@@ -41,7 +41,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
             )
             to = body.newEmail
             data = {
-              subject: 'Change Email for HackHarvard Account',
+              subject: 'Change Email for gbSTEM Account',
               action: {
                 link,
                 name: 'Change Email',
@@ -57,12 +57,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
           const link = await adminAuth.generatePasswordResetLink(body.email)
           to = body.email
           data = {
-            subject: 'Reset Password for HackHarvard Account',
+            subject: 'Reset Password for gbSTEM Account',
             action: {
               link,
               name: 'Reset Password',
               description:
-                'Please reset your password for your HackHarvard account by clicking the button below.',
+                'Please reset your password for your gbSTEM account by clicking the button below.',
             },
           }
           break
@@ -77,7 +77,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
           ...data,
           app: {
             name: 'Portal',
-            link: 'https://admin.hackharvard.io',
+            link: 'https://admin.gbstem.org',
           },
         },
       }
@@ -97,14 +97,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         const typedErr = err as
           | FirebaseError
           | {
-              errorInfo: FirebaseError
-              codePrefix: string
-            }
+            errorInfo: FirebaseError
+            codePrefix: string
+          }
         if ('errorInfo' in typedErr) {
           topError = error(
             400,
             typedErr.errorInfo.message ||
-              'Please wait a few minutes before trying again.',
+            'Please wait a few minutes before trying again.',
           )
         } else if ('message' in typedErr) {
           topError = error(400, typedErr.message)

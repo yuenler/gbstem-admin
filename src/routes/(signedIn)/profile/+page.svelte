@@ -130,8 +130,8 @@
       </div>
       <div class="text-sm">
         Any problems with changing your profile? Contact us at <a
-          href="mailto:team@hackharvard.io"
-          class="link">team@hackharvard.io</a
+          href="mailto:contact@gbstem.org"
+          class="link">contact@gbstem.org</a
         >.
       </div>
     </Card>

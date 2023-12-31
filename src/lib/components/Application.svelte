@@ -516,24 +516,24 @@
             <Input
               type="checkbox"
               bind:value={values.hackathon.firstHackathon}
-              label="Will HackHarvard be your first hackathon?"
+              label="Will gbSTEM be your first hackathon?"
             />
             {#if !values.hackathon.firstHackathon}
               <Input
                 type="checkbox"
                 bind:value={values.hackathon.previouslyParticipated}
-                label="Have you previously participated at a HackHarvard hackathon?"
+                label="Have you previously participated at a gbSTEM hackathon?"
               />
             {/if}
             <Input
               type="checkbox"
               bind:value={values.hackathon.ableToAttend}
-              label="HackHarvard is an in-person event. Will you be able to be in Cambridge, MA, United States, considering both the legal requirements for international students and the logistical aspects, on October 20th, 2023?"
+              label="gbSTEM is an in-person event. Will you be able to be in Cambridge, MA, United States, considering both the legal requirements for international students and the logistical aspects, on October 20th, 2023?"
               required
             />
             <Select
               bind:value={values.hackathon.reason}
-              label="How did you learn about HackHarvard?"
+              label="How did you learn about gbSTEM?"
               options={reasonsJson}
               required
             />
@@ -606,26 +606,26 @@
             />
             <Textarea
               bind:value={values.openResponse.whyHh}
-              label={`Share your goals and aspirations for this event and how you plan to make the most of your HackHarvard experience. What specific areas are you eager to learn more about, and what skills or technologies are you excited to acquire or improve? (500 char limit)`}
+              label={`Share your goals and aspirations for this event and how you plan to make the most of your gbSTEM experience. What specific areas are you eager to learn more about, and what skills or technologies are you excited to acquire or improve? (500 char limit)`}
               required
               maxlength={500}
             />
             <Textarea
               bind:value={values.openResponse.project}
-              label={`HackHarvard is all about sparking creativity and making a positive difference through innovative projects. We'd love to hear about a project you've been part of that embodies this spirit. How did your project bring a touch of magic or create a lasting impact, whether big or small, on the people or community it reached? (500 char limit)`}
+              label={`gbSTEM is all about sparking creativity and making a positive difference through innovative projects. We'd love to hear about a project you've been part of that embodies this spirit. How did your project bring a touch of magic or create a lasting impact, whether big or small, on the people or community it reached? (500 char limit)`}
               required
               maxlength={500}
             />
             <Textarea
               bind:value={values.openResponse.predictions}
-              label={`In line with the theme "Hack to the Future" for HackHarvard 2023, we invite you to unleash your creativity and envision three predictions for the year 2073. Let your imagination soar as you consider how the world may have transformed. Did OpenAI create AGI? Is Taylor Swift’s granddaughter allergic to tree nuts? Does the iPhone 55 have a headphone jack? Are cat videos still funny? Share your captivating predictions with us! (500 char limit)`}
+              label={`In line with the theme "Hack to the Future" for gbSTEM 2023, we invite you to unleash your creativity and envision three predictions for the year 2073. Let your imagination soar as you consider how the world may have transformed. Did OpenAI create AGI? Is Taylor Swift’s granddaughter allergic to tree nuts? Does the iPhone 55 have a headphone jack? Are cat videos still funny? Share your captivating predictions with us! (500 char limit)`}
               required
               maxlength={500}
             />
             <Input
               type="checkbox"
               bind:value={values.openResponse.resumeShare}
-              label="If you are accepted to HackHarvard 2023, would you like us to share your resume with our sponsors for potential recruitment opportunities?"
+              label="If you are accepted to gbSTEM 2023, would you like us to share your resume with our sponsors for potential recruitment opportunities?"
             />
           </div>
           <div class="grid gap-4">
