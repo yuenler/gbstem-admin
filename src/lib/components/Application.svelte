@@ -122,12 +122,12 @@
     const frozenId = id
     loading = true
     if (frozenId !== undefined) {
-      setDoc(doc(db, 'decisions', frozenId), {
+      setDoc(doc(db, 'decisionsSpring24', frozenId), {
         type: newDecision,
       })
         .then(() => {
-          updateDoc(doc(db, 'applicationsFall23', frozenId), {
-            'meta.decision': doc(db, 'decisions', frozenId),
+          updateDoc(doc(db, 'applicationsSpring24', frozenId), {
+            'meta.decision': doc(db, 'decisionsSpring24', frozenId),
           })
             .then(() => {
               invalidate('app:applications').then(() => {
@@ -140,9 +140,10 @@
               loading = false
             })
         })
-        .catch(() => {
+        .catch((err) => {
           alert.trigger('error', 'Something went wrong. Please try again.')
           loading = false
+          console.log(err)
         })
     }
   }
@@ -153,7 +154,7 @@
     loading = true
     disabled = true
     if (id !== undefined) {
-      setDoc(doc(db, 'applicationsFall23', id), values)
+      setDoc(doc(db, 'applicationsSpring24', id), values)
         .then(() => {
           invalidate('app:applications').then(() => {
             alert.trigger('success', 'Changes were saved successfully.')

@@ -108,34 +108,7 @@
       },
     )
   }
-  // function handleDecision(newDecision: Data.Decision) {
-  //   const frozenId = id
-  //   loading = true
-  //   if (frozenId !== undefined) {
-  //     setDoc(doc(db, 'decisions', frozenId), {
-  //       type: newDecision,
-  //     })
-  //       .then(() => {
-  //         updateDoc(doc(db, 'registrationsFall23', frozenId), {
-  //           'meta.decision': doc(db, 'decisions', frozenId),
-  //         })
-  //           .then(() => {
-  //             invalidate('app:registrations').then(() => {
-  //               alert.trigger('success', 'Decision updated successfully.')
-  //               decision = newDecision
-  //               loading = false
-  //             })
-  //           })
-  //           .catch(() => {
-  //             loading = false
-  //           })
-  //       })
-  //       .catch(() => {
-  //         alert.trigger('error', 'Something went wrong. Please try again.')
-  //         loading = false
-  //       })
-  //   }
-  // }
+
   function handleEdit() {
     disabled = false
   }
@@ -143,7 +116,7 @@
     loading = true
     disabled = true
     if (id !== undefined) {
-      setDoc(doc(db, 'registrationsFall23', id), values)
+      setDoc(doc(db, 'registrationsSpring24', id), values)
         .then(() => {
           invalidate('app:registrations').then(() => {
             alert.trigger('success', 'Changes were saved successfully.')
