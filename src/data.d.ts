@@ -15,10 +15,10 @@ declare global {
     type Token<T extends 'client' | 'server' | 'pojo'> = {
       role: Role
       expires: T extends 'client'
-        ? ClientTimestamp
-        : T extends 'server'
-        ? ServerTimestamp
-        : Date
+      ? ClientTimestamp
+      : T extends 'server'
+      ? ServerTimestamp
+      : Date
       consumable: boolean
       consumers: Array<string>
     }
@@ -45,6 +45,15 @@ declare global {
     }
 
     type Decision = 'accepted' | 'waitlisted' | 'rejected'
+
+    type EmailData = {
+      Subject: string,
+      From: string,
+      To: string,
+      HTMLBody: string,
+      ReplyTo: string,
+      MessageStream: 'outbound'
+    }
 
     type Application<T extends 'client' | 'server' | 'pojo'> = {
       personal: {
@@ -102,24 +111,24 @@ declare global {
         uid: string
         submitted: boolean
         decision:
-          | (T extends 'client'
-              ? ClientDocumentReference
-              : T extends 'server'
-              ? ServerDocumentReference
-              : Decision)
-          | null
+        | (T extends 'client'
+          ? ClientDocumentReference
+          : T extends 'server'
+          ? ServerDocumentReference
+          : Decision)
+        | null
       }
       timestamps: {
         created: T extends 'client'
-          ? ClientTimestamp
-          : T extends 'server'
-          ? ServerTimestamp
-          : Date
+        ? ClientTimestamp
+        : T extends 'server'
+        ? ServerTimestamp
+        : Date
         updated: T extends 'client'
-          ? ClientTimestamp
-          : T extends 'server'
-          ? ServerTimestamp
-          : Date
+        ? ClientTimestamp
+        : T extends 'server'
+        ? ServerTimestamp
+        : Date
       }
     }
 
@@ -127,10 +136,10 @@ declare global {
       title: string
       content: string
       timestamp: T extends 'client'
-        ? ClientTimestamp
-        : T extends 'server'
-        ? ServerTimestamp
-        : Date
+      ? ClientTimestamp
+      : T extends 'server'
+      ? ServerTimestamp
+      : Date
     }
   }
 }
