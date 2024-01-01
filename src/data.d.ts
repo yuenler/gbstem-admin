@@ -44,7 +44,7 @@ declare global {
       name: string
     }
 
-    type Decision = 'accepted' | 'waitlisted' | 'rejected'
+    type Decision = 'accepted' | 'interview' | 'waitlisted' | 'rejected'
 
     type EmailData = {
       Subject: string,
@@ -53,6 +53,29 @@ declare global {
       HTMLBody: string,
       ReplyTo: string,
       MessageStream: 'outbound'
+    }
+
+    type InterviewSlot = {
+      date: Date,
+      id: string,
+      interviewer: string,
+      interviewerEmail:string,
+      link:string,
+      status:string,
+    }
+
+    type TimeRange = {
+      start: number,
+      end: number,
+      timegap: number,
+      date: Date,
+      link: string,
+    }
+
+    type TimeSlot = {
+      date: Date,
+      time: number,
+      link: string,
     }
 
     type Registration<T extends 'client' | 'server' | 'pojo'> = {
@@ -147,6 +170,7 @@ declare global {
       meta: {
         id: string
         uid: string
+        interviewed: boolean
         submitted: boolean
         decision:
         | (T extends 'client'

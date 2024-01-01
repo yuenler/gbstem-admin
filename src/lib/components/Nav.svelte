@@ -33,6 +33,10 @@
       href: '/dashboard',
     },
     {
+      name: 'Interviews',
+      href: '/interviews',
+    },
+    {
       name: 'Applications',
       href: '/applications',
     },

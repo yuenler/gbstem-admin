@@ -13,7 +13,7 @@
     "deploy": "npm run build && firebase deploy"
   },
   "devDependencies": {
-    "@sveltejs/adapter-vercel": "^3.0.3",
+    "@sveltejs/adapter-vercel": "^3.1.0",
     "@sveltejs/kit": "^1.22.4",
     "@types/lodash-es": "^4.17.8",
     "@types/nprogress": "^0.2.0",
