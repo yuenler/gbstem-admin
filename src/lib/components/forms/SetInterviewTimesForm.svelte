@@ -18,7 +18,8 @@
   let className = ''
   export { className as class }
 
-  let disabled = false
+  let editSlots = false
+
   let showValidation = false
   let values: Data.InterviewSlot[] = []
   let timeRanges: Data.TimeRange = {
@@ -34,7 +35,6 @@
     link: '',
   }
   let startId = values.length + 1
-
   async function getData() {
     const q = query(collection(db, 'instructorInterviewTimes'))
     const querySnapshot = await getDocs(q)
@@ -49,27 +49,33 @@
         if ($user.object.displayName) {
           for (let element of values) {
             if (element.id === id) {
-              include = false
+              include = false;
             }
-            if (element.interviewer !== $user.object.displayName) {
-              include = false
+            if (element.interviewerEmail !== $user.object.email) {
+              include = false;
             }
           }
-          if (json['status'] === 'available' && include) {
+          if (json['interviewSlotStatus'] === 'available' && include) {
             values.push({
               date: interviewDate,
               id: id,
-              interviewer: json['interviewer'],
+              interviewerFirstName: json['interviewerFirstName'],
+              interviewerLastName: json['intervieweeLastName'],
+              intervieweeFirstName: json['intervieweeFirstName'],
+              intervieweeLastName: json['intervieweeLastName'],
+              intervieweeId: json['intervieweeId'],
               interviewerEmail: json['interviewerEmail'],
-              link: json['link'],
-              status: json['status'],
+              interviewLink: json['interviewLink'],
+              interviewSlotStatus: json['interviewSlotStatus'],
             })
           }
         }
       }
     })
-    console.log(startId)
-    return values
+    console.log(startId);
+    console.log($user?.object.email);
+    console.log(values);
+    return values;
   }
 
   async function clearData() {
@@ -105,10 +111,14 @@
         values.push({
           date: slot,
           id: startId.toString(),
-          interviewer: $user.object.displayName,
+          interviewerFirstName: $user.object.displayName.split(' ')[0],
+          interviewerLastName: $user.object.displayName.split(' ')[0],
+          intervieweeFirstName: '',
+          intervieweeLastName: '',
+          intervieweeId: '',
           interviewerEmail: $user.object.email,
-          link: timeSlot.link,
-          status: 'available',
+          interviewLink: timeSlot.link,
+          interviewSlotStatus: 'available',
         })
         data = getData()
       }
@@ -146,10 +156,14 @@
           values.push({
             date: intervalSlot,
             id: startId.toString(),
-            interviewer: $user.object.displayName,
+            interviewerFirstName: $user.object.displayName.split(' ')[0],
+            interviewerLastName: $user.object.displayName.split(' ')[0],
+            intervieweeFirstName: '',
+            intervieweeLastName: '',
+            intervieweeId: '',
             interviewerEmail: $user.object.email,
-            link: timeRange.link,
-            status: 'available',
+            interviewLink: timeRange.link,
+            interviewSlotStatus: 'available',
           })
         }
 
@@ -176,6 +190,30 @@
     )
   }
 
+  function toLocalISOString(date: Date) {
+    const pad = (number: number) => (number < 10 ? '0' + number : number)
+
+    const year = date.getFullYear()
+    const month = pad(date.getMonth() + 1) // JavaScript months are 0-indexed.
+    const day = pad(date.getDate())
+    const hour = pad(date.getHours())
+    const minute = pad(date.getMinutes())
+
+    return `${year}-${month}-${day}T${hour}:${minute}`
+  }
+
+    function formatDate(date: string): string {
+    const dateObj = new Date(date)
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }
+    return dateObj.toLocaleString(undefined, options)
+  }
+  
 </script>
 
 {#await data then value}
@@ -185,10 +223,9 @@
   >
     <div class="right-2 items-center">
       <Card>
-        <h2 class="font-bold">Add A Single Time</h2>
-        <Input type="date" bind:value={time.date} label="Set Date" />
-        <Input type="time" bind:value={time.time} label="Time" />
-        <Input type="text" bind:value={time.link} label="Link" />
+        <h2 class="font-bold">Add A Time Slot</h2>
+        <Input type="datetime-local" bind:value={time.date} label="Set Date" />
+        <Input type="text" bind:value={time.link} label="Interview Meeting Link" />
         <div class="right-2 items-center">
           <Button
             color="blue"
@@ -198,7 +235,9 @@
         </div>
       </Card>
 
-      <Card>
+      <Input type="checkbox" bind:value={editSlots} label="Edit Slots"/>
+
+      <!-- <Card>
         <h2 class="font-bold">Add Time Range</h2>
         <Input type="date" bind:value={timeRanges.date} label="Set Date" />
         <Input
@@ -212,7 +251,7 @@
           bind:value={timeRanges.timegap}
           label="Range Between Slots (30 min advised)"
         />
-        <Input type="text" bind:value={timeRanges.link} label="Link" />
+        <Input type="text" bind:value={timeRanges.link} label="Interview Meeting Link" />
         <div class="right-2 items-center">
           <Button
             color="blue"
@@ -220,8 +259,9 @@
             on:click={() => addRange(timeRanges)}>Confirm Range</Button
           >
         </div>
-      </Card>
+      </Card> -->
     </div>
+    {#if editSlots}
     <Card>
       <span class="font-bold">View and Edit Current Interview Slots</span>
       {#each value as interview}
@@ -234,12 +274,12 @@
             <Input
               type="text"
               bind:value={interview.date}
-              label="Edit Interview Time"
+              label="Edit Interview Meeting Time"
             />
             <Input
               type="text"
-              bind:value={interview.link}
-              label="Edit Interview Link"
+              bind:value={interview.interviewLink}
+              label="Edit Interview Meeting Link"
             />
             <div class="flex gap-5">
               <div class="right-2 items-center">
@@ -261,5 +301,6 @@
         </Form>
       {/each}
     </Card>
+    {/if}
   </Form>
 {/await}
