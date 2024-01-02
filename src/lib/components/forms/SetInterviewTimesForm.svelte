@@ -45,7 +45,6 @@
   async function getData() {
     const q = query(collection(db, 'instructorInterviewTimes'))
     const querySnapshot = await getDocs(q)
-    startId = querySnapshot.size + 1
     querySnapshot.forEach((doc) => {
       const json = doc.data()
       if ($user) {
@@ -57,6 +56,9 @@
           for (let intervalSlot of allInterviewSlots) {
             if (intervalSlot.id === doc.id) {
               include = false;
+            }
+            if(Number(intervalSlot.id) > startId) {
+              startId = Number(intervalSlot.id) + 1;
             }
           }
           if (json['interviewSlotStatus'] === 'available' && include) {
@@ -97,11 +99,9 @@
   }
 
   function addTime(timeSlot: Data.TimeSlot) {
-    startId = startId + 1
-        console.log(new Date(timeSlot.date).toUTCString());
-        const slot = new Date()
+    startId = startId + 1;
         allInterviewSlots.push({
-          date: new Date(timeSlot.date).toUTCString(),
+          date: timeSlot.date.toString(),
           id: startId.toString(),
           interviewerFirstName: interviewer.interviewerFirstName,
           interviewerLastName: interviewer.interviewerLastName,
@@ -174,13 +174,17 @@
   }
 
   async function deleteTime(interview: Data.InterviewSlot) {
-    await deleteDoc(doc(db, 'instructorInterviewTimes', interview.id)).then(
+    if(interview.interviewerEmail !== interviewer.interviewerEmail) {
+      alert.trigger('error', 'This interview does not belong to you!');
+    } else {
+      await deleteDoc(doc(db, 'instructorInterviewTimes', interview.id)).then(
       () => {
         data = clearData()
         data = getData()
         alert.trigger('success', 'Timeslot successfully deleted.')
       },
     )
+    }
   }
 
 </script>
@@ -237,14 +241,12 @@
       {#if editSlots}
       {#if (!includeAllSlots && interview.interviewerEmail === interviewer.interviewerEmail) || includeAllSlots}
       <Card>
-        <span class="font-bold">Edit Interview Slot</span>
         <Form
           class={clsx(showValidation && 'show-validation', className)}
           on:submit={() => updateTime(interview)}
         >
-          <hr style="margin-top:1rem;" />
           <div style="padding:1rem;">
-            <div><strong>Current Time Slot:</strong> {new Date(interview.date).toLocaleString()}</div>
+            <div><b>Interviewer: </b>{interview.interviewerFirstName}</div>
             <Input
               type="datetime-local"
               bind:value={interview.date}
@@ -278,10 +280,8 @@
         {:else}
         {#if (!includeAllSlots && interview.interviewerEmail === interviewer.interviewerEmail) || includeAllSlots}
         <Card>
-          <h2 class="font-bold">Interview Slot</h2>
-              <div style="padding:1rem;">
-                {new Date(interview.date).toLocaleString()}
-              </div>
+                <div class="my-1"><b>Interviewer:</b> {interview.interviewerFirstName}</div>
+                <b>Time:</b> {new Date(interview.date).toLocaleString()}
         </Card>
         {/if}
 
