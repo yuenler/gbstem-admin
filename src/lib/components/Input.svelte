@@ -14,7 +14,7 @@
   export let self: HTMLInputElement | undefined = undefined
   export let id = uniqueId('input-')
   export let type = 'text'
-  export let value: string | number | boolean | Array<string> | Date | Timestamp | File = '' 
+  export let value: string | number | boolean | Array<string> | Date | File = '' 
   export let label = ''
   export let name = kebabCase(label)
   export let required = false

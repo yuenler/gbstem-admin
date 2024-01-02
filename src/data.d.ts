@@ -56,7 +56,7 @@ declare global {
     }
 
     type InterviewSlot = {
-      date: Date,
+      date: string,
       id: string,
       interviewerFirstName: string,
       interviewerLastName: string,

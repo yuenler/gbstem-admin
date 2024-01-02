@@ -21,7 +21,8 @@
   let editSlots = false
   let includeAllSlots = true
   let showValidation = false
-  let values: Data.InterviewSlot[] = []
+  let allInterviewSlots: Data.InterviewSlot[] = []
+  let originalDateSlots = []
   let timeRanges: Data.TimeRange = {
     start: 0,
     end: 0,
@@ -40,31 +41,28 @@
     interviewerEmail:'',
   }
 
-  let startId = values.length + 1
+  let startId = allInterviewSlots.length + 1
   async function getData() {
     const q = query(collection(db, 'instructorInterviewTimes'))
     const querySnapshot = await getDocs(q)
     startId = querySnapshot.size + 1
     querySnapshot.forEach((doc) => {
       const json = doc.data()
-      const id = doc.id
-      const date = json['date']
-      const interviewDate = new Date(date['seconds'] * 1000)
       if ($user) {
         let include = true
         if ($user.object.displayName && $user.object.email) {
           interviewer.interviewerFirstName = $user.object.displayName.split(' ')[0];
           interviewer.interviewerLastName = $user.object.displayName.split(' ')[1];
           interviewer.interviewerEmail = $user.object.email;
-          for (let element of values) {
-            if (element.id === id) {
+          for (let intervalSlot of allInterviewSlots) {
+            if (intervalSlot.id === doc.id) {
               include = false;
             }
           }
           if (json['interviewSlotStatus'] === 'available' && include) {
-            values.push({
-              date: interviewDate,
-              id: id,
+            allInterviewSlots.push({
+              date: json['date'],
+              id: doc.id,
               interviewerFirstName: json['interviewerFirstName'],
               interviewerLastName: json['intervieweeLastName'],
               intervieweeFirstName: json['intervieweeFirstName'],
@@ -80,59 +78,48 @@
     })
     console.log(startId);
     console.log($user?.object.email);
-    console.log(values);
-    return values;
+    console.log(allInterviewSlots);
+    return allInterviewSlots;
   }
 
   async function clearData() {
-    values = []
-    return values
+    allInterviewSlots = []
+    return allInterviewSlots
   }
 
   let data = clearData()
   data = getData()
 
   function handleSubmit() {
-    values.forEach((interview) =>
+    allInterviewSlots.forEach((interview) =>
       setDoc(doc(db, 'instructorInterviewTimes', interview.id), interview),
     )
   }
 
   function addTime(timeSlot: Data.TimeSlot) {
     startId = startId + 1
-    if ($user) {
-      if ($user.object.displayName && $user.object.email) {
-        const date = new Date(timeSlot.date.toString())
-        const time =
-          Math.floor(
-            Number(timeSlot.time.toLocaleString().split(':')[0]) * 60,
-          ) + Number(timeSlot.time.toLocaleString().split(':')[1])
-        const slot = new Date(
-          date.getFullYear(),
-          date.getMonth(),
-          date.getUTCDate(),
-          time / 60,
-          time % 60,
-        )
-        values.push({
-          date: slot,
+        console.log(new Date(timeSlot.date).toUTCString());
+        const slot = new Date()
+        allInterviewSlots.push({
+          date: new Date(timeSlot.date).toUTCString(),
           id: startId.toString(),
-          interviewerFirstName: $user.object.displayName.split(' ')[0],
-          interviewerLastName: $user.object.displayName.split(' ')[0],
+          interviewerFirstName: interviewer.interviewerFirstName,
+          interviewerLastName: interviewer.interviewerLastName,
           intervieweeFirstName: '',
           intervieweeLastName: '',
           intervieweeId: '',
-          interviewerEmail: $user.object.email,
+          interviewerEmail: interviewer.interviewerEmail,
           interviewLink: timeSlot.link,
           interviewSlotStatus: 'available',
         })
         data = getData()
-      }
-    }
-    values.forEach((interview) =>
-      setDoc(doc(db, 'instructorInterviewTimes', interview.id), interview),
+      
+        console.log(allInterviewSlots)
+      allInterviewSlots.forEach((interview) =>
+      setDoc(doc(db, 'instructorInterviewTimes', interview.id), interview)
     )
-  }
+    }
+  
 
   function addRange(timeRange: Data.TimeRange) {
     startId = startId + 1
@@ -157,9 +144,9 @@
             date.getUTCDate(),
             t / 60,
             t % 60,
-          )
+          ).toUTCString()
           startId = startId + 1
-          values.push({
+          allInterviewSlots.push({
             date: intervalSlot,
             id: startId.toString(),
             interviewerFirstName: $user.object.displayName.split(' ')[0],
@@ -176,14 +163,9 @@
         data = getData()
       }
     }
-    values.forEach((interview) =>
+    allInterviewSlots.forEach((interview) =>
       setDoc(doc(db, 'instructorInterviewTimes', interview.id), interview),
     )
-  }
-
-  function toggleTimeSlotsFilter() {
-    console.log(includeAllSlots)
-    data = getData();
   }
 
   function updateTime(interview: Data.InterviewSlot) {
@@ -201,30 +183,6 @@
     )
   }
 
-  function toLocalISOString(date: Date) {
-    const pad = (number: number) => (number < 10 ? '0' + number : number)
-
-    const year = date.getFullYear()
-    const month = pad(date.getMonth() + 1) // JavaScript months are 0-indexed.
-    const day = pad(date.getDate())
-    const hour = pad(date.getHours())
-    const minute = pad(date.getMinutes())
-
-    return `${year}-${month}-${day}T${hour}:${minute}`
-  }
-
-    function formatDate(date: string): string {
-    const dateObj = new Date(date)
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }
-    return dateObj.toLocaleString(undefined, options)
-  }
-  
 </script>
 
 {#await data then value}
@@ -286,8 +244,9 @@
         >
           <hr style="margin-top:1rem;" />
           <div style="padding:1rem;">
+            <div><strong>Current Time Slot:</strong> {new Date(interview.date).toLocaleString()}</div>
             <Input
-              type="text"
+              type="datetime-local"
               bind:value={interview.date}
               label="Edit Interview Meeting Time"
             />
@@ -321,7 +280,7 @@
         <Card>
           <h2 class="font-bold">Interview Slot</h2>
               <div style="padding:1rem;">
-                {interview.date}
+                {new Date(interview.date).toLocaleString()}
               </div>
         </Card>
         {/if}
