@@ -19,7 +19,7 @@
   export { className as class }
 
   let editSlots = false
-
+  let includeAllSlots = true
   let showValidation = false
   let values: Data.InterviewSlot[] = []
   let timeRanges: Data.TimeRange = {
@@ -34,6 +34,12 @@
     time: 0,
     link: '',
   }
+  let interviewer = {
+    interviewerFirstName: '',
+    interviewerLastName: '',
+    interviewerEmail:'',
+  }
+
   let startId = values.length + 1
   async function getData() {
     const q = query(collection(db, 'instructorInterviewTimes'))
@@ -46,12 +52,12 @@
       const interviewDate = new Date(date['seconds'] * 1000)
       if ($user) {
         let include = true
-        if ($user.object.displayName) {
+        if ($user.object.displayName && $user.object.email) {
+          interviewer.interviewerFirstName = $user.object.displayName.split(' ')[0];
+          interviewer.interviewerLastName = $user.object.displayName.split(' ')[1];
+          interviewer.interviewerEmail = $user.object.email;
           for (let element of values) {
             if (element.id === id) {
-              include = false;
-            }
-            if (element.interviewerEmail !== $user.object.email) {
               include = false;
             }
           }
@@ -175,6 +181,11 @@
     )
   }
 
+  function toggleTimeSlotsFilter() {
+    console.log(includeAllSlots)
+    data = getData();
+  }
+
   function updateTime(interview: Data.InterviewSlot) {
     setDoc(doc(db, 'instructorInterviewTimes', interview.id), interview)
     alert.trigger('success', 'Timeslot updated successfully.')
@@ -235,8 +246,10 @@
         </div>
       </Card>
 
+      <div class="flex gap-5 my-5">
       <Input type="checkbox" bind:value={editSlots} label="Edit Slots"/>
-
+      <Input type="checkbox" bind:value={includeAllSlots} label="Include All Interview Time Slots"/>
+    </div>
       <!-- <Card>
         <h2 class="font-bold">Add Time Range</h2>
         <Input type="date" bind:value={timeRanges.date} label="Set Date" />
@@ -261,10 +274,12 @@
         </div>
       </Card> -->
     </div>
-    {#if editSlots}
-    <Card>
-      <span class="font-bold">View and Edit Current Interview Slots</span>
+
       {#each value as interview}
+      {#if editSlots}
+      {#if (!includeAllSlots && interview.interviewerEmail === interviewer.interviewerEmail) || includeAllSlots}
+      <Card>
+        <span class="font-bold">Edit Interview Slot</span>
         <Form
           class={clsx(showValidation && 'show-validation', className)}
           on:submit={() => updateTime(interview)}
@@ -299,8 +314,20 @@
             </div>
           </div>
         </Form>
-      {/each}
-    </Card>
-    {/if}
-  </Form>
+      </Card> 
+      {/if}
+        {:else}
+        {#if (!includeAllSlots && interview.interviewerEmail === interviewer.interviewerEmail) || includeAllSlots}
+        <Card>
+          <h2 class="font-bold">Interview Slot</h2>
+              <div style="padding:1rem;">
+                {interview.date}
+              </div>
+        </Card>
+        {/if}
+
+       
+        {/if}
+      {/each}   
+    </Form>
 {/await}
