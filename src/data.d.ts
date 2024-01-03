@@ -58,14 +58,13 @@ declare global {
     type InterviewSlot = {
       date: string,
       id: string,
-      interviewerFirstName: string,
-      interviewerLastName: string,
+      interviewerName: string,
       intervieweeFirstName: string,
       intervieweeLastName: string,
       intervieweeId: string,
-      interviewerEmail:string,
-      interviewLink:string,
-      interviewSlotStatus:string,
+      interviewerEmail: string,
+      interviewSlotStatus: string,
+      meetingLink: string,
     }
 
     type TimeRange = {
@@ -73,12 +72,6 @@ declare global {
       end: number,
       timegap: number,
       date: Date,
-      link: string,
-    }
-
-    type TimeSlot = {
-      date: Date,
-      time: number,
       link: string,
     }
 

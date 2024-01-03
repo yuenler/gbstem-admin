@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cn } from '$lib/utils'
-    import type { Timestamp } from 'firebase/firestore'
+  import type { Timestamp } from 'firebase/firestore'
   import { uniqueId, kebabCase, isArray, isBoolean } from 'lodash-es'
 
   let className:
@@ -14,7 +14,7 @@
   export let self: HTMLInputElement | undefined = undefined
   export let id = uniqueId('input-')
   export let type = 'text'
-  export let value: string | number | boolean | Array<string> | Date | File = '' 
+  export let value: string | number | boolean | Array<string> | File = ''
   export let label = ''
   export let name = kebabCase(label)
   export let required = false
