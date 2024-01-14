@@ -53,3 +53,19 @@ export function trapFocus(node: HTMLElement) {
     },
   }
 }
+
+export function addDataToHtmlTemplate(html, template) {
+  const htmlBody = html.replace(/{{(.*?)}}/g, (_, key) => {
+    const keys = key.trim().split('.');
+    let value = template.data;
+    for (const k of keys) {
+      value = value[k];
+      if (value === undefined) {
+        return '';
+      }
+    }
+    console.log(value);
+    return value;
+  });
+  return htmlBody;
+}

@@ -135,6 +135,18 @@
                 decision = newDecision
                 loading = false
               })
+              if (newDecision === 'interview') {
+                fetch('/api/scheduleInterview', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    type: 'scheduleInterview',
+                    email: values.personal.email,
+                  }),
+                })
+              }
             })
             .catch(() => {
               loading = false
@@ -202,11 +214,11 @@
             <span>Accept</span></Button
           >
           <Button
-            color={!loading && (decision === null || decision === 'waitlisted')
+            color={!loading && (decision === null || decision === 'interview')
               ? 'yellow'
               : 'gray'}
             class="flex items-center gap-1"
-            on:click={() => handleDecision('waitlisted')}
+            on:click={() => handleDecision('interview')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -220,7 +232,7 @@
                 clip-rule="evenodd"
               />
             </svg>
-            <span>Waitlist</span></Button
+            <span>Interview</span></Button
           >
           <Button
             color={!loading && (decision === null || decision === 'rejected')
