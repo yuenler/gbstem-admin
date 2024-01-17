@@ -228,11 +228,26 @@
               <b>Time:</b>
               {formatDate(new Date(interview.date))}
             </div>
+            <div>
+              <b>Meeting Link:</b>
+              <a href={interview.meetingLink} target="_blank">
+                {interview.meetingLink}
+              </a>
+            </div>
             <!-- interview status -->
             <div>
               <b>Interview Status:</b>
               {interview.interviewSlotStatus}
             </div>
+
+            {#if interview.intervieweeId !== ''}
+              <div>
+                <b>Interviewee:</b>
+                {interview.intervieweeFirstName}
+                {interview.intervieweeLastName}
+              </div>
+            {/if}
+
             {#if interview.interviewSlotStatus === 'available'}
               <div>
                 <Button
