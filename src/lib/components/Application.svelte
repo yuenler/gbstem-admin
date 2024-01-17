@@ -119,6 +119,12 @@
     })
   }
   function handleDecision(newDecision: Data.Decision) {
+    const confirmation = confirm(
+      'Are you sure you want to update the decision? An email will be sent to the applicant, and you should not be changing the decision after this.',
+    )
+    if (!confirmation) {
+      return
+    }
     const frozenId = id
     loading = true
     if (frozenId !== undefined) {
@@ -193,6 +199,24 @@
       <fieldset class="flex gap-3" disabled={loading}>
         {#if disabled}
           <Button
+            color={!loading && (decision === null || decision === 'interview')
+              ? 'blue'
+              : 'gray'}
+            class="flex items-center gap-1"
+            on:click={() => handleDecision('interview')}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="16"
+              width="10"
+              viewBox="0 0 320 512"
+              ><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path
+                d="M112 48a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm40 304V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V256.9L59.4 304.5c-9.1 15.1-28.8 20-43.9 10.9s-20-28.8-10.9-43.9l58.3-97c17.4-28.9 48.6-46.6 82.3-46.6h29.7c33.7 0 64.9 17.7 82.3 46.6l58.3 97c9.1 15.1 4.2 34.8-10.9 43.9s-34.8 4.2-43.9-10.9L232 256.9V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V352H152z"
+              /></svg
+            >
+            <span>Interview</span></Button
+          >
+          <Button
             color={!loading && (decision === null || decision === 'accepted')
               ? 'green'
               : 'gray'}
@@ -214,11 +238,11 @@
             <span>Accept</span></Button
           >
           <Button
-            color={!loading && (decision === null || decision === 'interview')
+            color={!loading && (decision === null || decision === 'waitlisted')
               ? 'yellow'
               : 'gray'}
             class="flex items-center gap-1"
-            on:click={() => handleDecision('interview')}
+            on:click={() => handleDecision('waitlisted')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -232,8 +256,9 @@
                 clip-rule="evenodd"
               />
             </svg>
-            <span>Interview</span></Button
+            <span>Waitlist</span></Button
           >
+
           <Button
             color={!loading && (decision === null || decision === 'rejected')
               ? 'red'
