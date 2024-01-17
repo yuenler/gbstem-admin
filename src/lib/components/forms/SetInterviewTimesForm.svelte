@@ -56,8 +56,7 @@
     const querySnapshot = await getDocs(q)
     querySnapshot.forEach((doc) => {
       const interviewInfo = doc.data()
-      let include = true
-      if (interviewInfo['interviewSlotStatus'] === 'available' && include) {
+      if (interviewInfo['interviewSlotStatus'] === 'available') {
         interviewSlots.push({
           ...interviewInfo,
           date: toLocalISOString(new Date(interviewInfo.date.seconds * 1000)),
