@@ -56,13 +56,11 @@
     const querySnapshot = await getDocs(q)
     querySnapshot.forEach((doc) => {
       const interviewInfo = doc.data()
-      if (interviewInfo['interviewSlotStatus'] === 'available') {
-        interviewSlots.push({
-          ...interviewInfo,
-          date: toLocalISOString(new Date(interviewInfo.date.seconds * 1000)),
-          id: doc.id,
-        } as Data.InterviewSlot)
-      }
+      interviewSlots.push({
+        ...interviewInfo,
+        date: toLocalISOString(new Date(interviewInfo.date.seconds * 1000)),
+        id: doc.id,
+      } as Data.InterviewSlot)
     })
     return interviewSlots
   }
@@ -228,15 +226,22 @@
             </div>
             <div>
               <b>Time:</b>
+              {formatDate(new Date(interview.date))}
             </div>
-            {formatDate(new Date(interview.date))}
+            <!-- interview status -->
             <div>
-              <Button
-                color="blue"
-                class="px-2 py-1 my-4"
-                on:click={() => (editSlot = interview.id)}>Edit</Button
-              >
+              <b>Interview Status:</b>
+              {interview.interviewSlotStatus}
             </div>
+            {#if interview.interviewSlotStatus === 'available'}
+              <div>
+                <Button
+                  color="blue"
+                  class="px-2 py-1 my-4"
+                  on:click={() => (editSlot = interview.id)}>Edit</Button
+                >
+              </div>
+            {/if}
           </Card>
         {/if}
       {/each}
