@@ -30,6 +30,7 @@
     interviewerName: '',
     intervieweeFirstName: '',
     intervieweeLastName: '',
+    intervieweeEmail: '',
     intervieweeId: '',
     interviewerEmail: '',
     meetingLink: '',
