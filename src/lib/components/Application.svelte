@@ -29,6 +29,7 @@
   import type { FirebaseError } from 'firebase/app'
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
+  import { load } from '../../routes/+page'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -89,7 +90,7 @@
     },
   }
   let values: Data.Application<'client'> = cloneDeep(defaultValues)
-  let decision: Data.Decision | null
+  let decision: Data.Decision | null | 'likely yes' | 'likely no'
   $: if (id !== undefined) {
     loading = true
     disabled = true
@@ -118,6 +119,12 @@
       }
     })
   }
+
+  function handleLikelyDecision(newDecision: 'yes' | 'no') {
+    decision = newDecision === 'yes' ? 'likely yes' : 'likely no'
+    window.alert('this feature has not been implemented yet')
+  }
+
   function handleDecision(newDecision: Data.Decision) {
     const confirmation = confirm(
       'Are you sure you want to update the decision? An email will be sent to the applicant, and you should not be changing the decision after this.',
@@ -198,6 +205,48 @@
     <Card class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
       <fieldset class="flex gap-3" disabled={loading}>
         {#if disabled}
+          <Button
+            color={!loading && (decision === null || decision === 'likely yes')
+              ? 'green'
+              : 'gray'}
+            class="flex items-center gap-1"
+            on:click={() => handleLikelyDecision('yes')}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              class="w-5 h-5"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <span>Likely Yes</span></Button
+          >
+          <Button
+            color={!loading && (decision === null || decision === 'likely no')
+              ? 'red'
+              : 'gray'}
+            class="flex items-center gap-1"
+            on:click={() => handleLikelyDecision('no')}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              class="w-5 h-5"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <span>Likely No</span></Button
+          >
           <Button
             color={!loading && (decision === null || decision === 'interview')
               ? 'blue'
