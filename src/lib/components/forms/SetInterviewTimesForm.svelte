@@ -86,7 +86,12 @@
       currentUser.object.uid
     }`
     interviewSlotToAdd.id = id
-    allInterviewSlots = [...allInterviewSlots, interviewSlotToAdd]
+    allInterviewSlots = [
+      ...allInterviewSlots,
+      {
+        ...interviewSlotToAdd,
+      },
+    ]
 
     await setDoc(doc(db, 'instructorInterviewTimes', interviewSlotToAdd.id), {
       ...interviewSlotToAdd,
