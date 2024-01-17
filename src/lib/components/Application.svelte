@@ -28,8 +28,6 @@
   import { cloneDeep } from 'lodash-es'
   import type { FirebaseError } from 'firebase/app'
   import { invalidate } from '$app/navigation'
-  import nProgress from 'nprogress'
-  import { load } from '../../routes/+page'
 
   export let dialogEl: Dialog
   export let id: string | undefined
