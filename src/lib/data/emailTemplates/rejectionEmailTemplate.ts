@@ -181,24 +181,6 @@ export const rejectionEmailTemplate = `<!doctype html>
                         </div>
                       </td>
                     </tr>
-                    <tr>
-                      <td align="center" vertical-align="middle"
-                        style="font-size:0px;padding:10px 25px;padding-top:20px;word-break:break-word;">
-                        <table border="0" cellpadding="0" cellspacing="0" role="presentation"
-                          style="border-collapse:separate;line-height:100%;">
-                          <tbody>
-                            <tr>
-                              <td align="center" bgcolor="darkblue" role="presentation"
-                                style="border:none;border-radius:100px;cursor:auto;mso-padding-alt:15px 25px 15px 25px;background:darkblue;"
-                                valign="middle"><a href="https://portal.gbstem.org/dashboard"
-                                  style="display:inline-block;background:darkblue;color:#ffffff;font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:14px;font-weight:normal;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:15px 25px 15px 25px;mso-padding-alt:0px;border-radius:100px;"
-                                  target="_blank"><b style="font-weight: 700"><b style="font-weight: 700">Schedule
-                                      Interview</b></b></a></td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
                   </tbody>
                 </table>
               </div><!--[if mso | IE]></td></tr></table><![endif]-->
