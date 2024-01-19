@@ -1,4 +1,4 @@
-export const scheduleInterviewEmailTemplate = `<!doctype html>
+export const acceptEmailTemplate = `<!doctype html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
   xmlns:o="urn:schemas-microsoft-com:office:office">
 
@@ -162,7 +162,7 @@ export const scheduleInterviewEmailTemplate = `<!doctype html>
                           style="font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#797e82;">
                           <h1
                             style="text-align: center;               color: #000000;               font-weight: 700;               font-size: 34px;">
-                            Schedule your gbSTEM interview</h1>
+                            Welcome to gbSTEM! </h1>
                         </div>
                       </td>
                     </tr>
@@ -170,14 +170,14 @@ export const scheduleInterviewEmailTemplate = `<!doctype html>
                       <td align="left" style="font-size:0px;padding:10px 25px;padding-top:0px;word-break:break-word;">
                         <div
                           style="font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:16px;line-height:22px;text-align:left;color:#000000;">
-                          <p style="margin:20px 0">Hello {{app.firstName}},</p>
-                          <p style="margin: 20px 0">Thank you for applying to be a gbSTEM instructor! We would like to
-                            learn some more about you. Please schedule an interview with us through the applicant portal.
+                          <p style="margin:20px 0"> Hello {{app.firstName}}, </p>
+                          <p style="margin: 20px 0"> 
+We are happy to announce that you have been accepted as an instructor for the upcoming semester. This was our most selective semester yet, so congratulations on your acceptance! You will soon receive an email with details about the mandatory instructor orientation for the semester. Thank you for your dedication to our program!
                           </p>
                           <p style="margin: 30px 0">If you have any questions or concerns,
                             visit our FAQs, or you can reach us at <a target="_blank" rel="noopener noreferrer"
                               style="color: darkblue" href="mailto:contact@gbstem.org">contact@gbstem.org</a>.</p>
-                          <p>With love 🤍,<br>The gbSTEM Team</p>
+                          <p>Best wishes,<br>The gbSTEM Team</p>
                         </div>
                       </td>
                     </tr>
@@ -243,5 +243,4 @@ export const scheduleInterviewEmailTemplate = `<!doctype html>
     </div><!--[if mso | IE]></td></tr></table><![endif]-->
   </div>
 </body>
-
 </html>`

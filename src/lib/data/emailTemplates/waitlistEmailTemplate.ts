@@ -1,4 +1,4 @@
-export const scheduleInterviewEmailTemplate = `<!doctype html>
+export const waitlistEmailTemplate = `<!doctype html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
   xmlns:o="urn:schemas-microsoft-com:office:office">
 
@@ -162,7 +162,7 @@ export const scheduleInterviewEmailTemplate = `<!doctype html>
                           style="font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#797e82;">
                           <h1
                             style="text-align: center;               color: #000000;               font-weight: 700;               font-size: 34px;">
-                            Schedule your gbSTEM interview</h1>
+                            gbSTEM Instructor Decisions </h1>
                         </div>
                       </td>
                     </tr>
@@ -171,13 +171,14 @@ export const scheduleInterviewEmailTemplate = `<!doctype html>
                         <div
                           style="font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:16px;line-height:22px;text-align:left;color:#000000;">
                           <p style="margin:20px 0">Hello {{app.firstName}},</p>
-                          <p style="margin: 20px 0">Thank you for applying to be a gbSTEM instructor! We would like to
-                            learn some more about you. Please schedule an interview with us through the applicant portal.
+                          <p style="margin: 20px 0">Thank you for applying to be a gbSTEM instructor. You have been waitlisted for this semester. We may offer you a position if one becomes open in the future, so be sure to periodically check for emails from us.</p>
+                          <p style="margin: 20px 0">We assure you that this decision was not made easily, as this was our most competitive application round ever. We continue to appreciate your interest and strongly encourage you to apply again next semester!
+
                           </p>
                           <p style="margin: 30px 0">If you have any questions or concerns,
                             visit our FAQs, or you can reach us at <a target="_blank" rel="noopener noreferrer"
                               style="color: darkblue" href="mailto:contact@gbstem.org">contact@gbstem.org</a>.</p>
-                          <p>With love 🤍,<br>The gbSTEM Team</p>
+                          <p>Best wishes,<br>The gbSTEM Team</p>
                         </div>
                       </td>
                     </tr>
