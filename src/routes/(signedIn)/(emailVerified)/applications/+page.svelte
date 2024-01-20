@@ -45,7 +45,7 @@
         school,
         graduationYear,
         courses.join(';'),
-        timeSlots.join(';'),
+        timeSlots,
         taughtBefore ? 'Yes' : 'No',
         inPerson ? 'Yes' : 'No',
       ]
