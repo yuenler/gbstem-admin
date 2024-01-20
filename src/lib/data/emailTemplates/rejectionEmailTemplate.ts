@@ -162,7 +162,7 @@ export const rejectionEmailTemplate = `<!doctype html>
                           style="font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#797e82;">
                           <h1
                             style="text-align: center;               color: #000000;               font-weight: 700;               font-size: 34px;">
-                            gbSTEM Instructor Decisions </h1>
+                            gbSTEM Instructor Decision </h1>
                         </div>
                       </td>
                     </tr>
@@ -171,7 +171,7 @@ export const rejectionEmailTemplate = `<!doctype html>
                         <div
                           style="font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:16px;line-height:22px;text-align:left;color:#000000;">
                           <p style="margin:20px 0">Hello {{app.firstName}},</p>
-                          <p style="margin: 20px 0">Thank you for applying to be a gbSTEM instructor. We are sorry to inform you that your application to be an instructor has not been accepted this semester. We assure you that this decision was not made easily, as this was our most competitive application round ever. We continue to appreciate your interest and strongly encourage you to apply again next semester!
+                          <p style="margin: 20px 0">Thank you for applying to be a gbSTEM instructor. We are sorry to inform you that you were not accepted as an instructor this semester. We assure you that this decision was not made easily, as this was our most competitive application round ever. We continue to appreciate your interest and strongly encourage you to apply again next semester!
 
                           </p>
                           <p style="margin: 30px 0">If you have any questions or concerns,

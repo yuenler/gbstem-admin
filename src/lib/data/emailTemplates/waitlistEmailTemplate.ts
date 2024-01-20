@@ -162,7 +162,7 @@ export const waitlistEmailTemplate = `<!doctype html>
                           style="font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:13px;line-height:1;text-align:left;color:#797e82;">
                           <h1
                             style="text-align: center;               color: #000000;               font-weight: 700;               font-size: 34px;">
-                            gbSTEM Instructor Decisions </h1>
+                            gbSTEM Instructor Decision </h1>
                         </div>
                       </td>
                     </tr>
