@@ -15,8 +15,7 @@
       total: number
       submitted: number
       decided: number
-      confirmed: number
-      checkedIn: number
+      registered: number
     }
     users: {
       total: number
@@ -33,9 +32,9 @@
           timer = window.setTimeout(resolve, 400)
         }),
         new Promise<void>((resolve) => {
-          const applicationsColl = collection(db, 'applications')
+          const applicationsColl = collection(db, 'applicationsSpring24')
           const usersColl = collection(db, 'users')
-          const confirmationsColl = collection(db, 'confirmations')
+          const registrationsColl = collection(db, 'registrationsSpring24')
           const hhidsColl = collection(db, 'hhids')
           Promise.all([
             getCountFromServer(applicationsColl),
@@ -47,17 +46,7 @@
             ),
             getCountFromServer(usersColl),
             getCountFromServer(
-              query(
-                confirmationsColl,
-                where(
-                  'confirmed',
-                  '==',
-                  'Yes, I can attend all 3 days of gbSTEM.',
-                ),
-              ),
-            ),
-            getCountFromServer(
-              query(hhidsColl, where('checkedIn', '==', true)),
+              query(registrationsColl, where('meta.submitted', '==', true)),
             ),
           ]).then(
             ([
@@ -65,16 +54,14 @@
               submittedApplicationsSnapshot,
               decidedApplicationsSnapshot,
               totalUsersSnapshot,
-              totalConfirmationsSnapshot,
-              totalCheckedInSnapshot,
+              totalRegistrationsSnapshot,
             ]) => {
               data = {
                 applications: {
                   total: totalApplicationsSnapshot.data().count,
                   submitted: submittedApplicationsSnapshot.data().count,
                   decided: decidedApplicationsSnapshot.data().count,
-                  confirmed: totalConfirmationsSnapshot.data().count,
-                  checkedIn: totalCheckedInSnapshot.data().count,
+                  registered: totalRegistrationsSnapshot.data().count,
                 },
                 users: {
                   total: totalUsersSnapshot.data().count,
@@ -134,11 +121,12 @@
         <Card class="space-y-2">
           <h2 class="text-xl font-bold">Applications</h2>
           <ol class="space-y-1">
-            <li>{data.applications.total} total.</li>
-            <li>{data.applications.submitted} submitted.</li>
-            <li>{data.applications.decided} decided.</li>
-            <li>{data.applications.confirmed} confirmed.</li>
-            <li>{data.applications.checkedIn} checked in.</li>
+            <li>
+              {data.applications.total} total instructor applications created.
+            </li>
+            <li>{data.applications.submitted} instructor apps submitted.</li>
+            <li>{data.applications.decided} instructor apps decided.</li>
+            <li>{data.applications.registered} students pre-registered.</li>
           </ol>
         </Card>
         <Card class="space-y-2">
