@@ -96,8 +96,8 @@
   }
 
   function createDecisionAction(decision: Data.Decision) {
-    let name: 'Accept' | 'Waitlist' | 'Reject'
-    let color: 'green' | 'yellow' | 'red'
+    let name: 'Accept' | 'Waitlist' | 'Reject' | 'Interview'
+    let color: 'green' | 'yellow' | 'red' | 'blue'
     switch (decision) {
       case 'accepted': {
         name = 'Accept'
@@ -114,7 +114,13 @@
         color = 'red'
         break
       }
+      case 'interview': {
+        name = 'Interview'
+        color = 'blue'
+        break
+      }
     }
+
     return {
       name: `${name} ${checked.length} ${
         checked.length > 1 ? 'applicants' : 'applicant'
