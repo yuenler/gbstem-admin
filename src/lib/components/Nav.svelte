@@ -111,9 +111,9 @@
   </div>
   {#if $actions === null}
     <div class="flex items-center gap-1 sm:gap-3 md:gap-4">
-      {#if user.emailVerified}
+      <!-- {#if user.emailVerified}
         <AnnouncementsBell />
-      {/if}
+      {/if} -->
       <ProfileMenu class="hidden sm:block" />
       <button
         class="sm:hidden hover:bg-gray-200 rounded-full h-10 w-10 flex items-center justify-center transition-colors"
