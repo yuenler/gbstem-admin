@@ -128,8 +128,23 @@ declare global {
       }
     }
 
+    type InstructorFeedback = {
+      instructorName: string
+      studentName: string
+      attendance: boolean
+      date: string
+      course: string
+      feedback: string
+    }
 
-
+    type StudentFeedback = {
+      instructorName: string
+      studentName: string
+      rating: number
+      date: string
+      course: string
+      feedback: string
+    }
 
     type Application<T extends 'client' | 'server' | 'pojo'> = {
       personal: {
@@ -192,6 +207,13 @@ declare global {
       }
     }
 
+    type User = {
+      applicationType: string
+      firstName: string
+      id: string
+      lastName: string
+      role: string
+    }
 
     type Announcement<T extends 'client' | 'server' | 'pojo'> = {
       title: string
