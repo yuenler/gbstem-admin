@@ -275,6 +275,7 @@
     <th scope="col" class="px-6 py-3">Notes</th>
     <th scope="col" class="px-6 py-3">Submitted</th>
     <th scope="col" class="px-6 py-3">Decision</th>
+    <th scope="col" class="px-6 py-3">Interview scheduled</th>
     <th scope="col" class="px-6 py-3">Name</th>
     <th scope="col" class="px-6 py-3">Email</th>
     <th scope="col" class="px-6 py-3">School</th>
@@ -419,6 +420,9 @@
           {:else}
             None
           {/if}
+        </td>
+        <td class="px-6 py-4">
+          {`${application.values.meta.interview ? 'Yes' : 'No'}`}
         </td>
         <td class="px-6 py-4">
           {`${application.values.personal.firstName} ${application.values.personal.lastName}`}
