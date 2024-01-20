@@ -77,8 +77,11 @@ export const load = (async ({ url, depends }) => {
           }),
         )
       ).map((doc) =>
-        doc ? (doc.data() as { type: Data.Decision }).type : null,
+        doc ? (doc.data() as { type: Data.Decision, likelyDecision: string, notes: string }) : null,
       )
+
+
+
       return {
         applications: snapshot.docs.map((doc, i) => {
           const data = doc.data() as Data.Application<'server'>

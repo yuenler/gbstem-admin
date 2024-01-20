@@ -81,6 +81,7 @@
       uid: '',
       decision: null,
       submitted: false,
+      interviewed: false,
     },
     timestamps: {
       created: serverTimestamp() as Timestamp,
@@ -88,7 +89,9 @@
     },
   }
   let values: Data.Application<'client'> = cloneDeep(defaultValues)
-  let decision: Data.Decision | null | 'likely yes' | 'likely no'
+  let decision: Data.Decision | null
+  let likelyDecision: 'likely yes' | 'likely no' | null
+  let notes = ''
   $: if (id !== undefined) {
     loading = true
     disabled = true
@@ -100,9 +103,15 @@
         dbValues = cloneDeep(data)
         if (data.meta.decision) {
           getDoc(data.meta.decision).then((decisionSnapshot) => {
-            const data = decisionSnapshot.data() as { type: Data.Decision }
+            const data = decisionSnapshot.data() as {
+              type: Data.Decision
+              likelyDecision: 'likely yes' | 'likely no'
+              notes: string
+            }
             if (decisionSnapshot.exists()) {
               decision = data.type
+              likelyDecision = data.likelyDecision
+              notes = data.notes
             } else {
               decision = null
             }
@@ -118,9 +127,67 @@
     })
   }
 
-  function handleLikelyDecision(newDecision: 'yes' | 'no') {
-    decision = newDecision === 'yes' ? 'likely yes' : 'likely no'
-    window.alert('this feature has not been implemented yet')
+  function saveNotes() {
+    const frozenId = id
+    loading = true
+    if (frozenId !== undefined) {
+      setDoc(doc(db, 'decisionsSpring24', frozenId), {
+        likelyDecision,
+        type: decision,
+        notes,
+      })
+        .then(() => {
+          updateDoc(doc(db, 'applicationsSpring24', frozenId), {
+            'meta.decision': doc(db, 'decisionsSpring24', frozenId),
+          })
+            .then(() => {
+              invalidate('app:applications').then(() => {
+                alert.trigger('success', 'Decision updated successfully.')
+                loading = false
+              })
+            })
+            .catch(() => {
+              loading = false
+            })
+        })
+        .catch((err) => {
+          alert.trigger('error', 'Something went wrong. Please try again.')
+          loading = false
+          console.log(err)
+        })
+    }
+  }
+
+  function handleLikelyDecision(newDecision: 'likely yes' | 'likely no') {
+    const frozenId = id
+    loading = true
+    if (frozenId !== undefined) {
+      setDoc(doc(db, 'decisionsSpring24', frozenId), {
+        likelyDecision: newDecision,
+        type: decision,
+        notes,
+      })
+        .then(() => {
+          updateDoc(doc(db, 'applicationsSpring24', frozenId), {
+            'meta.decision': doc(db, 'decisionsSpring24', frozenId),
+          })
+            .then(() => {
+              invalidate('app:applications').then(() => {
+                alert.trigger('success', 'Decision updated successfully.')
+                likelyDecision = newDecision
+                loading = false
+              })
+            })
+            .catch(() => {
+              loading = false
+            })
+        })
+        .catch((err) => {
+          alert.trigger('error', 'Something went wrong. Please try again.')
+          loading = false
+          console.log(err)
+        })
+    }
   }
 
   function handleDecision(newDecision: Data.Decision) {
@@ -135,6 +202,8 @@
     if (frozenId !== undefined) {
       setDoc(doc(db, 'decisionsSpring24', frozenId), {
         type: newDecision,
+        likelyDecision,
+        notes,
       })
         .then(() => {
           updateDoc(doc(db, 'applicationsSpring24', frozenId), {
@@ -218,11 +287,12 @@
       <fieldset class="flex gap-3" disabled={loading}>
         {#if disabled}
           <Button
-            color={!loading && (decision === null || decision === 'likely yes')
+            color={!loading &&
+            (decision === null || likelyDecision === 'likely yes')
               ? 'green'
               : 'gray'}
             class="flex items-center gap-1"
-            on:click={() => handleLikelyDecision('yes')}
+            on:click={() => handleLikelyDecision('likely yes')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -239,11 +309,12 @@
             <span>Likely Yes</span></Button
           >
           <Button
-            color={!loading && (decision === null || decision === 'likely no')
+            color={!loading &&
+            (decision === null || likelyDecision === 'likely no')
               ? 'red'
               : 'gray'}
             class="flex items-center gap-1"
-            on:click={() => handleLikelyDecision('no')}
+            on:click={() => handleLikelyDecision('likely no')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -341,6 +412,14 @@
             </svg>
             <span>Reject</span></Button
           >
+          <Input
+            type="text"
+            bind:value={notes}
+            label="Notes"
+            floating
+            class="w-96"
+          />
+          <Button color="green" on:click={saveNotes}>Save changes</Button>
         {:else}
           <Button color="green" on:click={handleSaveChanges}
             >Save changes</Button
