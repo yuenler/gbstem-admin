@@ -16,8 +16,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     const body = await request.json()
     try {
       const intervieweeEmail = body.email;
-      const decision =  body.decision;
-      console.log(decision);
+      const decision = body.decision;
       if (locals.user === null) {
         throw error(400, 'User not signed in.')
       } else {
@@ -33,19 +32,19 @@ export const POST: RequestHandler = async ({ request, locals }) => {
           },
         }
 
-        let htmlBody 
-        switch(decision) {
-            case "rejected":
-              htmlBody = addDataToHtmlTemplate(rejectionEmailTemplate, template);
-              break;
-            case "waitlisted":
-              htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template);
-              break;
-            case "accepted":
-              htmlBody = addDataToHtmlTemplate(acceptEmailTemplate, template);
-              break;
-            default:
-              htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template);
+        let htmlBody
+        switch (decision) {
+          case "rejected":
+            htmlBody = addDataToHtmlTemplate(rejectionEmailTemplate, template);
+            break;
+          case "waitlisted":
+            htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template);
+            break;
+          case "accepted":
+            htmlBody = addDataToHtmlTemplate(acceptEmailTemplate, template);
+            break;
+          default:
+            htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template);
         }
 
         const emailData: Data.EmailData = {

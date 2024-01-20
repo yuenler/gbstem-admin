@@ -64,7 +64,6 @@ export function addDataToHtmlTemplate(html, template) {
         return '';
       }
     }
-    console.log(value);
     return value;
   });
   return htmlBody;
