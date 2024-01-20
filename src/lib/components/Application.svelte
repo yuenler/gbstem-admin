@@ -155,6 +155,20 @@
                   body: JSON.stringify({
                     type: 'scheduleInterview',
                     email: values.personal.email,
+                    name: values.personal.firstName,
+                  }),
+                })
+              } else {
+                fetch('/api/decision', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    type: 'decision',
+                    decision: newDecision,
+                    email: values.personal.email,
+                    name: values.personal.firstName,
                   }),
                 })
               }
