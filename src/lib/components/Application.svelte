@@ -109,9 +109,9 @@
               notes: string
             }
             if (decisionSnapshot.exists()) {
-              decision = data.type
-              likelyDecision = data.likelyDecision
-              notes = data.notes
+              decision = data.type ?? null
+              likelyDecision = data.likelyDecision ?? null
+              notes = data.notes ?? ''
             } else {
               decision = null
             }
@@ -419,7 +419,7 @@
             floating
             class="w-96"
           />
-          <Button color="green" on:click={saveNotes}>Save changes</Button>
+          <Button color="green" on:click={saveNotes}>Save Notes</Button>
         {:else}
           <Button color="green" on:click={handleSaveChanges}
             >Save changes</Button
