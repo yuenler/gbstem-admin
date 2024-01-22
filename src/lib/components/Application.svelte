@@ -121,6 +121,8 @@
           })
         } else {
           decision = null
+          likelyDecision = null
+          notes = ''
           loading = false
         }
       } else {
