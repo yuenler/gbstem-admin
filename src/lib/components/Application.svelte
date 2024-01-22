@@ -146,7 +146,7 @@
           })
             .then(() => {
               invalidate('app:applications').then(() => {
-                alert.trigger('success', 'Decision updated successfully.')
+                alert.trigger('success', 'Notes updated successfully.')
                 loading = false
               })
             })
