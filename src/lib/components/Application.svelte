@@ -59,7 +59,7 @@
     program: {
       courses: [],
       preferences: '',
-      timeSlots: [],
+      timeSlots: '',
       notAvailable: '',
       inPerson: false,
       numClasses: '',
@@ -81,6 +81,7 @@
       uid: '',
       decision: null,
       submitted: false,
+      interviewed: false,
     },
     timestamps: {
       created: serverTimestamp() as Timestamp,
@@ -88,7 +89,9 @@
     },
   }
   let values: Data.Application<'client'> = cloneDeep(defaultValues)
-  let decision: Data.Decision | null | 'likely yes' | 'likely no'
+  let decision: Data.Decision | null
+  let likelyDecision: 'likely yes' | 'likely no' | null
+  let notes = ''
   $: if (id !== undefined) {
     loading = true
     disabled = true
@@ -100,9 +103,15 @@
         dbValues = cloneDeep(data)
         if (data.meta.decision) {
           getDoc(data.meta.decision).then((decisionSnapshot) => {
-            const data = decisionSnapshot.data() as { type: Data.Decision }
+            const data = decisionSnapshot.data() as {
+              type: Data.Decision
+              likelyDecision: 'likely yes' | 'likely no'
+              notes: string
+            }
             if (decisionSnapshot.exists()) {
-              decision = data.type
+              decision = data.type ?? null
+              likelyDecision = data.likelyDecision ?? null
+              notes = data.notes ?? ''
             } else {
               decision = null
             }
@@ -118,9 +127,67 @@
     })
   }
 
-  function handleLikelyDecision(newDecision: 'yes' | 'no') {
-    decision = newDecision === 'yes' ? 'likely yes' : 'likely no'
-    window.alert('this feature has not been implemented yet')
+  function saveNotes() {
+    const frozenId = id
+    loading = true
+    if (frozenId !== undefined) {
+      setDoc(doc(db, 'decisionsSpring24', frozenId), {
+        likelyDecision,
+        type: decision,
+        notes,
+      })
+        .then(() => {
+          updateDoc(doc(db, 'applicationsSpring24', frozenId), {
+            'meta.decision': doc(db, 'decisionsSpring24', frozenId),
+          })
+            .then(() => {
+              invalidate('app:applications').then(() => {
+                alert.trigger('success', 'Decision updated successfully.')
+                loading = false
+              })
+            })
+            .catch(() => {
+              loading = false
+            })
+        })
+        .catch((err) => {
+          alert.trigger('error', 'Something went wrong. Please try again.')
+          loading = false
+          console.log(err)
+        })
+    }
+  }
+
+  function handleLikelyDecision(newDecision: 'likely yes' | 'likely no') {
+    const frozenId = id
+    loading = true
+    if (frozenId !== undefined) {
+      setDoc(doc(db, 'decisionsSpring24', frozenId), {
+        likelyDecision: newDecision,
+        type: decision,
+        notes,
+      })
+        .then(() => {
+          updateDoc(doc(db, 'applicationsSpring24', frozenId), {
+            'meta.decision': doc(db, 'decisionsSpring24', frozenId),
+          })
+            .then(() => {
+              invalidate('app:applications').then(() => {
+                alert.trigger('success', 'Decision updated successfully.')
+                likelyDecision = newDecision
+                loading = false
+              })
+            })
+            .catch(() => {
+              loading = false
+            })
+        })
+        .catch((err) => {
+          alert.trigger('error', 'Something went wrong. Please try again.')
+          loading = false
+          console.log(err)
+        })
+    }
   }
 
   function handleDecision(newDecision: Data.Decision) {
@@ -135,6 +202,8 @@
     if (frozenId !== undefined) {
       setDoc(doc(db, 'decisionsSpring24', frozenId), {
         type: newDecision,
+        likelyDecision,
+        notes,
       })
         .then(() => {
           updateDoc(doc(db, 'applicationsSpring24', frozenId), {
@@ -155,6 +224,20 @@
                   body: JSON.stringify({
                     type: 'scheduleInterview',
                     email: values.personal.email,
+                    name: values.personal.firstName,
+                  }),
+                })
+              } else {
+                fetch('/api/decision', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    type: 'decision',
+                    decision: newDecision,
+                    email: values.personal.email,
+                    name: values.personal.firstName,
                   }),
                 })
               }
@@ -204,11 +287,12 @@
       <fieldset class="flex gap-3" disabled={loading}>
         {#if disabled}
           <Button
-            color={!loading && (decision === null || decision === 'likely yes')
+            color={!loading &&
+            (decision === null || likelyDecision === 'likely yes')
               ? 'green'
               : 'gray'}
             class="flex items-center gap-1"
-            on:click={() => handleLikelyDecision('yes')}
+            on:click={() => handleLikelyDecision('likely yes')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -225,11 +309,12 @@
             <span>Likely Yes</span></Button
           >
           <Button
-            color={!loading && (decision === null || decision === 'likely no')
+            color={!loading &&
+            (decision === null || likelyDecision === 'likely no')
               ? 'red'
               : 'gray'}
             class="flex items-center gap-1"
-            on:click={() => handleLikelyDecision('no')}
+            on:click={() => handleLikelyDecision('likely no')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -327,6 +412,14 @@
             </svg>
             <span>Reject</span></Button
           >
+          <Input
+            type="text"
+            bind:value={notes}
+            label="Notes"
+            floating
+            class="w-96"
+          />
+          <Button color="green" on:click={saveNotes}>Save Notes</Button>
         {:else}
           <Button color="green" on:click={handleSaveChanges}
             >Save changes</Button
@@ -348,11 +441,11 @@
         <fieldset class="space-y-14" {disabled}>
           <div class="grid gap-1">
             <span class="font-bold">Personal</span>
-            <Card class="grid gap-3 my-2">
-              <div class="bg-gray-100 shadow-sm rounded-md px-3 py-2">
+            <Card class="my-2 grid gap-3">
+              <div class="rounded-md bg-gray-100 px-3 py-2 shadow-sm">
                 {`Name: ${values.personal.firstName} ${values.personal.lastName}`}
               </div>
-              <div class="bg-gray-100 shadow-sm rounded-md px-3 py-2">
+              <div class="rounded-md bg-gray-100 px-3 py-2 shadow-sm">
                 {`Email: ${values.personal.email}`}
               </div>
               <div class="text-sm">
@@ -399,7 +492,7 @@
           </div>
           <div class="grid gap-1">
             <span class="font-bold">Academic</span>
-            <div class="grid sm:grid-cols-3 gap-1 sm:gap-3">
+            <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
               <div class="sm:col-span-2">
                 <Input
                   type="text"
@@ -451,32 +544,14 @@
               />
             </div>
 
-            <div class="mt-4">
-              <span class="font-bold"
-                >How many classes would you be able to teach a week? Each class
-                will meet for 2 hours a week.</span
-              >
-              <Select
-                bind:value={values.program.numClasses}
-                label="Num classes per week"
-                options={classesPerWeekJson}
-                floating
-                required
-              />
-            </div>
-
             <div class="mt-3 grid gap-1">
               <span class="font-bold">Timeslots</span>
-              <div class="grid grid-cols-2 gap-2">
-                {#each timeSlotsJson as timeSlot}
-                  <Input
-                    type="checkbox"
-                    bind:value={values.program.timeSlots}
-                    label={timeSlot.name}
-                    required
-                  />
-                {/each}
-              </div>
+              <Input
+                type="text"
+                bind:value={values.program.timeSlots}
+                label="Please describe your weekly availability. For example, 'weekdays after 4pm' or 'weekends anytime'."
+                required
+              />
             </div>
 
             <div class="mt-2">
@@ -490,7 +565,7 @@
             <Input
               type="checkbox"
               bind:value={values.program.inPerson}
-              label="gbSTEM will offer both virtual classes and in-person classes at the Cambridge Public Library. Check this box if you would be able to conduct in-person lessons."
+              label="gbSTEM will offer some in-person classes at the Cambridge Public Library. Check this box if you would be able to conduct in-person lessons on Saturdays 2:30-4:30pm."
             />
 
             <div class="mt-2">
@@ -545,10 +620,9 @@
                 <Input
                   type="checkbox"
                   bind:value={values.agreements.entireProgram}
-                  label="gbSTEM will run from September 17th to December 23rd. Do you confirm that you will be able to teach for the entirety of the program?"
+                  label="gbSTEM will run from September 24th to December 23rd. Do you confirm that you will be able to teach for the entirety of the program?"
                   required
                 />
-
                 <Input
                   type="checkbox"
                   bind:value={values.agreements.timeCommitment}

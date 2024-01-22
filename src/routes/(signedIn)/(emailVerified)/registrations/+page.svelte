@@ -24,11 +24,11 @@
     ($page.url.searchParams.get('filter') as any) ?? 'all'
 
   const mathCourseMap = {
-    'Mathematics 5a': 'mathematics-v',
-    'Mathematics 4a': 'mathematics-iv',
-    'Mathematics 3a': 'mathematics-iii',
-    'Mathematics 2a': 'mathematics-ii',
-    'Mathematics 1a': 'mathematics-i',
+    'Mathematics 5b': 'mathematics-v',
+    'Mathematics 4b': 'mathematics-iv',
+    'Mathematics 3b': 'mathematics-iii',
+    'Mathematics 2b': 'mathematics-ii',
+    'Mathematics 1b': 'mathematics-i',
   }
 
   const csv = data.registrations
@@ -65,7 +65,6 @@
         engineeringCourse.toLowerCase().replace(/ /g, '-'),
         mathCourseMap[mathCourse] ? mathCourseMap[mathCourse] : mathCourse,
         scienceCourse.toLowerCase().replace(/ /g, '-'),
-        timeSlots.join(';'),
         inPerson ? 'Yes' : 'No',
       ].join(',')
     })
@@ -76,15 +75,6 @@
   const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)
 
-  $: if (checked.length > 0) {
-    actions.set([
-      createDecisionAction('accepted'),
-      createDecisionAction('waitlisted'),
-      createDecisionAction('rejected'),
-    ])
-  } else {
-    actions.set(null)
-  }
   $: registration =
     data.registrations.length === 0
       ? undefined
@@ -114,67 +104,6 @@
     filterRef = `?${base.toString()}`
   }
 
-  function createDecisionAction(decision: Data.Decision) {
-    let name: 'Accept' | 'Waitlist' | 'Reject'
-    let color: 'green' | 'yellow' | 'red'
-    switch (decision) {
-      case 'accepted': {
-        name = 'Accept'
-        color = 'green'
-        break
-      }
-      case 'waitlisted': {
-        name = 'Waitlist'
-        color = 'yellow'
-        break
-      }
-      case 'rejected': {
-        name = 'Reject'
-        color = 'red'
-        break
-      }
-    }
-    return {
-      name: `${name} ${checked.length} ${
-        checked.length > 1 ? 'applicants' : 'applicant'
-      }`,
-      color,
-      callback: () =>
-        new Promise<void>((resolve, reject) => {
-          Promise.all(
-            checked.map((i) => {
-              const id = data.registrations[i].id
-              return new Promise<void>((resolve, reject) => {
-                setDoc(doc(db, 'decisions', id), {
-                  type: decision,
-                })
-                  .then(() => {
-                    updateDoc(doc(db, 'registrations', id), {
-                      'meta.decision': doc(db, 'decisions', id),
-                    })
-                      .then(resolve)
-                      .catch(reject)
-                  })
-                  .catch(reject)
-              })
-            }),
-          )
-            .then(() => {
-              invalidate('app:registrations').then(() => {
-                alert.trigger(
-                  'success',
-                  `${checked.length} ${
-                    checked.length > 1 ? 'applicants' : 'applicant'
-                  } ${decision}.`,
-                )
-                checked = []
-                resolve()
-              })
-            })
-            .catch(reject)
-        }),
-    }
-  }
   function handleCheck(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
     i: number,

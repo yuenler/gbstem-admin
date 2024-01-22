@@ -6,7 +6,9 @@ import {
   POSTMARK_API_TOKEN,
 } from '$env/static/private'
 import { addDataToHtmlTemplate } from '$lib/utils'
-import { scheduleInterviewEmailTemplate } from '$lib/data/emailTemplates/scheduleInterviewEmailTemplate'
+import { rejectionEmailTemplate } from '$lib/data/emailTemplates/rejectionEmailTemplate'
+import { waitlistEmailTemplate } from '$lib/data/emailTemplates/waitlistEmailTemplate'
+import { acceptEmailTemplate } from '$lib/data/emailTemplates/acceptEmailTemplate'
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   let topError
@@ -14,13 +16,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     const body = await request.json()
     try {
       const intervieweeEmail = body.email;
+      const decision = body.decision;
       if (locals.user === null) {
         throw error(400, 'User not signed in.')
       } else {
         const template = {
-          name: 'scheduleInterview',
+          name: 'decision',
           data: {
-            subject: 'Please schedule your gbSTEM instructor interview',
+            subject: 'gbSTEM Instructor Decision',
             app: {
               firstName: body.name,
               name: 'Portal',
@@ -29,7 +32,20 @@ export const POST: RequestHandler = async ({ request, locals }) => {
           },
         }
 
-        const htmlBody = addDataToHtmlTemplate(scheduleInterviewEmailTemplate, template);
+        let htmlBody
+        switch (decision) {
+          case "rejected":
+            htmlBody = addDataToHtmlTemplate(rejectionEmailTemplate, template);
+            break;
+          case "waitlisted":
+            htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template);
+            break;
+          case "accepted":
+            htmlBody = addDataToHtmlTemplate(acceptEmailTemplate, template);
+            break;
+          default:
+            htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template);
+        }
 
         const emailData: Data.EmailData = {
           From: 'donotreply@gbstem.org',

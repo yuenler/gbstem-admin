@@ -37,7 +37,7 @@ export const load = (async ({ url, depends }) => {
           ? adminDb
             .collection(collectionName)
             .where('meta.submitted', '==', true)
-            .orderBy('timestamps.updated')
+            .orderBy('timestamps.updated', 'desc')
             .orderBy('meta.decision')
             .where('meta.decision', '==', null)
             .startAfter(new Date(updated))
@@ -46,19 +46,19 @@ export const load = (async ({ url, depends }) => {
             .where('meta.submitted', '==', true)
             .orderBy('meta.decision')
             .where('meta.decision', '==', null)
-            .orderBy('timestamps.updated')
+            .orderBy('timestamps.updated', 'desc')
       }
       else {
         dbQuery = updated
           ? adminDb
             .collection(collectionName)
             .where('meta.submitted', '==', true)
-            .orderBy('timestamps.updated')
+            .orderBy('timestamps.updated', 'desc')
             .startAfter(new Date(updated))
           : adminDb
             .collection(collectionName)
             .where('meta.submitted', '==', true)
-            .orderBy('timestamps.updated')
+            .orderBy('timestamps.updated', 'desc')
       }
 
 
@@ -77,8 +77,10 @@ export const load = (async ({ url, depends }) => {
           }),
         )
       ).map((doc) =>
-        doc ? (doc.data() as { type: Data.Decision }).type : null,
+        doc ? (doc.data() as { type: Data.Decision, likelyDecision: string, notes: string }) : null,
       )
+
+
       return {
         applications: snapshot.docs.map((doc, i) => {
           const data = doc.data() as Data.Application<'server'>

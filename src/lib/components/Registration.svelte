@@ -71,7 +71,6 @@
       engineeringCourse: '',
       mathCourse: '',
       scienceCourse: '',
-      timeSlots: [],
       inPerson: false,
       reason: '',
     },
@@ -137,84 +136,9 @@
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
-  <svelte:fragment slot="title">registration</svelte:fragment>
+  <svelte:fragment slot="title">Registration</svelte:fragment>
   <div slot="description">
     <Card class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
-      <!-- <fieldset class="flex gap-3" disabled={loading}>
-        {#if disabled}
-          <Button
-            color={!loading && (decision === null || decision === 'accepted')
-              ? 'green'
-              : 'gray'}
-            class="flex items-center gap-1"
-            on:click={() => handleDecision('accepted')}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              class="w-5 h-5"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <span>Accept</span></Button
-          >
-          <Button
-            color={!loading && (decision === null || decision === 'waitlisted')
-              ? 'yellow'
-              : 'gray'}
-            class="flex items-center gap-1"
-            on:click={() => handleDecision('waitlisted')}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              class="w-5 h-5"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <span>Waitlist</span></Button
-          >
-          <Button
-            color={!loading && (decision === null || decision === 'rejected')
-              ? 'red'
-              : 'gray'}
-            class="flex items-center gap-1"
-            on:click={() => handleDecision('rejected')}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              class="w-5 h-5"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <span>Reject</span></Button
-          >
-        {:else}
-          <Button color="green" on:click={handleSaveChanges}
-            >Save changes</Button
-          >
-          <Button color="red" on:click={handleDeleteChanges}
-            >Delete changes</Button
-          >
-        {/if}
-      </fieldset> -->
-
       {#if !disabled}
         <Button color="green" on:click={handleSaveChanges}>Save changes</Button>
         <Button color="red" on:click={handleDeleteChanges}
@@ -230,13 +154,22 @@
       <Form class="max-w-2xl">
         <fieldset class="space-y-14" {disabled}>
           <div class="grid gap-1">
+            <span class="mt-3 font-bold">Pre-Registration</span>
+            <p class="mb-2">
+              To register for our spring semester, you must first fill out this
+              form, providing your availability and course preferences. After
+              this initial registration, class schedules will be posted once
+              pre-registration closes. You will then receive an email
+              notification to proceed with class enrollment on a first-come,
+              first-served basis.
+            </p>
             <span class="font-bold">Personal</span>
-            <Card class="grid gap-3 my-2">
-              <div class="bg-gray-100 shadow-sm rounded-md px-3 py-2">
-                {`Name: ${values.personal.studentFirstName} ${values.personal.studentLastName}`}
+            <Card class="my-2 grid gap-3">
+              <div class="rounded-md bg-gray-100 px-3 py-2 shadow-sm">
+                {`Parent Name: ${values.personal.parentFirstName} ${values.personal.parentLastName}`}
               </div>
-              <div class="bg-gray-100 shadow-sm rounded-md px-3 py-2">
-                {`Username:`}
+              <div class="rounded-md bg-gray-100 px-3 py-2 shadow-sm">
+                {`Email: ${values.personal.email}`}
               </div>
               <div class="text-sm">
                 Wrong name or email? Go to your <a class="link" href="/profile"
@@ -247,16 +180,18 @@
 
             <Input
               type="text"
-              bind:value={values.personal.parentFirstName}
-              label="Parent first name"
+              bind:value={values.personal.studentFirstName}
+              label="Student first name"
               floating
+              required
             />
 
             <Input
               type="text"
-              bind:value={values.personal.parentLastName}
-              label="Parent last name"
+              bind:value={values.personal.studentLastName}
+              label="Student last name"
               floating
+              required
             />
 
             <Input
@@ -323,7 +258,7 @@
           </div>
           <div class="grid gap-1">
             <span class="font-bold">Academic</span>
-            <div class="grid sm:grid-cols-3 gap-1 sm:gap-3">
+            <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
               <div class="sm:col-span-2">
                 <Input
                   type="text"
@@ -343,13 +278,20 @@
             </div>
           </div>
           <div class="grid gap-1">
-            <span class="font-bold">Course Selection</span>
+            <span class="font-bold">Course Interest (max 2 courses)</span>
+            <span
+              >Note that selecting your courses below is NOT formally enrolling
+              in the course. Your response here will help us estimate the number
+              of sections for each course. Course enrollment will be on a
+              first-come, first-served basis, and you will be notified via email
+              when enrollment opens.
+            </span>
             <span
               >Go to <a
-                href="https://gbstem.org/cs"
+                href="https://gbstem.org/#/cs"
                 class="link"
                 target="_blank"
-                >https://gbstem.org/cs
+                >https://gbstem.org/#/cs
               </a> for more information</span
             >
             <div class="mb-2">
@@ -363,18 +305,38 @@
             </div>
             <span
               >Go to <a
-                href="https://gbstem.org/math"
+                href="https://gbstem.org/#/math"
                 class="link"
                 target="_blank"
-                >https://gbstem.org/math
+                >https://gbstem.org/#/math
               </a> for more information.
             </span>
             <span class="text-sm"
-              >Note that each math course is broken down into two semesters with
-              different content. If your child was enrolled for a math course
-              during the gbSTEM Fall 2022 semester, they should enroll in a
-              second semester of that same course.</span
-            >
+              >gbSTEM math classes have a separate fall and spring curriculum
+              for each level. For example, we offer Math 1a in the Fall and Math
+              1b in the Spring.
+
+              <p class="font-bold">Students from Fall 2023:</p>
+              <p>
+                If you took a math class in the fall 2023 semester, it's
+                advisable to opt for the “b” version of the course. For example,
+                if you completed Math 2a in the fall, you should proceed to Math
+                2b.
+              </p>
+
+              <p class="font-bold">Students from Spring 2023:</p>
+
+              <p>
+                If your most recent math class was in the spring semester of
+                2023 (and you did not take any math class in the fall 2023
+                semester), you should continue with the “a” semester of the next
+                level course you were enrolled in. For example, if you completed
+                Math 3b in the spring, you would proceed to Math 4a.
+                Unfortunately, we don't offer the "a" section of math courses in
+                the spring, so we recommend waiting until next fall to enroll in
+                a math course.
+              </p>
+            </span>
             <div class="mb-2">
               <Select
                 bind:value={values.program.mathCourse}
@@ -386,10 +348,10 @@
             </div>
             <span
               >Go to <a
-                href="https://gbstem.org/engineering"
+                href="https://gbstem/#/engineering"
                 class="link"
                 target="_blank"
-                >https://gbstem.org/engineering
+                >https://gbstem.org/#/engineering
               </a> for more information</span
             >
             <div class="mb-2">
@@ -403,10 +365,10 @@
             </div>
             <span
               >Go to <a
-                href="https://gbstem.org/science"
+                href="https://gbstem.org/#/science"
                 class="link"
                 target="_blank"
-                >https://gbstem.org/science
+                >https://gbstem.org/#/science
               </a> for more information</span
             >
             <div class="mt-2">
@@ -418,25 +380,6 @@
                 required
               />
             </div>
-            <div class="mt-3 grid gap-1">
-              <span class="font-bold">Timeslots</span>
-              <span
-                >You must check at least as many boxes as the number of classes
-                you select. Note that we cannot guarantee that you will be
-                placed into one of your desired timeslots, but we will try our
-                best.</span
-              >
-              <div class="grid grid-cols-2 gap-2">
-                {#each timeSlotsJson as timeSlot}
-                  <Input
-                    type="checkbox"
-                    bind:value={values.program.timeSlots}
-                    label={timeSlot.name}
-                  />
-                {/each}
-              </div>
-            </div>
-
             <div class="mt-2">
               <Select
                 bind:value={values.program.reason}
@@ -446,11 +389,10 @@
                 required
               />
             </div>
-
             <Input
               type="checkbox"
               bind:value={values.program.inPerson}
-              label="gbSTEM will offer in-person classes at the Cambridge Public Library. Would you like to opt for the in-person option if available for your student? Note that we cannot guarantee that in-person classes will be available for all students."
+              label="gbSTEM will offer in-person classes at the Cambridge Public Library on Saturdays 2:30-4:30pm. Would you like to opt for the in-person option if available for your child? Note that we cannot guarantee that in-person classes will be available for all students."
             />
           </div>
           <div class="grid gap-1">
@@ -459,20 +401,20 @@
               <Input
                 type="checkbox"
                 bind:value={values.agreements.entireProgram}
-                label="gbSTEM will run from September 17th to December 23rd. Will the student be able to participate throughout the entirety of the program?"
+                label="gbSTEM will run from September 24th to December 23rd. Will the student be able to participate throughout the entirety of the program?"
                 required
               />
 
               <Input
                 type="checkbox"
                 bind:value={values.agreements.timeCommitment}
-                label="Do you hereby confirm that the student can meet the gbSTEM weekly time commitment? Once you have registered for your courses, you will not be able to unenroll. Please understand that an unused spot for your child prevents others from joining or getting their preferred time slots. The time commitment for EACH course selected is at minimum 2 hours per week.  This means that if your student takes an engineering and math course the time commitment will be 4 hours a week. Students are not allowed to miss classes unless for medical reasons or family emergencies."
+                label="Do you hereby confirm that the student can meet the gbSTEM weekly time commitment? Please understand that an unused spot for your child prevents others from joining or getting their preferred time slots. The time commitment for EACH course selected is at minimum 2 hours per week.  This means that if your student takes an engineering and math course the time commitment will be 4 hours a week. Students are not allowed to miss classes unless for medical reasons or family emergencies."
                 required
               />
               <Input
                 type="checkbox"
                 bind:value={values.agreements.submitting}
-                label="I understand submitting means I can no longer make changes to my application. Don't check this box until you are sure that you are ready to submit."
+                label="I understand submitting means I can no longer make changes to my pre-registration. Don't check this box until you are sure that you are ready to submit."
                 required
               />
             </div>

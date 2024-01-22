@@ -45,7 +45,7 @@
         school,
         graduationYear,
         courses.join(';'),
-        timeSlots.join(';'),
+        timeSlots,
         taughtBefore ? 'Yes' : 'No',
         inPerson ? 'Yes' : 'No',
       ]
@@ -96,8 +96,8 @@
   }
 
   function createDecisionAction(decision: Data.Decision) {
-    let name: 'Accept' | 'Waitlist' | 'Reject'
-    let color: 'green' | 'yellow' | 'red'
+    let name: 'Accept' | 'Waitlist' | 'Reject' | 'Interview'
+    let color: 'green' | 'yellow' | 'red' | 'blue'
     switch (decision) {
       case 'accepted': {
         name = 'Accept'
@@ -114,7 +114,13 @@
         color = 'red'
         break
       }
+      case 'interview': {
+        name = 'Interview'
+        color = 'blue'
+        break
+      }
     }
+
     return {
       name: `${name} ${checked.length} ${
         checked.length > 1 ? 'applicants' : 'applicant'
@@ -265,8 +271,11 @@
         <label for="check-all" class="sr-only">checkbox</label>
       </div>
     </th>
+    <th scope="col" class="px-6 py-3">Likely decision</th>
+    <th scope="col" class="px-6 py-3">Notes</th>
     <th scope="col" class="px-6 py-3">Submitted</th>
     <th scope="col" class="px-6 py-3">Decision</th>
+    <th scope="col" class="px-6 py-3">Interview scheduled</th>
     <th scope="col" class="px-6 py-3">Name</th>
     <th scope="col" class="px-6 py-3">Email</th>
     <th scope="col" class="px-6 py-3">School</th>
@@ -298,6 +307,42 @@
           </div>
         </td>
         <td class="px-6 py-4">
+          {#if application.values.meta.decision?.likelyDecision}
+            {#if application.values.meta.decision?.likelyDecision === 'likely yes'}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5 text-green-300"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            {:else if application.values.meta.decision?.likelyDecision === 'likely no'}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5 text-red-300"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            {/if}
+          {:else}
+            None
+          {/if}
+        </td>
+        <td class="px-6 py-4">
+          {`${application.values.meta.decision?.notes}`}
+        </td>
+        <td class="px-6 py-4">
           {#if application.values.meta.submitted}
             {format(application.values.timestamps.updated, 'yyyy.MM.dd p')}
           {:else}
@@ -318,8 +363,8 @@
           {/if}
         </td>
         <td class="px-6 py-4">
-          {#if application.values.meta.decision}
-            {#if application.values.meta.decision === 'accepted'}
+          {#if application.values.meta.decision?.type}
+            {#if application.values.meta.decision?.type === 'accepted'}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -332,7 +377,7 @@
                   clip-rule="evenodd"
                 />
               </svg>
-            {:else if application.values.meta.decision === 'waitlisted'}
+            {:else if application.values.meta.decision?.type === 'waitlisted'}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -345,7 +390,7 @@
                   clip-rule="evenodd"
                 />
               </svg>
-            {:else if application.values.meta.decision === 'rejected'}
+            {:else if application.values.meta.decision.type === 'rejected'}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -358,10 +403,26 @@
                   clip-rule="evenodd"
                 />
               </svg>
+            {:else if application.values.meta.decision.type === 'interview'}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5 text-blue-300"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
+                  clip-rule="evenodd"
+                />
+              </svg>
             {/if}
           {:else}
             None
           {/if}
+        </td>
+        <td class="px-6 py-4">
+          {`${application.values.meta.interview ? 'Yes' : 'No'}`}
         </td>
         <td class="px-6 py-4">
           {`${application.values.personal.firstName} ${application.values.personal.lastName}`}

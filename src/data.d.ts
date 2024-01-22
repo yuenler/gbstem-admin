@@ -100,7 +100,6 @@ declare global {
         mathCourse: string
         engineeringCourse: string
         scienceCourse: string
-        timeSlots: string[]
         reason: string
         inPerson: boolean
       }
@@ -164,7 +163,7 @@ declare global {
         courses: string[]
         preferences: string
         numClasses: string
-        timeSlots: string[]
+        timeSlots: string
         notAvailable: string
         inPerson: boolean
         reason: string
