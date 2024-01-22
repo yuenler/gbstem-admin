@@ -114,6 +114,8 @@
               notes = data.notes ?? ''
             } else {
               decision = null
+              likelyDecision = null
+              notes = ''
             }
             loading = false
           })
