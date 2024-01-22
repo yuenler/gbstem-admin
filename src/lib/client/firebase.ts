@@ -7,6 +7,7 @@ import {
   PUBLIC_FIREBASE_APP_ID,
   PUBLIC_FIREBASE_MEASUREMENT_ID,
 } from '$env/static/public'
+
 import { initializeApp } from 'firebase/app'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
