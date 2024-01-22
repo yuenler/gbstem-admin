@@ -287,157 +287,162 @@
 <Dialog bind:this={dialogEl} size="full" alert>
   <svelte:fragment slot="title">Application</svelte:fragment>
   <div slot="description">
-    <Card class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
-      <fieldset class="flex gap-3" disabled={loading}>
-        {#if disabled}
-          <Button
-            color={!loading &&
-            (decision === null || likelyDecision === 'likely yes')
-              ? 'green'
-              : 'gray'}
-            class="flex items-center gap-1"
-            on:click={() => handleLikelyDecision('likely yes')}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              class="w-5 h-5"
+    <Card>
+      <div class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
+        <fieldset class="flex gap-3" disabled={loading}>
+          {#if disabled}
+            <Button
+              color={!loading &&
+              (likelyDecision === null || likelyDecision === 'likely yes')
+                ? 'green'
+                : 'gray'}
+              class="flex items-center gap-1"
+              on:click={() => handleLikelyDecision('likely yes')}
             >
-              <path
-                fill-rule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <span>Likely Yes</span></Button
-          >
-          <Button
-            color={!loading &&
-            (decision === null || likelyDecision === 'likely no')
-              ? 'red'
-              : 'gray'}
-            class="flex items-center gap-1"
-            on:click={() => handleLikelyDecision('likely no')}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              class="w-5 h-5"
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>Likely Yes</span></Button
             >
-              <path
-                fill-rule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <span>Likely No</span></Button
-          >
-          <Button
-            color={!loading && (decision === null || decision === 'interview')
-              ? 'blue'
-              : 'gray'}
-            class="flex items-center gap-1"
-            on:click={() => handleDecision('interview')}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              height="16"
-              width="10"
-              viewBox="0 0 320 512"
-              ><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path
-                d="M112 48a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm40 304V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V256.9L59.4 304.5c-9.1 15.1-28.8 20-43.9 10.9s-20-28.8-10.9-43.9l58.3-97c17.4-28.9 48.6-46.6 82.3-46.6h29.7c33.7 0 64.9 17.7 82.3 46.6l58.3 97c9.1 15.1 4.2 34.8-10.9 43.9s-34.8 4.2-43.9-10.9L232 256.9V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V352H152z"
-              /></svg
+            <Button
+              color={!loading &&
+              (likelyDecision === null || likelyDecision === 'likely no')
+                ? 'red'
+                : 'gray'}
+              class="flex items-center gap-1"
+              on:click={() => handleLikelyDecision('likely no')}
             >
-            <span>Interview</span></Button
-          >
-          <Button
-            color={!loading && (decision === null || decision === 'accepted')
-              ? 'green'
-              : 'gray'}
-            class="flex items-center gap-1"
-            on:click={() => handleDecision('accepted')}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              class="w-5 h-5"
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>Likely No</span></Button
             >
-              <path
-                fill-rule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <span>Accept</span></Button
-          >
-          <Button
-            color={!loading && (decision === null || decision === 'waitlisted')
-              ? 'yellow'
-              : 'gray'}
-            class="flex items-center gap-1"
-            on:click={() => handleDecision('waitlisted')}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              class="w-5 h-5"
+            <Button
+              color={!loading && (decision === null || decision === 'interview')
+                ? 'blue'
+                : 'gray'}
+              class="flex items-center gap-1"
+              on:click={() => handleDecision('interview')}
             >
-              <path
-                fill-rule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <span>Waitlist</span></Button
-          >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                height="16"
+                width="10"
+                viewBox="0 0 320 512"
+                ><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path
+                  d="M112 48a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm40 304V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V256.9L59.4 304.5c-9.1 15.1-28.8 20-43.9 10.9s-20-28.8-10.9-43.9l58.3-97c17.4-28.9 48.6-46.6 82.3-46.6h29.7c33.7 0 64.9 17.7 82.3 46.6l58.3 97c9.1 15.1 4.2 34.8-10.9 43.9s-34.8 4.2-43.9-10.9L232 256.9V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V352H152z"
+                /></svg
+              >
+              <span>Interview</span></Button
+            >
+            <Button
+              color={!loading && (decision === null || decision === 'accepted')
+                ? 'green'
+                : 'gray'}
+              class="flex items-center gap-1"
+              on:click={() => handleDecision('accepted')}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>Accept</span></Button
+            >
+            <Button
+              color={!loading &&
+              (decision === null || decision === 'waitlisted')
+                ? 'yellow'
+                : 'gray'}
+              class="flex items-center gap-1"
+              on:click={() => handleDecision('waitlisted')}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>Waitlist</span></Button
+            >
 
-          <Button
-            color={!loading && (decision === null || decision === 'rejected')
-              ? 'red'
-              : 'gray'}
-            class="flex items-center gap-1"
-            on:click={() => handleDecision('rejected')}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              class="w-5 h-5"
+            <Button
+              color={!loading && (decision === null || decision === 'rejected')
+                ? 'red'
+                : 'gray'}
+              class="flex items-center gap-1"
+              on:click={() => handleDecision('rejected')}
             >
-              <path
-                fill-rule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <span>Reject</span></Button
-          >
-          <Input
-            type="text"
-            bind:value={notes}
-            label="Notes"
-            floating
-            class="w-96"
-          />
-          <Button color="green" on:click={saveNotes}>Save Notes</Button>
-        {:else}
-          <Button color="green" on:click={handleSaveChanges}
-            >Save changes</Button
-          >
-          <Button color="red" on:click={handleDeleteChanges}
-            >Delete changes</Button
-          >
-        {/if}
-      </fieldset>
-      <div class="flex gap-3">
-        {#if disabled}
-          <Button on:click={handleEdit}>Edit</Button>
-        {/if}
-        <Button on:click={dialogEl.cancel}>Close</Button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>Reject</span></Button
+            >
+          {:else}
+            <Button color="green" on:click={handleSaveChanges}
+              >Save changes</Button
+            >
+            <Button color="red" on:click={handleDeleteChanges}
+              >Cancel changes</Button
+            >
+          {/if}
+        </fieldset>
+        <div class="flex gap-3">
+          {#if disabled}
+            <Button on:click={handleEdit}>Edit</Button>
+          {/if}
+          <Button on:click={dialogEl.cancel}>Close</Button>
+        </div>
+      </div>
+      <div class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
+        <Input
+          type="text"
+          bind:value={notes}
+          label="Notes"
+          floating
+          class="w-96"
+        />
+        <Button color="green" on:click={saveNotes}>Save Notes</Button>
       </div>
     </Card>
     <div class="mt-4 flex justify-center">
