@@ -307,8 +307,8 @@
           </div>
         </td>
         <td class="px-6 py-4">
-          {#if application.values.meta.decision.likelyDecision}
-            {#if application.values.meta.decision.likelyDecision === 'likely yes'}
+          {#if application.values.meta.decision?.likelyDecision}
+            {#if application.values.meta.decision?.likelyDecision === 'likely yes'}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -321,7 +321,7 @@
                   clip-rule="evenodd"
                 />
               </svg>
-            {:else if application.values.meta.decision.likelyDecision === 'likely no'}
+            {:else if application.values.meta.decision?.likelyDecision === 'likely no'}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -340,7 +340,7 @@
           {/if}
         </td>
         <td class="px-6 py-4">
-          {`${application.values.meta.decision.notes}`}
+          {`${application.values.meta.decision?.notes}`}
         </td>
         <td class="px-6 py-4">
           {#if application.values.meta.submitted}
@@ -363,8 +363,8 @@
           {/if}
         </td>
         <td class="px-6 py-4">
-          {#if application.values.meta.decision.type}
-            {#if application.values.meta.decision.type === 'accepted'}
+          {#if application.values.meta.decision?.type}
+            {#if application.values.meta.decision?.type === 'accepted'}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -377,7 +377,7 @@
                   clip-rule="evenodd"
                 />
               </svg>
-            {:else if application.values.meta.decision.type === 'waitlisted'}
+            {:else if application.values.meta.decision?.type === 'waitlisted'}
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"

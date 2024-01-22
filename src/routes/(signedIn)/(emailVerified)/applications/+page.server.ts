@@ -81,7 +81,6 @@ export const load = (async ({ url, depends }) => {
       )
 
 
-
       return {
         applications: snapshot.docs.map((doc, i) => {
           const data = doc.data() as Data.Application<'server'>
