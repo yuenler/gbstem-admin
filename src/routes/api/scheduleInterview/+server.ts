@@ -41,7 +41,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         }
         try {
           const client = new postmark.ServerClient(POSTMARK_API_TOKEN);
-          client.sendEmail(emailData);
+          await client.sendEmail(emailData);
 
           return new Response()
         } catch (err) {
