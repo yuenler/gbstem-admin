@@ -249,7 +249,7 @@
               </div>
             {/if}
 
-            {#if interview.interviewSlotStatus === 'available'}
+            {#if interview.interviewSlotStatus === 'available' && interview.interviewerEmail === currentUser.object.email}
               <div>
                 <Button
                   color="blue"
