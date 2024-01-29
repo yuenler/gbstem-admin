@@ -107,7 +107,7 @@ export const load = (async ({ url, depends }) => {
   } else {
     try {
       const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY)
-      const index = client.initIndex('portal_applications')
+      const index = client.initIndex('applicationsSpring24')
       const { hits } = await index.search<
         Omit<Data.Application<'server'>, 'meta' | 'timestamps'> & {
           meta: {
