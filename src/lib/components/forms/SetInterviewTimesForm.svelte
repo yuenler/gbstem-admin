@@ -101,6 +101,16 @@
   }
 
   async function updateTime(interview: Data.InterviewSlot) {
+    if (
+      interview.interviewerEmail !== currentUser.object.email &&
+      currentUser.profile.role !== 'admin'
+    ) {
+      alert.trigger(
+        'error',
+        'This interview does not belong to you and you are not an admin!',
+      )
+      return
+    }
     setDoc(doc(db, 'instructorInterviewTimes', interview.id), {
       ...interview,
       date: new Date(interview.date),
@@ -110,8 +120,14 @@
   }
 
   const deleteTime = async (interview: Data.InterviewSlot) => {
-    if (interview.interviewerEmail !== currentUser.object.email) {
-      alert.trigger('error', 'This interview does not belong to you!')
+    if (
+      interview.interviewerEmail !== currentUser.object.email &&
+      currentUser.profile.role !== 'admin'
+    ) {
+      alert.trigger(
+        'error',
+        'This interview does not belong to you and you are not an admin!',
+      )
     } else {
       deleteDoc(doc(db, 'instructorInterviewTimes', interview.id)).then(
         async () => {
@@ -255,7 +271,7 @@
               </div>
             {/if}
 
-            {#if interview.interviewSlotStatus === 'available' && interview.interviewerEmail === currentUser.object.email}
+            {#if interview.interviewSlotStatus === 'available' && (interview.interviewerEmail === currentUser.object.email || currentUser.profile.role === 'admin')}
               <div>
                 <Button
                   color="blue"
