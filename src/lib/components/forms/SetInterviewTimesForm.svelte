@@ -21,7 +21,8 @@
   export { className as class }
 
   let editSlot = ''
-  let includeAllSlots = true
+  let onlyIncludeMyInterviews = true
+  let onlyShowFutureSlots = true
   let showValidation = false
   let allInterviewSlots: Data.InterviewSlot[] = []
   let interviewSlotToAdd: Data.InterviewSlot = {
@@ -167,15 +168,20 @@
         <div class="flex gap-5 my-5">
           <Input
             type="checkbox"
-            bind:value={includeAllSlots}
-            label="Include All Interview Time Slots"
+            bind:value={onlyIncludeMyInterviews}
+            label="Only include my interviews"
+          />
+          <Input
+            type="checkbox"
+            bind:value={onlyShowFutureSlots}
+            label="Only show future interview slots"
           />
         </div>
       </div>
 
       {#each value as interview}
         {#if editSlot === interview.id}
-          {#if (!includeAllSlots && interview.interviewerEmail === currentUser.object.email) || includeAllSlots}
+          {#if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser.object.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
             <Card>
               <Form
                 class={clsx(showValidation && 'show-validation', className)}
@@ -219,7 +225,7 @@
               </Form>
             </Card>
           {/if}
-        {:else if (!includeAllSlots && interview.interviewerEmail === currentUser.object.email) || includeAllSlots}
+        {:else if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser.object.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
           <Card>
             <div class="my-1">
               <b>Interviewer:</b>
