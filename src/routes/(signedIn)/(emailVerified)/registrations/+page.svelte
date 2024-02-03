@@ -14,6 +14,7 @@
   import { doc, setDoc, updateDoc } from 'firebase/firestore'
   import fi from 'date-fns/locale/fi'
   import Select from '$lib/components/Select.svelte'
+  import { kebabCase } from 'lodash-es'
 
   export let data: PageData
   let dialogEl: Dialog
@@ -62,7 +63,7 @@
         grade,
         csCourse.toLowerCase().replace(/ /g, '-'),
         engineeringCourse.toLowerCase().replace(/ /g, '-'),
-        mathCourse.toLowerCase().replace(/ /g, '-'),
+        kebabCase(mathCourse),
         scienceCourse.toLowerCase().replace(/ /g, '-'),
         inPerson ? 'Yes' : 'No',
       ].join(',')
