@@ -62,7 +62,8 @@ export const load = (async ({ url, depends }) => {
       }
 
 
-      const snapshot = await dbQuery.limit(25).get()
+      // const snapshot = await dbQuery.limit(25).get()
+      const snapshot = await dbQuery.get()
 
 
       // const snapshot = await dbQuery.get()
@@ -130,7 +131,7 @@ export const load = (async ({ url, depends }) => {
           }),
         )
       ).map((doc) =>
-        doc ? (doc.data() as { type: Data.Decision }).type : null,
+        doc ? (doc.data() as { type: Data.Decision, likelyDecision: string, notes: string }) : null,
       )
       return {
         query,

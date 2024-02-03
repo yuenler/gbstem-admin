@@ -23,13 +23,13 @@
   let decisionFilter: 'all' | 'decided' | 'undecided' =
     ($page.url.searchParams.get('filter') as any) ?? 'all'
 
-  const mathCourseMap = {
-    'Mathematics 5b': 'mathematics-v',
-    'Mathematics 4b': 'mathematics-iv',
-    'Mathematics 3b': 'mathematics-iii',
-    'Mathematics 2b': 'mathematics-ii',
-    'Mathematics 1b': 'mathematics-i',
-  }
+  // const mathCourseMap = {
+  //   'Mathematics 5b': 'mathematics-v',
+  //   'Mathematics 4b': 'mathematics-iv',
+  //   'Mathematics 3b': 'mathematics-iii',
+  //   'Mathematics 2b': 'mathematics-ii',
+  //   'Mathematics 1b': 'mathematics-i',
+  // }
 
   const csv = data.registrations
     .map((registration) => {
@@ -48,7 +48,6 @@
             engineeringCourse,
             mathCourse,
             scienceCourse,
-            timeSlots,
             inPerson,
           },
         },
@@ -63,14 +62,14 @@
         grade,
         csCourse.toLowerCase().replace(/ /g, '-'),
         engineeringCourse.toLowerCase().replace(/ /g, '-'),
-        mathCourseMap[mathCourse] ? mathCourseMap[mathCourse] : mathCourse,
+        mathCourse.toLowerCase().replace(/ /g, '-'),
         scienceCourse.toLowerCase().replace(/ /g, '-'),
         inPerson ? 'Yes' : 'No',
       ].join(',')
     })
     .join('\n')
   // add column names
-  const csvWithHeaders = `id,firstName,lastName,email,secondaryEmail,school,grade,csCourse,engineeringCourse,mathCourse,scienceCourse,timeSlots,In-person\n${csv}`
+  const csvWithHeaders = `id,firstName,lastName,email,secondaryEmail,school,grade,csCourse,engineeringCourse,mathCourse,scienceCourse,In-person\n${csv}`
 
   const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)

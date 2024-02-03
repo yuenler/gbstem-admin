@@ -81,7 +81,7 @@
       uid: '',
       decision: null,
       submitted: false,
-      interviewed: false,
+      interview: false,
     },
     timestamps: {
       created: serverTimestamp() as Timestamp,

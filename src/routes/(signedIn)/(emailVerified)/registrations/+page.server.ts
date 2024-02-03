@@ -62,7 +62,8 @@ export const load = (async ({ url, depends }) => {
       }
 
 
-      const snapshot = await dbQuery.limit(25).get()
+      // const snapshot = await dbQuery.limit(25).get()
+      const snapshot = await dbQuery.get()
 
       // const snapshot = await dbQuery.get()
 
