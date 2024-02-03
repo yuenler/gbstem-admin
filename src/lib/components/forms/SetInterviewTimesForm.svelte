@@ -161,7 +161,7 @@
           <Input
             type="datetime-local"
             bind:value={interviewSlotToAdd.date}
-            label="Set Date (Eastern Time))"
+            label="Set Date (your local time)"
           />
           <Input
             type="text"
