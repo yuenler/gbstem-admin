@@ -21,7 +21,8 @@
   export { className as class }
 
   let editSlot = ''
-  let includeAllSlots = true
+  let onlyIncludeMyInterviews = true
+  let onlyShowFutureSlots = true
   let showValidation = false
   let allInterviewSlots: Data.InterviewSlot[] = []
   let interviewSlotToAdd: Data.InterviewSlot = {
@@ -100,6 +101,16 @@
   }
 
   async function updateTime(interview: Data.InterviewSlot) {
+    if (
+      interview.interviewerEmail !== currentUser.object.email &&
+      currentUser.profile.role !== 'admin'
+    ) {
+      alert.trigger(
+        'error',
+        'This interview does not belong to you and you are not an admin!',
+      )
+      return
+    }
     setDoc(doc(db, 'instructorInterviewTimes', interview.id), {
       ...interview,
       date: new Date(interview.date),
@@ -109,8 +120,14 @@
   }
 
   const deleteTime = async (interview: Data.InterviewSlot) => {
-    if (interview.interviewerEmail !== currentUser.object.email) {
-      alert.trigger('error', 'This interview does not belong to you!')
+    if (
+      interview.interviewerEmail !== currentUser.object.email &&
+      currentUser.profile.role !== 'admin'
+    ) {
+      alert.trigger(
+        'error',
+        'This interview does not belong to you and you are not an admin!',
+      )
     } else {
       deleteDoc(doc(db, 'instructorInterviewTimes', interview.id)).then(
         async () => {
@@ -144,7 +161,7 @@
           <Input
             type="datetime-local"
             bind:value={interviewSlotToAdd.date}
-            label="Set Date (Eastern Time))"
+            label="Set Date (your local time)"
           />
           <Input
             type="text"
@@ -167,15 +184,20 @@
         <div class="flex gap-5 my-5">
           <Input
             type="checkbox"
-            bind:value={includeAllSlots}
-            label="Include All Interview Time Slots"
+            bind:value={onlyIncludeMyInterviews}
+            label="Only include my interviews"
+          />
+          <Input
+            type="checkbox"
+            bind:value={onlyShowFutureSlots}
+            label="Only show future interview slots"
           />
         </div>
       </div>
 
       {#each value as interview}
         {#if editSlot === interview.id}
-          {#if (!includeAllSlots && interview.interviewerEmail === currentUser.object.email) || includeAllSlots}
+          {#if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser.object.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
             <Card>
               <Form
                 class={clsx(showValidation && 'show-validation', className)}
@@ -219,7 +241,7 @@
               </Form>
             </Card>
           {/if}
-        {:else if (!includeAllSlots && interview.interviewerEmail === currentUser.object.email) || includeAllSlots}
+        {:else if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser.object.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
           <Card>
             <div class="my-1">
               <b>Interviewer:</b>
@@ -249,7 +271,7 @@
               </div>
             {/if}
 
-            {#if interview.interviewSlotStatus === 'available'}
+            {#if interview.interviewSlotStatus === 'available' && (interview.interviewerEmail === currentUser.object.email || currentUser.profile.role === 'admin')}
               <div>
                 <Button
                   color="blue"

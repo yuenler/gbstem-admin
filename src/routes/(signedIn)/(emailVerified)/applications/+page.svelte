@@ -12,7 +12,6 @@
   import { actions, alert } from '$lib/stores'
   import { db } from '$lib/client/firebase'
   import { doc, setDoc, updateDoc } from 'firebase/firestore'
-  import fi from 'date-fns/locale/fi'
   import Select from '$lib/components/Select.svelte'
 
   export let data: PageData
@@ -35,24 +34,27 @@
           meta: { submitted, decision },
         },
       } = application
+
       return [
         id,
         submitted ? 'Submitted' : 'Not Submitted',
-        decision ? decision : 'No Decision',
+        decision?.type ?? 'Undecided',
+        decision?.likelyDecision ?? 'Undecided',
+        decision?.notes.replace(/,/g, '') ?? '',
         firstName,
         lastName,
         email,
-        school,
+        school.replace(/,/g, ''),
         graduationYear,
         courses.join(';'),
-        timeSlots,
+        timeSlots.replace(/,/g, ''),
         taughtBefore ? 'Yes' : 'No',
         inPerson ? 'Yes' : 'No',
       ]
     })
     .join('\n')
   // add column names
-  const csvWithHeaders = `ID,Submitted,Decision,First Name,Last Name,Email,School,Graduation Year,Courses,Time Slots,Taught Before,In-person\n${csv}`
+  const csvWithHeaders = `ID,Submitted,Decision,Likely Decision,Notes,First Name,Last Name,Email,School,Graduation Year,Courses,Time Slots,Taught Before,In-person\n${csv}`
 
   const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)

@@ -182,7 +182,7 @@ declare global {
       meta: {
         id: string
         uid: string
-        interviewed: boolean
+        interview: boolean
         submitted: boolean
         decision:
         | (T extends 'client'
