@@ -194,7 +194,23 @@
     }
   }
 
-  function handleDecision(newDecision: Data.Decision) {
+  const formatDate = (date: Date) => {
+    return date.toLocaleString('en-US', {
+      weekday: 'short', // long, short, narrow
+      month: 'short', // numeric, 2-digit, long, short, narrow
+      day: 'numeric', // numeric, 2-digit
+    })
+  }
+
+  async function handleDecision(newDecision: Data.Decision) {
+    let weekDeadline = new Date(new Date().setDate(new Date().getDate() + 7))
+    let interviewDeadline = formatDate(weekDeadline)
+
+    const dueDate = await getDoc(doc(db, 'semesterDates', 'spring24'))
+    if(dueDate.exists()) {
+      interviewDeadline = formatDate(new Date(Math.min(weekDeadline, new Date(dueDate.data().instructorOrientation))))
+    }
+
     const confirmation = confirm(
       'Are you sure you want to update the decision? An email will be sent to the applicant, and you should not be changing the decision after this.',
     )
@@ -229,6 +245,7 @@
                     type: 'scheduleInterview',
                     email: values.personal.email,
                     name: values.personal.firstName,
+                    deadline: interviewDeadline,
                   }),
                 })
               } else {

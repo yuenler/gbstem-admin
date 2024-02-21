@@ -172,7 +172,7 @@ export const scheduleInterviewEmailTemplate = `<!doctype html>
                           style="font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:16px;line-height:22px;text-align:left;color:#000000;">
                           <p style="margin:20px 0">Hello {{app.firstName}},</p>
                           <p style="margin: 20px 0">Thank you for applying to be a gbSTEM instructor! We would like to
-                            learn some more about you. Please schedule an interview with us through the applicant portal.
+                            learn some more about you. Please schedule an interview with us through the applicant portal. Be sure to have scheduled an interview by {{app.deadline}}.
                           </p>
                           <p style="margin: 30px 0">If you have any questions or concerns,
                             visit our FAQs, or you can reach us at <a target="_blank" rel="noopener noreferrer"
