@@ -25,6 +25,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
               firstName: body.name,
               name: 'Portal',
               link: 'https://portal.gbstem.org',
+              deadline: body.deadline,
             },
           },
         }
