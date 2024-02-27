@@ -57,6 +57,7 @@
               submittedApplicationsSnapshot,
               decidedApplicationsSnapshot,
               totalUsersSnapshot,
+              submittedRegistrationsSnapshot,
               totalRegistrationsSnapshot,
             ]) => {
               data = {
@@ -64,7 +65,7 @@
                   total: totalApplicationsSnapshot.data().count,
                   submitted: submittedApplicationsSnapshot.data().count,
                   decided: decidedApplicationsSnapshot.data().count,
-                  registered: totalRegistrationsSnapshot.data().count,
+                  registered: submittedRegistrationsSnapshot.data().count,
                   totalRegistrationsStarted:
                     totalRegistrationsSnapshot.data().count,
                 },
