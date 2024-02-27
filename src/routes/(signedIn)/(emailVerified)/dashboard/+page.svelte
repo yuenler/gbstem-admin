@@ -1,5 +1,6 @@
 <script lang="ts">
   import { db, user } from '$lib/client/firebase'
+  import Button from '$lib/components/Button.svelte'
   import Card from '$lib/components/Card.svelte'
   import PageLayout from '$lib/components/PageLayout.svelte'
   import {
@@ -7,9 +8,10 @@
     getCountFromServer,
     query,
     where,
+    getDocs,
   } from 'firebase/firestore'
-  import { get } from 'svelte/store'
   import { fade } from 'svelte/transition'
+  import { alert } from '$lib/stores'
 
   type DashboardData = {
     applications: {
@@ -25,6 +27,9 @@
   }
 
   let loading = true
+  let uncompletedRegistrationsEmails = ''
+  let uncompletedApplicationsEmails = ''
+
   let data: DashboardData
   user.subscribe((user) => {
     if (user) {
@@ -37,7 +42,26 @@
           const applicationsColl = collection(db, 'applicationsSpring24')
           const usersColl = collection(db, 'users')
           const registrationsColl = collection(db, 'registrationsSpring24')
-          const hhidsColl = collection(db, 'hhids')
+          // get uncompleted registration emails
+          getDocs(
+            query(registrationsColl, where('meta.submitted', '==', false)),
+          ).then((snapshot) => {
+            snapshot.forEach((doc) => {
+              uncompletedRegistrationsEmails += doc.data().personal.email + ', '
+            })
+            resolve()
+          })
+
+          // get uncompleted application emails
+          getDocs(
+            query(applicationsColl, where('meta.submitted', '==', false)),
+          ).then((snapshot) => {
+            snapshot.forEach((doc) => {
+              uncompletedApplicationsEmails += doc.data().personal.email + ', '
+            })
+            resolve()
+          })
+
           Promise.all([
             getCountFromServer(applicationsColl),
             getCountFromServer(
@@ -137,6 +161,26 @@
               {data.applications.totalRegistrationsStarted} pre-registrations started.
             </li>
           </ol>
+          <Button
+            on:click={() => {
+              // copy emails to clipboard
+              navigator.clipboard.writeText(uncompletedRegistrationsEmails)
+              alert.trigger(
+                'success',
+                'Emails of uncompleted registrations copied to clipboard.',
+              )
+            }}>Copy Emails for Uncompleted Registrations</Button
+          >
+          <Button
+            on:click={() => {
+              // copy emails to clipboard
+              navigator.clipboard.writeText(uncompletedApplicationsEmails)
+              alert.trigger(
+                'success',
+                'Emails of uncompleted applications copied to clipboard.',
+              )
+            }}>Copy Emails for Uncompleted Applications</Button
+          >
         </Card>
         <Card class="space-y-2">
           <h2 class="text-xl font-bold">Users</h2>
