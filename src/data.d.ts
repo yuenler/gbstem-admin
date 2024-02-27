@@ -107,6 +107,7 @@ declare global {
         entireProgram: boolean
         timeCommitment: boolean
         submitting: boolean
+        bypassAgeLimits:boolean
       }
       meta: {
         id: string

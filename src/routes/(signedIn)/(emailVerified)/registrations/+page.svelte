@@ -11,7 +11,7 @@
   import Table from '$lib/components/Table.svelte'
   import { actions, alert } from '$lib/stores'
   import { db } from '$lib/client/firebase'
-  import { doc, setDoc, updateDoc } from 'firebase/firestore'
+  import { doc, setDoc, updateDoc, getDoc } from 'firebase/firestore'
   import fi from 'date-fns/locale/fi'
   import Select from '$lib/components/Select.svelte'
   import { kebabCase } from 'lodash-es'
@@ -134,6 +134,14 @@
       goto(`?${base.toString()}`)
     }
   }
+  function bypassAgeLimits(id:string) {
+    getDoc(doc(db, 'registrationsSpring24', id)).then((applicationSnapshot) => {
+      if (applicationSnapshot.exists()) {
+        console.log(applicationSnapshot.data().agreements.bypassAgeLimits)
+        updateDoc(doc(db, 'registrationsSpring24', id), {'agreements.bypassAgeLimits': !applicationSnapshot.data().agreements.bypassAgeLimits});
+      }
+    })
+  }
   async function handleClear() {
     goto('/registrations').then(() => {
       search = ''
@@ -222,7 +230,7 @@
     <th scope="col" class="px-6 py-3">engineering course</th>
     <th scope="col" class="px-6 py-3">math course</th>
     <th scope="col" class="px-6 py-3">science course</th>
-    <th scope="col" class="px-6 py-3">Timeslots</th>
+    <th scope="col" class="px-6 py-3">Bypass Age Limits?</th>
     <!-- <th scope="col" class="px-6 py-3">Taught before</th> -->
   </svelte:fragment>
   <svelte:fragment slot="body">
@@ -284,7 +292,16 @@
         >
         <td class="px-6 py-4">{registration.values.program.mathCourse}</td>
         <td class="px-6 py-4">{registration.values.program.scienceCourse}</td>
-        <td class="px-6 py-4">{registration.values.program.timeSlots}</td>
+        <td class="px-6 py-4">
+        <input
+          id={`check-${i}`}
+          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+          type="checkbox"
+          checked={registration.values.agreements.bypassAgeLimits}
+          on:input={() => bypassAgeLimits(registration.id)}
+          on:click|stopPropagation
+        />
+        </td>
 
         <td class="px-6 py-4">
           <!-- {#if registration.values.essay.taughtBefore}
