@@ -8,6 +8,7 @@
     query,
     where,
   } from 'firebase/firestore'
+  import { get } from 'svelte/store'
   import { fade } from 'svelte/transition'
 
   type DashboardData = {
@@ -16,6 +17,7 @@
       submitted: number
       decided: number
       registered: number
+      totalRegistrationsStarted: number
     }
     users: {
       total: number
@@ -48,6 +50,7 @@
             getCountFromServer(
               query(registrationsColl, where('meta.submitted', '==', true)),
             ),
+            getCountFromServer(registrationsColl),
           ]).then(
             ([
               totalApplicationsSnapshot,
@@ -62,6 +65,8 @@
                   submitted: submittedApplicationsSnapshot.data().count,
                   decided: decidedApplicationsSnapshot.data().count,
                   registered: totalRegistrationsSnapshot.data().count,
+                  totalRegistrationsStarted:
+                    totalRegistrationsSnapshot.data().count,
                 },
                 users: {
                   total: totalUsersSnapshot.data().count,
@@ -127,6 +132,9 @@
             <li>{data.applications.submitted} instructor apps submitted.</li>
             <li>{data.applications.decided} instructor apps decided.</li>
             <li>{data.applications.registered} students pre-registered.</li>
+            <li>
+              {data.applications.totalRegistrationsStarted} pre-registrations started.
+            </li>
           </ol>
         </Card>
         <Card class="space-y-2">
