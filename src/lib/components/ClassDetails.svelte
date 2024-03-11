@@ -53,6 +53,8 @@
     gradeRecommendation: '',
   }
 
+  let meetingTimes: string[] = []
+
   let values: any = cloneDeep(defaultValues)
   $: if (id !== undefined) {
     studentList = []
@@ -61,10 +63,11 @@
     values = cloneDeep(defaultValues)
     getDoc(doc(db, 'classesSpring24', id)).then((snapshot) => {
       let data = snapshot.data() as any
-      const meetingTimes = data.meetingTimes.map((time: Timestamp) =>
+
+      meetingTimes = data.meetingTimes.map((time: Timestamp) =>
         new Date(time.seconds * 1000).toISOString(),
       )
-      data = { ...data, meetingTimes }
+
       const studentUids = data.students
       if (studentUids) {
         getStudentList(studentUids)
@@ -349,8 +352,8 @@
             >
               Schedule
             </div>
-            {#if values.meetingTimes}
-              {#each values.meetingTimes as meetingTime}
+            {#if meetingTimes}
+              {#each meetingTimes as meetingTime}
                 <div
                   style="border-width:1px; border-style:solid; border-color:gray; padding:1rem;"
                 >
