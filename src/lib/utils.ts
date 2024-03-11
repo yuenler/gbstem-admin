@@ -68,3 +68,23 @@ export function addDataToHtmlTemplate(html, template) {
   });
   return htmlBody;
 }
+
+
+export function formatTime24to12(time24: string): string {
+  // Split the string by ":" to obtain hours and minutes
+  const [hours24, minutes] = time24.split(':')
+
+  // Parse the hours and minutes to integers
+  const hours24Int = parseInt(hours24, 10)
+  const minutesInt = parseInt(minutes, 10)
+
+  // Create a date object at January 1, 2000, at the specified hours and minutes
+  const date = new Date(2000, 0, 1, hours24Int, minutesInt)
+
+  // Return the formatted time string in 12-hour format with AM/PM
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true,
+  })
+}

@@ -15,6 +15,7 @@ import parentEducationJson from './parentEducation.json'
 import timeSlotsJson from './timeSlots.json'
 import coursesJson from './courses.json'
 import classesPerWeekJson from './classesPerWeek.json'
+import daysOfWeekJson from './daysOfWeek.json'
 
 export {
   raceJson,
@@ -33,5 +34,6 @@ export {
   parentEducationJson,
   timeSlotsJson,
   coursesJson,
-  classesPerWeekJson
+  classesPerWeekJson,
+  daysOfWeekJson
 }

@@ -45,6 +45,10 @@
       href: '/registrations',
     },
     {
+      name: 'Classes',
+      href: '/classes',
+    },
+    {
       name: 'Student Feedback',
       href: '/student-feedback',
     },
@@ -52,6 +56,7 @@
       name: 'Instructor Feedback',
       href: '/instructor-feedback',
     },
+    
   ]
   function updateShadow() {
     shadow = window.scrollY !== 0
