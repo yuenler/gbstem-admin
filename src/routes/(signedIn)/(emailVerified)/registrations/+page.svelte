@@ -10,8 +10,8 @@
   import { page } from '$app/stores'
   import Table from '$lib/components/Table.svelte'
   import { actions, alert } from '$lib/stores'
-  import { db } from '$lib/client/firebase'
-  import { doc, setDoc, updateDoc, getDoc } from 'firebase/firestore'
+  import { db, user } from '$lib/client/firebase'
+  import { doc, updateDoc, getDoc, collection, query, getDocs, where} from 'firebase/firestore'
   import fi from 'date-fns/locale/fi'
   import Select from '$lib/components/Select.svelte'
   import { kebabCase } from 'lodash-es'
@@ -21,7 +21,7 @@
   let search: string = data.query ?? ''
   let current: number | undefined
   let checked: Array<number> = []
-  let decisionFilter: 'all' | 'decided' | 'undecided' =
+  let decisionFilter: 'all' | 'submitted' | 'enrolled' =
     ($page.url.searchParams.get('filter') as any) ?? 'all'
 
   // const mathCourseMap = {
@@ -147,6 +147,32 @@
       search = ''
     })
   }
+  function getInterestedClasses(registration:any) {
+    let interestedClasses = ''
+    if(registration) {
+      interestedClasses += registration.values.program.csCourse.includes('I am not interested') ? '' : registration.values.program.csCourse + ', '
+      interestedClasses += registration.values.program.engineeringCourse.includes('I am not interested') ? '' : registration.values.program.engineeringCourse + ', '
+      interestedClasses += registration.values.program.mathCourse.includes('I am not interested') ? '' : registration.values.program.mathCourse + ', '
+      interestedClasses += registration.values.program.scienceCourse.includes('I am not interested') ? '' : registration.values.program.scienceCourse
+    }
+    return interestedClasses
+  }
+
+  async function getCourses(id: string) {
+    let enrolled = true
+    const q = query(collection(db, 'classesSpring24'), where('students', 'array-contains', id))
+    const snapshot = await getDocs(q)
+    const courses = snapshot.docs.map((doc) => doc.data().course)
+    if (courses.length === 0) {
+      enrolled = false
+    }
+
+     const registrationDocRef = doc(db, 'registrationsSpring24', id)  
+      updateDoc(registrationDocRef, { enrolled: enrolled })
+
+    return enrolled? courses : "NO CLASS ENROLLMENT FOUND"
+  }
+
 </script>
 
 <svelte:head>
@@ -192,13 +218,13 @@
     <Select
       bind:value={decisionFilter}
       label="Filter"
-      options={[{ name: 'all' }, { name: 'undecided' }]}
+      options={[{ name: 'all' }, { name: 'submitted' }, {name: 'enrolled'}]}
       floating
       required
     />
     <a
       href={filterRef}
-      class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
+      class="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
     >
       Filter
     </a>
@@ -226,11 +252,9 @@
     <th scope="col" class="px-6 py-3">Email</th>
     <th scope="col" class="px-6 py-3">School</th>
     <th scope="col" class="px-6 py-3">Grade</th>
-    <th scope="col" class="px-6 py-3">CS course</th>
-    <th scope="col" class="px-6 py-3">engineering course</th>
-    <th scope="col" class="px-6 py-3">math course</th>
-    <th scope="col" class="px-6 py-3">science course</th>
+    <th scope="col" class="px-6 py-3">Course Interest</th>
     <th scope="col" class="px-6 py-3">Bypass Age Limits?</th>
+    <th scope="col" class="px-6 py-3">Course Enrollment</th>
     <!-- <th scope="col" class="px-6 py-3">Taught before</th> -->
   </svelte:fragment>
   <svelte:fragment slot="body">
@@ -286,12 +310,7 @@
         <td class="px-6 py-4">
           {registration.values.academic.grade}
         </td>
-        <td class="px-6 py-4">{registration.values.program.csCourse}</td>
-        <td class="px-6 py-4"
-          >{registration.values.program.engineeringCourse}</td
-        >
-        <td class="px-6 py-4">{registration.values.program.mathCourse}</td>
-        <td class="px-6 py-4">{registration.values.program.scienceCourse}</td>
+        <td class="px-6 py-4">{getInterestedClasses(registration)}</td>
         <td class="px-6 py-4">
         <input
           id={`check-${i}`}
@@ -302,40 +321,11 @@
           on:click|stopPropagation
         />
         </td>
-
-        <td class="px-6 py-4">
-          <!-- {#if registration.values.essay.taughtBefore}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-5 h-5"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M4.5 12.75l6 6 9-13.5"
-              />
-            </svg>
-          {:else}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-5 h-5"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          {/if} -->
-        </td>
+        {#await getCourses(registration.id) then courses}
+        <td class="px-6 py-4"
+          >{courses}</td
+        >
+        {/await}
       </tr>
     {/each}
   </svelte:fragment>
