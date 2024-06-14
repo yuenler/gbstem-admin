@@ -32,23 +32,24 @@ export const load = (async ({ url, depends }) => {
       // else
 
       const collectionName = 'registrationsSpring24'
-      if (filter === 'undecided') {
+      if (filter === 'submitted') {
         dbQuery = updated
           ? adminDb
             .collection(collectionName)
             .where('meta.submitted', '==', true)
-            .orderBy('timestamps.updated', 'desc')
-            .orderBy('meta.decision')
-            .where('meta.decision', '==', null)
             .startAfter(new Date(updated))
           : adminDb
             .collection(collectionName)
             .where('meta.submitted', '==', true)
-            .orderBy('meta.decision')
-            .where('meta.decision', '==', null)
-            .orderBy('timestamps.updated', 'desc')
-      }
-      else {
+      } else if (filter === 'enrolled') {
+        dbQuery = updated
+          ? adminDb
+            .collection(collectionName)
+            .where('enrolled', '==', true)
+          : adminDb
+            .collection(collectionName)
+            .where('enrolled', '==', true)
+      } else {
         dbQuery = updated
           ? adminDb
             .collection(collectionName)
