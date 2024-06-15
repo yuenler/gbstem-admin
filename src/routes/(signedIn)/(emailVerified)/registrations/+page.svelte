@@ -252,6 +252,7 @@
     <th scope="col" class="px-6 py-3">Email</th>
     <th scope="col" class="px-6 py-3">School</th>
     <th scope="col" class="px-6 py-3">Grade</th>
+    <th scope="col" class="px-6 py-3">Parent</th>
     <th scope="col" class="px-6 py-3">Course Interest</th>
     <th scope="col" class="px-6 py-3">Bypass Age Limits?</th>
     <th scope="col" class="px-6 py-3">Course Enrollment</th>
@@ -310,6 +311,8 @@
         <td class="px-6 py-4">
           {registration.values.academic.grade}
         </td>
+        <td class="px-6 py-4">
+          {registration.values.personal.parentFirstName}{' '}{registration.values.personal.parentLastName}
         <td class="px-6 py-4">{getInterestedClasses(registration)}</td>
         <td class="px-6 py-4">
         <input
