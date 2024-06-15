@@ -224,5 +224,24 @@ declare global {
       ? ServerTimestamp
       : Date
     }
+
+    type Class = {
+      classCap: number
+      classDay1: string
+      classDay2: string
+      classTime1: string
+      classTime2: string
+      course: string
+      instructorEmail: string
+      instructorFirstName: string
+      instructorLastName: string
+      meetingLink: string
+      meetingTimes: Date[]
+      datesHeld: Date[]
+      numClassesHeld: number
+      feedbackCompleted: boolean[]
+      online: boolean
+      students: string[]
+    }
   }
 }

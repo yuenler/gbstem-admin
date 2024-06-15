@@ -3,6 +3,7 @@
   import Button from '$lib/components/Button.svelte'
   import Card from '$lib/components/Card.svelte'
   import PageLayout from '$lib/components/PageLayout.svelte'
+  import { startOfDay } from 'date-fns';
   import {
     collection,
     getCountFromServer,
@@ -25,6 +26,8 @@
       total: number
     }
   }
+
+  let classesToday: Data.Class[] = [];
 
   let loading = true
   let uncompletedRegistrationsEmails = ''
@@ -100,6 +103,22 @@
               resolve()
             },
           )
+        }),
+
+        new Promise<void>((resolve) => {
+          const q = query(collection(db, 'classesSpring24'))
+          getDocs(q).then((snapshot) => {
+            snapshot.forEach((doc) => {
+              const meetingTimes: Date[] = doc.data().meetingTimes;
+              meetingTimes.forEach((meetingTime) => {
+                const classDate = new Date(meetingTime);
+                if (new Date().toDateString() === classDate.toDateString()) {
+                  classesToday.push(doc.data() as Data.Class);
+                }
+              });
+            });
+            resolve();
+          });
         }),
       ]).then(() => {
         loading = false
@@ -188,6 +207,19 @@
             <li>{data.users.total} total.</li>
           </ol>
         </Card>
+        <Card>
+
+        </Card>
+        <h2 class="text-xl font-bold">Classes Today</h2>
+        {#each classesToday as classToday}
+          <Card class="space-y-2">
+            <ol class="space-y-1">
+              <li>{classToday.course}</li>
+              <li>{classToday.instructorFirstName + " " + classToday.instructorLastName}</li>
+            </ol>
+            <div>{datesHeld}</div>
+          </Card>
+        {/each}
       </div>
     {/if}
   </div>
