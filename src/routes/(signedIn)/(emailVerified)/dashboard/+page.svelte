@@ -10,9 +10,11 @@
     query,
     where,
     getDocs,
+    Timestamp,
   } from 'firebase/firestore'
   import { fade } from 'svelte/transition'
   import { alert } from '$lib/stores'
+    import type { DatabaseService } from 'firebase-admin/lib/database/database'
 
   type DashboardData = {
     applications: {
@@ -27,13 +29,41 @@
     }
   }
 
-  let classesToday: Data.Class[] = [];
+  type ClassToday = {
+    index: number
+    class: Data.Class
+  }
+  let classesToday: ClassToday[] = [];
 
   let loading = true
   let uncompletedRegistrationsEmails = ''
   let uncompletedApplicationsEmails = ''
 
   let data: DashboardData
+  const formatDate = (date: Date) => {
+    return date.toLocaleString('en-US', {
+      weekday: 'short', // long, short, narrow
+      month: 'short', // numeric, 2-digit, long, short, narrow
+      day: 'numeric', // numeric, 2-digit
+      hour: 'numeric', // numeric, 2-digit
+      minute: 'numeric', // numeric, 2-digit
+      hour12: true, // use 12-hour time format with AM/PM
+    })
+  }
+
+  const timestampToDate = (timestamp: Timestamp | Date) => {
+    return new Date(timestamp.seconds * 1000)
+  }
+
+  const classHeldToday = (datesHeld: Date[], classToday: Date) => {
+    return datesHeld.filter((date) => classToday.toDateString() === timestampToDate(date).toDateString() && new Date() > date).length > 0
+  }
+
+  const classUpcoming = (date: Date) => {
+    return date.getTime() > Date.now() && Math.abs(date.getTime() - new Date().getTime()) / (1000*60) < 30
+  }
+
+
   user.subscribe((user) => {
     if (user) {
       let timer: number
@@ -108,21 +138,22 @@
         new Promise<void>((resolve) => {
           const q = query(collection(db, 'classesSpring24'))
           getDocs(q).then((snapshot) => {
-            snapshot.forEach((doc) => {
-              const meetingTimes: Date[] = doc.data().meetingTimes;
-              meetingTimes.forEach((meetingTime) => {
-                const classDate = new Date(meetingTime);
-                if (new Date().toDateString() === classDate.toDateString()) {
-                  classesToday.push(doc.data() as Data.Class);
-                }
-              });
-            });
-            resolve();
+          snapshot.forEach((doc) => {
+          const meetingTimes: Timestamp[] = doc.data().meetingTimes;
+          for (let i = 0; i < Object.values(meetingTimes).length; i++){
+            const meetingTime = Object.values(meetingTimes).at(i) ? timestampToDate(Object.values(meetingTimes).at(i)) : new Date();
+          if (meetingTime && new Date().toDateString() === meetingTime.toDateString()) {
+            const classSession = doc.data() as Data.Class;
+            classesToday.push({class: classSession, index: i});
+            }
+          }
+        });
+            resolve(console.log(classesToday));
           });
         }),
       ]).then(() => {
         loading = false
-      })
+      })     
       return () => window.clearTimeout(timer)
     }
   })
@@ -207,19 +238,46 @@
             <li>{data.users.total} total.</li>
           </ol>
         </Card>
-        <Card>
-
-        </Card>
-        <h2 class="text-xl font-bold">Classes Today</h2>
-        {#each classesToday as classToday}
           <Card class="space-y-2">
-            <ol class="space-y-1">
-              <li>{classToday.course}</li>
-              <li>{classToday.instructorFirstName + " " + classToday.instructorLastName}</li>
-            </ol>
-            <div>{datesHeld}</div>
-          </Card>
-        {/each}
+            <h2 class="text-xl font-bold">Classes Today</h2>
+            <ul class="list-none space-y-2">
+              {#each classesToday as classToday}
+                {#if classUpcoming(timestampToDate(classToday.class.meetingTimes[classToday.index]))}
+                  <li
+                      class="flex items-center justify-between rounded-lg p-4 bg-blue-100"
+                    >
+                    <p>{classToday.class.course}</p>
+                    <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
+                    <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index]))}</p>
+                  </li>
+                {:else if !classHeldToday(classToday.class.datesHeld, timestampToDate(classToday.class.meetingTimes[classToday.index]))}
+                    <li
+                    class="flex items-center justify-between rounded-lg p-4 bg-red-100"
+                  >
+                  <p>{classToday.class.course}</p>
+                  <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
+                  <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index]))}</p>
+                </li>
+                {:else if classToday.class.feedbackCompleted[classToday.index] === false}
+                    <li
+                    class="flex items-center justify-between rounded-lg p-4 bg-yellow-100" 
+                  >
+                  <p>{classToday.class.course}</p>
+                  <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
+                  <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index]))}</p>
+                </li>
+                {:else}
+                    <li
+                    class="flex items-center justify-between rounded-lg p-4 bg-green-100"
+                  >
+                  <p>{classToday.class.course}</p>
+                  <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
+                  <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index]))}</p>
+                </li>
+                {/if}
+                {/each}
+            </ul>          
+          </Card>    
       </div>
     {/if}
   </div>
