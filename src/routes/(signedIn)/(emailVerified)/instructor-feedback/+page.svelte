@@ -113,7 +113,7 @@
         <td class="px-6 py-4">
           {value.classNumber}
         </td>
-        <td class="px-6 py-4">{formatDate(new Date(value.date.seconds * 1000))}</td>
+        <td class="px-6 py-4">{value.date}</td>
         <td class="px-6 py-4">{getAttendancePercent(value)}</td>
         <td class="px-6 py-4">
           {value.feedback}
