@@ -51,6 +51,7 @@
     classCap: 0,
     online: true,
     gradeRecommendation: '',
+    classesStatus: [],
   }
 
   let meetingTimes: string[] = []
@@ -65,8 +66,7 @@
       let data = snapshot.data() as any
 
       meetingTimes = data.meetingTimes.map((time: Timestamp) =>
-        new Date(time.seconds * 1000).toISOString(),
-      )
+        new Date(time.seconds * 1000)).sort((a:Date, b:Date) => a.getTime() - b.getTime()).map((time:Date) => time.toISOString())
 
       const studentUids = data.students
       if (studentUids) {
@@ -180,6 +180,7 @@
     <div class="mt-4 flex justify-center">
       <Form>
         <fieldset class="mt-4 space-y-4" {disabled}>
+        <div class = "grid gap-1 sm:grid-cols-3 sm:gap-3">
           <Select
             bind:value={values.course}
             label="Course"
@@ -190,9 +191,17 @@
           <Input
             type="text"
             bind:value={values.gradeRecommendation}
+            floating
             label="Grade recommendation. For example, 3-5 or 6-8."
           />
-
+          <Input
+            type="number"
+            bind:value={values.classCap}
+            label="Class capacity"
+            floating
+            required
+          />
+        </div>
           {#if values.online}
             <Input
               type="text"
@@ -250,14 +259,6 @@
               </div>
             {/if}
           </div>
-          <Input
-            type="number"
-            bind:value={values.classCap}
-            label="Class capacity"
-            floating
-            required
-          />
-
           <Input
             type="checkbox"
             bind:value={values.online}
@@ -342,25 +343,58 @@
       </Card>
       <div>
         <table
-          class="grid grid-cols-2 justify-between gap-0"
+          class="grid grid-cols-1 justify-between gap-1"
           style="margin-top:1rem;"
         >
           <div>
             <div
-              class="bg-gray-100"
-              style="border-width:1px; border-style:solid; border-color:gray; padding:1rem;"
+              class="rounded-lg bg-gray-100 p-4 mb-2"
             >
-              Schedule
+              <strong>Schedule</strong>
             </div>
             {#if meetingTimes}
-              {#each meetingTimes as meetingTime}
-                <div
-                  style="border-width:1px; border-style:solid; border-color:gray; padding:1rem;"
-                >
+              {#each meetingTimes as meetingTime, i}
+              {#if values.classesStatus[i] === 'allComplete'}
+              <div class="rounded-lg bg-green-100 p-4 mb-2">
+                <div class="flex items-center justify-between">
                   <p class="meeting-time">
                     {formatDate(meetingTime)}
                   </p>
                 </div>
+                </div>
+              {:else if values.classesStatus[i] === 'missingFeedback'}
+              <div class="rounded-lg bg-yellow-100 p-4 mb-2">
+                <div class="flex items-center justify-between">
+                  <p class="meeting-time">
+                    {formatDate(meetingTime)}
+                  </p>
+                </div>
+                </div>
+              {:else if values.classesStatus[i] === 'upcoming'}
+                <div class="rounded-lg bg-blue-100 p-4 mb-2">
+                  <div class="flex items-center justify-between">
+                    <p class="meeting-time">
+                      {formatDate(meetingTime)}
+                    </p>
+                  </div>
+                  </div>
+              {:else if values.classesStatus[i] === 'classMissed'}
+                  <div class="rounded-lg bg-red-100 p-4 mb-2">
+                    <div class="flex items-center justify-between">
+                      <p class="meeting-time">
+                        {formatDate(meetingTime)}
+                      </p>
+                    </div>
+                    </div>
+              {:else}
+              <div class="rounded-lg bg-gray-100 p-4 mb-2">
+                <div class="flex items-center justify-between">
+                  <p class="meeting-time">
+                    {formatDate(meetingTime)}
+                  </p>
+                </div>
+                </div>
+              {/if}
               {/each}
             {/if}
           </div>
