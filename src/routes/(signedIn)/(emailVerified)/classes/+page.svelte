@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { collection, query, getDocs } from 'firebase/firestore'
+  import { collection, query, getDocs, updateDoc, doc } from 'firebase/firestore'
   import { db, user } from '$lib/client/firebase'
   import { onMount } from 'svelte'
   import Table from '$lib/components/Table.svelte'
