@@ -130,11 +130,13 @@ declare global {
 
     type InstructorFeedback = {
       instructorName: string
-      studentName: string
-      attendance: boolean
+      students: string[]
+      attendance: boolean[]
       date: string
       course: string
       feedback: string
+      classNumber: number
+      id: string
     }
 
     type StudentFeedback = {
