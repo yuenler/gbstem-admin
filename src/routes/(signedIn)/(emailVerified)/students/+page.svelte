@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Registration from '$lib/components/Registration.svelte'
+    import StudentDetails from '$lib/components/StudentDetails.svelte'
     import type Dialog from '$lib/components/Dialog.svelte'
     import { format } from 'date-fns'
     import Input from '$lib/components/Input.svelte'
@@ -23,14 +23,6 @@
     let checked: Array<number> = []
     let decisionFilter: 'all' | 'submitted' | 'enrolled' =
       ($page.url.searchParams.get('filter') as any) ?? 'all'
-  
-    // const mathCourseMap = {
-    //   'Mathematics 5b': 'mathematics-v',
-    //   'Mathematics 4b': 'mathematics-iv',
-    //   'Mathematics 3b': 'mathematics-iii',
-    //   'Mathematics 2b': 'mathematics-ii',
-    //   'Mathematics 1b': 'mathematics-i',
-    // }
   
     const csv = data.registrations
       .map((registration) => {
@@ -260,6 +252,8 @@
     </svelte:fragment>
     <svelte:fragment slot="body">
       {#each data.registrations as registration, i}
+      {#await getCourses(registration.id) then courses}
+        {#if courses !== "NO CLASS ENROLLMENT FOUND"}
         <tr
           class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
           on:click={() => {
@@ -283,11 +277,10 @@
           <td class="px-6 py-4">
             {`${normalizeCapitals(registration.values.personal.studentFirstName)} ${normalizeCapitals(registration.values.personal.studentLastName)}`}
           </td>
-          {#await getCourses(registration.id) then courses}
+          
           <td class="px-6 py-4"
             >{courses}</td
           >
-          {/await}
           <td class="px-6 py-4"> {registration.values.personal.email} </td>
           <td class="px-6 py-4">
             {registration.values.academic.school}
@@ -298,6 +291,8 @@
           <td class="px-6 py-4">
             {normalizeCapitals(registration.values.personal.parentFirstName)}{' '}{normalizeCapitals(registration.values.personal.parentLastName)}
         </tr>
+        {/if}
+        {/await}
       {/each}
     </svelte:fragment>
   </Table>
@@ -306,7 +301,7 @@
     <Button href={nextHref}>Next</Button>
   </div>
   
-  <Registration bind:dialogEl id={registration?.id} />
+  <StudentDetails bind:dialogEl id={registration?.id} />
   
   <style>
     input:checked {

@@ -13,23 +13,6 @@ export const load = (async ({ url, depends }) => {
     const filter = url.searchParams.get('filter')
     try {
       let dbQuery;
-      // if (filter === 'decided') {
-      //   dbQuery = updated
-      //     ? adminDb
-      //       .collection('registrations')
-      //       .where('meta.submitted', '==', true)
-      //       .orderBy('timestamps.updated')
-      //       .orderBy('meta.decision')
-      //       .where('meta.decision', '!=', null)
-      //       .startAfter(new Date(updated))
-      //     : adminDb
-      //       .collection('registrations')
-      //       .where('meta.submitted', '==', true)
-      //       .orderBy('meta.decision')
-      //       .where('meta.decision', '!=', false)
-      //       .orderBy('timestamps.updated')
-      // }
-      // else
 
       const collectionName = 'registrationsSpring24'
       if (filter === 'submitted') {
