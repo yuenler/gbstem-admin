@@ -6,6 +6,10 @@
     serverTimestamp,
     setDoc,
     updateDoc,
+    query,
+    getDocs,
+    collection,
+    where,
   } from 'firebase/firestore'
   import Input from '$lib/components/Input.svelte'
   import Select from '$lib/components/Select.svelte'
@@ -21,6 +25,8 @@
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
+  import {onMount} from 'svelte'
+  import { formatTime24to12 } from '$lib/utils'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -28,65 +34,107 @@
   let loading = true
   let dbValues: Data.Registration<'client'>
 
-  let studentList: {
+  type ClassAttendance = {
+    className: string
+    date: string
+    attended: boolean
+    feedback: string
+    id: string
+    classNumber: number
+  }
+
+  let studentData: {
     name: string
     email: string
     secondaryEmail: string
     phone: string
     grade: number
     school: string
-  }[] = []
-
-  const defaultValues = {
-    course: '',
-    instructorFirstName: '',
-    instructorLastName: '',
-    instructorEmail: '',
-    classDay1: '',
-    classTime1: '',
-    classDay2: '',
-    classTime2: '',
-    meetingLink: '',
-    classCap: 0,
-    online: true,
-    gradeRecommendation: '',
-    classesStatus: [],
+  } = {
+    name: '',
+    email: '',
+    secondaryEmail: '',
+    phone: '',
+    grade: 0,
+    school: '',
   }
 
-  let classes: Data.Class[] = []
+  type Class = {
+      classCap: number
+      classDay1: string
+      classDay2: string
+      classTime1: string
+      classTime2: string
+      course: string
+      instructorEmail: string
+      instructorFirstName: string
+      instructorLastName: string
+      meetingLink: string
+      meetingTimes: Date[]
+      datesHeld: Date[]
+      classesStatus: string[]
+      numClassesHeld: number
+      feedbackCompleted: boolean[]
+      online: boolean
+      students: string[]
+      id: string
+    }
 
-  let values: any = cloneDeep(defaultValues)
-  $: if (id !== undefined) {
-    loading = true
-    values = cloneDeep(defaultValues)
-    const studentDocRef = doc(db, 'registrationsSpring24', id)
-      getDoc(studentDocRef).then((studentDoc) => {
-        if (studentDoc.exists()) {
-          const data = studentDoc.data()
-          if (data) {
-            studentList.push({
-              name: `${data.personal.studentFirstName} ${data.personal.studentLastName}`,
-              email: data.personal.email,
-              secondaryEmail: data.personal.secondaryEmail,
-              phone: data.personal.phoneNumber,
-              grade: data.academic.grade,
-              school: data.academic.school,
-            })
-          }
-          studentList = [...studentList]
-        }
-      })
+  let attendance: ClassAttendance[] = []
 
-      getDocs(query(collection(db, 'classesSpring24'), where('students', 'array-contains', id))).then((snapshot) => {
-        let data = snapshot.data() as Data.Class
-        if (data) {
-            classes.push(data)
-            console.log(data)
-        } else {
-          alert.trigger('error', 'Registration not found.')
-        }
-      })
-  }
+  let classes: Class[] = [] 
+
+    $: if (id !== undefined && loading) {
+        const studentDocRef = doc(db, 'registrationsSpring24', id);
+        getDoc(studentDocRef).then((studentDoc) => {
+            if (studentDoc.exists()) {
+                const data = studentDoc.data();
+                if (data) {
+                    studentData = {
+                        name: `${data.personal.studentFirstName} ${data.personal.studentLastName}`,
+                        email: data.personal.email,
+                        secondaryEmail: data.personal.secondaryEmail,
+                        phone: data.personal.phoneNumber,
+                        grade: data.academic.grade,
+                        school: data.academic.school,
+                    };
+                }
+            }
+        });
+
+        getDocs(query(collection(db, 'instructorFeedback24'))).then((snapshot) => {
+            attendance = []
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                if(data) {
+                    attendance.push({
+                        className: data.courseName,
+                        date: data.date,
+                        attended: data.attendanceList,
+                        feedback: data.feedback, 
+                        id: doc.id,
+                        classNumber: data.classNumber
+                    });
+                }
+            });
+            attendance.sort((a, b) => a.classNumber - b.classNumber);
+        })
+
+        getDocs(query(collection(db, 'classesSpring24'), where('students', 'array-contains', id))).then((snapshot) => {
+            classes = []
+            snapshot.forEach((doc) => {
+                const data = doc.data() as Class;
+                if (data) {
+                    data.id = doc.id;
+                    classes.push(data);
+                } else {
+                    alert.trigger('error', 'Registration not found.');
+                }
+            });
+        }).then(() => {
+            loading = false;
+        });
+    }
 
   function formatDate(dateString: string) {
     const date = new Date(dateString)
@@ -100,18 +148,21 @@
     })
   }
 
+  function formatClassTimes(
+    classDays: string[],
+    classTimes: string[],
+  ): string[] {
+    return classDays.map(
+      (day, index) => `${day} at ${formatTime24to12(classTimes[index])}`,
+    )
+  }
+
   function copyEmails() {
-    const emailList = studentList
-      .map(
-        (student) =>
-          `${student.email}${
-            student.secondaryEmail ? `, ${student.secondaryEmail}` : ''
-          }`,
-      )
-      .join(', ')
+    const email = studentData.email.concat(studentData.secondaryEmail ? ', ' + studentData.secondaryEmail : '')
+         
 
     navigator.clipboard
-      .writeText(emailList)
+      .writeText(email)
       .then(() => {
         alert.trigger('success', 'Emails copied to clipboard!')
       })
@@ -122,110 +173,98 @@
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
-    <svelte:fragment slot="title">Class Details</svelte:fragment>
+    <svelte:fragment slot="title">Student Attendance and Information</svelte:fragment>
     <div slot="description">
-    <Card class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
-      <div class="flex gap-3">
-       
-      </div>
-    </Card>
-    <div class="mt-4 flex justify-center">
-    {#each classes as value}
-      <Form>
-        <fieldset class="mt-4 space-y-4">
-        <div class = "grid gap-1 sm:grid-cols-3 sm:gap-3">
-          <Select
-            bind:value={value.course}
-            label="Course"
-            options={coursesJson}
-            floating
-            required
-          />
-          <Input
-            type="text"
-            bind:value={value.gradeRecommendation}
-            floating
-            label="Grade recommendation. For example, 3-5 or 6-8."
-          />
-          <Input
-            type="number"
-            bind:value={value.classCap}
-            label="Class capacity"
-            floating
-            required
-          />
-        </div>
-          {#if value.online}
-            <Input
-              type="text"
-              bind:value={value.meetingLink}
-              label="Meeting link"
-              floating
-              required
-            />
-          {/if}
-
-          <div class="grid gap-1">
-            <span class="font-bold"
-              >Online classes meet twice weekly at consistent days and times
-              throughout the semester and run for 45-60 minutes each. In-person
-              classes meet once a week on a weekend afternoon at the Cambridge
-              Public Library.
-            </span>
-
-            <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
-              <div class="sm:col-span-2">
-                <Select
-                  bind:value={value.classDay1}
-                  label="Meeting day 1"
-                  options={daysOfWeekJson}
-                  floating
-                  required
-                />
-              </div>
-              <Input
-                type="time"
-                bind:value={value.classTime1}
-                label="Meeting time 1"
-                floating
-                required
-              />
-            </div>
-
-            {#if value.online}
-              <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
-                <div class="sm:col-span-2">
-                  <Select
-                    bind:value={value.classDay2}
-                    label="Meeting day 2"
-                    options={daysOfWeekJson}
-                    floating
-                    required
-                  />
-                </div>
-                <Input
-                  type="time"
-                  bind:value={value.classTime2}
-                  label="Meeting time 2"
-                  floating
-                />
-              </div>
-            {/if}
-          </div>
-          <Input
-            type="checkbox"
-            bind:value={value.online}
-            label="Class taught online?"
-          />
+    <Button color = 'blue' on:click={dialogEl.cancel}>Close</Button>
+    <div class="mt-4 justify-center">
+    {#each classes as value, i}
+      <Card class = "mt-2">
+          <h2 class="font-bold">Class {i+1} Information</h2>
+        <fieldset class="mt-4 space-y-4" {loading}>
+            <table style="border-collapse: collapse; width: 100%; text-align: left;">
+                <thead>
+                  <tr>
+                    <th
+                      style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
+                      >Course</th
+                    >
+                    <th
+                      style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
+                      >Instructor</th
+                    >
+                    <th
+                      style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
+                      >Instructor Email</th
+                    >
+                    <th
+                      style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
+                      >Meeting Link</th
+                    >
+                    <th
+                      style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
+                      >Format</th
+                    >
+                    <th
+                      style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
+                      >Class Times</th
+                    >
+                  </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid #ccc;">
+                      <td style="padding: 8px;">{value.course}</td>
+                      <td style="padding: 8px;">{value.instructorFirstName + ' ' + value.instructorLastName}</td>
+                      <td style="padding: 8px;">{value.instructorEmail}</td>
+                      <td style="padding: 8px;">{value.meetingLink}</td>
+                      <td style="padding: 8px;">{value.online? 'Online' : 'In-Person'}</td>
+                      <td style="padding: 8px;">{formatClassTimes([value.classDay1, value.classDay2], [value.classTime1, value.classTime2])}</td>
+                    </tr>
+                </tbody>
+              </table>
+              <h2 class="font-bold">Attendance</h2>
+                <table style="border-collapse: collapse; width: 100%; text-align: left;">
+                    <thead>
+                    <tr>
+                        <th
+                        style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
+                        >Class Number</th
+                        >
+                        <th
+                        style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
+                        >Date</th
+                        >
+                        <th
+                        style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
+                        >Attended</th
+                        >
+                        <th
+                        style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
+                        >Feedback</th
+                        >
+                    </tr>
+                    </thead>
+                    {#each attendance as att, i}
+                     {#if att.className === value.course && att.id.includes(value.id) && Object.keys(att.attended).includes(studentData.name)}
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #ccc;">
+                        <td style="padding: 8px;">{att.classNumber}</td>
+                        <td style="padding: 8px;">{att.date}</td>
+                        <td style="padding: 8px;">{att.attended[studentData.name]? 'Yes' : 'No'}</td>
+                        <td style="padding: 8px;">{att.feedback}</td>
+                        </tr>
+                    </tbody>
+                    {/if}
+                    {/each}
+                </table>
         </fieldset>
-      </Form>
+    </Card>
     {/each}
     </div>
 
     <div>
       <Card class="mb-4 mt-5">
         <div class="mb-4 flex items-center justify-between">
-          <h2 class="font-bold">Class List</h2>
+          <h2 class="font-bold">Student Information</h2>
           <Button on:click={copyEmails} class="flex items-center gap-1">
             <svg
               fill="#000000"
@@ -281,34 +320,18 @@
               </tr>
             </thead>
             <tbody>
-              {#each studentList as student}
                 <tr style="border-bottom: 1px solid #ccc;">
-                  <td style="padding: 8px;">{student.name}</td>
-                  <td style="padding: 8px;">{student.email}</td>
-                  <td style="padding: 8px;">{student.secondaryEmail}</td>
-                  <td style="padding: 8px;">{student.phone}</td>
-                  <td style="padding: 8px;">{student.grade}</td>
-                  <td style="padding: 8px;">{student.school}</td>
+                  <td style="padding: 8px;">{studentData.name}</td>
+                  <td style="padding: 8px;">{studentData.email}</td>
+                  <td style="padding: 8px;">{studentData.secondaryEmail}</td>
+                  <td style="padding: 8px;">{studentData.phone}</td>
+                  <td style="padding: 8px;">{studentData.grade}</td>
+                  <td style="padding: 8px;">{studentData.school}</td>
                 </tr>
-              {/each}
             </tbody>
           </table>
         </div>
       </Card>
-      <div>
-        <table
-          class="grid grid-cols-1 justify-between gap-1"
-          style="margin-top:1rem;"
-        >
-          <div>
-            <div
-              class="rounded-lg bg-gray-100 p-4 mb-2"
-            >
-              <strong>Schedule</strong>
-            </div>
-          </div>
-        </table>
-      </div>
     </div>
   </div>
 </Dialog>
