@@ -297,7 +297,7 @@
           </Button>
         </div>
         <div class="m-5" style="overflow: auto;">
-          <table style="border-collapse: collapse; width: 100%;">
+          <table style="border-collapse: collapse; width: 100%; text-align: left;">
             <thead>
               <tr>
                 <th
