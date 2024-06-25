@@ -240,6 +240,7 @@ declare global {
       meetingLink: string
       meetingTimes: Date[]
       datesHeld: Date[]
+      classesStatus: string[]
       numClassesHeld: number
       feedbackCompleted: boolean[]
       online: boolean
