@@ -40,6 +40,8 @@
           personal: {
             studentFirstName,
             studentLastName,
+            parentFirstName,
+            parentLastName,
             email,
             secondaryEmail,
           },
@@ -55,8 +57,10 @@
       } = registration
       return [
         id,
-        studentFirstName,
-        studentLastName,
+        normalizeCapitals(studentFirstName),
+        normalizeCapitals(studentLastName),
+        normalizeCapitals(parentFirstName),
+        normalizeCapitals(parentLastName),
         email,
         secondaryEmail,
         school.replace(/,/g, ''),
@@ -70,7 +74,7 @@
     })
     .join('\n')
   // add column names
-  const csvWithHeaders = `id,firstName,lastName,email,secondaryEmail,school,grade,csCourse,engineeringCourse,mathCourse,scienceCourse,In-person\n${csv}`
+  const csvWithHeaders = `id,studentFirstName,studentLastName,parentFirstName,parentLastName,email,secondaryEmail,school,grade,csCourse,engineeringCourse,mathCourse,scienceCourse,In-person\n${csv}`
 
   const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)
@@ -103,6 +107,10 @@
     }
     filterRef = `?${base.toString()}`
   }
+
+  function normalizeCapitals(name: string) {
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+}
 
   function handleCheck(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
@@ -302,7 +310,7 @@
         </td>
 
         <td class="px-6 py-4">
-          {`${registration.values.personal.studentFirstName} ${registration.values.personal.studentLastName}`}
+          {`${normalizeCapitals(registration.values.personal.studentFirstName)} ${normalizeCapitals(registration.values.personal.studentLastName)}`}
         </td>
         <td class="px-6 py-4"> {registration.values.personal.email} </td>
         <td class="px-6 py-4">
@@ -312,7 +320,7 @@
           {registration.values.academic.grade}
         </td>
         <td class="px-6 py-4">
-          {registration.values.personal.parentFirstName}{' '}{registration.values.personal.parentLastName}
+          {normalizeCapitals(registration.values.personal.parentFirstName)}{' '}{normalizeCapitals(registration.values.personal.parentLastName)}
         <td class="px-6 py-4">{getInterestedClasses(registration)}</td>
         <td class="px-6 py-4">
         <input
