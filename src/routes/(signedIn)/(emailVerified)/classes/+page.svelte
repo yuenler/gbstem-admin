@@ -7,11 +7,12 @@
   import { formatTime24to12 } from '$lib/utils'
   import { format } from 'date-fns'
   import ClassDetails from '$lib/components/ClassDetails.svelte'
+  import type { PageData } from './$types'
 
+  export let data: PageData
   let showValidation = false
   let currentUser: Data.User.Store
   let scheduled = false
-  let data: any[] = []
   let loading = true
   let selectedClassId: string | undefined = undefined
 
@@ -28,42 +29,30 @@
     })
   }
 
-  onMount(() => {
-    return user.subscribe(async (user) => {
-      if (user) {
-        currentUser = user
-        data = await getData()
-        loading = false
-      }
-    })
-  })
+  // onMount(() => {
+  //   return user.subscribe(async (user) => {
+  //     if (user) {
+  //       currentUser = user
+  //       data = await getData()
+  //       loading = false
+  //     }
+  //   })
+  // })
 
-  async function getData() {
-    const q = query(collection(db, 'classesSpring24'))
-    const classes = await getDocs(q)
-    classes.forEach(async (document) => {
-      let d = document.data()
-      d = {
-        ...d,
-        id: document.id,
-        classTimes: formatClassTimes(
-          [d.classDay1, d.classDay2],
-          [d.classTime1, d.classTime2],
-        ),
-      }
-      data.push(d)
-    })
-    return data
-  }
-
-  function formatClassTimes(
-    classDays: string[],
-    classTimes: string[],
-  ): string[] {
-    return classDays.map(
-      (day, index) => `${day} at ${formatTime24to12(classTimes[index])}`,
-    )
-  }
+  // async function getData() {
+  //   const q = query(collection(db, 'classesSpring24'))
+  //   const classes = await getDocs(q)
+  //   classes.forEach(async (document) => {
+  //     let d = document.data()
+  //     d = {
+  //       ...d,
+  //       id: document.id,
+        
+  //     }
+  //     data.push(d)
+  //   })
+  //   return data
+  // }
 </script>
 
 <ClassDetails bind:dialogEl id={selectedClassId} />
@@ -71,8 +60,7 @@
 {#await data then feedback}
   <Table>
     <svelte:fragment slot="head">
-      <th scope="col" class="px-6 py-3">Instructor First Name</th>
-      <th scope="col" class="px-6 py-3">Instructor Last Name</th>
+      <th scope="col" class="px-6 py-3">Instructor Name</th>
       <th scope="col" class="px-6 py-3">Instructor Email</th>
       <th scope="col" class="px-6 py-3">Course</th>
       <th scope="col" class="px-6 py-3">Meeting Link</th>
@@ -80,7 +68,7 @@
       <th scope="col" class="px-6 py-3">Number of students</th>
     </svelte:fragment>
     <svelte:fragment slot="body">
-      {#each feedback as value, i}
+      {#each feedback.classes as value, i}
         <tr
           class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
           on:click={() => {
@@ -88,15 +76,14 @@
             dialogEl.open()
           }}
         >
-          <td class="px-6 py-4"> {value.instructorFirstName} </td>
           <td class="px-6 py-4">
-            {value.instructorLastName}
+            {value.name}
           </td>
           <td class="px-6 py-4">
-            {value.instructorEmail}
+            {value.email}
           </td>
           <td class="px-6 py-4">
-            {value.course}
+            {value.classes}
           </td>
           <td class="px-6 py-4">
             {value.meetingLink}
