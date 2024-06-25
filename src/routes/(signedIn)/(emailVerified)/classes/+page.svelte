@@ -53,15 +53,17 @@
           name,
           email,
           courses,
-          students,
-          classesStatus,
+          students.join(', '),
+          classesStatus.filter((status) => status === 'allComplete').length,
+          classesStatus.filter((status) => status === 'missingFeedback').length,
+          classesStatus.filter((status) => status === 'classMissed').length,
           meetingLink,
-          classTimes,
+          classTimes.map((value) => value.toString()).join(', ')
         ].join(',')
       })
       .join('\n')
 
-  const csvWithHeaders = `id,firstName,lastName,email,secondaryEmail,school,grade,csCourse,engineeringCourse,mathCourse,scienceCourse,In-person\n${csv}`
+  const csvWithHeaders = `id,name,email,class,students,classes complete, classes missing feedback, classes missed, meeting link, class times\n${csv}`
   
     const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
