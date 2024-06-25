@@ -41,10 +41,6 @@
       href: '/students',
     },
     {
-      name: 'Instructors',
-      href: '/instructors',
-    },
-    {
       name: 'Interviews',
       href: '/interviews',
     },
