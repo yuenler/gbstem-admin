@@ -160,6 +160,52 @@
         alert.trigger('error', 'Failed to copy emails to clipboard!')
       })
   }
+  function sendInstructorReminder(instructorName: string, instructorEmail: string, className: string) {
+    const confirmSend = confirm("Send class reminder to instructor?");
+    let classTime: String = '';
+        for (let i = 0; i < meetingTimes.length; i++){
+            const meetingTime = new Date(meetingTimes[i])
+          if (meetingTime && new Date().toDateString() === meetingTime.toDateString()) {
+            classTime = formatDate(meetingTime);
+            break;
+          }
+        }
+      if(classTime === '') {
+        const nextTime = confirm("No class today. Send reminder for next class?");
+        if(nextTime) {
+          for(let i = 0; i < meetingTimes.length; i++) {
+            const meetingTime2 = new Date(meetingTimes[i])
+            if(new Date().getTime() < meetingTime2.getTime()) {
+              console.log(meetingTime2);
+              classTime = formatDate(meetingTime2);
+              break;
+            }
+          }
+        } else {
+          return;
+        }
+      }
+    fetch('/api/remindInstructor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: instructorName,
+          email: instructorEmail,
+          class: className,
+          classTime: classTime,
+        }),
+      }).then(async (res) => {
+        if (res.ok) {
+          alert.trigger('success', 'A reminder email was sent!')
+        } else {
+          const { message } = await res.json()
+          alert.trigger('error', message)
+        }
+      });
+  }
+
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
@@ -173,8 +219,9 @@
         >
       {/if}
       <div class="flex gap-3">
-        <Button on:click={handleEdit}>Edit</Button>
-        <Button on:click={dialogEl.cancel}>Close</Button>
+        <Button color = 'green' on:click={handleEdit}>Edit</Button>
+        <Button color = 'red' on:click={dialogEl.cancel}>Close</Button>
+        <Button color = 'blue' on:click = {() => sendInstructorReminder(values.instructorFirstName, values.instructorEmail, values.course)}>Send Instructor Reminder</Button>
       </div>
     </Card>
     <div class="mt-4 flex justify-center">

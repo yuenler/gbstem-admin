@@ -244,7 +244,7 @@
         </div>
       </th>
       <th scope="col" class="px-6 py-3">Student Name</th>
-      <th scope="col" class="px-6 py-3">Class</th>
+      <th scope="col" class="px-6 py-3">Classes</th>
       <th scope="col" class="px-6 py-3">Email</th>
       <th scope="col" class="px-6 py-3">School</th>
       <th scope="col" class="px-6 py-3">Grade</th>

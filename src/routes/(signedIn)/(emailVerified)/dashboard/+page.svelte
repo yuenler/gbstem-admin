@@ -63,6 +63,30 @@
     return date.getTime() > Date.now() && Math.abs(date.getTime() - new Date().getTime()) / (1000*60) < 30
   }
 
+  function sendInstructorReminder(instructorName: string, instructorEmail: string, className: string, classTime: Date) {
+    const confirmSend = confirm("Send class reminder to instructor?");
+      if (confirmSend) {
+    fetch('/api/remindInstructor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: instructorName,
+          email: instructorEmail,
+          class: className,
+          classTime: classTime,
+        }),
+      }).then(async (res) => {
+        if (res.ok) {
+          alert.trigger('success', 'A reminder email was sent!')
+        } else {
+          const { message } = await res.json()
+          alert.trigger('error', message)
+        }
+      });
+  }
+}
 
   user.subscribe((user) => {
     if (user) {
@@ -248,6 +272,7 @@
                     >
                     <p>{classToday.class.course}</p>
                     <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
+                    <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index])))}>Send Instructor Reminder</Button>
                     <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index]))}</p>
                   </li>
                 {:else if !classHeldToday(classToday.class.datesHeld, timestampToDate(classToday.class.meetingTimes[classToday.index]))}
@@ -256,6 +281,7 @@
                   >
                   <p>{classToday.class.course}</p>
                   <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
+                  <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index])))}>Send Instructor Reminder</Button>
                   <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index]))}</p>
                 </li>
                 {:else if classToday.class.feedbackCompleted[classToday.index] === false}
@@ -264,6 +290,7 @@
                   >
                   <p>{classToday.class.course}</p>
                   <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
+                  <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index])))}>Send Instructor Reminder</Button>
                   <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index]))}</p>
                 </li>
                 {:else}
@@ -272,6 +299,7 @@
                   >
                   <p>{classToday.class.course}</p>
                   <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
+                  <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index])))}>Send Instructor Reminder</Button>
                   <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index]))}</p>
                 </li>
                 {/if}

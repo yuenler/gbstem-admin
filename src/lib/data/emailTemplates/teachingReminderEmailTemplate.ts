@@ -171,7 +171,7 @@ export const teachingReminderEmailTemplate = `<!doctype html>
                         <div
                           style="font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:16px;line-height:22px;text-align:left;color:#000000;">
                           <p style="margin:20px 0">Hello {{app.firstName}},</p>
-                          <p style="margin: 20px 0"> This is a reminder that you are scheduled to hold a {{app.class}} class at {{app.classTime}}. If you are unable to hold class, please be sure to send out an email to your class and update your class schedule on <a href = "portal.gbstem.org" >the gbSTEM portal</a>!
+                          <p style="margin: 20px 0"> This is a reminder that you are scheduled to hold a {{app.class}} class on {{app.classTime}}. If you are unable to hold class, please be sure to send out an email to your class and update your class schedule on <a href = "portal.gbstem.org" >the gbSTEM portal</a>!
                           </p>
                           <p>Best wishes,<br>The gbSTEM Team</p>
                         </div>
