@@ -156,7 +156,6 @@
       (day, index) => `${day} at ${formatTime24to12(classTimes[index])}`,
     )
   }
-
   
   function sendClassReminder(instructorName: string, instructorEmail: string, className: string, meetingTimes: Date[]) {
     const confirmSend = confirm("Send class reminder to student?");
@@ -210,8 +209,7 @@
   }
 
   function copyEmails() {
-    const email = studentData.email.concat(studentData.secondaryEmail ? ', ' + studentData.secondaryEmail : '')
-         
+    const email = studentData.email.concat(studentData.secondaryEmail ? ', ' + studentData.secondaryEmail : '')   
 
     navigator.clipboard
       .writeText(email)
@@ -225,15 +223,13 @@
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
-    <svelte:fragment slot="title">Student Attendance and Information</svelte:fragment>
+    <svelte:fragment slot="title"><div class="flex" style="justify-content:space-between;"><div style="align-content:center;">Student Attendance and Information</div><div><Button color = 'red' on:click={dialogEl.cancel}>Close</Button></div></div></svelte:fragment>
     <div slot="description">
-    <Button color = 'blue' on:click={dialogEl.cancel}>Close</Button>
     <div class="mt-4 justify-center">
     {#each classes as value, i}
-      <Card class = "mt-2">
-          <h2 class="font-bold">Class {i+1} Information</h2>
+      <Card>
+          <div class="flex" style="justify-content:space-between;"><div style="align-content:center;"><h2 class="font-bold">Class {i+1} Information</h2></div><div><Button color = 'blue' on:click = {() => sendClassReminder(value.instructorFirstName, value.instructorEmail, value.course, value.meetingTimes)}>Send {value.course} Class Reminder To Student?</Button> </div></div>
         <fieldset class="mt-4 space-y-4" {loading}>
-            <Button color = 'blue' on:click = {() => sendClassReminder(value.instructorFirstName, value.instructorEmail, value.course, value.meetingTimes)}>Send {value.course} Class Reminder To Student?</Button>
             <table style="border-collapse: collapse; width: 100%; text-align: left;">
                 <thead>
                   <tr>

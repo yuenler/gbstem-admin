@@ -127,7 +127,7 @@
 
 <Dialog bind:this={dialogEl} size="full" alert>
   <svelte:fragment slot="title"
-    ><div class="flex" style="justify-content:space-between;"><div style="align-content:center;">Feedback for {values.instructorName}'s {values.courseName} Class #{values.classNumber}</div><div><Button color="blue" on:click={dialogEl.cancel}>Close</Button></div></div></svelte:fragment
+    ><div class="flex" style="justify-content:space-between;"><div style="align-content:center;">Feedback for {values.instructorName}'s {values.courseName} Class #{values.classNumber}</div><div><Button color="red" on:click={dialogEl.cancel}>Close</Button></div></div></svelte:fragment
   >
   <div slot="description">
     <div style="text-align:left;">
