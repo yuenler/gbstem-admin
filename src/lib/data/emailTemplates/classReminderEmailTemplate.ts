@@ -1,4 +1,4 @@
-export const teachingReminderEmailTemplate = `<!doctype html>
+export const classReminderEmailTemplate = `<!doctype html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
   xmlns:o="urn:schemas-microsoft-com:office:office">
 
@@ -170,10 +170,10 @@ export const teachingReminderEmailTemplate = `<!doctype html>
                       <td align="left" style="font-size:0px;padding:10px 25px;padding-top:0px;word-break:break-word;">
                         <div
                           style="font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:16px;line-height:22px;text-align:left;color:#000000;">
-                          <p style="margin:20px 0">Hello {{app.firstName}},</p>
-                          <p style="margin: 20px 0"> This is a reminder that you are scheduled to hold a {{app.class}} class on {{app.classTime}}. If you are unable to hold class, please be sure to send out an email to your class and update your class schedule on <a href = "portal.gbstem.org" >the gbSTEM portal</a>!
+                          <p style="margin:20px 0">Hello {{app.firstName}} and family,</p>
+                          <p style="margin: 20px 0"> This is a reminder for your upcoming {{app.class}} class at {{app.classTime}}. See you then!
                           </p>
-                          <p>Best wishes,<br>The gbSTEM Team</p>
+                          <p>Best,<br></br>{{app.instructor}}</p>
                         </div>
                       </td>
                     </tr>

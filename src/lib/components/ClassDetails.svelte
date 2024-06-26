@@ -160,8 +160,8 @@
         alert.trigger('error', 'Failed to copy emails to clipboard!')
       })
   }
-  function sendInstructorReminder(instructorName: string, instructorEmail: string, className: string) {
-    const confirmSend = confirm("Send class reminder to instructor?");
+  function sendReminder(toInstructor: boolean, instructorName: string, instructorEmail: string, className: string) {
+    const confirmSend = confirm("Send class reminder to" + (toInstructor? ' instructor?' : ' student?'));
     let classTime: String = '';
         for (let i = 0; i < meetingTimes.length; i++){
             const meetingTime = new Date(meetingTimes[i])
@@ -184,7 +184,11 @@
         } else {
           return;
         }
+      } if(classTime === '') {
+        alert.trigger('error', 'No upcoming classes found!')
+        return;
       }
+    if(toInstructor) {
     fetch('/api/remindInstructor', {
         method: 'POST',
         headers: {
@@ -204,8 +208,32 @@
           alert.trigger('error', message)
         }
       });
+    } else {
+      studentList.map((student) => {
+        fetch('/api/remindStudents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: student.name,
+          email: student.email,
+          instructorEmail: instructorEmail,
+          class: className,
+          classTime: classTime,
+          instructorName: instructorName,
+        })
+      }).then(async (res) => {
+        if (res.ok) {
+          alert.trigger('success', 'Reminder emails were sent!')
+        } else {
+           const { message } = await res.json()
+           alert.trigger('error', message)
+        }
+      });
+      })
+    }
   }
-
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
@@ -221,7 +249,8 @@
       <div class="flex gap-3">
         <Button color = 'green' on:click={handleEdit}>Edit</Button>
         <Button color = 'red' on:click={dialogEl.cancel}>Close</Button>
-        <Button color = 'blue' on:click = {() => sendInstructorReminder(values.instructorFirstName, values.instructorEmail, values.course)}>Send Instructor Reminder</Button>
+        <Button color = 'blue' on:click = {() => sendReminder(true, values.instructorFirstName, values.instructorEmail, values.course)}>Send Instructor Reminder</Button>
+        <Button color = 'blue' on:click = {() => sendReminder(false, values.instructorFirstName, values.instructorEmail, values.course)}>Send Reminder To All Students</Button>
       </div>
     </Card>
     <div class="mt-4 flex justify-center">

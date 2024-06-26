@@ -157,6 +157,58 @@
     )
   }
 
+  
+  function sendClassReminder(instructorName: string, instructorEmail: string, className: string, meetingTimes: Date[]) {
+    const confirmSend = confirm("Send class reminder to student?");
+    let classTime: String = '';
+        for (let i = 0; i < meetingTimes.length; i++){
+            const meetingTime = new Date(meetingTimes[i])
+          if (meetingTime && new Date().toDateString() === meetingTime.toDateString()) {
+            classTime = formatDate(meetingTime);
+            break;
+          }
+        }
+      if(classTime === '') {
+        const nextTime = confirm("No class today. Send reminder for next class?");
+        if(nextTime) {
+          for(let i = 0; i < meetingTimes.length; i++) {
+            const meetingTime2 = new Date(meetingTimes[i])
+            if(new Date().getTime() < meetingTime2.getTime()) {
+              console.log(meetingTime2);
+              classTime = formatDate(meetingTime2);
+              break;
+            }
+          }
+        } else {
+          return;
+        }
+      } if(classTime === '') {
+        alert.trigger('error', 'No upcoming classes found!')
+        return;
+      }
+        fetch('/api/remindStudents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: studentData.name,
+          email: studentData.email,
+          instructorEmail: instructorEmail,
+          class: className,
+          classTime: classTime,
+          instructorName: instructorName,
+        }),
+      }).then(async (res) => {
+        if (res.ok) {
+          alert.trigger('success', 'Reminder emails were sent!')
+        } else {
+          const { message } = await res.json()
+          alert.trigger('error', message)
+        }
+      });
+  }
+
   function copyEmails() {
     const email = studentData.email.concat(studentData.secondaryEmail ? ', ' + studentData.secondaryEmail : '')
          
@@ -181,6 +233,7 @@
       <Card class = "mt-2">
           <h2 class="font-bold">Class {i+1} Information</h2>
         <fieldset class="mt-4 space-y-4" {loading}>
+            <Button color = 'blue' on:click = {() => sendClassReminder(value.instructorFirstName, value.instructorEmail, value.course, value.meetingTimes)}>Send {value.course} Class Reminder To Student?</Button>
             <table style="border-collapse: collapse; width: 100%; text-align: left;">
                 <thead>
                   <tr>
