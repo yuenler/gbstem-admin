@@ -6,7 +6,7 @@ import {
   POSTMARK_API_TOKEN,
 } from '$env/static/private'
 import { addDataToHtmlTemplate } from '$lib/utils'
-import { teachingReminderEmailTemplate } from '$lib/data/emailTemplates/teachingReminderEmailTemplate'
+import { classReminderEmailTemplate } from '$lib/data/emailTemplates/classReminderEmailTemplate'
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   let topError
@@ -18,19 +18,20 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         throw error(400, 'User not signed in.')
       } else {
         const template = {
-          name: 'teachingReminder',
+          name: 'classReminder',
           data: {
-            subject: 'gbSTEM Class Teaching Reminder',
+            subject: 'gbSTEM Class Reminder',
             app: {
               firstName: body.name,
               name: 'Portal',
               class: body.class,
               classTime: body.classTime,
+              instructor: body.instructorName,
             },
           },
         }
 
-        const htmlBody = addDataToHtmlTemplate(teachingReminderEmailTemplate, template);
+        const htmlBody = addDataToHtmlTemplate(classReminderEmailTemplate, template);
 
         const emailData: Data.EmailData = {
           From: 'donotreply@gbstem.org',
