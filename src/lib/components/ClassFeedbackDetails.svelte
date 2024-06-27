@@ -51,16 +51,11 @@
 
   let values: any = cloneDeep(defaultValues)
   $: if (id !== undefined) {
-    studentList = []
     loading = true
     disabled = true
     values = cloneDeep(defaultValues)
     getDoc(doc(db, 'instructorFeedback24', id)).then((snapshot) => {
       let data = snapshot.data() as any
-      const studentUids = data.students
-      if (studentUids) {
-        getStudentList(studentUids)
-      }
       if (snapshot.exists()) {
         values = cloneDeep(data)
         dbValues = cloneDeep(data)
@@ -193,78 +188,6 @@
                     <td style="padding: 8px;"
                       >{values.attendanceList[attendance].present}</td
                     >
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-        <Card class="mb-4 mt-5">
-          <div class="mb-4 flex items-center justify-between">
-            <h2 class="font-bold">Student Details</h2>
-            <Button on:click={copyEmails} class="flex items-center gap-1">
-              <svg
-                fill="#000000"
-                height="20"
-                width="20"
-                version="1.1"
-                id="Capa_1"
-                xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
-                viewBox="0 0 352.804 352.804"
-                xml:space="preserve"
-              >
-                <g>
-                  <path
-                    d="M318.54,57.282h-47.652V15c0-8.284-6.716-15-15-15H34.264c-8.284,0-15,6.716-15,15v265.522c0,8.284,6.716,15,15,15h47.651
-           v42.281c0,8.284,6.716,15,15,15H318.54c8.284,0,15-6.716,15-15V72.282C333.54,63.998,326.824,57.282,318.54,57.282z
-            M49.264,265.522V30h191.623v27.282H96.916c-8.284,0-15,6.716-15,15v193.24H49.264z M303.54,322.804H111.916V87.282H303.54V322.804
-           z"
-                  />
-                </g>
-              </svg>
-              <span>Copy</span>
-            </Button>
-          </div>
-          <div class="m-5" style="overflow: auto;">
-            <table style="border-collapse: collapse; width: 100%;">
-              <thead>
-                <tr>
-                  <th
-                    style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
-                    >Student Name</th
-                  >
-                  <th
-                    style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
-                    >Email</th
-                  >
-                  <th
-                    style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
-                    >Secondary Email</th
-                  >
-                  <th
-                    style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
-                    >Phone</th
-                  >
-                  <th
-                    style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
-                    >Grade</th
-                  >
-                  <th
-                    style="white-space: nowrap; border-bottom: 1px solid #ccc; padding: 8px;"
-                    >School</th
-                  >
-                </tr>
-              </thead>
-              <tbody>
-                {#each studentList as student}
-                  <tr style="border-bottom: 1px solid #ccc;">
-                    <td style="padding: 8px;">{student.name}</td>
-                    <td style="padding: 8px;">{student.email}</td>
-                    <td style="padding: 8px;">{student.secondaryEmail}</td>
-                    <td style="padding: 8px;">{student.phone}</td>
-                    <td style="padding: 8px;">{student.grade}</td>
-                    <td style="padding: 8px;">{student.school}</td>
                   </tr>
                 {/each}
               </tbody>
