@@ -43,6 +43,7 @@
     instructorFirstName: '',
     instructorLastName: '',
     instructorEmail: '',
+    otherInstructorEmails: '',
     classDay1: '',
     classTime1: '',
     classDay2: '',
@@ -115,7 +116,7 @@
           const data = studentDoc.data()
           if (data) {
             studentList.push({
-              name: `${data.personal.studentFirstName} ${data.personal.studentLastName}`,
+              name: `${normalizeCapitals(data.personal.studentFirstName)} ${normalizeCapitals(data.personal.studentLastName)}`,
               email: data.personal.email,
               secondaryEmail: data.personal.secondaryEmail,
               phone: data.personal.phoneNumber,
@@ -141,6 +142,10 @@
     })
   }
 
+  function normalizeCapitals(name: string) {
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+ }
+
   function copyEmails() {
     const emailList = studentList
       .map(
@@ -160,13 +165,13 @@
         alert.trigger('error', 'Failed to copy emails to clipboard!')
       })
   }
-  function sendReminder(toInstructor: boolean, instructorName: string, instructorEmail: string, className: string) {
-    const confirmSend = confirm("Send class reminder to" + (toInstructor? ' instructor?' : ' student?'));
+  function sendReminder(toInstructor: boolean, instructorName: string, instructorEmail: string, otherInstructorEmails: string, className: string) {
+    const confirmSend = confirm("Send class reminder to" + (toInstructor? ' instructor?' : ' all students?'));
     let classTime: String = '';
         for (let i = 0; i < meetingTimes.length; i++){
             const meetingTime = new Date(meetingTimes[i])
           if (meetingTime && new Date().toDateString() === meetingTime.toDateString()) {
-            classTime = formatDate(meetingTime);
+            classTime = formatDate(meetingTimes[i]);
             break;
           }
         }
@@ -177,7 +182,7 @@
             const meetingTime2 = new Date(meetingTimes[i])
             if(new Date().getTime() < meetingTime2.getTime()) {
               console.log(meetingTime2);
-              classTime = formatDate(meetingTime2);
+              classTime = formatDate(meetingTimes[i]);
               break;
             }
           }
@@ -195,8 +200,9 @@
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: instructorName,
+          name: normalizeCapitals(instructorName),
           email: instructorEmail,
+          otherInstructorEmails: otherInstructorEmails,
           class: className,
           classTime: classTime,
         }),
@@ -219,9 +225,10 @@
           name: student.name,
           email: student.email,
           instructorEmail: instructorEmail,
+          otherInstructorEmails: otherInstructorEmails,
           class: className,
           classTime: classTime,
-          instructorName: instructorName,
+          instructorName: normalizeCapitals(instructorName),
         })
       }).then(async (res) => {
         if (res.ok) {
@@ -249,8 +256,8 @@
       <div class="flex gap-3">
         <Button color = 'green' on:click={handleEdit}>Edit</Button>
         <Button color = 'red' on:click={dialogEl.cancel}>Close</Button>
-        <Button color = 'blue' on:click = {() => sendReminder(true, values.instructorFirstName, values.instructorEmail, values.course)}>Send Instructor Reminder</Button>
-        <Button color = 'blue' on:click = {() => sendReminder(false, values.instructorFirstName, values.instructorEmail, values.course)}>Send Reminder To All Students</Button>
+        <Button color = 'blue' on:click = {() => sendReminder(true, values.instructorFirstName, values.instructorEmail, values.otherInstructorEmails, values.course)}>Send Instructor Reminder</Button>
+        <Button color = 'blue' on:click = {() => sendReminder(false, values.instructorFirstName, values.instructorEmail, values.otherInstructorEmails, values.course)}>Send Reminder To All Students</Button>
       </div>
     </Card>
     <div class="mt-4 flex justify-center">

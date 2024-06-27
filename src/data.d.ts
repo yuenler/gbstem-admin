@@ -50,6 +50,7 @@ declare global {
       Subject: string,
       From: string,
       To: string,
+      Cc: string,
       HTMLBody: string,
       ReplyTo: string,
       MessageStream: 'outbound'
@@ -235,6 +236,7 @@ declare global {
       classTime2: string
       course: string
       instructorEmail: string
+      otherInstructorEmails: string
       instructorFirstName: string
       instructorLastName: string
       meetingLink: string

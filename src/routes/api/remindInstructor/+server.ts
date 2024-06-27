@@ -14,6 +14,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     const body = await request.json()
     try {
       const email = body.email;
+      const otherEmails = body.otherInstructorEmails;
       if (locals.user === null) {
         throw error(400, 'User not signed in.')
       } else {
@@ -35,6 +36,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         const emailData: Data.EmailData = {
           From: 'donotreply@gbstem.org',
           To: email,
+          Cc: otherEmails,
           Subject: String(template.data.subject),
           HTMLBody: htmlBody,
           ReplyTo: 'contact@gbstem.org',

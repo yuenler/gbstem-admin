@@ -67,6 +67,7 @@
       classTime2: string
       course: string
       instructorEmail: string
+      otherInstructorEmails: string
       instructorFirstName: string
       instructorLastName: string
       meetingLink: string
@@ -91,7 +92,7 @@
                 const data = studentDoc.data();
                 if (data) {
                     studentData = {
-                        name: `${data.personal.studentFirstName} ${data.personal.studentLastName}`,
+                        name: `${normalizeCapitals(data.personal.studentFirstName)} ${normalizeCapitals(data.personal.studentLastName)}`,
                         email: data.personal.email,
                         secondaryEmail: data.personal.secondaryEmail,
                         phone: data.personal.phoneNumber,
@@ -157,13 +158,13 @@
     )
   }
   
-  function sendClassReminder(instructorName: string, instructorEmail: string, className: string, meetingTimes: Date[]) {
+  function sendClassReminder(instructorName: string, instructorEmail: string, otherInstructorEmails: string, className: string, meetingTimes: Date[]) {
     const confirmSend = confirm("Send class reminder to student?");
     let classTime: String = '';
         for (let i = 0; i < meetingTimes.length; i++){
             const meetingTime = new Date(meetingTimes[i])
           if (meetingTime && new Date().toDateString() === meetingTime.toDateString()) {
-            classTime = formatDate(meetingTime);
+            classTime = formatDate(meetingTime.toISOString());
             break;
           }
         }
@@ -171,10 +172,12 @@
         const nextTime = confirm("No class today. Send reminder for next class?");
         if(nextTime) {
           for(let i = 0; i < meetingTimes.length; i++) {
-            const meetingTime2 = new Date(meetingTimes[i])
+            const meetingTime2 = new Date(meetingTimes[i].seconds * 1000)
+            console.log(meetingTime2)
+            console.log(new Date().getTime() - meetingTime2.getTime());
             if(new Date().getTime() < meetingTime2.getTime()) {
               console.log(meetingTime2);
-              classTime = formatDate(meetingTime2);
+              classTime = formatDate(meetingTime2.toISOString());
               break;
             }
           }
@@ -194,6 +197,7 @@
           name: studentData.name,
           email: studentData.email,
           instructorEmail: instructorEmail,
+          otherInstructorEmails: otherInstructorEmails,
           class: className,
           classTime: classTime,
           instructorName: instructorName,
@@ -207,6 +211,10 @@
         }
       });
   }
+  
+  function normalizeCapitals(name: string) {
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+}
 
   function copyEmails() {
     const email = studentData.email.concat(studentData.secondaryEmail ? ', ' + studentData.secondaryEmail : '')   
@@ -228,8 +236,8 @@
     <div class="mt-4 justify-center">
     {#each classes as value, i}
       <Card>
-          <div class="flex" style="justify-content:space-between;"><div style="align-content:center;"><h2 class="font-bold">Class {i+1} Information</h2></div><div><Button color = 'blue' on:click = {() => sendClassReminder(value.instructorFirstName, value.instructorEmail, value.course, value.meetingTimes)}>Send {value.course} Class Reminder To Student?</Button> </div></div>
-        <fieldset class="mt-4 space-y-4" {loading}>
+          <div class="flex" style="justify-content:space-between;"><div style="align-content:center;"><h2 class="font-bold">Class {i+1} Information</h2></div><div><Button color = 'blue' on:click = {() => sendClassReminder(normalizeCapitals(value.instructorFirstName), value.instructorEmail, value.otherInstructorEmails, value.course, value.meetingTimes)}>Send {value.course} Class Reminder To Student?</Button> </div></div>
+        <fieldset class="mt-4 space-y-4">
             <table style="border-collapse: collapse; width: 100%; text-align: left;">
                 <thead>
                   <tr>
@@ -298,7 +306,7 @@
                         <tr style="border-bottom: 1px solid #ccc;">
                         <td style="padding: 8px;">{att.classNumber}</td>
                         <td style="padding: 8px;">{att.date}</td>
-                        <td style="padding: 8px;">{att.attended[studentData.name]? 'Yes' : 'No'}</td>
+                        <td style="padding: 8px;">{att.attended[studentData.name].present? 'Yes' : 'No'}</td>
                         <td style="padding: 8px;">{att.feedback}</td>
                         </tr>
                     </tbody>
