@@ -53,6 +53,7 @@
     online: true,
     gradeRecommendation: '',
     classesStatus: [],
+    feedbackCompleted: [],
   }
 
   let meetingTimes: string[] = []
@@ -79,7 +80,7 @@
       } else {
         alert.trigger('error', 'Registration not found.')
       }
-    })
+    }).then(checkStatuses)
   }
 
   function handleEdit() {
@@ -106,6 +107,28 @@
   function handleDeleteChanges() {
     disabled = true
     values = cloneDeep(dbValues)
+  }
+
+  function checkStatuses() {
+    for (let i = 0; i < meetingTimes.length; i++) {
+      if (
+        new Date().getTime() > new Date(meetingTimes[i]).getTime() &&
+        values.classesStatus[i] !== 'allComplete' &&
+        values.classesStatus[i] !== 'missingFeedback'
+      ) {
+        values.classesStatus[i] = values.feedbackCompleted[i] ? 'allComplete' : 'classMissed'
+      } else if (classUpcoming(new Date(meetingTimes[i]))) {
+        values.classesStatus[i] = 'upcoming'
+      } else if (
+        values.classesStatus[i] === 'missingFeedback' &&
+        values.feedbackCompleted[i]
+      ) {
+        values.classesStatus[i] = 'allComplete'
+      }
+    }
+    updateDoc(doc(db, 'classesSpring24', id), {
+      classesStatus: values.classesStatus,
+    })
   }
 
   const getStudentList = (studentUids: string[]) => {
@@ -165,6 +188,14 @@
         alert.trigger('error', 'Failed to copy emails to clipboard!')
       })
   }
+
+  const classUpcoming = (date: Date) => {
+    return (
+      date.getTime() > Date.now() &&
+      Math.abs(date.getTime() - new Date().getTime()) / (1000 * 60) < 30
+    )
+  }
+
   function sendReminder(toInstructor: boolean, instructorName: string, instructorEmail: string, otherInstructorEmails: string, className: string) {
     const confirmSend = confirm("Send class reminder to" + (toInstructor? ' instructor?' : ' all students?'));
     let classTime: String = '';
