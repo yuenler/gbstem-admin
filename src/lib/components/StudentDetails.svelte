@@ -92,7 +92,7 @@
                 const data = studentDoc.data();
                 if (data) {
                     studentData = {
-                        name: `${normalizeCapitals(data.personal.studentFirstName)} ${normalizeCapitals(data.personal.studentLastName)}`,
+                        name: `${data.personal.studentFirstName} ${data.personal.studentLastName}`,
                         email: data.personal.email,
                         secondaryEmail: data.personal.secondaryEmail,
                         phone: data.personal.phoneNumber,
@@ -194,13 +194,13 @@
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: studentData.name,
+          name: normalizeCapitals(studentData.name),
           email: studentData.email,
           instructorEmail: instructorEmail,
           otherInstructorEmails: otherInstructorEmails,
           class: className,
           classTime: classTime,
-          instructorName: instructorName,
+          instructorName: normalizeCapitals(instructorName),
         }),
       }).then(async (res) => {
         if (res.ok) {
@@ -213,7 +213,7 @@
   }
   
   function normalizeCapitals(name: string) {
-    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+    return name.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
 }
 
   function copyEmails() {
@@ -236,7 +236,7 @@
     <div class="mt-4 justify-center">
     {#each classes as value, i}
       <Card>
-          <div class="flex" style="justify-content:space-between;"><div style="align-content:center;"><h2 class="font-bold">Class {i+1} Information</h2></div><div><Button color = 'blue' on:click = {() => sendClassReminder(normalizeCapitals(value.instructorFirstName), value.instructorEmail, value.otherInstructorEmails, value.course, value.meetingTimes)}>Send {value.course} Class Reminder To Student?</Button> </div></div>
+          <div class="flex" style="justify-content:space-between;"><div style="align-content:center;"><h2 class="font-bold">Class {i+1} Information</h2></div><div><Button color = 'blue' on:click = {() => sendClassReminder(value.instructorFirstName, value.instructorEmail, value.otherInstructorEmails, value.course, value.meetingTimes)}>Send {value.course} Class Reminder To Student?</Button> </div></div>
         <fieldset class="mt-4 space-y-4">
             <table style="border-collapse: collapse; width: 100%; text-align: left;">
                 <thead>
@@ -306,7 +306,7 @@
                         <tr style="border-bottom: 1px solid #ccc;">
                         <td style="padding: 8px;">{att.classNumber}</td>
                         <td style="padding: 8px;">{att.date}</td>
-                        <td style="padding: 8px;">{att.attended[studentData.name].present? 'Yes' : 'No'}</td>
+                        <td style="padding: 8px;">{att.attended[studentData.name]? 'Yes' : 'No'}</td>
                         <td style="padding: 8px;">{att.feedback}</td>
                         </tr>
                     </tbody>
