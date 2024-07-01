@@ -24,7 +24,7 @@
   let selectedClassId: string | undefined = undefined
   let search: string = data.query ?? ''
   let checked: Array<number> = []
-  let decisionFilter: 'Scratch' | 'Python' | 'Python II' | 'Web Development' | 'Engineering I' | 'Engineering II' | 'Engineering III' | 'Math I' | 'Math II' | 'Math III' | 'Math IV' | 'Math V' | 'Environmental Science' =
+  let courseFilter: 'Scratch' | 'Python' | 'Python II' | 'Web Development' | 'Engineering I' | 'Engineering II' | 'Engineering III' | 'Math I' | 'Math II' | 'Math III' | 'Math IV' | 'Math V' | 'Environmental Science' =
     ($page.url.searchParams.get('filter') as any) ?? 'all'
   
   let filterRef = ''
@@ -32,7 +32,7 @@
 
     $: {
       const base = $page.url.searchParams
-        base.set('filter', decisionFilter)
+        base.set('filter', courseFilter)
         base.delete('updated')
       filterRef = `?${base.toString()}`
     }
@@ -152,7 +152,7 @@
 
   <div class="flex">
     <Select
-      bind:value={decisionFilter}
+      bind:value={courseFilter}
       label="Filter"
       options={[{ name: 'Scratch' }, { name: 'Python I' }, {name: 'Python II'}, {name: 'Web Development'}, {name: 'Math I'}, {name: 'Math II'}, {name: 'Math III'}, {name: 'Math IV'}, {name: 'Math V'}, {name: 'Engineering I'}, {name: 'Engineering II'}, {name: 'Engineering III'}, {name: 'Environmental Science'}]}
       floating
