@@ -174,6 +174,14 @@
       })
   }
 
+  /**
+   * Sends a reminder email to the instructor or all students in the class.
+   * @param toInstructor - Whether to send the reminder to the instructor or all students (minimizes need for 2 different sendReminder() functions).
+   * @param instructorName - The name of the instructor.
+   * @param instructorEmail - The email of the instructor.
+   * @param otherInstructorEmails - The emails of other instructors.
+   * @param className - The name of the class.
+   */
   function sendReminder(toInstructor: boolean, instructorName: string, instructorEmail: string, otherInstructorEmails: string, className: string) {
     const confirmSend = confirm("Send class reminder to" + (toInstructor? ' instructor?' : ' all students?'));
     let classTime: String = '';

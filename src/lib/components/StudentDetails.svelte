@@ -67,17 +67,20 @@
       classTime2: string
       course: string
       instructorEmail: string
+      // comma separated list of co-instructor emails
       otherInstructorEmails: string
       instructorFirstName: string
       instructorLastName: string
       meetingLink: string
       meetingTimes: Date[]
       datesHeld: Date[]
+      // array class completion statuses
       classesStatus: string[]
-      numClassesHeld: number
+      // array of class feedback completion
       feedbackCompleted: boolean[]
       online: boolean
       students: string[]
+      // class id
       id: string
     }
 
