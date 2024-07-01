@@ -21,6 +21,7 @@
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
+    import { ClassStatus, formatDateString, isClassUpcoming, normalizeCapitals } from '$lib/utils'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -43,6 +44,7 @@
     instructorFirstName: '',
     instructorLastName: '',
     instructorEmail: '',
+    otherInstructorEmails: '',
     classDay1: '',
     classTime1: '',
     classDay2: '',
@@ -51,6 +53,8 @@
     classCap: 0,
     online: true,
     gradeRecommendation: '',
+    classesStatus: [],
+    feedbackCompleted: [],
   }
 
   let meetingTimes: string[] = []
@@ -65,8 +69,7 @@
       let data = snapshot.data() as any
 
       meetingTimes = data.meetingTimes.map((time: Timestamp) =>
-        new Date(time.seconds * 1000).toISOString(),
-      )
+        new Date(time.seconds * 1000)).sort((a:Date, b:Date) => a.getTime() - b.getTime()).map((time:Date) => time.toISOString())
 
       const studentUids = data.students
       if (studentUids) {
@@ -78,7 +81,7 @@
       } else {
         alert.trigger('error', 'Registration not found.')
       }
-    })
+    }).then(checkStatuses)
   }
 
   function handleEdit() {
@@ -107,6 +110,28 @@
     values = cloneDeep(dbValues)
   }
 
+  function checkStatuses() {
+    for (let i = 0; i < meetingTimes.length; i++) {
+      if (
+        new Date().getTime() > new Date(meetingTimes[i]).getTime() &&
+        values.classesStatus[i] !== ClassStatus.EverythingComplete &&
+        values.classesStatus[i] !== ClassStatus.FeedbackIncomplete
+      ) {
+        values.classesStatus[i] = values.feedbackCompleted[i] ? ClassStatus.EverythingComplete : ClassStatus.ClassNotHeld
+      } else if (isClassUpcoming(new Date(meetingTimes[i]))) {
+        values.classesStatus[i] = ClassStatus.ClassUpcomingSoon
+      } else if (
+        values.classesStatus[i] === ClassStatus.FeedbackIncomplete &&
+        values.feedbackCompleted[i]
+      ) {
+        values.classesStatus[i] = ClassStatus.EverythingComplete
+      }
+    }
+    updateDoc(doc(db, 'classesSpring24', id), {
+      classesStatus: values.classesStatus,
+    })
+  }
+
   const getStudentList = (studentUids: string[]) => {
     studentUids.forEach((studentUid) => {
       const studentDocRef = doc(db, 'registrationsSpring24', studentUid)
@@ -115,7 +140,7 @@
           const data = studentDoc.data()
           if (data) {
             studentList.push({
-              name: `${data.personal.studentFirstName} ${data.personal.studentLastName}`,
+              name: `${normalizeCapitals(data.personal.studentFirstName + ' ' + data.personal.studentLastName)}`,
               email: data.personal.email,
               secondaryEmail: data.personal.secondaryEmail,
               phone: data.personal.phoneNumber,
@@ -126,18 +151,6 @@
           studentList = [...studentList]
         }
       })
-    })
-  }
-
-  function formatDate(dateString: string) {
-    const date = new Date(dateString)
-    return date.toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     })
   }
 
@@ -160,6 +173,83 @@
         alert.trigger('error', 'Failed to copy emails to clipboard!')
       })
   }
+
+  function sendReminder(toInstructor: boolean, instructorName: string, instructorEmail: string, otherInstructorEmails: string, className: string) {
+    const confirmSend = confirm("Send class reminder to" + (toInstructor? ' instructor?' : ' all students?'));
+    let classTime: String = '';
+        for (let i = 0; i < meetingTimes.length; i++){
+            const meetingTime = new Date(meetingTimes[i])
+          if (meetingTime && new Date().toDateString() === meetingTime.toDateString()) {
+            classTime = formatDateString(meetingTimes[i]);
+            break;
+          }
+        }
+      if(classTime === '') {
+        const nextTime = confirm("No class today. Send reminder for next class?");
+        if(nextTime) {
+          for(let i = 0; i < meetingTimes.length; i++) {
+            const meetingTime2 = new Date(meetingTimes[i])
+            if(new Date().getTime() < meetingTime2.getTime()) {
+              console.log(meetingTime2);
+              classTime = formatDateString(meetingTimes[i]);
+              break;
+            }
+          }
+        } else {
+          return;
+        }
+      } if(classTime === '') {
+        alert.trigger('error', 'No upcoming classes found!')
+        return;
+      }
+    if(toInstructor) {
+    fetch('/api/remindInstructor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: normalizeCapitals(instructorName),
+          email: instructorEmail,
+          otherInstructorEmails: otherInstructorEmails,
+          class: className,
+          classTime: classTime,
+        }),
+      }).then(async (res) => {
+        if (res.ok) {
+          alert.trigger('success', 'A reminder email was sent!')
+        } else {
+          const { message } = await res.json()
+          alert.trigger('error', message)
+        }
+      });
+    } else {
+      studentList.map((student) => {
+        fetch('/api/remindStudents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: student.name,
+          email: student.email,
+          instructorEmail: instructorEmail,
+          otherInstructorEmails: otherInstructorEmails,
+          class: className,
+          classTime: classTime,
+          instructorName: normalizeCapitals(instructorName),
+        })
+      }).then(async (res) => {
+        if (res.ok) {
+          alert.trigger('success', 'Reminder emails were sent!')
+        } else {
+           const { message } = await res.json()
+           alert.trigger('error', message)
+        }
+      });
+      })
+    }
+  }
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
@@ -173,13 +263,16 @@
         >
       {/if}
       <div class="flex gap-3">
-        <Button on:click={handleEdit}>Edit</Button>
-        <Button on:click={dialogEl.cancel}>Close</Button>
+        <Button color = 'green' on:click={handleEdit}>Edit</Button>
+        <Button color = 'red' on:click={dialogEl.cancel}>Close</Button>
+        <Button color = 'blue' on:click = {() => sendReminder(true, values.instructorFirstName, values.instructorEmail, values.otherInstructorEmails, values.course)}>Send Instructor Reminder</Button>
+        <Button color = 'blue' on:click = {() => sendReminder(false, values.instructorFirstName, values.instructorEmail, values.otherInstructorEmails, values.course)}>Send Reminder To All Students</Button>
       </div>
     </Card>
     <div class="mt-4 flex justify-center">
       <Form>
         <fieldset class="mt-4 space-y-4" {disabled}>
+        <div class = "grid gap-1 sm:grid-cols-3 sm:gap-3">
           <Select
             bind:value={values.course}
             label="Course"
@@ -190,9 +283,17 @@
           <Input
             type="text"
             bind:value={values.gradeRecommendation}
+            floating
             label="Grade recommendation. For example, 3-5 or 6-8."
           />
-
+          <Input
+            type="number"
+            bind:value={values.classCap}
+            label="Class capacity"
+            floating
+            required
+          />
+        </div>
           {#if values.online}
             <Input
               type="text"
@@ -251,14 +352,6 @@
             {/if}
           </div>
           <Input
-            type="number"
-            bind:value={values.classCap}
-            label="Class capacity"
-            floating
-            required
-          />
-
-          <Input
             type="checkbox"
             bind:value={values.online}
             label="Class taught online?"
@@ -296,7 +389,7 @@
           </Button>
         </div>
         <div class="m-5" style="overflow: auto;">
-          <table style="border-collapse: collapse; width: 100%;">
+          <table style="border-collapse: collapse; width: 100%; text-align: left;">
             <thead>
               <tr>
                 <th
@@ -342,25 +435,58 @@
       </Card>
       <div>
         <table
-          class="grid grid-cols-2 justify-between gap-0"
+          class="grid grid-cols-1 justify-between gap-1"
           style="margin-top:1rem;"
         >
           <div>
             <div
-              class="bg-gray-100"
-              style="border-width:1px; border-style:solid; border-color:gray; padding:1rem;"
+              class="rounded-lg bg-gray-100 p-4 mb-2"
             >
-              Schedule
+              <strong>Schedule</strong>
             </div>
             {#if meetingTimes}
-              {#each meetingTimes as meetingTime}
-                <div
-                  style="border-width:1px; border-style:solid; border-color:gray; padding:1rem;"
-                >
+              {#each meetingTimes as meetingTime, i}
+              {#if values.classesStatus[i] === ClassStatus.EverythingComplete}
+              <div class="rounded-lg bg-green-100 p-4 mb-2">
+                <div class="flex items-center justify-between">
                   <p class="meeting-time">
-                    {formatDate(meetingTime)}
+                    {formatDateString(meetingTime)}
                   </p>
                 </div>
+                </div>
+              {:else if values.classesStatus[i] === ClassStatus.FeedbackIncomplete}
+              <div class="rounded-lg bg-yellow-100 p-4 mb-2">
+                <div class="flex items-center justify-between">
+                  <p class="meeting-time">
+                    {formatDateString(meetingTime)}
+                  </p>
+                </div>
+                </div>
+              {:else if values.classesStatus[i] === ClassStatus.ClassUpcomingSoon}
+                <div class="rounded-lg bg-blue-100 p-4 mb-2">
+                  <div class="flex items-center justify-between">
+                    <p class="meeting-time">
+                      {formatDateString(meetingTime)}
+                    </p>
+                  </div>
+                  </div>
+              {:else if values.classesStatus[i] === ClassStatus.ClassNotHeld}
+                  <div class="rounded-lg bg-red-100 p-4 mb-2">
+                    <div class="flex items-center justify-between">
+                      <p class="meeting-time">
+                        {formatDateString(meetingTime)}
+                      </p>
+                    </div>
+                    </div>
+              {:else}
+              <div class="rounded-lg bg-gray-100 p-4 mb-2">
+                <div class="flex items-center justify-between">
+                  <p class="meeting-time">
+                    {formatDateString(meetingTime)}
+                  </p>
+                </div>
+                </div>
+              {/if}
               {/each}
             {/if}
           </div>

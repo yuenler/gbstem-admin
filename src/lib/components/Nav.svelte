@@ -33,6 +33,14 @@
       href: '/dashboard',
     },
     {
+      name: 'Classes',
+      href: '/classes',
+    },
+    {
+      name: 'Students',
+      href: '/students',
+    },
+    {
       name: 'Interviews',
       href: '/interviews',
     },
@@ -43,10 +51,6 @@
     {
       name: 'Registrations',
       href: '/registrations',
-    },
-    {
-      name: 'Classes',
-      href: '/classes',
     },
     {
       name: 'Student Feedback',

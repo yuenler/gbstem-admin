@@ -250,7 +250,7 @@
     />
     <a
       href={filterRef}
-      class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
+      class="flex items-center inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
     >
       Filter
     </a>

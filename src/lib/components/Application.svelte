@@ -28,6 +28,7 @@
   import { cloneDeep } from 'lodash-es'
   import type { FirebaseError } from 'firebase/app'
   import { invalidate } from '$app/navigation'
+    import { formatDateShort } from '$lib/utils'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -194,21 +195,13 @@
     }
   }
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleString('en-US', {
-      weekday: 'short', // long, short, narrow
-      month: 'short', // numeric, 2-digit, long, short, narrow
-      day: 'numeric', // numeric, 2-digit
-    })
-  }
-
   async function handleDecision(newDecision: Data.Decision) {
     let weekDeadline = new Date(new Date().setDate(new Date().getDate() + 7))
-    let interviewDeadline = formatDate(weekDeadline)
+    let interviewDeadline = formatDateShort(weekDeadline)
 
     const dueDate = await getDoc(doc(db, 'semesterDates', 'spring24'))
     if(dueDate.exists()) {
-      interviewDeadline = formatDate(new Date(Math.min(weekDeadline, new Date(dueDate.data().instructorOrientation))))
+      interviewDeadline = formatDateShort(new Date(Math.min(weekDeadline, new Date(dueDate.data().instructorOrientation))))
     }
 
     const confirmation = confirm(
