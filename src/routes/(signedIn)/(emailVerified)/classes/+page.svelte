@@ -4,7 +4,7 @@
   import { onMount } from 'svelte'
   import Table from '$lib/components/Table.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
-  import { formatTime24to12 } from '$lib/utils'
+  import { ClassStatus, formatTime24to12 } from '$lib/utils'
   import { format } from 'date-fns'
   import ClassDetails from '$lib/components/ClassDetails.svelte'
   import type { PageData } from './$types'
@@ -55,9 +55,9 @@
           email,
           courses,
           students.join(', '),
-          classesStatus.filter((status) => status === 'allComplete').length,
-          classesStatus.filter((status) => status === 'missingFeedback').length,
-          classesStatus.filter((status) => status === 'classMissed').length,
+          classesStatus.filter((status) => status === ClassStatus.EverythingComplete).length,
+          classesStatus.filter((status) => status === ClassStatus.FeedbackIncomplete).length,
+          classesStatus.filter((status) => status === ClassStatus.ClassNotHeld).length,
           meetingLink,
           classTimes.map((value) => value.toString()).join(', ')
         ].join(',')
@@ -87,30 +87,6 @@
       })
   }
 
-  // onMount(() => {
-  //   return user.subscribe(async (user) => {
-  //     if (user) {
-  //       currentUser = user
-  //       data = await getData()
-  //       loading = false
-  //     }
-  //   })
-  // })
-
-  // async function getData() {
-  //   const q = query(collection(db, 'classesSpring24'))
-  //   const classes = await getDocs(q)
-  //   classes.forEach(async (document) => {
-  //     let d = document.data()
-  //     d = {
-  //       ...d,
-  //       id: document.id,
-        
-  //     }
-  //     data.push(d)
-  //   })
-  //   return data
-  // }
   function handleCheckAll(
       e: Event & { currentTarget: EventTarget & HTMLInputElement },
     ) {
@@ -224,6 +200,8 @@
       <th scope="col" class="px-6 py-3">Meeting Link</th>
       <th scope="col" class="px-6 py-3">Class Time</th>
       <th scope="col" class="px-6 py-3">Number of students</th>
+      <th scope="col" class="px-6 py-3">Classes Missed</th>
+      <th scope="col" class="px-6 py-3">Classes Missing Feedback</th>
     </svelte:fragment>
     <svelte:fragment slot="body">
       {#each feedback.classes as value, i}
@@ -251,6 +229,12 @@
           </td>
           <td class="px-6 py-4">
             {value.students ? value.students.length : 0}
+          </td>
+          <td class="px-6 py-4">
+            {value.classesStatus.filter((status) => status === ClassStatus.ClassNotHeld).length}
+          </td>
+          <td class="px-6 py-4">
+            {value.classesStatus.filter((status) => status === ClassStatus.FeedbackIncomplete).length}
           </td>
         </tr>
       {/each}

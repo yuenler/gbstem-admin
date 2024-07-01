@@ -3,7 +3,6 @@
   import Button from '$lib/components/Button.svelte'
   import Card from '$lib/components/Card.svelte'
   import PageLayout from '$lib/components/PageLayout.svelte'
-  import { startOfDay } from 'date-fns';
   import {
     collection,
     getCountFromServer,
@@ -14,7 +13,7 @@
   } from 'firebase/firestore'
   import { fade } from 'svelte/transition'
   import { alert } from '$lib/stores'
-    import type { DatabaseService } from 'firebase-admin/lib/database/database'
+  import { classHeldToday, classUpcoming, formatDate, normalizeCapitals, timestampToDate } from '$lib/utils'
 
   type DashboardData = {
     applications: {
@@ -30,7 +29,7 @@
   }
 
   type ClassToday = {
-    index: number
+    classNumber: number
     class: Data.Class
   }
   let classesToday: ClassToday[] = [];
@@ -40,32 +39,6 @@
   let uncompletedApplicationsEmails = ''
 
   let data: DashboardData
-  const formatDate = (date: Date) => {
-    return date.toLocaleString('en-US', {
-      weekday: 'short', // long, short, narrow
-      month: 'short', // numeric, 2-digit, long, short, narrow
-      day: 'numeric', // numeric, 2-digit
-      hour: 'numeric', // numeric, 2-digit
-      minute: 'numeric', // numeric, 2-digit
-      hour12: true, // use 12-hour time format with AM/PM
-    })
-  }
-
-  const timestampToDate = (timestamp: Timestamp | Date) => {
-    return new Date(timestamp.seconds * 1000)
-  }
-
-  const classHeldToday = (datesHeld: Date[], classToday: Date) => {
-    return datesHeld.filter((date) => classToday.toDateString() === timestampToDate(date).toDateString() && new Date() > date).length > 0
-  }
-
-  const classUpcoming = (date: Date) => {
-    return date.getTime() > Date.now() && Math.abs(date.getTime() - new Date().getTime()) / (1000*60) < 30
-  }
-
-  function normalizeCapitals(name: string) {
-    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
- }
 
   function sendInstructorReminder(instructorName: string, instructorEmail: string, otherInstructorEmails: string, className: string, classTime: Date) {
     const confirmSend = confirm("Send class reminder to instructor?");
@@ -173,7 +146,7 @@
             const meetingTime = Object.values(meetingTimes).at(i) ? timestampToDate(Object.values(meetingTimes).at(i)) : new Date();
           if (meetingTime && new Date().toLocaleDateString() === meetingTime.toLocaleDateString()) {
             const classSession = doc.data() as Data.Class;
-            classesToday.push({class: classSession, index: i});
+            classesToday.push({class: classSession, classNumber: i});
             }
           }
         });
@@ -271,32 +244,32 @@
             <h2 class="text-xl font-bold">Classes Today</h2>
             <ul class="list-none space-y-2">
               {#each classesToday as classToday}
-                {#if classUpcoming(timestampToDate(classToday.class.meetingTimes[classToday.index]))}
+                {#if classUpcoming(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}
                   <li
                       class="flex items-center justify-between rounded-lg p-4 bg-blue-100"
                     >
                     <p>{classToday.class.course}</p>
                     <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
-                    <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.otherInstructorEmails, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index])))}>Send Instructor Reminder</Button>
-                    <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index]))}</p>
+                    <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.otherInstructorEmails, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber])))}>Send Instructor Reminder</Button>
+                    <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}</p>
                   </li>
-                {:else if !classHeldToday(classToday.class.datesHeld, timestampToDate(classToday.class.meetingTimes[classToday.index]))}
+                {:else if !classHeldToday(classToday.class.datesHeld)}
                     <li
                     class="flex items-center justify-between rounded-lg p-4 bg-red-100"
                   >
                   <p>{classToday.class.course}</p>
                   <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
-                  <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.otherInstructorEmails, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index])))}>Send Instructor Reminder</Button>
-                  <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index]))}</p>
+                  <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.otherInstructorEmails, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber])))}>Send Instructor Reminder</Button>
+                  <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}</p>
                 </li>
-                {:else if classToday.class.feedbackCompleted[classToday.index] === false}
+                {:else if classToday.class.feedbackCompleted[classToday.classNumber] === false}
                     <li
                     class="flex items-center justify-between rounded-lg p-4 bg-yellow-100" 
                   >
                   <p>{classToday.class.course}</p>
                   <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
-                  <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.otherInstructorEmails, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index])))}>Send Instructor Reminder</Button>
-                  <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index]))}</p>
+                  <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.otherInstructorEmails, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber])))}>Send Instructor Reminder</Button>
+                  <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}</p>
                 </li>
                 {:else}
                     <li
@@ -304,8 +277,8 @@
                   >
                   <p>{classToday.class.course}</p>
                   <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
-                  <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.otherInstructorEmails, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index])))}>Send Instructor Reminder</Button>
-                  <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.index]))}</p>
+                  <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.otherInstructorEmails, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber])))}>Send Instructor Reminder</Button>
+                  <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}</p>
                 </li>
                 {/if}
                 {/each}

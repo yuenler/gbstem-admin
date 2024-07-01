@@ -26,7 +26,7 @@
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
   import {onMount} from 'svelte'
-  import { formatTime24to12 } from '$lib/utils'
+  import { formatDateString, formatTime24to12 } from '$lib/utils'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -137,18 +137,6 @@
         });
     }
 
-  function formatDate(dateString: string) {
-    const date = new Date(dateString)
-    return date.toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
   function formatClassTimes(
     classDays: string[],
     classTimes: string[],
@@ -164,7 +152,7 @@
         for (let i = 0; i < meetingTimes.length; i++){
             const meetingTime = new Date(meetingTimes[i])
           if (meetingTime && new Date().toDateString() === meetingTime.toDateString()) {
-            classTime = formatDate(meetingTime.toISOString());
+            classTime = formatDateString(meetingTime.toISOString());
             break;
           }
         }
@@ -177,7 +165,7 @@
             console.log(new Date().getTime() - meetingTime2.getTime());
             if(new Date().getTime() < meetingTime2.getTime()) {
               console.log(meetingTime2);
-              classTime = formatDate(meetingTime2.toISOString());
+              classTime = formatDateString(meetingTime2.toISOString());
               break;
             }
           }

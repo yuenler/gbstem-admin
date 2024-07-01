@@ -1,5 +1,6 @@
 import type { ClassValue } from 'clsx'
 import clsx from 'clsx'
+import { Timestamp } from 'firebase-admin/firestore'
 import { twMerge } from 'tailwind-merge'
 
 export function cn(...classes: Array<ClassValue>) {
@@ -69,7 +70,6 @@ export function addDataToHtmlTemplate(html, template) {
   return htmlBody;
 }
 
-
 export function formatTime24to12(time24: string): string {
   // Split the string by ":" to obtain hours and minutes
   const [hours24, minutes] = time24.split(':')
@@ -87,4 +87,59 @@ export function formatTime24to12(time24: string): string {
     minute: 'numeric',
     hour12: true,
   })
+}
+
+export enum ClassStatus {
+  ClassNotHeld = 'classMissed',
+  FeedbackIncomplete = 'missingFeedback',
+  ClassUpcomingSoon = 'upcoming',
+  EverythingComplete = 'allComplete',
+  ClassInFuture = 'sometime',
+}
+
+export const formatDate = (date: Date) => {
+  return date.toLocaleString('en-US', {
+    weekday: 'short', // long, short, narrow
+    month: 'short', // numeric, 2-digit, long, short, narrow
+    day: 'numeric', // numeric, 2-digit
+    hour: 'numeric', // numeric, 2-digit
+    minute: 'numeric', // numeric, 2-digit
+    hour12: true, // use 12-hour time format with AM/PM
+  })
+}
+
+export function formatDateString(dateString: string) {
+  const date = new Date(dateString)
+  return date.toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+export const formatDateShort = (date: Date) => {
+  return date.toLocaleString('en-US', {
+    weekday: 'short', // long, short, narrow
+    month: 'short', // numeric, 2-digit, long, short, narrow
+    day: 'numeric', // numeric, 2-digit
+  })
+}
+
+export const timestampToDate = (timestamp: Timestamp | Date) => {
+  return new Date(timestamp.seconds * 1000)
+}
+
+export const classHeldToday = (datesHeld: Date[]) => {
+  return datesHeld.filter((date) => new Date().toDateString() === timestampToDate(date).toDateString() && new Date() > date).length > 0
+}
+
+export const classUpcoming = (date: Date) => {
+  return date.getTime() > Date.now() && Math.abs(date.getTime() - new Date().getTime()) / (1000*60) < 30
+}
+
+export function normalizeCapitals(name: string) {
+  return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 }

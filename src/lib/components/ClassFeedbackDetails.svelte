@@ -7,12 +7,8 @@
     setDoc,
     updateDoc,
   } from 'firebase/firestore'
-  import Input from '$lib/components/Input.svelte'
-  import Select from '$lib/components/Select.svelte'
   import Card from '$lib/components/Card.svelte'
-  import Form from '$lib/components/Form.svelte'
   import { db } from '$lib/client/firebase'
-  import Field from '$lib/components/Field.svelte'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
   import { alert } from '$lib/stores'
@@ -84,18 +80,6 @@
           studentList = [...studentList]
         }
       })
-    })
-  }
-
-  function formatDate(dateString: string) {
-    const date = new Date(dateString)
-    return date.toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     })
   }
 

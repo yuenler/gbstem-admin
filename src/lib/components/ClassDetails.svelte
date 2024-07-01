@@ -21,6 +21,7 @@
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
+    import { ClassStatus, formatDateString } from '$lib/utils'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -113,17 +114,17 @@
     for (let i = 0; i < meetingTimes.length; i++) {
       if (
         new Date().getTime() > new Date(meetingTimes[i]).getTime() &&
-        values.classesStatus[i] !== 'allComplete' &&
-        values.classesStatus[i] !== 'missingFeedback'
+        values.classesStatus[i] !== ClassStatus.EverythingComplete &&
+        values.classesStatus[i] !== ClassStatus.FeedbackIncomplete
       ) {
-        values.classesStatus[i] = values.feedbackCompleted[i] ? 'allComplete' : 'classMissed'
+        values.classesStatus[i] = values.feedbackCompleted[i] ? ClassStatus.EverythingComplete : ClassStatus.ClassNotHeld
       } else if (classUpcoming(new Date(meetingTimes[i]))) {
-        values.classesStatus[i] = 'upcoming'
+        values.classesStatus[i] = ClassStatus.ClassUpcomingSoon
       } else if (
-        values.classesStatus[i] === 'missingFeedback' &&
+        values.classesStatus[i] === ClassStatus.FeedbackIncomplete &&
         values.feedbackCompleted[i]
       ) {
-        values.classesStatus[i] = 'allComplete'
+        values.classesStatus[i] = ClassStatus.EverythingComplete
       }
     }
     updateDoc(doc(db, 'classesSpring24', id), {
@@ -150,18 +151,6 @@
           studentList = [...studentList]
         }
       })
-    })
-  }
-
-  function formatDate(dateString: string) {
-    const date = new Date(dateString)
-    return date.toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     })
   }
 
@@ -202,7 +191,7 @@
         for (let i = 0; i < meetingTimes.length; i++){
             const meetingTime = new Date(meetingTimes[i])
           if (meetingTime && new Date().toDateString() === meetingTime.toDateString()) {
-            classTime = formatDate(meetingTimes[i]);
+            classTime = formatDateString(meetingTimes[i]);
             break;
           }
         }
@@ -213,7 +202,7 @@
             const meetingTime2 = new Date(meetingTimes[i])
             if(new Date().getTime() < meetingTime2.getTime()) {
               console.log(meetingTime2);
-              classTime = formatDate(meetingTimes[i]);
+              classTime = formatDateString(meetingTimes[i]);
               break;
             }
           }
@@ -468,35 +457,35 @@
             </div>
             {#if meetingTimes}
               {#each meetingTimes as meetingTime, i}
-              {#if values.classesStatus[i] === 'allComplete'}
+              {#if values.classesStatus[i] === ClassStatus.EverythingComplete}
               <div class="rounded-lg bg-green-100 p-4 mb-2">
                 <div class="flex items-center justify-between">
                   <p class="meeting-time">
-                    {formatDate(meetingTime)}
+                    {formatDateString(meetingTime)}
                   </p>
                 </div>
                 </div>
-              {:else if values.classesStatus[i] === 'missingFeedback'}
+              {:else if values.classesStatus[i] === ClassStatus.FeedbackIncomplete}
               <div class="rounded-lg bg-yellow-100 p-4 mb-2">
                 <div class="flex items-center justify-between">
                   <p class="meeting-time">
-                    {formatDate(meetingTime)}
+                    {formatDateString(meetingTime)}
                   </p>
                 </div>
                 </div>
-              {:else if values.classesStatus[i] === 'upcoming'}
+              {:else if values.classesStatus[i] === ClassStatus.ClassUpcomingSoon}
                 <div class="rounded-lg bg-blue-100 p-4 mb-2">
                   <div class="flex items-center justify-between">
                     <p class="meeting-time">
-                      {formatDate(meetingTime)}
+                      {formatDateString(meetingTime)}
                     </p>
                   </div>
                   </div>
-              {:else if values.classesStatus[i] === 'classMissed'}
+              {:else if values.classesStatus[i] === ClassStatus.ClassNotHeld}
                   <div class="rounded-lg bg-red-100 p-4 mb-2">
                     <div class="flex items-center justify-between">
                       <p class="meeting-time">
-                        {formatDate(meetingTime)}
+                        {formatDateString(meetingTime)}
                       </p>
                     </div>
                     </div>
@@ -504,7 +493,7 @@
               <div class="rounded-lg bg-gray-100 p-4 mb-2">
                 <div class="flex items-center justify-between">
                   <p class="meeting-time">
-                    {formatDate(meetingTime)}
+                    {formatDateString(meetingTime)}
                   </p>
                 </div>
                 </div>

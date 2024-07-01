@@ -27,17 +27,6 @@
   let dialogEl: Dialog
   let selectedFeedbackId: string | undefined = undefined
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleString('en-US', {
-      weekday: 'short', // long, short, narrow
-      month: 'short', // numeric, 2-digit, long, short, narrow
-      day: 'numeric', // numeric, 2-digit
-      hour: 'numeric', // numeric, 2-digit
-      minute: 'numeric', // numeric, 2-digit
-      hour12: true, // use 12-hour time format with AM/PM
-    })
-  }
-
   onMount(() => {
     return user.subscribe(async (user) => {
       if (user) {
