@@ -13,7 +13,7 @@
   } from 'firebase/firestore'
   import { fade } from 'svelte/transition'
   import { alert } from '$lib/stores'
-  import { classHeldToday, classUpcoming, formatDate, normalizeCapitals, timestampToDate } from '$lib/utils'
+  import { classHeldToday, isClassUpcoming, formatDate, normalizeCapitals, timestampToDate } from '$lib/utils'
 
   type DashboardData = {
     applications: {
@@ -244,7 +244,7 @@
             <h2 class="text-xl font-bold">Classes Today</h2>
             <ul class="list-none space-y-2">
               {#each classesToday as classToday}
-                {#if classUpcoming(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}
+                {#if isClassUpcoming(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}
                   <li
                       class="flex items-center justify-between rounded-lg p-4 bg-blue-100"
                     >

@@ -26,7 +26,7 @@
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
   import {onMount} from 'svelte'
-  import { formatDateString, formatTime24to12 } from '$lib/utils'
+  import { formatDateString, formatTime24to12, normalizeCapitals } from '$lib/utils'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -199,10 +199,6 @@
         }
       });
   }
-  
-  function normalizeCapitals(name: string) {
-    return name.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
-}
 
   function copyEmails() {
     const email = studentData.email.concat(studentData.secondaryEmail ? ', ' + studentData.secondaryEmail : '')   

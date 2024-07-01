@@ -21,7 +21,7 @@
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
-    import { ClassStatus, formatDateString } from '$lib/utils'
+    import { ClassStatus, formatDateString, isClassUpcoming, normalizeCapitals } from '$lib/utils'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -118,7 +118,7 @@
         values.classesStatus[i] !== ClassStatus.FeedbackIncomplete
       ) {
         values.classesStatus[i] = values.feedbackCompleted[i] ? ClassStatus.EverythingComplete : ClassStatus.ClassNotHeld
-      } else if (classUpcoming(new Date(meetingTimes[i]))) {
+      } else if (isClassUpcoming(new Date(meetingTimes[i]))) {
         values.classesStatus[i] = ClassStatus.ClassUpcomingSoon
       } else if (
         values.classesStatus[i] === ClassStatus.FeedbackIncomplete &&
@@ -140,7 +140,7 @@
           const data = studentDoc.data()
           if (data) {
             studentList.push({
-              name: `${normalizeCapitals(data.personal.studentFirstName)} ${normalizeCapitals(data.personal.studentLastName)}`,
+              name: `${normalizeCapitals(data.personal.studentFirstName + ' ' + data.personal.studentLastName)}`,
               email: data.personal.email,
               secondaryEmail: data.personal.secondaryEmail,
               phone: data.personal.phoneNumber,
@@ -153,10 +153,6 @@
       })
     })
   }
-
-  function normalizeCapitals(name: string) {
-    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
- }
 
   function copyEmails() {
     const emailList = studentList
@@ -176,13 +172,6 @@
       .catch((err) => {
         alert.trigger('error', 'Failed to copy emails to clipboard!')
       })
-  }
-
-  const classUpcoming = (date: Date) => {
-    return (
-      date.getTime() > Date.now() &&
-      Math.abs(date.getTime() - new Date().getTime()) / (1000 * 60) < 30
-    )
   }
 
   function sendReminder(toInstructor: boolean, instructorName: string, instructorEmail: string, otherInstructorEmails: string, className: string) {

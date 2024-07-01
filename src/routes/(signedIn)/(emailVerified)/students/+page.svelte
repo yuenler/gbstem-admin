@@ -15,6 +15,7 @@
     import fi from 'date-fns/locale/fi'
     import Select from '$lib/components/Select.svelte'
     import { kebabCase } from 'lodash-es'
+    import { normalizeCapitals } from '$lib/utils'
   
     export let data: PageData
     let dialogEl: Dialog
@@ -165,10 +166,6 @@
       return enrolled? courses : "NO CLASS ENROLLMENT FOUND"
     }
 
-    function normalizeCapitals(name: string) {
-    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-    }
-  
   </script>
   
   <svelte:head>
@@ -275,7 +272,7 @@
             </div>
           </td>
           <td class="px-6 py-4">
-            {`${normalizeCapitals(registration.values.personal.studentFirstName)} ${normalizeCapitals(registration.values.personal.studentLastName)}`}
+            {`${normalizeCapitals(registration.values.personal.studentFirstName + ' ' + registration.values.personal.studentLastName)}`}
           </td>
           
           <td class="px-6 py-4"
@@ -289,7 +286,7 @@
             {registration.values.academic.grade}
           </td>
           <td class="px-6 py-4">
-            {normalizeCapitals(registration.values.personal.parentFirstName)}{' '}{normalizeCapitals(registration.values.personal.parentLastName)}
+            {normalizeCapitals(registration.values.personal.parentFirstName + ' ' + registration.values.personal.parentLastName)}
         </tr>
         {/if}
         {/await}

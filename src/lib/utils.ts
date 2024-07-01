@@ -136,10 +136,10 @@ export const classHeldToday = (datesHeld: Date[]) => {
   return datesHeld.filter((date) => new Date().toDateString() === timestampToDate(date).toDateString() && new Date() > date).length > 0
 }
 
-export const classUpcoming = (date: Date) => {
+export const isClassUpcoming = (date: Date) => {
   return date.getTime() > Date.now() && Math.abs(date.getTime() - new Date().getTime()) / (1000*60) < 30
 }
 
 export function normalizeCapitals(name: string) {
-  return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  return name.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
 }
