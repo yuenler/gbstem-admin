@@ -26,7 +26,7 @@
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
   import {onMount} from 'svelte'
-  import { formatDateString, formatTime24to12, normalizeCapitals } from '$lib/utils'
+  import { formatDateString, formatTime24to12, normalizeCapitals, timestampToDate } from '$lib/utils'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -153,7 +153,7 @@
     const confirmSend = confirm("Send class reminder to student?");
     let classTime: String = '';
         for (let i = 0; i < meetingTimes.length; i++){
-            const meetingTime = new Date(meetingTimes[i])
+            const meetingTime = timestampToDate(meetingTimes[i]);
           if (meetingTime && new Date().toDateString() === meetingTime.toDateString()) {
             classTime = formatDateString(meetingTime.toISOString());
             break;

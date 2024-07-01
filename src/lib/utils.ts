@@ -1,6 +1,5 @@
 import type { ClassValue } from 'clsx'
 import clsx from 'clsx'
-import { Timestamp } from 'firebase-admin/firestore'
 import { twMerge } from 'tailwind-merge'
 
 export function cn(...classes: Array<ClassValue>) {
@@ -141,5 +140,5 @@ export const isClassUpcoming = (date: Date) => {
 }
 
 export function normalizeCapitals(name: string) {
-  return name.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
+  return name.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
 }
