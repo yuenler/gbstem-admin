@@ -18,6 +18,7 @@
   import { connectStorageEmulator } from 'firebase/storage'
   import ClassFeedbackDetails from '$lib/components/ClassFeedbackDetails.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
+    import { instructorFeedbackCollection } from '$lib/data/collections'
 
   let showValidation = false
   let currentUser: Data.User.Store
@@ -38,7 +39,7 @@
   })
 
   async function getData() {
-    const q = query(collection(db, 'instructorFeedback24'))
+    const q = query(collection(db, instructorFeedbackCollection))
     const classFeedback = await getDocs(q)
     classFeedback.forEach(async (document) => {
       const session = document.data()

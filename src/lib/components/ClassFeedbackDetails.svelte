@@ -17,7 +17,7 @@
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
-    import { registrationsCollection } from '$lib/data/collections'
+    import { instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -51,7 +51,7 @@
     loading = true
     disabled = true
     values = cloneDeep(defaultValues)
-    getDoc(doc(db, 'instructorFeedback24', id)).then((snapshot) => {
+    getDoc(doc(db, instructorFeedbackCollection, id)).then((snapshot) => {
       let data = snapshot.data() as any
       if (snapshot.exists()) {
         values = cloneDeep(data)

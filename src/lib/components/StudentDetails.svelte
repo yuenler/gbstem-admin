@@ -27,7 +27,7 @@
   import { coursesJson, daysOfWeekJson } from '$lib/data'
   import {onMount} from 'svelte'
   import { formatDateString, formatTime24to12, normalizeCapitals, timestampToDate } from '$lib/utils'
-    import { classesCollection, registrationsCollection } from '$lib/data/collections'
+    import { classesCollection, instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -107,7 +107,7 @@
             }
         });
 
-        getDocs(query(collection(db, 'instructorFeedback24'))).then((snapshot) => {
+        getDocs(query(collection(db, instructorFeedbackCollection))).then((snapshot) => {
             attendance = []
             snapshot.forEach((doc) => {
                 const data = doc.data();
