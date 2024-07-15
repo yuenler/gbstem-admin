@@ -88,14 +88,6 @@ export function formatTime24to12(time24: string): string {
   })
 }
 
-export enum ClassStatus {
-  ClassNotHeld = 'classMissed',
-  FeedbackIncomplete = 'missingFeedback',
-  ClassUpcomingSoon = 'upcoming',
-  EverythingComplete = 'allComplete',
-  ClassInFuture = 'sometime',
-}
-
 export const formatDate = (date: Date) => {
   return date.toLocaleString('en-US', {
     weekday: 'short', // long, short, narrow
@@ -141,4 +133,9 @@ export const isClassUpcoming = (date: Date) => {
 
 export function normalizeCapitals(name: string) {
   return name.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+}
+
+export const getNearestFutureClass = (meetingTimes: Date[]) => {
+   const nextIndex = meetingTimes.findIndex(schedule => new Date(schedule) > new Date())
+   return nextIndex === -1 ? 'No Upcoming Classes' : formatDate(new Date(meetingTimes[nextIndex]))
 }

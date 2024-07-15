@@ -21,8 +21,10 @@
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
-    import { ClassStatus, formatDateString, isClassUpcoming, normalizeCapitals } from '$lib/utils'
-    import { classesCollection, registrationsCollection } from '$lib/data/collections'
+  import { ClassStatus, formatDateString, isClassUpcoming, normalizeCapitals } from '$lib/utils'
+  import { classesCollection, registrationsCollection } from '$lib/data/collections'
+  import type { ClassDetails } from '$lib/data/types/ClassDetails'
+  import type { Student } from '$lib/data/types/Student'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -31,16 +33,9 @@
   let disabled = true
   let dbValues: Data.Registration<'client'>
 
-  let studentList: {
-    name: string
-    email: string
-    secondaryEmail: string
-    phone: string
-    grade: number
-    school: string
-  }[] = []
+  let studentList: Student[] = []
 
-  const defaultValues = {
+  const defaultValues: ClassDetails = {
     course: '',
     instructorFirstName: '',
     instructorLastName: '',
@@ -54,11 +49,12 @@
     classCap: 0,
     online: true,
     gradeRecommendation: '',
-    classesStatus: [],
+    classStatuses: [],
     feedbackCompleted: [],
+    meetingTimes: [],
+    datesHeld: [],
+    id: ''
   }
-
-  let meetingTimes: string[] = []
 
   let values: any = cloneDeep(defaultValues)
   $: if (id !== undefined) {
@@ -69,8 +65,8 @@
     getDoc(doc(db, classesCollection, id)).then((snapshot) => {
       let data = snapshot.data() as any
 
-      meetingTimes = data.meetingTimes.map((time: Timestamp) =>
-        new Date(time.seconds * 1000)).sort((a:Date, b:Date) => a.getTime() - b.getTime()).map((time:Date) => time.toISOString())
+      values.meetingTimes = data.meetingTimes.map((time: Timestamp) =>
+        new Date(time.seconds * 1000)).sort((a:Date, b:Date) => a - b)
 
       const studentUids = data.students
       if (studentUids) {
@@ -112,6 +108,7 @@
   }
 
   function checkStatuses() {
+    const { meetingTimes } = values;
     for (let i = 0; i < meetingTimes.length; i++) {
       if (
         new Date().getTime() > new Date(meetingTimes[i]).getTime() &&
@@ -184,6 +181,7 @@
    * @param className - The name of the class.
    */
   function sendReminder(toInstructor: boolean, instructorName: string, instructorEmail: string, otherInstructorEmails: string, className: string) {
+    const { meetingTimes } = values;
     const confirmSend = confirm("Send class reminder to" + (toInstructor? ' instructor?' : ' all students?'));
     let classTime: String = '';
         for (let i = 0; i < meetingTimes.length; i++){

@@ -27,7 +27,9 @@
   import { coursesJson, daysOfWeekJson } from '$lib/data'
   import {onMount} from 'svelte'
   import { formatDateString, formatTime24to12, normalizeCapitals, timestampToDate } from '$lib/utils'
-    import { classesCollection, instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
+  import { classesCollection, instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
+  import ClassDetails from './ClassDetails.svelte'
+  import type { Student } from '$lib/data/types/Student'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -44,14 +46,7 @@
     classNumber: number
   }
 
-  let studentData: {
-    name: string
-    email: string
-    secondaryEmail: string
-    phone: string
-    grade: number
-    school: string
-  } = {
+  let studentData: Student = {
     name: '',
     email: '',
     secondaryEmail: '',
@@ -60,34 +55,8 @@
     school: '',
   }
 
-  type Class = {
-      classCap: number
-      classDay1: string
-      classDay2: string
-      classTime1: string
-      classTime2: string
-      course: string
-      instructorEmail: string
-      // comma separated list of co-instructor emails
-      otherInstructorEmails: string
-      instructorFirstName: string
-      instructorLastName: string
-      meetingLink: string
-      meetingTimes: Date[]
-      datesHeld: Date[]
-      // array class completion statuses
-      classesStatus: string[]
-      // array of class feedback completion
-      feedbackCompleted: boolean[]
-      online: boolean
-      students: string[]
-      // class id
-      id: string
-    }
-
   let attendance: ClassAttendance[] = []
-
-  let classes: Class[] = [] 
+  let classes: ClassDetails[] = [] 
 
     $: if (id !== undefined && loading) {
         const studentDocRef = doc(db, registrationsCollection, id);
@@ -128,7 +97,7 @@
         getDocs(query(collection(db, classesCollection), where('students', 'array-contains', id))).then((snapshot) => {
             classes = []
             snapshot.forEach((doc) => {
-                const data = doc.data() as Class;
+                const data = doc.data() as ClassDetails;
                 if (data) {
                     data.id = doc.id;
                     classes.push(data);
