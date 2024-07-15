@@ -16,6 +16,7 @@
     import Select from '$lib/components/Select.svelte'
     import { kebabCase } from 'lodash-es'
     import { normalizeCapitals } from '$lib/utils'
+    import { classesCollection, registrationsCollection } from '$lib/data/collections'
   
     export let data: PageData
     let dialogEl: Dialog
@@ -128,10 +129,10 @@
       }
     }
     function bypassAgeLimits(id:string) {
-      getDoc(doc(db, 'registrationsSpring24', id)).then((applicationSnapshot) => {
+      getDoc(doc(db, registrationsCollection, id)).then((applicationSnapshot) => {
         if (applicationSnapshot.exists()) {
           console.log(applicationSnapshot.data().agreements.bypassAgeLimits)
-          updateDoc(doc(db, 'registrationsSpring24', id), {'agreements.bypassAgeLimits': !applicationSnapshot.data().agreements.bypassAgeLimits});
+          updateDoc(doc(db, registrationsCollection, id), {'agreements.bypassAgeLimits': !applicationSnapshot.data().agreements.bypassAgeLimits});
         }
       })
     }
@@ -153,14 +154,14 @@
   
     async function getCourses(id: string) {
       let enrolled = true
-      const q = query(collection(db, 'classesSpring24'), where('students', 'array-contains', id))
+      const q = query(collection(db, classesCollection), where('students', 'array-contains', id))
       const snapshot = await getDocs(q)
       const courses = snapshot.docs.map((doc) => doc.data().course)
       if (courses.length === 0) {
         enrolled = false
       }
   
-       const registrationDocRef = doc(db, 'registrationsSpring24', id)  
+       const registrationDocRef = doc(db, registrationsCollection, id)  
         updateDoc(registrationDocRef, { enrolled: enrolled })
   
       return enrolled? courses : "NO CLASS ENROLLMENT FOUND"

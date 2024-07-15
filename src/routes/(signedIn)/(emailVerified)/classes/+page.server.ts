@@ -4,6 +4,7 @@ import { adminDb } from '$lib/server/firebase'
 import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
 import algoliasearch from 'algoliasearch'
 import { formatTime24to12 } from '$lib/utils'
+import { classesCollection } from '$lib/data/collections'
 // import { db } from '$lib/client/firebase'
 
 function formatClassTimes(
@@ -23,7 +24,7 @@ export const load = (async ({ url, depends }) => {
     try {
       let dbQuery;
 
-      const collectionName = 'classesSpring24'
+      const collectionName = classesCollection
       if (filter === 'Python I') {
         dbQuery = adminDb
             .collection(collectionName)
@@ -111,7 +112,7 @@ export const load = (async ({ url, depends }) => {
   } else {
     try {
       const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY)
-      const index = client.initIndex('classesSpring24')
+      const index = client.initIndex(classesCollection)
       const { hits } = await index.search<
         Omit<Data.Class, 'classCap' | 'meetingTimes' | 'feedbackCompleted'> & {
           meta: {

@@ -22,6 +22,7 @@
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
     import { ClassStatus, formatDateString, isClassUpcoming, normalizeCapitals } from '$lib/utils'
+    import { classesCollection, registrationsCollection } from '$lib/data/collections'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -65,7 +66,7 @@
     loading = true
     disabled = true
     values = cloneDeep(defaultValues)
-    getDoc(doc(db, 'classesSpring24', id)).then((snapshot) => {
+    getDoc(doc(db, classesCollection, id)).then((snapshot) => {
       let data = snapshot.data() as any
 
       meetingTimes = data.meetingTimes.map((time: Timestamp) =>
@@ -91,7 +92,7 @@
     loading = true
     disabled = true
     if (id !== undefined) {
-      setDoc(doc(db, 'classesSpring24', id), values)
+      setDoc(doc(db, classesCollection, id), values)
         .then(() => {
           invalidate('app:registrations').then(() => {
             alert.trigger('success', 'Changes were saved successfully.')
@@ -127,14 +128,14 @@
         values.classesStatus[i] = ClassStatus.EverythingComplete
       }
     }
-    updateDoc(doc(db, 'classesSpring24', id), {
+    updateDoc(doc(db, classesCollection, id), {
       classesStatus: values.classesStatus,
     })
   }
 
   const getStudentList = (studentUids: string[]) => {
     studentUids.forEach((studentUid) => {
-      const studentDocRef = doc(db, 'registrationsSpring24', studentUid)
+      const studentDocRef = doc(db, registrationsCollection, studentUid)
       getDoc(studentDocRef).then((studentDoc) => {
         if (studentDoc.exists()) {
           const data = studentDoc.data()

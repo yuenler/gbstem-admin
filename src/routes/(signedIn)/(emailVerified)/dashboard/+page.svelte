@@ -14,6 +14,7 @@
   import { fade } from 'svelte/transition'
   import { alert } from '$lib/stores'
   import { classHeldToday, isClassUpcoming, formatDate, normalizeCapitals, timestampToDate } from '$lib/utils'
+    import { applicationsCollection, classesCollection } from '$lib/data/collections'
 
   type DashboardData = {
     applications: {
@@ -74,9 +75,9 @@
           timer = window.setTimeout(resolve, 400)
         }),
         new Promise<void>((resolve) => {
-          const applicationsColl = collection(db, 'applicationsSpring24')
+          const applicationsColl = collection(db, applicationsCollection)
           const usersColl = collection(db, 'users')
-          const registrationsColl = collection(db, 'registrationsSpring24')
+          const registrationsColl = collection(db, applicationsCollection)
           // get uncompleted registration emails
           getDocs(
             query(registrationsColl, where('meta.submitted', '==', false)),
@@ -138,7 +139,7 @@
         }),
 
         new Promise<void>((resolve) => {
-          const q = query(collection(db, 'classesSpring24'))
+          const q = query(collection(db, classesCollection))
           getDocs(q).then((snapshot) => {
           snapshot.forEach((doc) => {
           const meetingTimes: Timestamp[] = doc.data().meetingTimes;

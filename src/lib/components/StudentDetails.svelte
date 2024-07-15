@@ -27,6 +27,7 @@
   import { coursesJson, daysOfWeekJson } from '$lib/data'
   import {onMount} from 'svelte'
   import { formatDateString, formatTime24to12, normalizeCapitals, timestampToDate } from '$lib/utils'
+    import { classesCollection, registrationsCollection } from '$lib/data/collections'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -89,7 +90,7 @@
   let classes: Class[] = [] 
 
     $: if (id !== undefined && loading) {
-        const studentDocRef = doc(db, 'registrationsSpring24', id);
+        const studentDocRef = doc(db, registrationsCollection, id);
         getDoc(studentDocRef).then((studentDoc) => {
             if (studentDoc.exists()) {
                 const data = studentDoc.data();
@@ -124,7 +125,7 @@
             attendance.sort((a, b) => a.classNumber - b.classNumber);
         })
 
-        getDocs(query(collection(db, 'classesSpring24'), where('students', 'array-contains', id))).then((snapshot) => {
+        getDocs(query(collection(db, classesCollection), where('students', 'array-contains', id))).then((snapshot) => {
             classes = []
             snapshot.forEach((doc) => {
                 const data = doc.data() as Class;

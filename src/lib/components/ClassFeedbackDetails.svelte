@@ -17,6 +17,7 @@
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
+    import { registrationsCollection } from '$lib/data/collections'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -63,7 +64,7 @@
 
   const getStudentList = (studentUids: string[]) => {
     studentUids.forEach((studentUid) => {
-      const studentDocRef = doc(db, 'registrationsSpring24', studentUid)
+      const studentDocRef = doc(db, registrationsCollection, studentUid)
       getDoc(studentDocRef).then((studentDoc) => {
         if (studentDoc.exists()) {
           const data = studentDoc.data()

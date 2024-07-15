@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types'
 import { adminDb } from '$lib/server/firebase'
 import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
 import algoliasearch from 'algoliasearch'
+import { applicationsCollection } from '$lib/data/collections'
 // import { db } from '$lib/client/firebase'
 
 export const load = (async ({ url, depends }) => {
@@ -31,7 +32,7 @@ export const load = (async ({ url, depends }) => {
       // }
       // else
 
-      const collectionName = 'applicationsSpring24'
+      const collectionName = applicationsCollection
       if (filter === 'undecided') {
         dbQuery = updated
           ? adminDb
@@ -108,7 +109,7 @@ export const load = (async ({ url, depends }) => {
   } else {
     try {
       const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY)
-      const index = client.initIndex('applicationsSpring24')
+      const index = client.initIndex(applicationsCollection)
       const { hits } = await index.search<
         Omit<Data.Application<'server'>, 'meta' | 'timestamps'> & {
           meta: {

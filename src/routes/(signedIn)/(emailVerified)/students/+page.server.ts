@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types'
 import { adminDb } from '$lib/server/firebase'
 import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
 import algoliasearch from 'algoliasearch'
+import { registrationsCollection } from '$lib/data/collections'
 // import { db } from '$lib/client/firebase'
 
 export const load = (async ({ url, depends }) => {
@@ -14,7 +15,7 @@ export const load = (async ({ url, depends }) => {
     try {
       let dbQuery;
 
-      const collectionName = 'registrationsSpring24'
+      const collectionName = registrationsCollection
       if (filter === 'submitted') {
         dbQuery = updated
           ? adminDb
@@ -77,7 +78,7 @@ export const load = (async ({ url, depends }) => {
   } else {
     try {
       const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY)
-      const index = client.initIndex('registrationsSpring24')
+      const index = client.initIndex(registrationsCollection)
       const { hits } = await index.search<
         Omit<Data.Registration<'server'>, 'meta' | 'timestamps'> & {
           meta: {

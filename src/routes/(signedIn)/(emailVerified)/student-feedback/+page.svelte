@@ -16,6 +16,7 @@
     import Table from '$lib/components/Table.svelte'
     import { json } from '@sveltejs/kit'
     import { connectStorageEmulator } from 'firebase/storage'
+    import { classFeedbackCollection } from '$lib/data/collections'
   
     let showValidation = false
     let currentUser: Data.User.Store
@@ -34,7 +35,7 @@
     })
   
     async function getData() {
-      const q = query(collection(db, 'classFeedback24'))
+      const q = query(collection(db, classFeedbackCollection))
       const classFeedback = await getDocs(q)
       classFeedback.forEach(async (document) => {
         const session = document.data()

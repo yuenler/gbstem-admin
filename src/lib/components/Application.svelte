@@ -29,6 +29,7 @@
   import type { FirebaseError } from 'firebase/app'
   import { invalidate } from '$app/navigation'
     import { formatDateShort } from '$lib/utils'
+    import { applicationsCollection, decisionsCollection, semesterDatesDocument } from '$lib/data/collections'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -97,7 +98,7 @@
     loading = true
     disabled = true
     values = cloneDeep(defaultValues)
-    getDoc(doc(db, 'applicationsSpring24', id)).then((applicationSnapshot) => {
+    getDoc(doc(db, applicationsCollection, id)).then((applicationSnapshot) => {
       const data = applicationSnapshot.data() as Data.Application<'client'>
       if (applicationSnapshot.exists()) {
         values = cloneDeep(data)
@@ -136,14 +137,14 @@
     const frozenId = id
     loading = true
     if (frozenId !== undefined) {
-      setDoc(doc(db, 'decisionsSpring24', frozenId), {
+      setDoc(doc(db, decisionsCollection, frozenId), {
         likelyDecision,
         type: decision,
         notes,
       })
         .then(() => {
-          updateDoc(doc(db, 'applicationsSpring24', frozenId), {
-            'meta.decision': doc(db, 'decisionsSpring24', frozenId),
+          updateDoc(doc(db, applicationsCollection, frozenId), {
+            'meta.decision': doc(db, decisionsCollection, frozenId),
           })
             .then(() => {
               invalidate('app:applications').then(() => {
@@ -167,14 +168,14 @@
     const frozenId = id
     loading = true
     if (frozenId !== undefined) {
-      setDoc(doc(db, 'decisionsSpring24', frozenId), {
+      setDoc(doc(db, decisionsCollection, frozenId), {
         likelyDecision: newDecision,
         type: decision,
         notes,
       })
         .then(() => {
-          updateDoc(doc(db, 'applicationsSpring24', frozenId), {
-            'meta.decision': doc(db, 'decisionsSpring24', frozenId),
+          updateDoc(doc(db, applicationsCollection, frozenId), {
+            'meta.decision': doc(db, decisionsCollection, frozenId),
           })
             .then(() => {
               invalidate('app:applications').then(() => {
@@ -196,10 +197,13 @@
   }
 
   async function handleDecision(newDecision: Data.Decision) {
-    let weekDeadline = new Date(new Date().setDate(new Date().getDate() + 7))
-    let interviewDeadline = formatDateShort(weekDeadline)
+    // Get today's date
+    let today = new Date();
 
-    const dueDate = await getDoc(doc(db, 'semesterDates', 'spring24'))
+    // Calculate the date 7 days from today
+    let weekDeadline = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);    let interviewDeadline = formatDateShort(weekDeadline)
+
+    const dueDate = await getDoc(doc(db, 'semesterDates', semesterDatesDocument))
     if(dueDate.exists()) {
       interviewDeadline = formatDateShort(new Date(Math.min(weekDeadline, new Date(dueDate.data().instructorOrientation))))
     }
@@ -213,14 +217,14 @@
     const frozenId = id
     loading = true
     if (frozenId !== undefined) {
-      setDoc(doc(db, 'decisionsSpring24', frozenId), {
+      setDoc(doc(db, decisionsCollection, frozenId), {
         type: newDecision,
         likelyDecision,
         notes,
       })
         .then(() => {
-          updateDoc(doc(db, 'applicationsSpring24', frozenId), {
-            'meta.decision': doc(db, 'decisionsSpring24', frozenId),
+          updateDoc(doc(db, applicationsCollection, frozenId), {
+            'meta.decision': doc(db, decisionsCollection, frozenId),
           })
             .then(() => {
               invalidate('app:applications').then(() => {
@@ -274,7 +278,7 @@
     loading = true
     disabled = true
     if (id !== undefined) {
-      setDoc(doc(db, 'applicationsSpring24', id), values)
+      setDoc(doc(db, applicationsCollection, id), values)
         .then(() => {
           invalidate('app:applications').then(() => {
             alert.trigger('success', 'Changes were saved successfully.')
