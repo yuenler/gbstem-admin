@@ -133,8 +133,8 @@ export const timestampToDate = (timestamp: Timestamp | Date) => {
   return new Date(timestamp.seconds * 1000)
 }
 
-export const classHeldToday = (datesHeld: Date[]) => {
-  return datesHeld.filter((date) => new Date().toDateString() === timestampToDate(date).toDateString() && new Date() > date).length > 0
+export const classHeldToday = (datesHeld: Date[], classTimeToday: Date) => {
+  return datesHeld.filter((date) => new Date().toDateString() === timestampToDate(date).toDateString() && new Date() > date).length > 0 || timestampToDate(classTimeToday) > new Date()
 }
 
 export const isClassUpcoming = (date: Date) => {
@@ -148,6 +148,10 @@ export function normalizeCapitals(name: string) {
 export const getNearestFutureClass = (meetingTimes: Date[]) => {
    const nextIndex = meetingTimes.findIndex(schedule => new Date(timestampToDate(schedule)) > new Date())
    return nextIndex === -1 ? 'No Upcoming Classes' : formatDate(timestampToDate(meetingTimes[nextIndex]))
+}
+
+export const getNearestFutureClassIndex = (meetingTimes: Date[]) => {
+  return meetingTimes.findIndex(schedule => new Date(timestampToDate(schedule)) > new Date())
 }
 
 export function copyEmails(email: string) {

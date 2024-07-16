@@ -13,8 +13,9 @@
   } from 'firebase/firestore'
   import { fade } from 'svelte/transition'
   import { alert } from '$lib/stores'
-  import { classHeldToday, isClassUpcoming, formatDate, normalizeCapitals, timestampToDate } from '$lib/utils'
+  import { classHeldToday, isClassUpcoming, formatDate, normalizeCapitals, timestampToDate, getNearestFutureClass, getNearestFutureClassIndex } from '$lib/utils'
     import { applicationsCollection, classesCollection } from '$lib/data/collections'
+    import sendClassReminder from '$lib/data/helpers/sendClassReminders'
 
   type DashboardData = {
     applications: {
@@ -33,6 +34,7 @@
     classNumber: number
     class: Data.Class
   }
+
   let classesToday: ClassToday[] = [];
 
   let loading = true
@@ -40,32 +42,6 @@
   let uncompletedApplicationsEmails = ''
 
   let data: DashboardData
-
-  function sendInstructorReminder(instructorName: string, instructorEmail: string, otherInstructorEmails: string, className: string, classTime: Date) {
-    const confirmSend = confirm("Send class reminder to instructor?");
-      if (confirmSend) {
-    fetch('/api/remindInstructor', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: normalizeCapitals(instructorName),
-          otherInstructorEmails: otherInstructorEmails,
-          email: instructorEmail,
-          class: className,
-          classTime: classTime,
-        }),
-      }).then(async (res) => {
-        if (res.ok) {
-          alert.trigger('success', 'A reminder email was sent!')
-        } else {
-          const { message } = await res.json()
-          alert.trigger('error', message)
-        }
-      });
-  }
-}
 
   user.subscribe((user) => {
     if (user) {
@@ -251,16 +227,16 @@
                     >
                     <p>{classToday.class.course}</p>
                     <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
-                    <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.otherInstructorEmails, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber])))}>Send Instructor Reminder</Button>
+                    <Button color = 'gray' on:click = {() => sendClassReminder({ instructorName: classToday.class.instructorFirstName, instructorEmail: classToday.class.instructorEmail, otherInstructorEmails: classToday.class.otherInstructorEmails, className: classToday.class.course, nextMeetingTime: formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))})}>Send Instructor Reminder</Button>
                     <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}</p>
                   </li>
-                {:else if !classHeldToday(classToday.class.datesHeld)}
+                {:else if !classHeldToday(classToday.class.completedClassDates, classToday.class.meetingTimes[getNearestFutureClassIndex(classToday.class.meetingTimes)])}
                     <li
                     class="flex items-center justify-between rounded-lg p-4 bg-red-100"
                   >
                   <p>{classToday.class.course}</p>
                   <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
-                  <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.otherInstructorEmails, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber])))}>Send Instructor Reminder</Button>
+                  <Button color = 'gray' on:click = {() => sendClassReminder({ instructorName: classToday.class.instructorFirstName, instructorEmail: classToday.class.instructorEmail, otherInstructorEmails: classToday.class.otherInstructorEmails, className: classToday.class.course, nextMeetingTime: formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))})}>Send Instructor Reminder</Button>
                   <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}</p>
                 </li>
                 {:else if classToday.class.feedbackCompleted[classToday.classNumber] === false}
@@ -269,7 +245,7 @@
                   >
                   <p>{classToday.class.course}</p>
                   <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
-                  <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.otherInstructorEmails, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber])))}>Send Instructor Reminder</Button>
+                  <Button color = 'gray' on:click = {() => sendClassReminder({ instructorName: classToday.class.instructorFirstName, instructorEmail: classToday.class.instructorEmail, otherInstructorEmails: classToday.class.otherInstructorEmails, className: classToday.class.course, nextMeetingTime: formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))})}>Send Instructor Reminder</Button>
                   <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}</p>
                 </li>
                 {:else}
@@ -278,7 +254,7 @@
                   >
                   <p>{classToday.class.course}</p>
                   <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
-                  <Button color = 'gray' on:click = {() => sendInstructorReminder(classToday.class.instructorFirstName, classToday.class.instructorEmail, classToday.class.otherInstructorEmails, classToday.class.course, formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber])))}>Send Instructor Reminder</Button>
+                  <Button color = 'gray' on:click = {() => sendClassReminder({ instructorName: classToday.class.instructorFirstName, instructorEmail: classToday.class.instructorEmail, otherInstructorEmails: classToday.class.otherInstructorEmails, className: classToday.class.course, nextMeetingTime: formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))})}>Send Instructor Reminder</Button>
                   <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}</p>
                 </li>
                 {/if}

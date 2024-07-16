@@ -4,7 +4,7 @@
   import { onMount } from 'svelte'
   import Table from '$lib/components/Table.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
-  import {formatTime24to12 } from '$lib/utils'
+  import {copyEmails, formatTime24to12 } from '$lib/utils'
   import { format } from 'date-fns'
   import ClassDetails from '$lib/components/ClassDetails.svelte'
   import type { PageData } from './$types'
@@ -69,24 +69,6 @@
   
     const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
-
-    function copyEmails() {
-    const emailList = data.classes
-      .map(
-        (instructor) =>
-          `${instructor.email}`,
-      )
-      .join(', ')
-
-    navigator.clipboard
-      .writeText(emailList)
-      .then(() => {
-        alert.trigger('success', 'Emails copied to clipboard!')
-      })
-      .catch((err) => {
-        alert.trigger('error', 'Failed to copy emails to clipboard!')
-      })
-  }
 
   function handleCheckAll(
       e: Event & { currentTarget: EventTarget & HTMLInputElement },
@@ -167,7 +149,7 @@
     </a>
   </div>
   <Button color = 'blue'><a href={url}>Download</a></Button>
-  <Button on:click={copyEmails} class="flex items-center gap-1">
+  <Button on:click={ () => copyEmails (data.classes.map((instructor) =>`${instructor.email}`,).join(', '))} class="flex items-center gap-1">
     <svg
       fill="#000000"
       height="20"

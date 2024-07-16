@@ -21,7 +21,7 @@
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
-    import { formatDate, getNearestFutureClass, isClassUpcoming, normalizeCapitals, timestampToDate } from '$lib/utils'
+    import { copyEmails, formatDate, getNearestFutureClass, isClassUpcoming, normalizeCapitals, timestampToDate } from '$lib/utils'
     import { classesCollection, registrationsCollection } from '$lib/data/collections'
     import { ClassStatus } from '$lib/data/types/ClassStatus'
     import sendClassReminder from '$lib/data/helpers/sendClassReminders'
@@ -104,6 +104,9 @@
     disabled = true
   }
 
+  /**
+   * Update the status of each class session in the array based on the current time. 
+   */
   function checkStatuses() {
     const { meetingTimes, classStatuses, feedbackCompleted } = values
     for (let i = 0; i < meetingTimes.length; i++) {
@@ -149,25 +152,6 @@
     })
   }
 
-  function copyEmails() {
-    const emailList = studentList
-      .map(
-        (student) =>
-          `${student.email}${
-            student.secondaryEmail ? `, ${student.secondaryEmail}` : ''
-          }`,
-      )
-      .join(', ')
-
-    navigator.clipboard
-      .writeText(emailList)
-      .then(() => {
-        alert.trigger('success', 'Emails copied to clipboard!')
-      })
-      .catch((err) => {
-        alert.trigger('error', 'Failed to copy emails to clipboard!')
-      })
-  }
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
@@ -190,14 +174,14 @@
             otherInstructorEmails: values.otherInstructorEmails,
             className: values.course,
             nextMeetingTime: getNearestFutureClass(values.meetingTimes)
-        })}>Send Instructor Reminder</Button>
+        })}>Send Reminder To All Students</Button>
         <Button color = 'blue' on:click = {() => sendClassReminder({
             instructorName: values.instructorFirstName,
             instructorEmail: values.instructorEmail,
             otherInstructorEmails: values.otherInstructorEmails,
             className: values.course,
             nextMeetingTime: getNearestFutureClass(values.meetingTimes)
-        })}>Send Reminder To All Students</Button>
+        })}>Send Instructor Reminder</Button>
       </div>
     </Card>
     <div class="mt-4 flex justify-center">
@@ -295,7 +279,7 @@
       <Card class="mb-4 mt-5">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="font-bold">Class List</h2>
-          <Button on:click={copyEmails} class="flex items-center gap-1">
+          <Button on:click={() => copyEmails(studentList.map((student) => `${student.email}${student.secondaryEmail ? `, ${student.secondaryEmail}` : ''}`,).join(', '))} class="flex items-center gap-1">
             <svg
               fill="#000000"
               height="20"
