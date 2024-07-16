@@ -12,69 +12,37 @@
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
   import { alert } from '$lib/stores'
-  import { attempt, cloneDeep } from 'lodash-es'
-  import type { FirebaseError } from 'firebase/app'
-  import { invalidate } from '$app/navigation'
-  import nProgress from 'nprogress'
-  import { coursesJson, daysOfWeekJson } from '$lib/data'
-  import { instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
-  import type { Student } from '$lib/data/types/Student'
+  import { instructorFeedbackCollection } from '$lib/data/collections'
 
   export let dialogEl: Dialog
   export let id: string | undefined
 
   let loading = true
   let disabled = true
-  let dbValues: Data.Registration<'client'>
 
-  const defaultValues: Data.InstructorFeedback = {
-    course: '',
+  let values: Data.InstructorFeedback = {
+    courseName: '',
     instructorName: '',
     feedback: '',
     date: '',
     classNumber: 0,
-    attendance: [],
+    attendanceList: [],
     id: '',
     students: [],
   }
 
-  let values: any = cloneDeep(defaultValues)
   $: if (id !== undefined) {
     loading = true
     disabled = true
-    values = cloneDeep(defaultValues)
     getDoc(doc(db, instructorFeedbackCollection, id)).then((snapshot) => {
-      let data = snapshot.data() as any
+      let data = snapshot.data() as Data.InstructorFeedback
       if (snapshot.exists()) {
-        values = cloneDeep(data)
-        dbValues = cloneDeep(data)
+        values = data
       } else {
         alert.trigger('error', 'Registration not found.')
       }
     })
   }
-
-  // const getStudentList = (studentUids: string[]) => {
-  //   studentUids.forEach((studentUid) => {
-  //     const studentDocRef = doc(db, registrationsCollection, studentUid)
-  //     getDoc(studentDocRef).then((studentDoc) => {
-  //       if (studentDoc.exists()) {
-  //         const data = studentDoc.data()
-  //         if (data) {
-  //           studentList.push({
-  //             name: `${data.personal.studentFirstName} ${data.personal.studentLastName}`,
-  //             email: data.personal.email,
-  //             secondaryEmail: data.personal.secondaryEmail,
-  //             phone: data.personal.phoneNumber,
-  //             grade: data.academic.grade,
-  //             school: data.academic.school,
-  //           })
-  //         }
-  //         studentList = [...studentList]
-  //       }
-  //     })
-  //   })
-  // }
 
 </script>
 

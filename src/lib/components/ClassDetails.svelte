@@ -23,7 +23,7 @@
   import { coursesJson, daysOfWeekJson } from '$lib/data'
     import { formatDateString, isClassUpcoming, normalizeCapitals } from '$lib/utils'
     import { classesCollection, registrationsCollection } from '$lib/data/collections'
-    import { ClassStatus } from '$lib/data/helpers/ClassStatus'
+    import { ClassStatus } from '$lib/data/types/ClassStatus'
 
   export let dialogEl: Dialog
   export let id: string | undefined

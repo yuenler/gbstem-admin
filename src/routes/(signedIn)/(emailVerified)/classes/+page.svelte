@@ -4,7 +4,7 @@
   import { onMount } from 'svelte'
   import Table from '$lib/components/Table.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
-  import { ClassStatus, formatTime24to12 } from '$lib/utils'
+  import {formatTime24to12 } from '$lib/utils'
   import { format } from 'date-fns'
   import ClassDetails from '$lib/components/ClassDetails.svelte'
   import type { PageData } from './$types'
@@ -15,6 +15,7 @@
     import { goto } from '$app/navigation'
     import { page } from '$app/stores'
     import {alert} from '$lib/stores'
+    import { ClassStatus } from '$lib/data/types/ClassStatus'
 
   export let data: PageData
   let showValidation = false

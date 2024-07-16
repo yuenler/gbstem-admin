@@ -89,14 +89,6 @@ export function formatTime24to12(time24: string): string {
   })
 }
 
-export enum ClassStatus {
-  ClassNotHeld = 'classMissed',
-  FeedbackIncomplete = 'missingFeedback',
-  ClassUpcomingSoon = 'upcoming',
-  EverythingComplete = 'allComplete',
-  ClassInFuture = 'sometime',
-}
-
 export function formatClassTimes(
   classDays: string[],
   classTimes: string[],
@@ -105,7 +97,6 @@ export function formatClassTimes(
     (day, index) => `${day} at ${formatTime24to12(classTimes[index])}`,
   )
 }
-
 
 export const formatDate = (date: Date) => {
   return date.toLocaleString('en-US', {

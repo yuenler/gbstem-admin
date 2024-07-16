@@ -3,18 +3,9 @@ import type { PageServerLoad } from './$types'
 import { adminDb } from '$lib/server/firebase'
 import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
 import algoliasearch from 'algoliasearch'
-import { formatTime24to12 } from '$lib/utils'
 import { classesCollection } from '$lib/data/collections'
+import { formatClassTimes } from '$lib/utils'
 // import { db } from '$lib/client/firebase'
-
-function formatClassTimes(
-    classDays: string[],
-    classTimes: string[],
-  ): string[] {
-    return classDays.map(
-      (day, index) => `${day} at ${formatTime24to12(classTimes[index])}`,
-    )
-  }
 
 export const load = (async ({ url, depends }) => {
   depends('app:classes')

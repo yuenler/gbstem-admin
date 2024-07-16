@@ -27,9 +27,10 @@
   import { coursesJson, daysOfWeekJson } from '$lib/data'
   import {onMount} from 'svelte'
   import { copyEmails, formatClassTimes, formatDateString, formatTime24to12, normalizeCapitals, timestampToDate } from '$lib/utils'
-    import { classesCollection, instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
-    import sendClassReminder from '$lib/data/helpers/sendClassReminder'
-    import type { Student } from '$lib/data/types/Student'
+  import { classesCollection, instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
+  import type ClassData from '$lib/data/types/ClassData'
+  import type Student from '$lib/data/types/Student'
+  import sendClassReminder from '$lib/data/helpers/sendClassReminders'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -47,7 +48,7 @@
   }
 
   let attendance: Data.InstructorFeedback[] = []
-  let classes: ClassDetails[] = [] 
+  let classes: ClassData[] = [] 
 
     $: if (id !== undefined && loading) {
         const studentDocRef = doc(db, registrationsCollection, id);
@@ -90,7 +91,7 @@
         getDocs(query(collection(db, classesCollection), where('students', 'array-contains', id))).then((snapshot) => {
             classes = []
             snapshot.forEach((doc) => {
-                const data = doc.data() as Class;
+                const data = doc.data() as ClassData;
                 if (data) {
                     data.id = doc.id;
                     classes.push(data);
@@ -111,17 +112,7 @@
     <div class="mt-4 justify-center">
     {#each classes as value, i}
       <Card>
-          <div class="flex" style="justify-content:space-between;"><div style="align-content:center;"><h2 class="font-bold">Class {i+1} Information</h2></div><div><Button color = 'blue' on:click = {() => sendClassReminder(
-            { 
-            studentData.name, 
-            studentData.email,
-            value.instructorFirstName, 
-            value.instructorEmail, 
-            value.otherInstructorEmails, 
-            value.course, 
-            value.meetingTimes
-            }
-            )}>Send {value.course} Class Reminder To Student?</Button> </div></div>
+          <div class="flex" style="justify-content:space-between;"><div style="align-content:center;"><h2 class="font-bold">Class {i+1} Information</h2></div><div><Button color = 'blue' on:click = {() => sendClassReminder()}>Send {value.course} Class Reminder To Student?</Button> </div></div>
         <fieldset class="mt-4 space-y-4">
             <table style="border-collapse: collapse; width: 100%; text-align: left;">
                 <thead>
