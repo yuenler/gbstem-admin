@@ -26,7 +26,7 @@
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
   import {onMount} from 'svelte'
-  import { copyEmails, formatClassTimes, formatDateString, formatTime24to12, normalizeCapitals, timestampToDate } from '$lib/utils'
+  import { copyEmails, formatClassTimes, formatDateString, formatTime24to12, getNearestFutureClass, normalizeCapitals, timestampToDate } from '$lib/utils'
   import { classesCollection, instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
   import type ClassData from '$lib/data/types/ClassData'
   import type Student from '$lib/data/types/Student'
@@ -36,7 +36,6 @@
   export let id: string | undefined
 
   let loading = true
-  let dbValues: Data.Registration<'client'>
 
   let studentData: Student = {
     name: '',
@@ -74,9 +73,9 @@
                 const data = doc.data();
                 if(data) {
                     attendance.push({
-                        course: data.courseName,
+                        courseName: data.courseName,
                         date: data.date,
-                        attendance: data.attendanceList,
+                        attendanceList: data.attendanceList,
                         feedback: data.feedback, 
                         id: doc.id,
                         classNumber: data.classNumber,
@@ -112,7 +111,16 @@
     <div class="mt-4 justify-center">
     {#each classes as value, i}
       <Card>
-          <div class="flex" style="justify-content:space-between;"><div style="align-content:center;"><h2 class="font-bold">Class {i+1} Information</h2></div><div><Button color = 'blue' on:click = {() => sendClassReminder()}>Send {value.course} Class Reminder To Student?</Button> </div></div>
+          <div class="flex" style="justify-content:space-between;"><div style="align-content:center;"><h2 class="font-bold">Class {i+1} Information</h2></div><div><Button color = 'blue' on:click = {() => sendClassReminder({
+            studentList: [studentData],
+            studentName: studentData.name,
+            studentEmail: studentData.email,
+            instructorName: value.instructorFirstName,
+            instructorEmail: value.instructorEmail,
+            otherInstructorEmails: value.otherInstructorEmails,
+            className: value.course,
+            nextMeetingTime: getNearestFutureClass(value.meetingTimes)
+          })}>Send {value.course} Class Reminder To Student?</Button> </div></div>
         <fieldset class="mt-4 space-y-4">
             <table style="border-collapse: collapse; width: 100%; text-align: left;">
                 <thead>
@@ -177,12 +185,12 @@
                     </tr>
                     </thead>
                     {#each attendance as att, i}
-                     {#if att.course === value.course && att.id.includes(value.id) && Object.keys(att.attendance).includes(studentData.name)}
+                     {#if att.courseName === value.course && att.id.includes(value.id) && Object.keys(att.attendanceList).includes(studentData.name)}
                     <tbody>
                         <tr style="border-bottom: 1px solid #ccc;">
                         <td style="padding: 8px;">{att.classNumber}</td>
                         <td style="padding: 8px;">{att.date}</td>
-                        <td style="padding: 8px;">{att.attendance[studentData.name]? 'Yes' : 'No'}</td>
+                        <td style="padding: 8px;">{att.attendanceList[studentData.name]? 'Yes' : 'No'}</td>
                         <td style="padding: 8px;">{att.feedback}</td>
                         </tr>
                     </tbody>

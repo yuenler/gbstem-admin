@@ -100,8 +100,8 @@ export function formatClassTimes(
 
 export const formatDate = (date: Date) => {
   return date.toLocaleString('en-US', {
-    weekday: 'short', // long, short, narrow
-    month: 'short', // numeric, 2-digit, long, short, narrow
+    weekday: 'long', // long, short, narrow
+    month: 'long', // numeric, 2-digit, long, short, narrow
     day: 'numeric', // numeric, 2-digit
     hour: 'numeric', // numeric, 2-digit
     minute: 'numeric', // numeric, 2-digit
@@ -146,8 +146,8 @@ export function normalizeCapitals(name: string) {
 }
 
 export const getNearestFutureClass = (meetingTimes: Date[]) => {
-   const nextIndex = meetingTimes.findIndex(schedule => new Date(schedule) > new Date())
-   return nextIndex === -1 ? 'No Upcoming Classes' : formatDate(new Date(meetingTimes[nextIndex]))
+   const nextIndex = meetingTimes.findIndex(schedule => new Date(timestampToDate(schedule)) > new Date())
+   return nextIndex === -1 ? 'No Upcoming Classes' : formatDate(timestampToDate(meetingTimes[nextIndex]))
 }
 
 export function copyEmails(email: string) {

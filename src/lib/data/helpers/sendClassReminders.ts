@@ -14,7 +14,7 @@ import type Student from '../types/Student';
    */
   function sendClassReminder(
     opts: {
-      studentList: Student[],
+      studentList?: Student[],
       studentName?: string,
       studentEmail?: string,
       instructorName: string,
@@ -38,6 +38,35 @@ import type Student from '../types/Student';
     } = opts;
 
     /* if student name is not specified, assume it is all */
+    if(!studentList) {
+      const confirmSend = confirm('Send class reminder to instructor ' + instructorName + '?');
+      if(confirmSend) {
+        if (nextMeetingTime === 'No Upcoming Classes') {
+          alert.trigger('error', 'No upcoming classes found!')
+          return
+        }
+        fetch('/api/remindInstructor', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: normalizeCapitals(instructorName),
+            email: instructorEmail,
+            otherInstructorEmails: otherInstructorEmails,
+            class: className,
+            classTime: nextMeetingTime,
+          }),
+        }).then(async (res) => {
+          if (res.ok) {
+            alert.trigger('success', 'A reminder email was sent!')
+          } else {
+            const { message } = await res.json()
+            alert.trigger('error', message)
+          }
+        });
+      }
+    } else {
     if (!studentEmail || !studentEmail) {
       const confirmSend = confirm('Send class reminder to all students?')
       if (confirmSend) {
@@ -107,6 +136,6 @@ import type Student from '../types/Student';
       }
     }
   }
-
+}
 
   export default sendClassReminder;

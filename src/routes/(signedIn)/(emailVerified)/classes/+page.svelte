@@ -46,7 +46,7 @@
           email,
           courses,
           students,
-          classesStatus,
+          classStatuses,
           meetingLink,
           classTimes,
         } = classes
@@ -56,9 +56,9 @@
           email,
           courses,
           students.join(', '),
-          classesStatus.filter((status) => status === ClassStatus.EverythingComplete).length,
-          classesStatus.filter((status) => status === ClassStatus.FeedbackIncomplete).length,
-          classesStatus.filter((status) => status === ClassStatus.ClassNotHeld).length,
+          classStatuses.filter((status) => status === ClassStatus.EverythingComplete).length,
+          classStatuses.filter((status) => status === ClassStatus.FeedbackIncomplete).length,
+          classStatuses.filter((status) => status === ClassStatus.ClassNotHeld).length,
           meetingLink,
           classTimes.map((value) => value.toString()).join(', ')
         ].join(',')
@@ -232,10 +232,10 @@
             {value.students ? value.students.length : 0}
           </td>
           <td class="px-6 py-4">
-            {value.classesStatus.filter((status) => status === ClassStatus.ClassNotHeld).length}
+            {value.classStatuses.filter((status) => status === ClassStatus.ClassNotHeld).length}
           </td>
           <td class="px-6 py-4">
-            {value.classesStatus.filter((status) => status === ClassStatus.FeedbackIncomplete).length}
+            {value.classStatuses.filter((status) => status === ClassStatus.FeedbackIncomplete).length}
           </td>
         </tr>
       {/each}

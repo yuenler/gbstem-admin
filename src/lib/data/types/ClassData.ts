@@ -7,7 +7,7 @@ type ClassData = {
     gradeRecommendation: string
     course: string
     meetingTimes: Date[]
-    datesHeld: Date[]
+    completedClassDates: Date[]
     feedbackCompleted: boolean[]
     classStatuses: string[]
     instructorFirstName: string
@@ -15,6 +15,7 @@ type ClassData = {
     instructorEmail: string
     otherInstructorEmails: string
     classCap: number
+    students: string[]
     online: boolean
     id: string
   }

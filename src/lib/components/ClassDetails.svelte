@@ -21,27 +21,22 @@
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
-    import { formatDateString, isClassUpcoming, normalizeCapitals } from '$lib/utils'
+    import { formatDate, getNearestFutureClass, isClassUpcoming, normalizeCapitals, timestampToDate } from '$lib/utils'
     import { classesCollection, registrationsCollection } from '$lib/data/collections'
     import { ClassStatus } from '$lib/data/types/ClassStatus'
+    import sendClassReminder from '$lib/data/helpers/sendClassReminders'
+    import type Student from '$lib/data/types/Student'
+    import type ClassData from '$lib/data/types/ClassData'
 
   export let dialogEl: Dialog
   export let id: string | undefined
 
   let loading = true
   let disabled = true
-  let dbValues: Data.Registration<'client'>
 
-  let studentList: {
-    name: string
-    email: string
-    secondaryEmail: string
-    phone: string
-    grade: number
-    school: string
-  }[] = []
+  let studentList: Student[] = []
 
-  const defaultValues = {
+  let values: ClassData = {
     course: '',
     instructorFirstName: '',
     instructorLastName: '',
@@ -55,31 +50,29 @@
     classCap: 0,
     online: true,
     gradeRecommendation: '',
-    classesStatus: [],
+    classStatuses: [],
     feedbackCompleted: [],
+    completedClassDates: [],
+    meetingTimes: [],
+    students: [],
+    id: '',
   }
 
-  let meetingTimes: string[] = []
-
-  let values: any = cloneDeep(defaultValues)
   $: if (id !== undefined) {
     studentList = []
     loading = true
     disabled = true
-    values = cloneDeep(defaultValues)
     getDoc(doc(db, classesCollection, id)).then((snapshot) => {
-      let data = snapshot.data() as any
+      let data = snapshot.data() as ClassData
 
-      meetingTimes = data.meetingTimes.map((time: Timestamp) =>
-        new Date(time.seconds * 1000)).sort((a:Date, b:Date) => a.getTime() - b.getTime()).map((time:Date) => time.toISOString())
+      values.meetingTimes = data.meetingTimes.sort((a:Date, b:Date) => a - b)
 
       const studentUids = data.students
       if (studentUids) {
         getStudentList(studentUids)
       }
       if (snapshot.exists()) {
-        values = cloneDeep(data)
-        dbValues = cloneDeep(data)
+        values = data
       } else {
         alert.trigger('error', 'Registration not found.')
       }
@@ -109,28 +102,28 @@
   }
   function handleDeleteChanges() {
     disabled = true
-    values = cloneDeep(dbValues)
   }
 
   function checkStatuses() {
+    const { meetingTimes, classStatuses, feedbackCompleted } = values
     for (let i = 0; i < meetingTimes.length; i++) {
       if (
         new Date().getTime() > new Date(meetingTimes[i]).getTime() &&
-        values.classesStatus[i] !== ClassStatus.EverythingComplete &&
-        values.classesStatus[i] !== ClassStatus.FeedbackIncomplete
+        classStatuses[i] !== ClassStatus.EverythingComplete &&
+        classStatuses[i] !== ClassStatus.FeedbackIncomplete
       ) {
-        values.classesStatus[i] = values.feedbackCompleted[i] ? ClassStatus.EverythingComplete : ClassStatus.ClassNotHeld
+        classStatuses[i] = feedbackCompleted[i] ? ClassStatus.EverythingComplete : ClassStatus.ClassNotHeld
       } else if (isClassUpcoming(new Date(meetingTimes[i]))) {
-        values.classesStatus[i] = ClassStatus.ClassUpcomingSoon
+        classStatuses[i] = ClassStatus.ClassUpcomingSoon
       } else if (
-        values.classesStatus[i] === ClassStatus.FeedbackIncomplete &&
-        values.feedbackCompleted[i]
+        classStatuses[i] === ClassStatus.FeedbackIncomplete &&
+        feedbackCompleted[i]
       ) {
-        values.classesStatus[i] = ClassStatus.EverythingComplete
+        classStatuses[i] = ClassStatus.EverythingComplete
       }
     }
     updateDoc(doc(db, classesCollection, id), {
-      classesStatus: values.classesStatus,
+      classStatuses: classStatuses,
     })
   }
 
@@ -175,91 +168,6 @@
         alert.trigger('error', 'Failed to copy emails to clipboard!')
       })
   }
-
-  /**
-   * Sends a reminder email to the instructor or all students in the class.
-   * @param toInstructor - Whether to send the reminder to the instructor or all students (minimizes need for 2 different sendReminder() functions).
-   * @param instructorName - The name of the instructor.
-   * @param instructorEmail - The email of the instructor.
-   * @param otherInstructorEmails - The emails of other instructors.
-   * @param className - The name of the class.
-   */
-  function sendReminder(toInstructor: boolean, instructorName: string, instructorEmail: string, otherInstructorEmails: string, className: string) {
-    const confirmSend = confirm("Send class reminder to" + (toInstructor? ' instructor?' : ' all students?'));
-    let classTime: String = '';
-        for (let i = 0; i < meetingTimes.length; i++){
-            const meetingTime = new Date(meetingTimes[i])
-          if (meetingTime && new Date().toDateString() === meetingTime.toDateString()) {
-            classTime = formatDateString(meetingTimes[i]);
-            break;
-          }
-        }
-      if(classTime === '') {
-        const nextTime = confirm("No class today. Send reminder for next class?");
-        if(nextTime) {
-          for(let i = 0; i < meetingTimes.length; i++) {
-            const meetingTime2 = new Date(meetingTimes[i])
-            if(new Date().getTime() < meetingTime2.getTime()) {
-              console.log(meetingTime2);
-              classTime = formatDateString(meetingTimes[i]);
-              break;
-            }
-          }
-        } else {
-          return;
-        }
-      } if(classTime === '') {
-        alert.trigger('error', 'No upcoming classes found!')
-        return;
-      }
-    if(toInstructor) {
-    fetch('/api/remindInstructor', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: normalizeCapitals(instructorName),
-          email: instructorEmail,
-          otherInstructorEmails: otherInstructorEmails,
-          class: className,
-          classTime: classTime,
-        }),
-      }).then(async (res) => {
-        if (res.ok) {
-          alert.trigger('success', 'A reminder email was sent!')
-        } else {
-          const { message } = await res.json()
-          alert.trigger('error', message)
-        }
-      });
-    } else {
-      studentList.map((student) => {
-        fetch('/api/remindStudents', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: student.name,
-          email: student.email,
-          instructorEmail: instructorEmail,
-          otherInstructorEmails: otherInstructorEmails,
-          class: className,
-          classTime: classTime,
-          instructorName: normalizeCapitals(instructorName),
-        })
-      }).then(async (res) => {
-        if (res.ok) {
-          alert.trigger('success', 'Reminder emails were sent!')
-        } else {
-           const { message } = await res.json()
-           alert.trigger('error', message)
-        }
-      });
-      })
-    }
-  }
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
@@ -275,8 +183,21 @@
       <div class="flex gap-3">
         <Button color = 'green' on:click={handleEdit}>Edit</Button>
         <Button color = 'red' on:click={dialogEl.cancel}>Close</Button>
-        <Button color = 'blue' on:click = {() => sendReminder(true, values.instructorFirstName, values.instructorEmail, values.otherInstructorEmails, values.course)}>Send Instructor Reminder</Button>
-        <Button color = 'blue' on:click = {() => sendReminder(false, values.instructorFirstName, values.instructorEmail, values.otherInstructorEmails, values.course)}>Send Reminder To All Students</Button>
+        <Button color = 'blue' on:click = {() => sendClassReminder({
+           studentList: studentList,
+            instructorName: values.instructorFirstName,
+            instructorEmail: values.instructorEmail,
+            otherInstructorEmails: values.otherInstructorEmails,
+            className: values.course,
+            nextMeetingTime: getNearestFutureClass(values.meetingTimes)
+        })}>Send Instructor Reminder</Button>
+        <Button color = 'blue' on:click = {() => sendClassReminder({
+            instructorName: values.instructorFirstName,
+            instructorEmail: values.instructorEmail,
+            otherInstructorEmails: values.otherInstructorEmails,
+            className: values.course,
+            nextMeetingTime: getNearestFutureClass(values.meetingTimes)
+        })}>Send Reminder To All Students</Button>
       </div>
     </Card>
     <div class="mt-4 flex justify-center">
@@ -456,35 +377,35 @@
             </div>
             {#if values.meetingTimes}
               {#each values.meetingTimes as meetingTime, i}
-              {#if values.classesStatus[i] === ClassStatus.EverythingComplete}
+              {#if values.classStatuses[i] === ClassStatus.EverythingComplete}
               <div class="rounded-lg bg-green-100 p-4 mb-2">
                 <div class="flex items-center justify-between">
                   <p class="meeting-time">
-                    {formatDateString(meetingTime)}
+                    {formatDate(timestampToDate(meetingTime))}
                   </p>
                 </div>
                 </div>
-              {:else if values.classesStatus[i] === ClassStatus.FeedbackIncomplete}
+              {:else if values.classStatuses[i] === ClassStatus.FeedbackIncomplete}
               <div class="rounded-lg bg-yellow-100 p-4 mb-2">
                 <div class="flex items-center justify-between">
                   <p class="meeting-time">
-                    {formatDateString(meetingTime)}
+                    {formatDate(timestampToDate(meetingTime))}
                   </p>
                 </div>
                 </div>
-              {:else if values.classesStatus[i] === ClassStatus.ClassUpcomingSoon}
+              {:else if values.classStatuses[i] === ClassStatus.ClassUpcomingSoon}
                 <div class="rounded-lg bg-blue-100 p-4 mb-2">
                   <div class="flex items-center justify-between">
                     <p class="meeting-time">
-                      {formatDateString(meetingTime)}
+                      {formatDate(timestampToDate(meetingTime))}
                     </p>
                   </div>
                   </div>
-              {:else if values.classesStatus[i] === ClassStatus.ClassNotHeld}
+              {:else if values.classStatuses[i] === ClassStatus.ClassNotHeld}
                   <div class="rounded-lg bg-red-100 p-4 mb-2">
                     <div class="flex items-center justify-between">
                       <p class="meeting-time">
-                        {formatDateString(meetingTime)}
+                        {formatDate(timestampToDate(meetingTime))}
                       </p>
                     </div>
                     </div>
@@ -492,7 +413,7 @@
               <div class="rounded-lg bg-gray-100 p-4 mb-2">
                 <div class="flex items-center justify-between">
                   <p class="meeting-time">
-                    {formatDateString(meetingTime)}
+                    {formatDate(timestampToDate(meetingTime))}
                   </p>
                 </div>
                 </div>

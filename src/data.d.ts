@@ -241,9 +241,8 @@ declare global {
       instructorLastName: string
       meetingLink: string
       meetingTimes: Date[]
-      datesHeld: Date[]
-      classesStatus: string[]
-      numClassesHeld: number
+      completedClassDates: Date[]
+      classStatuses: string[]
       feedbackCompleted: boolean[]
       online: boolean
       students: string[]
