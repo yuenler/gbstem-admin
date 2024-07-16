@@ -27,10 +27,9 @@
   import { coursesJson, daysOfWeekJson } from '$lib/data'
   import {onMount} from 'svelte'
   import { copyEmails, formatClassTimes, formatDateString, formatTime24to12, normalizeCapitals, timestampToDate } from '$lib/utils'
-  import { classesCollection, instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
-  import ClassDetails from './ClassDetails.svelte'
-  import type { Student } from '$lib/data/types/Student'
+    import { classesCollection, instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
     import sendClassReminder from '$lib/data/helpers/sendClassReminder'
+    import type { Student } from '$lib/data/types/Student'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -91,7 +90,7 @@
         getDocs(query(collection(db, classesCollection), where('students', 'array-contains', id))).then((snapshot) => {
             classes = []
             snapshot.forEach((doc) => {
-                const data = doc.data() as ClassDetails;
+                const data = doc.data() as Class;
                 if (data) {
                     data.id = doc.id;
                     classes.push(data);
