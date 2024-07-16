@@ -16,59 +16,10 @@ export const load = (async ({ url, depends }) => {
       let dbQuery;
 
       const collectionName = classesCollection
-      if (filter === 'Python I') {
+      if (filter === 'Python I' || filter === 'Python II' || filter === 'Scratch' || filter === 'Web Development' || filter === 'Engineering I' || filter === 'Engineering II' || filter === 'Engineering III' || filter === 'Math I' || filter === 'Math II' || filter === 'Math III' || filter === 'Math IV' || filter === 'Math V' || filter === 'Environmental Science'){ 
         dbQuery = adminDb
             .collection(collectionName)
-            .where('course', '==', 'Python I')
-      }
-      else if (filter === 'Python II'){
-        dbQuery = adminDb
-        .collection(collectionName)
-        .where('course', '==', 'Python II')
-      } else if (filter === 'Scratch'){
-        dbQuery = adminDb
-        .collection(collectionName)
-        .where('course', '==', 'Scratch')
-      } else if (filter === 'Web Development'){
-        dbQuery = adminDb
-        .collection(collectionName)
-        .where('course', '==', 'Web Development')
-      } else if (filter === 'Engineering I'){
-        dbQuery = adminDb
-        .collection(collectionName)
-        .where('course', '==', 'Engineering I')
-      } else if (filter === 'Engineering II'){
-        dbQuery = adminDb
-        .collection(collectionName)
-        .where('course', '==', 'Engineering II')
-      } else if (filter === 'Engineering III'){
-        dbQuery = adminDb
-        .collection(collectionName)
-        .where('course', '==', 'Engineering III')
-      } else if (filter === 'Math I'){
-        dbQuery = adminDb
-        .collection(collectionName)
-        .where('course', '==', 'Math I')
-      } else if (filter === 'Math II'){
-        dbQuery = adminDb
-        .collection(collectionName)
-        .where('course', '==', 'Math II')
-      } else if (filter === 'Math III'){
-        dbQuery = adminDb
-        .collection(collectionName)
-        .where('course', '==', 'Math III')
-      } else if (filter === 'Math IV'){
-        dbQuery = adminDb
-        .collection(collectionName)
-        .where('course', '==', 'Math IV')
-      } else if (filter === 'Math V'){
-        dbQuery = adminDb
-        .collection(collectionName)
-        .where('course', '==', 'Math IV')
-      } else if (filter === 'Environmental Science'){
-        dbQuery = adminDb
-        .collection(collectionName)
-        .where('course', '==', 'Math IV')
+            .where('course', '==', filter)
       } else {
         dbQuery = adminDb
         .collection(collectionName)
@@ -88,7 +39,7 @@ export const load = (async ({ url, depends }) => {
             courses: Array.of(data.course),
             students: data.students,
             meetingLink: data.meetingLink,
-            classesStatus: data.classesStatus,
+            classStatuses: data.classStatuses,
             classTimes: formatClassTimes(
                 [data.classDay1, data.classDay2],
                 [data.classTime1, data.classTime2],
@@ -127,7 +78,7 @@ export const load = (async ({ url, depends }) => {
             email: hit.instructorEmail,
             courses: Array.of(hit.course),
             students: hit.students,
-            classesStatus: hit.classesStatus,
+            classStatuses: hit.classStatuses,
             meetingLink: hit.meetingLink,
             classTimes: formatClassTimes(
                 [hit.classDay1, hit.classDay2],
