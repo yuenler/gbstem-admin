@@ -1,6 +1,7 @@
 import type { ClassValue } from 'clsx'
 import clsx from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { alert } from '$lib/stores'
 
 export function cn(...classes: Array<ClassValue>) {
   return twMerge(clsx(...classes))
@@ -88,6 +89,16 @@ export function formatTime24to12(time24: string): string {
   })
 }
 
+export function formatClassTimes(
+  classDays: string[],
+  classTimes: string[],
+): string[] {
+  return classDays.map(
+    (day, index) => `${day} at ${formatTime24to12(classTimes[index])}`,
+  )
+}
+
+
 export const formatDate = (date: Date) => {
   return date.toLocaleString('en-US', {
     weekday: 'short', // long, short, narrow
@@ -138,4 +149,15 @@ export function normalizeCapitals(name: string) {
 export const getNearestFutureClass = (meetingTimes: Date[]) => {
    const nextIndex = meetingTimes.findIndex(schedule => new Date(schedule) > new Date())
    return nextIndex === -1 ? 'No Upcoming Classes' : formatDate(new Date(meetingTimes[nextIndex]))
+}
+
+export function copyEmails(email: string) {
+  navigator.clipboard
+    .writeText(email)
+    .then(() => {
+      alert.trigger('success', 'Emails copied to clipboard!')
+    })
+    .catch((err) => {
+      alert.trigger('error', 'Failed to copy emails to clipboard!')
+    })
 }

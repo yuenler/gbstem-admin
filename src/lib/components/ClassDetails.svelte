@@ -21,10 +21,11 @@
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
-  import { ClassStatus, formatDateString, isClassUpcoming, normalizeCapitals } from '$lib/utils'
+  import { formatDateString, isClassUpcoming, normalizeCapitals } from '$lib/utils'
   import { classesCollection, registrationsCollection } from '$lib/data/collections'
   import type { ClassDetails } from '$lib/data/types/ClassDetails'
   import type { Student } from '$lib/data/types/Student'
+    import { ClassStatus } from '$lib/data/helpers/ClassStatus'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -451,8 +452,8 @@
             >
               <strong>Schedule</strong>
             </div>
-            {#if meetingTimes}
-              {#each meetingTimes as meetingTime, i}
+            {#if values.meetingTimes}
+              {#each values.meetingTimes as meetingTime, i}
               {#if values.classesStatus[i] === ClassStatus.EverythingComplete}
               <div class="rounded-lg bg-green-100 p-4 mb-2">
                 <div class="flex items-center justify-between">

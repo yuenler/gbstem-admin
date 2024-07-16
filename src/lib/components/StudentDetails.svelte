@@ -26,25 +26,17 @@
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
   import {onMount} from 'svelte'
-  import { formatDateString, formatTime24to12, normalizeCapitals, timestampToDate } from '$lib/utils'
+  import { copyEmails, formatClassTimes, formatDateString, formatTime24to12, normalizeCapitals, timestampToDate } from '$lib/utils'
   import { classesCollection, instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
   import ClassDetails from './ClassDetails.svelte'
   import type { Student } from '$lib/data/types/Student'
+    import sendClassReminder from '$lib/data/helpers/sendClassReminder'
 
   export let dialogEl: Dialog
   export let id: string | undefined
 
   let loading = true
   let dbValues: Data.Registration<'client'>
-
-  type ClassAttendance = {
-    className: string
-    date: string
-    attended: boolean
-    feedback: string
-    id: string
-    classNumber: number
-  }
 
   let studentData: Student = {
     name: '',
@@ -55,7 +47,7 @@
     school: '',
   }
 
-  let attendance: ClassAttendance[] = []
+  let attendance: Data.InstructorFeedback[] = []
   let classes: ClassDetails[] = [] 
 
     $: if (id !== undefined && loading) {
@@ -82,12 +74,14 @@
                 const data = doc.data();
                 if(data) {
                     attendance.push({
-                        className: data.courseName,
+                        course: data.courseName,
                         date: data.date,
-                        attended: data.attendanceList,
+                        attendance: data.attendanceList,
                         feedback: data.feedback, 
                         id: doc.id,
-                        classNumber: data.classNumber
+                        classNumber: data.classNumber,
+                        instructorName: data.instructorName,
+                        students: data.students,
                     });
                 }
             });
@@ -110,81 +104,6 @@
         });
     }
 
-  function formatClassTimes(
-    classDays: string[],
-    classTimes: string[],
-  ): string[] {
-    return classDays.map(
-      (day, index) => `${day} at ${formatTime24to12(classTimes[index])}`,
-    )
-  }
-  
-  function sendClassReminder(instructorName: string, instructorEmail: string, otherInstructorEmails: string, className: string, meetingTimes: Date[]) {
-    const confirmSend = confirm("Send class reminder to student?");
-    let classTime: String = '';
-        for (let i = 0; i < meetingTimes.length; i++){
-            const meetingTime = timestampToDate(meetingTimes[i]);
-          if (meetingTime && new Date().toDateString() === meetingTime.toDateString()) {
-            classTime = formatDateString(meetingTime.toISOString());
-            break;
-          }
-        }
-      if(classTime === '') {
-        const nextTime = confirm("No class today. Send reminder for next class?");
-        if(nextTime) {
-          for(let i = 0; i < meetingTimes.length; i++) {
-            const meetingTime2 = new Date(meetingTimes[i].seconds * 1000)
-            console.log(meetingTime2)
-            console.log(new Date().getTime() - meetingTime2.getTime());
-            if(new Date().getTime() < meetingTime2.getTime()) {
-              console.log(meetingTime2);
-              classTime = formatDateString(meetingTime2.toISOString());
-              break;
-            }
-          }
-        } else {
-          return;
-        }
-      } if(classTime === '') {
-        alert.trigger('error', 'No upcoming classes found!')
-        return;
-      }
-        fetch('/api/remindStudents', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: normalizeCapitals(studentData.name),
-          email: studentData.email,
-          instructorEmail: instructorEmail,
-          otherInstructorEmails: otherInstructorEmails,
-          class: className,
-          classTime: classTime,
-          instructorName: normalizeCapitals(instructorName),
-        }),
-      }).then(async (res) => {
-        if (res.ok) {
-          alert.trigger('success', 'Reminder emails were sent!')
-        } else {
-          const { message } = await res.json()
-          alert.trigger('error', message)
-        }
-      });
-  }
-
-  function copyEmails() {
-    const email = studentData.email.concat(studentData.secondaryEmail ? ', ' + studentData.secondaryEmail : '')   
-
-    navigator.clipboard
-      .writeText(email)
-      .then(() => {
-        alert.trigger('success', 'Emails copied to clipboard!')
-      })
-      .catch((err) => {
-        alert.trigger('error', 'Failed to copy emails to clipboard!')
-      })
-  }
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
@@ -193,7 +112,17 @@
     <div class="mt-4 justify-center">
     {#each classes as value, i}
       <Card>
-          <div class="flex" style="justify-content:space-between;"><div style="align-content:center;"><h2 class="font-bold">Class {i+1} Information</h2></div><div><Button color = 'blue' on:click = {() => sendClassReminder(value.instructorFirstName, value.instructorEmail, value.otherInstructorEmails, value.course, value.meetingTimes)}>Send {value.course} Class Reminder To Student?</Button> </div></div>
+          <div class="flex" style="justify-content:space-between;"><div style="align-content:center;"><h2 class="font-bold">Class {i+1} Information</h2></div><div><Button color = 'blue' on:click = {() => sendClassReminder(
+            { 
+            studentData.name, 
+            studentData.email,
+            value.instructorFirstName, 
+            value.instructorEmail, 
+            value.otherInstructorEmails, 
+            value.course, 
+            value.meetingTimes
+            }
+            )}>Send {value.course} Class Reminder To Student?</Button> </div></div>
         <fieldset class="mt-4 space-y-4">
             <table style="border-collapse: collapse; width: 100%; text-align: left;">
                 <thead>
@@ -258,12 +187,12 @@
                     </tr>
                     </thead>
                     {#each attendance as att, i}
-                     {#if att.className === value.course && att.id.includes(value.id) && Object.keys(att.attended).includes(studentData.name)}
+                     {#if att.course === value.course && att.id.includes(value.id) && Object.keys(att.attendance).includes(studentData.name)}
                     <tbody>
                         <tr style="border-bottom: 1px solid #ccc;">
                         <td style="padding: 8px;">{att.classNumber}</td>
                         <td style="padding: 8px;">{att.date}</td>
-                        <td style="padding: 8px;">{att.attended[studentData.name]? 'Yes' : 'No'}</td>
+                        <td style="padding: 8px;">{att.attendance[studentData.name]? 'Yes' : 'No'}</td>
                         <td style="padding: 8px;">{att.feedback}</td>
                         </tr>
                     </tbody>
@@ -279,7 +208,7 @@
       <Card class="mb-4 mt-5">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="font-bold">Student Information</h2>
-          <Button on:click={copyEmails} class="flex items-center gap-1">
+          <Button on:click={() => copyEmails(studentData.email.concat(studentData.secondaryEmail ? ', ' + studentData.secondaryEmail : ''))} class="flex items-center gap-1">
             <svg
               fill="#000000"
               height="20"

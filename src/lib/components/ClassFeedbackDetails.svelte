@@ -17,7 +17,8 @@
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
-    import { instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
+  import { instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
+  import type { Student } from '$lib/data/types/Student'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -26,25 +27,16 @@
   let disabled = true
   let dbValues: Data.Registration<'client'>
 
-  let studentList: {
-    name: string
-    email: string
-    secondaryEmail: string
-    phone: string
-    grade: number
-    school: string
-  }[] = []
-
-  const defaultValues = {
-    courseName: '',
+  const defaultValues: Data.InstructorFeedback = {
+    course: '',
     instructorName: '',
     feedback: '',
     date: '',
-    classNumber: '',
-    attendanceList: {},
+    classNumber: 0,
+    attendance: [],
+    id: '',
+    students: [],
   }
-
-  let meetingTimes: string[] = []
 
   let values: any = cloneDeep(defaultValues)
   $: if (id !== undefined) {
@@ -62,47 +54,28 @@
     })
   }
 
-  const getStudentList = (studentUids: string[]) => {
-    studentUids.forEach((studentUid) => {
-      const studentDocRef = doc(db, registrationsCollection, studentUid)
-      getDoc(studentDocRef).then((studentDoc) => {
-        if (studentDoc.exists()) {
-          const data = studentDoc.data()
-          if (data) {
-            studentList.push({
-              name: `${data.personal.studentFirstName} ${data.personal.studentLastName}`,
-              email: data.personal.email,
-              secondaryEmail: data.personal.secondaryEmail,
-              phone: data.personal.phoneNumber,
-              grade: data.academic.grade,
-              school: data.academic.school,
-            })
-          }
-          studentList = [...studentList]
-        }
-      })
-    })
-  }
+  // const getStudentList = (studentUids: string[]) => {
+  //   studentUids.forEach((studentUid) => {
+  //     const studentDocRef = doc(db, registrationsCollection, studentUid)
+  //     getDoc(studentDocRef).then((studentDoc) => {
+  //       if (studentDoc.exists()) {
+  //         const data = studentDoc.data()
+  //         if (data) {
+  //           studentList.push({
+  //             name: `${data.personal.studentFirstName} ${data.personal.studentLastName}`,
+  //             email: data.personal.email,
+  //             secondaryEmail: data.personal.secondaryEmail,
+  //             phone: data.personal.phoneNumber,
+  //             grade: data.academic.grade,
+  //             school: data.academic.school,
+  //           })
+  //         }
+  //         studentList = [...studentList]
+  //       }
+  //     })
+  //   })
+  // }
 
-  function copyEmails() {
-    const emailList = studentList
-      .map(
-        (student) =>
-          `${student.email}${
-            student.secondaryEmail ? `, ${student.secondaryEmail}` : ''
-          }`,
-      )
-      .join(', ')
-
-    navigator.clipboard
-      .writeText(emailList)
-      .then(() => {
-        alert.trigger('success', 'Emails copied to clipboard!')
-      })
-      .catch((err) => {
-        alert.trigger('error', 'Failed to copy emails to clipboard!')
-      })
-  }
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
