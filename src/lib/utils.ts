@@ -1,6 +1,7 @@
 import type { ClassValue } from 'clsx'
 import clsx from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { alert } from '$lib/stores'
 
 export function cn(...classes: Array<ClassValue>) {
   return twMerge(clsx(...classes))
@@ -69,7 +70,6 @@ export function addDataToHtmlTemplate(html, template) {
   return htmlBody;
 }
 
-
 export function formatTime24to12(time24: string): string {
   // Split the string by ":" to obtain hours and minutes
   const [hours24, minutes] = time24.split(':')
@@ -87,4 +87,80 @@ export function formatTime24to12(time24: string): string {
     minute: 'numeric',
     hour12: true,
   })
+}
+
+export function formatClassTimes(
+  classDays: string[],
+  classTimes: string[],
+): string[] {
+  return classDays.map(
+    (day, index) => `${day} at ${formatTime24to12(classTimes[index])}`,
+  )
+}
+
+export const formatDate = (date: Date) => {
+  return date.toLocaleString('en-US', {
+    weekday: 'long', // long, short, narrow
+    month: 'long', // numeric, 2-digit, long, short, narrow
+    day: 'numeric', // numeric, 2-digit
+    hour: 'numeric', // numeric, 2-digit
+    minute: 'numeric', // numeric, 2-digit
+    hour12: true, // use 12-hour time format with AM/PM
+  })
+}
+
+export function formatDateString(dateString: string) {
+  const date = new Date(dateString)
+  return date.toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+export const formatDateShort = (date: Date) => {
+  return date.toLocaleString('en-US', {
+    weekday: 'short', // long, short, narrow
+    month: 'short', // numeric, 2-digit, long, short, narrow
+    day: 'numeric', // numeric, 2-digit
+  })
+}
+
+export const timestampToDate = (timestamp: Timestamp | Date) => {
+  return new Date(timestamp.seconds * 1000)
+}
+
+export const classHeldToday = (datesHeld: Date[], classTimeToday: Date) => {
+  return datesHeld.filter((date) => new Date().toDateString() === timestampToDate(date).toDateString() && new Date() > date).length > 0 || timestampToDate(classTimeToday) > new Date()
+}
+
+export const isClassUpcoming = (date: Date) => {
+  return date.getTime() > Date.now() && Math.abs(date.getTime() - new Date().getTime()) / (1000*60) < 30
+}
+
+export function normalizeCapitals(name: string) {
+  return name.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+}
+
+export const getNearestFutureClass = (meetingTimes: Date[]) => {
+   const nextIndex = meetingTimes.findIndex(schedule => new Date(timestampToDate(schedule)) > new Date())
+   return nextIndex === -1 ? 'No Upcoming Classes' : formatDate(timestampToDate(meetingTimes[nextIndex]))
+}
+
+export const getNearestFutureClassIndex = (meetingTimes: Date[]) => {
+  return meetingTimes.findIndex(schedule => new Date(timestampToDate(schedule)) > new Date())
+}
+
+export function copyEmails(email: string) {
+  navigator.clipboard
+    .writeText(email)
+    .then(() => {
+      alert.trigger('success', 'Emails copied to clipboard!')
+    })
+    .catch((err) => {
+      alert.trigger('error', 'Failed to copy emails to clipboard!')
+    })
 }

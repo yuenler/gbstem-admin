@@ -50,6 +50,7 @@ declare global {
       Subject: string,
       From: string,
       To: string,
+      Cc: string,
       HTMLBody: string,
       ReplyTo: string,
       MessageStream: 'outbound'
@@ -130,11 +131,13 @@ declare global {
 
     type InstructorFeedback = {
       instructorName: string
-      studentName: string
-      attendance: boolean
+      students: string[]
+      attendanceList: string[]
       date: string
-      course: string
+      courseName: string
       feedback: string
+      classNumber: number
+      id: string
     }
 
     type StudentFeedback = {
@@ -223,6 +226,26 @@ declare global {
       : T extends 'server'
       ? ServerTimestamp
       : Date
+    }
+
+    type Class = {
+      classCap: number
+      classDay1: string
+      classDay2: string
+      classTime1: string
+      classTime2: string
+      course: string
+      instructorEmail: string
+      otherInstructorEmails: string
+      instructorFirstName: string
+      instructorLastName: string
+      meetingLink: string
+      meetingTimes: Date[]
+      completedClassDates: Date[]
+      classStatuses: string[]
+      feedbackCompleted: boolean[]
+      online: boolean
+      students: string[]
     }
   }
 }

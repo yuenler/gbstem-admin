@@ -33,6 +33,7 @@
   import type { FirebaseError } from 'firebase/app'
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
+    import { registrationsCollection } from '$lib/data/collections'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -95,7 +96,7 @@
     loading = true
     disabled = true
     values = cloneDeep(defaultValues)
-    getDoc(doc(db, 'registrationsSpring24', id)).then(
+    getDoc(doc(db, registrationsCollection, id)).then(
       (registrationSnapshot) => {
         const data = registrationSnapshot.data() as Data.Registration<'client'>
         if (registrationSnapshot.exists()) {
@@ -115,7 +116,7 @@
     loading = true
     disabled = true
     if (id !== undefined) {
-      setDoc(doc(db, 'registrationsSpring24', id), values)
+      setDoc(doc(db, registrationsCollection, id), values)
         .then(() => {
           invalidate('app:registrations').then(() => {
             alert.trigger('success', 'Changes were saved successfully.')

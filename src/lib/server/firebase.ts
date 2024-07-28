@@ -23,7 +23,9 @@ try {
 }
 
 export const adminAuth = getAuth()
-export const adminDb = getFirestore()
+// export const adminDb = getFirestore()
+//FOR TESTING
+export const adminDb = getFirestore('gbstem-testing')
 
 export function verifyToken(token: string) {
   return new Promise<Data.Token<'server'>>((resolve, reject) => {

@@ -3,53 +3,37 @@ import type { PageServerLoad } from './$types'
 import { adminDb } from '$lib/server/firebase'
 import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
 import algoliasearch from 'algoliasearch'
-import { applicationsCollection } from '$lib/data/collections'
+import { registrationsCollection } from '$lib/data/collections'
 // import { db } from '$lib/client/firebase'
 
 export const load = (async ({ url, depends }) => {
-  depends('app:applications')
+  depends('app:registrations')
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
     const updated = url.searchParams.get('updated')
     const filter = url.searchParams.get('filter')
     try {
       let dbQuery;
-      // if (filter === 'decided') {
-      //   dbQuery = updated
-      //     ? adminDb
-      //       .collection('applications')
-      //       .where('meta.submitted', '==', true)
-      //       .orderBy('timestamps.updated')
-      //       .orderBy('meta.decision')
-      //       .where('meta.decision', '!=', null)
-      //       .startAfter(new Date(updated))
-      //     : adminDb
-      //       .collection('applications')
-      //       .where('meta.submitted', '==', true)
-      //       .orderBy('meta.decision')
-      //       .where('meta.decision', '!=', false)
-      //       .orderBy('timestamps.updated')
-      // }
-      // else
 
-      const collectionName = applicationsCollection
-      if (filter === 'undecided') {
+      const collectionName = registrationsCollection
+      if (filter === 'submitted') {
         dbQuery = updated
           ? adminDb
             .collection(collectionName)
             .where('meta.submitted', '==', true)
-            .orderBy('timestamps.updated', 'desc')
-            .orderBy('meta.decision')
-            .where('meta.decision', '==', null)
             .startAfter(new Date(updated))
           : adminDb
             .collection(collectionName)
             .where('meta.submitted', '==', true)
-            .orderBy('meta.decision')
-            .where('meta.decision', '==', null)
-            .orderBy('timestamps.updated', 'desc')
-      }
-      else {
+      } else if (filter === 'enrolled') {
+        dbQuery = updated
+          ? adminDb
+            .collection(collectionName)
+            .where('enrolled', '==', true)
+          : adminDb
+            .collection(collectionName)
+            .where('enrolled', '==', true)
+      } else {
         dbQuery = updated
           ? adminDb
             .collection(collectionName)
@@ -66,33 +50,18 @@ export const load = (async ({ url, depends }) => {
       // const snapshot = await dbQuery.limit(25).get()
       const snapshot = await dbQuery.get()
 
-
       // const snapshot = await dbQuery.get()
 
 
-      const decisions = (
-        await Promise.all(
-          snapshot.docs.map((doc) => {
-            const decision = (doc.data() as Data.Application<'server'>).meta
-              .decision
-            return decision ? decision.get() : null
-          }),
-        )
-      ).map((doc) =>
-        doc ? (doc.data() as { type: Data.Decision, likelyDecision: string, notes: string }) : null,
-      )
-
-
       return {
-        applications: snapshot.docs.map((doc, i) => {
-          const data = doc.data() as Data.Application<'server'>
+        registrations: snapshot.docs.map((doc) => {
+          const data = doc.data() as Data.Registration<'server'>
           return {
             id: doc.id,
             values: {
               ...data,
               meta: {
                 ...data.meta,
-                decision: decisions.at(i),
               },
               timestamps: {
                 updated: data.timestamps.updated.toDate(),
@@ -109,11 +78,11 @@ export const load = (async ({ url, depends }) => {
   } else {
     try {
       const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY)
-      const index = client.initIndex(applicationsCollection)
+      const index = client.initIndex(registrationsCollection)
       const { hits } = await index.search<
-        Omit<Data.Application<'server'>, 'meta' | 'timestamps'> & {
+        Omit<Data.Registration<'server'>, 'meta' | 'timestamps'> & {
           meta: {
-            id: string
+            hhid: string
             uid: string
             submitted: boolean
             decision: string | null
@@ -132,18 +101,17 @@ export const load = (async ({ url, depends }) => {
           }),
         )
       ).map((doc) =>
-        doc ? (doc.data() as { type: Data.Decision, likelyDecision: string, notes: string }) : null,
+        doc ? (doc.data() as { type: Data.Decision }).type : null,
       )
       return {
         query,
-        applications: hits.map((hit, i) => {
+        registrations: hits.map((hit, i) => {
           return {
             id: hit.objectID,
             values: {
               personal: hit.personal,
               academic: hit.academic,
               program: hit.program,
-              essay: hit.essay,
               agreements: hit.agreements,
               meta: {
                 ...hit.meta,

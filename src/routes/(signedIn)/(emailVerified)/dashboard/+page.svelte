@@ -9,9 +9,13 @@
     query,
     where,
     getDocs,
+    Timestamp,
   } from 'firebase/firestore'
   import { fade } from 'svelte/transition'
   import { alert } from '$lib/stores'
+  import { classHeldToday, isClassUpcoming, formatDate, normalizeCapitals, timestampToDate, getNearestFutureClass, getNearestFutureClassIndex } from '$lib/utils'
+    import { applicationsCollection, classesCollection } from '$lib/data/collections'
+    import sendClassReminder from '$lib/data/helpers/sendClassReminders'
 
   type DashboardData = {
     applications: {
@@ -26,11 +30,19 @@
     }
   }
 
+  type ClassToday = {
+    classNumber: number
+    class: Data.Class
+  }
+
+  let classesToday: ClassToday[] = [];
+
   let loading = true
   let uncompletedRegistrationsEmails = ''
   let uncompletedApplicationsEmails = ''
 
   let data: DashboardData
+
   user.subscribe((user) => {
     if (user) {
       let timer: number
@@ -39,9 +51,9 @@
           timer = window.setTimeout(resolve, 400)
         }),
         new Promise<void>((resolve) => {
-          const applicationsColl = collection(db, 'applicationsSpring24')
+          const applicationsColl = collection(db, applicationsCollection)
           const usersColl = collection(db, 'users')
-          const registrationsColl = collection(db, 'registrationsSpring24')
+          const registrationsColl = collection(db, applicationsCollection)
           // get uncompleted registration emails
           getDocs(
             query(registrationsColl, where('meta.submitted', '==', false)),
@@ -101,9 +113,26 @@
             },
           )
         }),
+
+        new Promise<void>((resolve) => {
+          const q = query(collection(db, classesCollection))
+          getDocs(q).then((snapshot) => {
+          snapshot.forEach((doc) => {
+          const meetingTimes: Timestamp[] = doc.data().meetingTimes;
+          for (let i = 0; i < Object.values(meetingTimes).length; i++){
+            const meetingTime = Object.values(meetingTimes).at(i) ? timestampToDate(Object.values(meetingTimes).at(i)) : new Date();
+          if (meetingTime && new Date().toLocaleDateString() === meetingTime.toLocaleDateString()) {
+            const classSession = doc.data() as Data.Class;
+            classesToday.push({class: classSession, classNumber: i});
+            }
+          }
+        });
+            resolve(console.log(classesToday));
+          });
+        }),
       ]).then(() => {
         loading = false
-      })
+      })     
       return () => window.clearTimeout(timer)
     }
   })
@@ -188,6 +217,50 @@
             <li>{data.users.total} total.</li>
           </ol>
         </Card>
+          <Card class="space-y-2">
+            <h2 class="text-xl font-bold">Classes Today</h2>
+            <ul class="list-none space-y-2">
+              {#each classesToday as classToday}
+                {#if isClassUpcoming(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}
+                  <li
+                      class="flex items-center justify-between rounded-lg p-4 bg-blue-100"
+                    >
+                    <p>{classToday.class.course}</p>
+                    <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
+                    <Button color = 'gray' on:click = {() => sendClassReminder({ instructorName: classToday.class.instructorFirstName, instructorEmail: classToday.class.instructorEmail, otherInstructorEmails: classToday.class.otherInstructorEmails, className: classToday.class.course, nextMeetingTime: formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))})}>Send Instructor Reminder</Button>
+                    <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}</p>
+                  </li>
+                {:else if !classHeldToday(classToday.class.completedClassDates, classToday.class.meetingTimes[getNearestFutureClassIndex(classToday.class.meetingTimes)])}
+                    <li
+                    class="flex items-center justify-between rounded-lg p-4 bg-red-100"
+                  >
+                  <p>{classToday.class.course}</p>
+                  <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
+                  <Button color = 'gray' on:click = {() => sendClassReminder({ instructorName: classToday.class.instructorFirstName, instructorEmail: classToday.class.instructorEmail, otherInstructorEmails: classToday.class.otherInstructorEmails, className: classToday.class.course, nextMeetingTime: formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))})}>Send Instructor Reminder</Button>
+                  <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}</p>
+                </li>
+                {:else if classToday.class.feedbackCompleted[classToday.classNumber] === false}
+                    <li
+                    class="flex items-center justify-between rounded-lg p-4 bg-yellow-100" 
+                  >
+                  <p>{classToday.class.course}</p>
+                  <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
+                  <Button color = 'gray' on:click = {() => sendClassReminder({ instructorName: classToday.class.instructorFirstName, instructorEmail: classToday.class.instructorEmail, otherInstructorEmails: classToday.class.otherInstructorEmails, className: classToday.class.course, nextMeetingTime: formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))})}>Send Instructor Reminder</Button>
+                  <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}</p>
+                </li>
+                {:else}
+                    <li
+                    class="flex items-center justify-between rounded-lg p-4 bg-green-100"
+                  >
+                  <p>{classToday.class.course}</p>
+                  <p>{classToday.class.instructorFirstName + " " + classToday.class.instructorLastName}</p>
+                  <Button color = 'gray' on:click = {() => sendClassReminder({ instructorName: classToday.class.instructorFirstName, instructorEmail: classToday.class.instructorEmail, otherInstructorEmails: classToday.class.otherInstructorEmails, className: classToday.class.course, nextMeetingTime: formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))})}>Send Instructor Reminder</Button>
+                  <p>{formatDate(timestampToDate(classToday.class.meetingTimes[classToday.classNumber]))}</p>
+                </li>
+                {/if}
+                {/each}
+            </ul>          
+          </Card>    
       </div>
     {/if}
   </div>

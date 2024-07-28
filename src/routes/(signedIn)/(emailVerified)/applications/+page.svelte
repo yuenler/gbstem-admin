@@ -13,6 +13,7 @@
   import { db } from '$lib/client/firebase'
   import { doc, setDoc, updateDoc } from 'firebase/firestore'
   import Select from '$lib/components/Select.svelte'
+    import { applicationsCollection } from '$lib/data/collections'
 
   export let data: PageData
   let dialogEl: Dialog
@@ -138,7 +139,7 @@
                   type: decision,
                 })
                   .then(() => {
-                    updateDoc(doc(db, 'applicationsSpring24', id), {
+                    updateDoc(doc(db, applicationsCollection, id), {
                       'meta.decision': doc(db, 'decisions', id),
                     })
                       .then(resolve)
@@ -250,7 +251,7 @@
     />
     <a
       href={filterRef}
-      class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
+      class="flex items-center inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
     >
       Filter
     </a>

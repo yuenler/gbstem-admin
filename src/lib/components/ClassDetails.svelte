@@ -21,28 +21,27 @@
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
+    import { copyEmails, formatDate, getNearestFutureClass, isClassUpcoming, normalizeCapitals, timestampToDate } from '$lib/utils'
+    import { classesCollection, registrationsCollection } from '$lib/data/collections'
+    import { ClassStatus } from '$lib/data/types/ClassStatus'
+    import sendClassReminder from '$lib/data/helpers/sendClassReminders'
+    import type Student from '$lib/data/types/Student'
+    import type ClassData from '$lib/data/types/ClassData'
 
   export let dialogEl: Dialog
   export let id: string | undefined
 
   let loading = true
   let disabled = true
-  let dbValues: Data.Registration<'client'>
 
-  let studentList: {
-    name: string
-    email: string
-    secondaryEmail: string
-    phone: string
-    grade: number
-    school: string
-  }[] = []
+  let studentList: Student[] = []
 
-  const defaultValues = {
+  let values: ClassData = {
     course: '',
     instructorFirstName: '',
     instructorLastName: '',
     instructorEmail: '',
+    otherInstructorEmails: '',
     classDay1: '',
     classTime1: '',
     classDay2: '',
@@ -51,34 +50,33 @@
     classCap: 0,
     online: true,
     gradeRecommendation: '',
+    classStatuses: [],
+    feedbackCompleted: [],
+    completedClassDates: [],
+    meetingTimes: [],
+    students: [],
+    id: '',
   }
 
-  let meetingTimes: string[] = []
-
-  let values: any = cloneDeep(defaultValues)
   $: if (id !== undefined) {
     studentList = []
     loading = true
     disabled = true
-    values = cloneDeep(defaultValues)
-    getDoc(doc(db, 'classesSpring24', id)).then((snapshot) => {
-      let data = snapshot.data() as any
+    getDoc(doc(db, classesCollection, id)).then((snapshot) => {
+      let data = snapshot.data() as ClassData
 
-      meetingTimes = data.meetingTimes.map((time: Timestamp) =>
-        new Date(time.seconds * 1000).toISOString(),
-      )
+      values.meetingTimes = data.meetingTimes.sort((a:Date, b:Date) => a - b)
 
       const studentUids = data.students
       if (studentUids) {
         getStudentList(studentUids)
       }
       if (snapshot.exists()) {
-        values = cloneDeep(data)
-        dbValues = cloneDeep(data)
+        values = data
       } else {
         alert.trigger('error', 'Registration not found.')
       }
-    })
+    }).then(checkStatuses)
   }
 
   function handleEdit() {
@@ -88,7 +86,7 @@
     loading = true
     disabled = true
     if (id !== undefined) {
-      setDoc(doc(db, 'classesSpring24', id), values)
+      setDoc(doc(db, classesCollection, id), values)
         .then(() => {
           invalidate('app:registrations').then(() => {
             alert.trigger('success', 'Changes were saved successfully.')
@@ -104,18 +102,43 @@
   }
   function handleDeleteChanges() {
     disabled = true
-    values = cloneDeep(dbValues)
+  }
+
+  /**
+   * Update the status of each class session in the array based on the current time. 
+   */
+  function checkStatuses() {
+    const { meetingTimes, classStatuses, feedbackCompleted } = values
+    for (let i = 0; i < meetingTimes.length; i++) {
+      if (
+        new Date().getTime() > new Date(meetingTimes[i]).getTime() &&
+        classStatuses[i] !== ClassStatus.EverythingComplete &&
+        classStatuses[i] !== ClassStatus.FeedbackIncomplete
+      ) {
+        classStatuses[i] = feedbackCompleted[i] ? ClassStatus.EverythingComplete : ClassStatus.ClassNotHeld
+      } else if (isClassUpcoming(new Date(meetingTimes[i]))) {
+        classStatuses[i] = ClassStatus.ClassUpcomingSoon
+      } else if (
+        classStatuses[i] === ClassStatus.FeedbackIncomplete &&
+        feedbackCompleted[i]
+      ) {
+        classStatuses[i] = ClassStatus.EverythingComplete
+      }
+    }
+    updateDoc(doc(db, classesCollection, id), {
+      classStatuses: classStatuses,
+    })
   }
 
   const getStudentList = (studentUids: string[]) => {
     studentUids.forEach((studentUid) => {
-      const studentDocRef = doc(db, 'registrationsSpring24', studentUid)
+      const studentDocRef = doc(db, registrationsCollection, studentUid)
       getDoc(studentDocRef).then((studentDoc) => {
         if (studentDoc.exists()) {
           const data = studentDoc.data()
           if (data) {
             studentList.push({
-              name: `${data.personal.studentFirstName} ${data.personal.studentLastName}`,
+              name: `${normalizeCapitals(data.personal.studentFirstName + ' ' + data.personal.studentLastName)}`,
               email: data.personal.email,
               secondaryEmail: data.personal.secondaryEmail,
               phone: data.personal.phoneNumber,
@@ -129,37 +152,6 @@
     })
   }
 
-  function formatDate(dateString: string) {
-    const date = new Date(dateString)
-    return date.toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
-  function copyEmails() {
-    const emailList = studentList
-      .map(
-        (student) =>
-          `${student.email}${
-            student.secondaryEmail ? `, ${student.secondaryEmail}` : ''
-          }`,
-      )
-      .join(', ')
-
-    navigator.clipboard
-      .writeText(emailList)
-      .then(() => {
-        alert.trigger('success', 'Emails copied to clipboard!')
-      })
-      .catch((err) => {
-        alert.trigger('error', 'Failed to copy emails to clipboard!')
-      })
-  }
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
@@ -173,13 +165,29 @@
         >
       {/if}
       <div class="flex gap-3">
-        <Button on:click={handleEdit}>Edit</Button>
-        <Button on:click={dialogEl.cancel}>Close</Button>
+        <Button color = 'green' on:click={handleEdit}>Edit</Button>
+        <Button color = 'red' on:click={dialogEl.cancel}>Close</Button>
+        <Button color = 'blue' on:click = {() => sendClassReminder({
+           studentList: studentList,
+            instructorName: values.instructorFirstName,
+            instructorEmail: values.instructorEmail,
+            otherInstructorEmails: values.otherInstructorEmails,
+            className: values.course,
+            nextMeetingTime: getNearestFutureClass(values.meetingTimes)
+        })}>Send Reminder To All Students</Button>
+        <Button color = 'blue' on:click = {() => sendClassReminder({
+            instructorName: values.instructorFirstName,
+            instructorEmail: values.instructorEmail,
+            otherInstructorEmails: values.otherInstructorEmails,
+            className: values.course,
+            nextMeetingTime: getNearestFutureClass(values.meetingTimes)
+        })}>Send Instructor Reminder</Button>
       </div>
     </Card>
     <div class="mt-4 flex justify-center">
       <Form>
         <fieldset class="mt-4 space-y-4" {disabled}>
+        <div class = "grid gap-1 sm:grid-cols-3 sm:gap-3">
           <Select
             bind:value={values.course}
             label="Course"
@@ -190,9 +198,17 @@
           <Input
             type="text"
             bind:value={values.gradeRecommendation}
+            floating
             label="Grade recommendation. For example, 3-5 or 6-8."
           />
-
+          <Input
+            type="number"
+            bind:value={values.classCap}
+            label="Class capacity"
+            floating
+            required
+          />
+        </div>
           {#if values.online}
             <Input
               type="text"
@@ -251,14 +267,6 @@
             {/if}
           </div>
           <Input
-            type="number"
-            bind:value={values.classCap}
-            label="Class capacity"
-            floating
-            required
-          />
-
-          <Input
             type="checkbox"
             bind:value={values.online}
             label="Class taught online?"
@@ -271,7 +279,7 @@
       <Card class="mb-4 mt-5">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="font-bold">Class List</h2>
-          <Button on:click={copyEmails} class="flex items-center gap-1">
+          <Button on:click={() => copyEmails(studentList.map((student) => `${student.email}${student.secondaryEmail ? `, ${student.secondaryEmail}` : ''}`,).join(', '))} class="flex items-center gap-1">
             <svg
               fill="#000000"
               height="20"
@@ -296,7 +304,7 @@
           </Button>
         </div>
         <div class="m-5" style="overflow: auto;">
-          <table style="border-collapse: collapse; width: 100%;">
+          <table style="border-collapse: collapse; width: 100%; text-align: left;">
             <thead>
               <tr>
                 <th
@@ -342,25 +350,58 @@
       </Card>
       <div>
         <table
-          class="grid grid-cols-2 justify-between gap-0"
+          class="grid grid-cols-1 justify-between gap-1"
           style="margin-top:1rem;"
         >
           <div>
             <div
-              class="bg-gray-100"
-              style="border-width:1px; border-style:solid; border-color:gray; padding:1rem;"
+              class="rounded-lg bg-gray-100 p-4 mb-2"
             >
-              Schedule
+              <strong>Schedule</strong>
             </div>
-            {#if meetingTimes}
-              {#each meetingTimes as meetingTime}
-                <div
-                  style="border-width:1px; border-style:solid; border-color:gray; padding:1rem;"
-                >
+            {#if values.meetingTimes}
+              {#each values.meetingTimes as meetingTime, i}
+              {#if values.classStatuses[i] === ClassStatus.EverythingComplete}
+              <div class="rounded-lg bg-green-100 p-4 mb-2">
+                <div class="flex items-center justify-between">
                   <p class="meeting-time">
-                    {formatDate(meetingTime)}
+                    {formatDate(timestampToDate(meetingTime))}
                   </p>
                 </div>
+                </div>
+              {:else if values.classStatuses[i] === ClassStatus.FeedbackIncomplete}
+              <div class="rounded-lg bg-yellow-100 p-4 mb-2">
+                <div class="flex items-center justify-between">
+                  <p class="meeting-time">
+                    {formatDate(timestampToDate(meetingTime))}
+                  </p>
+                </div>
+                </div>
+              {:else if values.classStatuses[i] === ClassStatus.ClassUpcomingSoon}
+                <div class="rounded-lg bg-blue-100 p-4 mb-2">
+                  <div class="flex items-center justify-between">
+                    <p class="meeting-time">
+                      {formatDate(timestampToDate(meetingTime))}
+                    </p>
+                  </div>
+                  </div>
+              {:else if values.classStatuses[i] === ClassStatus.ClassNotHeld}
+                  <div class="rounded-lg bg-red-100 p-4 mb-2">
+                    <div class="flex items-center justify-between">
+                      <p class="meeting-time">
+                        {formatDate(timestampToDate(meetingTime))}
+                      </p>
+                    </div>
+                    </div>
+              {:else}
+              <div class="rounded-lg bg-gray-100 p-4 mb-2">
+                <div class="flex items-center justify-between">
+                  <p class="meeting-time">
+                    {formatDate(timestampToDate(meetingTime))}
+                  </p>
+                </div>
+                </div>
+              {/if}
               {/each}
             {/if}
           </div>

@@ -16,23 +16,17 @@
   import Table from '$lib/components/Table.svelte'
   import { json } from '@sveltejs/kit'
   import { connectStorageEmulator } from 'firebase/storage'
+  import ClassFeedbackDetails from '$lib/components/ClassFeedbackDetails.svelte'
+  import Dialog from '$lib/components/Dialog.svelte'
+    import { instructorFeedbackCollection } from '$lib/data/collections'
 
   let showValidation = false
   let currentUser: Data.User.Store
   let scheduled = false
   let data: Data.InstructorFeedback[] = []
   let loading = true
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleString('en-US', {
-      weekday: 'short', // long, short, narrow
-      month: 'short', // numeric, 2-digit, long, short, narrow
-      day: 'numeric', // numeric, 2-digit
-      hour: 'numeric', // numeric, 2-digit
-      minute: 'numeric', // numeric, 2-digit
-      hour12: true, // use 12-hour time format with AM/PM
-    })
-  }
+  let dialogEl: Dialog
+  let selectedFeedbackId: string | undefined = undefined
 
   onMount(() => {
     return user.subscribe(async (user) => {
@@ -45,58 +39,75 @@
   })
 
   async function getData() {
-    const q = query(collection(db, 'instructorFeedback24'))
+    const q = query(collection(db, instructorFeedbackCollection))
     const classFeedback = await getDocs(q)
     classFeedback.forEach(async (document) => {
       const session = document.data()
-      const keys = Object.keys(session.attendanceList)
-      keys.forEach((key) => {
-        let tempClass: Data.InstructorFeedback = {
+      let tempClass: Data.InstructorFeedback = {
           instructorName: '',
-          studentName: '',
+          students: [],
           feedback: '',
-          attendance: false,
+          attendance: [],
           course: '',
           date: '',
+          classNumber: 0,
+          id: document.id,
         }
+        tempClass.students = Object.keys(session.attendanceList)        
         tempClass.instructorName = session.instructorName
         tempClass.date = session.date
         tempClass.feedback = session.feedback
-        tempClass.studentName = key
         tempClass.course = session.courseName
-        tempClass.attendance = session.attendanceList[key].present
+        tempClass.attendance = Object.values(session.attendanceList)
+        tempClass.classNumber = session.classNumber
         data.push(tempClass)
       })
-    })
     return data
   }
+
+  function getAttendancePercent(value: Data.InstructorFeedback) {
+    const attended = value.attendance.filter((attended) => attended.present === true).length 
+    const total = value.students.length
+    return `${(attended / total) * 100}%`
+  }
+
 </script>
+
+<ClassFeedbackDetails bind:dialogEl id={selectedFeedbackId} />
 
 {#await data then feedback}
   <Table>
     <svelte:fragment slot="head">
       <th scope="col" class="px-6 py-3">Instructor Name</th>
-      <th scope="col" class="px-6 py-3">Student Name</th>
       <th scope="col" class="px-6 py-3">Course</th>
+      <th scope="col" class="px-6 py-3">Class Number</th>
       <th scope="col" class="px-6 py-3">Date</th>
-      <th scope="col" class="px-6 py-3">Attendance</th>
+      <th scope="col" class="px-6 py-3">Attendance Percent</th>
       <th scope="col" class="px-6 py-3">Feedback</th>
     </svelte:fragment>
     <svelte:fragment slot="body">
       {#each feedback as value}
-        <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer">
-          <td class="px-6 py-4">
-            {`${value.instructorName}`}
-          </td>
-          <td class="px-6 py-4"> {value.studentName} </td>
-          <td class="px-6 py-4">
-            {value.course}
-          </td>
-          <td class="px-6 py-4">{value.date}</td>
-          <td class="px-6 py-4">{value.attendance}</td>
-          <td class="px-6 py-4">
-            {value.feedback}
-          </td>
+        <tr
+          class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
+          on:click={() => {
+            selectedFeedbackId = value.id
+            dialogEl.open()
+          }}
+        >
+        <td class="px-6 py-4">
+          {`${value.instructorName}`}
+        </td>
+        <td class="px-6 py-4">
+          {value.course}
+        </td>
+        <td class="px-6 py-4">
+          {value.classNumber}
+        </td>
+        <td class="px-6 py-4">{value.date}</td>
+        <td class="px-6 py-4">{getAttendancePercent(value)}</td>
+        <td class="px-6 py-4">
+          {value.feedback}
+        </td>
         </tr>
       {/each}
     </svelte:fragment>

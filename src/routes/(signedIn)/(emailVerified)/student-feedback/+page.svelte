@@ -16,23 +16,13 @@
     import Table from '$lib/components/Table.svelte'
     import { json } from '@sveltejs/kit'
     import { connectStorageEmulator } from 'firebase/storage'
+    import { classFeedbackCollection } from '$lib/data/collections'
   
     let showValidation = false
     let currentUser: Data.User.Store
     let scheduled = false
     let data: Data.StudentFeedback[] = []
     let loading = true
-  
-    const formatDate = (date: Date) => {
-      return date.toLocaleString('en-US', {
-        weekday: 'short', // long, short, narrow
-        month: 'short', // numeric, 2-digit, long, short, narrow
-        day: 'numeric', // numeric, 2-digit
-        hour: 'numeric', // numeric, 2-digit
-        minute: 'numeric', // numeric, 2-digit
-        hour12: true, // use 12-hour time format with AM/PM
-      })
-    }
   
     onMount(() => {
       return user.subscribe(async (user) => {
@@ -45,7 +35,7 @@
     })
   
     async function getData() {
-      const q = query(collection(db, 'classFeedback24'))
+      const q = query(collection(db, classFeedbackCollection))
       const classFeedback = await getDocs(q)
       classFeedback.forEach(async (document) => {
         const session = document.data()
