@@ -247,5 +247,19 @@ declare global {
       online: boolean
       students: string[]
     }
+
+    type SubRequest = {
+      id: string
+      classNumber: number
+      course: string
+      dateOfClass: Date
+      originalInstructorEmail: string
+      subInstructorId: string
+      subInstructorFirstName: string
+      subInstructorEmail: string
+      subRequestStatus: SubRequestStatus
+      link: string
+      notes: string
+    }
   }
 }

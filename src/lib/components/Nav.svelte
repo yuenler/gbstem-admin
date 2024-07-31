@@ -60,7 +60,10 @@
       name: 'Instructor Feedback',
       href: '/instructor-feedback',
     },
-    
+    {
+      name: 'Sub Requests Log',
+      href: '/sub-requests',
+    },
   ]
   function updateShadow() {
     shadow = window.scrollY !== 0
