@@ -70,7 +70,6 @@
   }
   function handleCreate() {
     create = true
-    console.log('hi')
   }
   function handleCopyAction(token: { id: string; values: Data.Token<'pojo'> }) {
     navigator.clipboard
