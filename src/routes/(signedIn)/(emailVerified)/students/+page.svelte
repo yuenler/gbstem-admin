@@ -131,7 +131,6 @@
     function bypassAgeLimits(id:string) {
       getDoc(doc(db, registrationsCollection, id)).then((applicationSnapshot) => {
         if (applicationSnapshot.exists()) {
-          console.log(applicationSnapshot.data().agreements.bypassAgeLimits)
           updateDoc(doc(db, registrationsCollection, id), {'agreements.bypassAgeLimits': !applicationSnapshot.data().agreements.bypassAgeLimits});
         }
       })
