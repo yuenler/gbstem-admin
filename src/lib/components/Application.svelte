@@ -588,7 +588,7 @@
             <Input
               type="checkbox"
               bind:value={values.program.inPerson}
-              label="gbSTEM will offer some in-person classes at the Cambridge Public Library. Check this box if you would be able to conduct in-person lessons on Saturdays 2:30-4:30pm."
+              label="For our in-person offering in the fall, gbSTEM is holding a new Lego Robotics competition program for students grade 5 and up. The program will meet weekly in-person at the Cambridge Public Library on Saturdays 1:00-3:00pm; parents are encouraged to help coach the robotics team. There are 10 slots available this year and will be more in the future. You may apply for this program on top of two courses, but if you are selected you will only be able to enroll in one additional course. Would you like to apply for the robotics program?"
             />
 
             <div class="mt-2">

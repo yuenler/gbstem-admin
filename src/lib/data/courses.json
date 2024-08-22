@@ -15,19 +15,19 @@
     "name": "Web Development"
   },
   {
-    "name": "Mathematics 1b"
+    "name": "Mathematics 1a"
   },
   {
-    "name": "Mathematics 2b"
+    "name": "Mathematics 2a"
   },
   {
-    "name": "Mathematics 3b"
+    "name": "Mathematics 3a"
   },
   {
-    "name": "Mathematics 4b"
+    "name": "Mathematics 4a"
   },
   {
-    "name": "Mathematics 5b"
+    "name": "Mathematics 5a"
   },
   {
     "name": "Engineering I"
@@ -40,5 +40,8 @@
   },
   {
     "name": "Environmental Science"
+  },
+  {
+    "name": "Lego Robotics Competition"
   }
 ]
