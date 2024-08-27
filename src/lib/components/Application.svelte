@@ -98,7 +98,7 @@
     interviewer: '',
     notes: '',
     type: 'interview',
-    likelyDecision: 'likely waitlist',
+    likelyDecision: 'likely no',
     attendance: 'No-Show',
     conversation: 0,
     conversationNotes: '',
@@ -211,6 +211,7 @@
           })
             .then(() => {
               invalidate('app:applications').then(() => {
+                console.log(newDecision)
                 alert.trigger('success', 'Decision updated successfully.')
                 likelyDecision = newDecision
                 loading = false
