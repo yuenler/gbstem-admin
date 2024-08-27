@@ -170,8 +170,9 @@
     const frozenId = id
     loading = true
     if (frozenId !== undefined) {
+      const { conversation, conversationNotes, mockLessonExplanations, mockLessonEngagement, mockLessonPace, mockLessonOverall, mockLessonNotes, teachingPreferences, availabilityNotes, notes, likelyDecision, lastSemesterNotes, date, interviewer, type, attendance } = interview
       setDoc(doc(db, decisionsCollection, frozenId), {
-        interview,
+        conversation, conversationNotes, mockLessonExplanations, mockLessonEngagement, mockLessonPace, mockLessonOverall, mockLessonNotes, teachingPreferences, availabilityNotes, notes, likelyDecision, lastSemesterNotes, date, interviewer, type, attendance
       })
         .then(() => {
           updateDoc(doc(db, applicationsCollection, frozenId), {
