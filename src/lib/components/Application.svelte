@@ -780,14 +780,14 @@
         <div>Continue onto the mock lessons. Send the link for the candidate’s top subject to teach. Allow each candidate 3 minutes to familiarize themselves with the lesson before having them share their screen to present it to you. Note their delivery, audience engagement, ability to speak slowly and clearly, quality of explanations, as well as their attitude.</div>
         <div class="font-bold mt-8">Mock Lesson Materials</div>
         <div class ="flex gap-4">
-          <Button class="bg-gray-200" href="https://docs.google.com/presentation/d/1dtv0qWFLNg3pjnlPCkm8nKEkEU_m5-dcLVMNEJmwFjk/edit#slide=id.g11b679f5bf6_0_9">Math</Button>
-          <Button color="green" href="https://docs.google.com/presentation/d/15aI-M8eEPKsFGpodmZ_oi4MWQKzTJ8Jrup4C7oFgSls/edit#slide=id.g2085bab7786_0_0">Environmental Science</Button>
-          <Button color="yellow" href="https://docs.google.com/presentation/d/1yf3ZOVCFgwILyihaG_sJonevv3cIiUMNvDlwJVarCto/edit#slide=id.g2085d4bbb38_0_4125">Engineering</Button>
+          <Button class="bg-gray-200" href="https://docs.google.com/presentation/d/1dtv0qWFLNg3pjnlPCkm8nKEkEU_m5-dcLVMNEJmwFjk/edit#slide=id.g11b679f5bf6_0_9" target="_blank">Math</Button>
+          <Button color="green" href="https://docs.google.com/presentation/d/15aI-M8eEPKsFGpodmZ_oi4MWQKzTJ8Jrup4C7oFgSls/edit#slide=id.g2085bab7786_0_0" target="_blank">Environmental Science</Button>
+          <Button color="yellow" href="https://docs.google.com/presentation/d/1yf3ZOVCFgwILyihaG_sJonevv3cIiUMNvDlwJVarCto/edit#slide=id.g2085d4bbb38_0_4125" target="_blank">Engineering</Button>
         </div>
         <div class = "flex gap-4 mt-4">
-          <Button color="blue" href="https://docs.google.com/document/d/1ruPmF-SRdWQ_LlilQz0PBFX1p7gDpfGZ1jVBmSpdgyI/edit#">Scratch</Button>
-          <Button color="blue" href="https://docs.google.com/document/d/1-Q40jjtKjt1dvX09qndC1ZEA7amiieAQgXF8qPDEvOE/edit">Python I</Button>
-          <Button color="blue" href="https://docs.google.com/document/d/1LonFfZTQOwjz_QeZbRHb_RFVq_EntkVu64BBca2TVGw/edit">Web Dev</Button>
+          <Button color="blue" href="https://docs.google.com/document/d/1ruPmF-SRdWQ_LlilQz0PBFX1p7gDpfGZ1jVBmSpdgyI/edit#" target="_blank">Scratch</Button>
+          <Button color="blue" href="https://docs.google.com/document/d/1-Q40jjtKjt1dvX09qndC1ZEA7amiieAQgXF8qPDEvOE/edit" target="_blank">Python I</Button>
+          <Button color="blue" href="https://docs.google.com/document/d/1LonFfZTQOwjz_QeZbRHb_RFVq_EntkVu64BBca2TVGw/edit" target="_blank">Web Dev</Button>
         </div>
         </div>
         <Input
