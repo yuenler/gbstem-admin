@@ -202,7 +202,7 @@
     loading = true
     if (frozenId !== undefined) {
       updateDoc(doc(db, decisionsCollection, frozenId), {
-        'likelyDecision': newDecision,
+        likelyDecision: newDecision,
         'type': decision,
       })
         .then(() => {
