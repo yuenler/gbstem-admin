@@ -131,8 +131,22 @@
           getDoc(data.meta.decision).then((decisionSnapshot) => {
             const data = decisionSnapshot.data() as Data.Interview
             if (decisionSnapshot.exists()) {
-              interview = data
-              decision = data.type ?? null
+              const { type, likelyDecision, notes, interviewer, attendance, conversation, conversationNotes, lastSemesterNotes, mockLessonEngagement, mockLessonExplanations, mockLessonNotes, mockLessonPace, mockLessonOverall, teachingPreferences, availabilityNotes } = data
+              decision = type ?? null
+              interview.likelyDecision = likelyDecision ?? null
+              interview.notes = notes ?? ''
+              interview.interviewer = interviewer ?? ''
+              interview.attendance = attendance ?? ''
+              interview.conversation = conversation ?? 0
+              interview.conversationNotes = conversationNotes ?? ''
+              interview.lastSemesterNotes = lastSemesterNotes ?? ''
+              interview.mockLessonExplanations = mockLessonExplanations ?? 0
+              interview.mockLessonNotes = mockLessonNotes ?? ''
+              interview.mockLessonPace = mockLessonPace ?? 0
+              interview.mockLessonOverall = mockLessonOverall ?? 0
+              interview.teachingPreferences = teachingPreferences ?? ''
+              interview.mockLessonEngagement = mockLessonEngagement ?? 0
+              interview.availabilityNotes = availabilityNotes ?? ''
             } else {
               decision = null
               likelyDecision = null
