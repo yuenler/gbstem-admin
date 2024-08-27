@@ -147,7 +147,7 @@
               interview.teachingPreferences = teachingPreferences ?? ''
               interview.mockLessonEngagement = mockLessonEngagement ?? 0
               interview.availabilityNotes = availabilityNotes ?? ''
-              interview.date = toLocalISOString(timestampToDate(date)) ?? ''
+              interview.date = toLocalISOString(new Date(date)) ?? ''
             } else {
               decision = null
               likelyDecision = null
@@ -202,8 +202,8 @@
     loading = true
     if (frozenId !== undefined) {
       updateDoc(doc(db, decisionsCollection, frozenId), {
-        likelyDecision: newDecision,
-        type: decision,
+        'likelyDecision': newDecision,
+        'type': decision,
       })
         .then(() => {
           updateDoc(doc(db, applicationsCollection, frozenId), {
@@ -251,9 +251,8 @@
     loading = true
     if (frozenId !== undefined) {
       updateDoc(doc(db, decisionsCollection, frozenId), {
-        type: newDecision,
-        likelyDecision,
-        notes,
+        'type': newDecision,
+        'likelyDecision': likelyDecision,
       })
         .then(() => {
           updateDoc(doc(db, applicationsCollection, frozenId), {
