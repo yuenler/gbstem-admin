@@ -848,8 +848,9 @@
         <div>Mark <strong>Likely Yes</strong> or <strong>Likely No</strong> depending on your decision recommendation. Be careful NOT to click "Interview", "Accept", "Waitlist", or "Reject".</div>  
         </div>
         <Textarea
-          bind:value={notes}
-          label="This is a space for notes on your recommendation, if you feel that it needs further explanation."
+          bind:value={interview.notes}
+          label="Please briefly summarize the reasoning behind your recommendation."
+          required 
         />
       <div class="my-2 mt-4 font-bold">Once you have completed this form, click "Save Notes" to submit it!</div>
       <div class="flex justify-start gap-4">
