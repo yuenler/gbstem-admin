@@ -32,8 +32,6 @@
     import { applicationsCollection, decisionsCollection, semesterDatesDocument } from '$lib/data/collections'
 
   export let dialogEl: Dialog
-  
-  let interviewDialogEl: Dialog
   export let id: string | undefined
 
   let loading = true
@@ -336,7 +334,6 @@
     <Card>
       <div class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
         <fieldset class="flex gap-3" disabled={loading}>
-          <Button color="green" on:click={() => showInterviewForm = !showInterviewForm}>{showInterviewForm ? "Close Interview Form" : "Show Interview Form"}</Button>
           {#if disabled}
             <Button
               color={!loading &&
@@ -474,6 +471,7 @@
             >
           {/if}
         </fieldset>
+        <Button color="green" on:click={() => showInterviewForm = !showInterviewForm}>{showInterviewForm ? "Close Interview Form" : "Show Interview Form"}</Button>
         <div class="flex gap-3">
           {#if disabled}
             <Button on:click={handleEdit}>Edit</Button>
@@ -483,7 +481,7 @@
       </div>    
     </Card>
     <div class="mt-4 flex justify-center">
-      {#if showInterviewForm}
+      {#if !showInterviewForm}
       <Form class="max-w-2xl">
         <fieldset class="space-y-14" {disabled}>
           <div class="grid gap-1">
@@ -667,7 +665,7 @@
                 <Input
                   type="checkbox"
                   bind:value={values.agreements.entireProgram}
-                  label="gbSTEM will run from September 24th to December 23rd. Do you confirm that you will be able to teach for the entirety of the program?"
+                  label="gbSTEM will run from September 29th to December 21st. Do you confirm that you will be able to teach for the entirety of the program?"
                   required
                 />
                 <Input
@@ -689,7 +687,6 @@
       </Form>
       {:else}
       <Form class="max-w-2xl">
-        <Button on:click={() => showInterviewForm = false}>Close</Button>
       <div class="flex justify-start gap-8">
         <Input
           type="text"
@@ -722,19 +719,70 @@
           floating
           required
         />
+        <ul>          
+          <li>Greet the candidate when they arrive & ask them how they are, general conversational beginning. Try to be personable and make them comfortable!</li>
+          <li>Introduce yourself: name, grade, school, and role at gbSTEM. For example: “I’ll start by introducing myself. My name is __________, and I am a [GRADE] at [SCHOOL] high school. I have been an instructor at gbSTEM for [NUM SEMESTERS] semesters and am currently a [ROLE AT gbSTEM] at gbSTEM.”</li>
+          <li>If they are a new candidate: ask them to introduce themselves. For example: “Could you tell me a little about yourself?” Ask them some questions. In addition to getting to know them, we want to get a good idea of how they interact!</li>
+        </ul>
         <Input
           type="number"
           bind:value={interview.conversation}
           min="-5"
           max="5"
-          label="Please rank the camdidate's friendliness and how well you think they would work with children on a -5 to 5 scale, -5 being the worst and 5 being the best."
+          label="Please rank the candidate's friendliness and how well you think they would work with children on a -5 to 5 scale, -5 being the worst and 5 being the best."
           required
         />
         <Textarea
           bind:value={interview.conversationNotes}
           label="Conversation Notes"
+          optional
+        />
+        <div>
+          Clarify the subject they are applying to teach for (plus the level), clarify if there are other subjects that they could be considered for. Ask them to state their preferences, such as top 3.
+        </div>
+        <Textarea
+          bind:value={interview.teachingPreferences}
+          label="What courses does the candidate want to teach?"
           required
         />
+        {#if values.essay.taughtBefore}
+          <div>Ask them about their experience as an instructor. For example, “You're a returning instructor, correct? I would like to take some time to talk about your experience last semester. Could you give me an overview of the good, the bad, anything that can be improved?” </div>
+          <div>Followup questions about their experience, as needed:</div>
+          <ul>
+            <li>How did you find the curriculum? Were there any parts that were too fast, too slow?</li>
+            <li>Did your students enjoy the class? Were they engaged, and do you feel like they learned the content well?</li>
+            <li>How was student attendance?</li>
+            <li>Did you have any issues with technology, such as the Free Zoom limit, WiFi, anything?</li>
+            <li>Did you feel supported by your track leadership if you had questions, and informed about events?</li>
+            <li>How do you think you can improve as an instructor this semester?</li>
+          </ul>
+          <Textarea
+            bind:value={interview.lastSemesterNotes}
+            label="Last semester notes"
+            required
+          />   
+        {:else}  
+          <div>Talk a little about the logistics of being an instructor.</div>
+          <ul>
+            <li>Classes meet twice a week; 60 min</li>
+            <li>Most classes will take place through Microsoft Teams (link will be provided for you). This is something new we are trying this year, so we may fall back on Zoom/Google Meet if needed.</li>
+            <li>Class sizes are usually between 5-15 students, but keep in mind that not every student will be able to attend every class session.</li>
+            <li>The curriculum for your classes will be provided to you and accessible on the portal.</li>
+            <li>You'll be able to check in with the curriculum developer and director for your course regularly to give feedback & ask questions</li>
+            <li>Do you have any questions?</li>
+          </ul>
+        {/if}
+        <div>Continue onto the mock lessons. Send the link for the candidate’s top subject to teach. Allow each candidate 3 minutes to familiarize themselves with the lesson before having them share their screen to present it to you. Note their delivery, audience engagement, ability to speak slowly and clearly, quality of explanations, as well as their attitude.</div>
+        <div class ="flex gap-4">
+          <Button color="gray" href="https://docs.google.com/presentation/d/1dtv0qWFLNg3pjnlPCkm8nKEkEU_m5-dcLVMNEJmwFjk/edit#slide=id.g11b679f5bf6_0_9">Math Mock Lesson Materials</Button>
+          <Button color="green" href="https://docs.google.com/presentation/d/15aI-M8eEPKsFGpodmZ_oi4MWQKzTJ8Jrup4C7oFgSls/edit#slide=id.g2085bab7786_0_0">Environmental Science Mock Lesson Materials</Button>
+          <Button color="yellow" href="https://docs.google.com/presentation/d/1yf3ZOVCFgwILyihaG_sJonevv3cIiUMNvDlwJVarCto/edit#slide=id.g2085d4bbb38_0_4125">Engineering Mock Lesson Materials</Button>
+        </div>
+        <div class = "flex gap-4 mt-4">
+          <Button color="blue" href="https://docs.google.com/document/d/1ruPmF-SRdWQ_LlilQz0PBFX1p7gDpfGZ1jVBmSpdgyI/edit#">Scratch Mock Lesson Materials</Button>
+          <Button color="blue" href="https://docs.google.com/document/d/1-Q40jjtKjt1dvX09qndC1ZEA7amiieAQgXF8qPDEvOE/edit">Python I Mock Lesson Materials</Button>
+          <Button color="blue" href="https://docs.google.com/document/d/1LonFfZTQOwjz_QeZbRHb_RFVq_EntkVu64BBca2TVGw/edit">Web Dev Mock Lesson Materials</Button>
+        </div>
         <Input
           type="number"
           bind:value={interview.mockLessonExplanations}
@@ -772,16 +820,22 @@
           label="Mock lesson notes. What went well? What could be improved? If there was a low pacing score, why -- too fast or too slow?"
           required
         />
-        <Textarea
-          bind:value={interview.teachingPreferences}
-          label="What are the candidate's teaching preferences?"
-          required
-        />
+        <div>
+          Continue:
+        </div>
+        <ul>
+          <li>Outline that classes meet twice a week from September 29th to December 21st. Ask if they have any known scheduling conflicts, days they will have to miss, or days of the week they can't make.</li>
+          <li>Remind them that, as the teacher, they are obviously required to go to all classes and show up on time, and they should also prepare for the class before the class happens by looking through the curriculum.</li>
+          <li>Additionally, emphasize that we expect them to respond to emails and slack messages within 24 hours.</li>
+          <li>Ask if they are meet all of the above expectations, and if there is anything we can help them with to make sure they are able to do all this.”</li>
+        </ul>
         <Textarea
           bind:value={interview.availabilityNotes}
           label="Availability notes. When is the candidate not available? Are there any potential concerns with the candidate's availability?"
           required
         />
+        <div>Thank them for speaking with you, and let them know that they can reach us at contact@gbstem.org. Additionally, tell them that if they are accepted, instructor orientation will be on Sept. 20th, so they should mark their calendars for that.</div>
+        <div>Once you have completed this form, click "Save Notes" to submit it!</div>
       </div>
      </Form>
       {/if}
