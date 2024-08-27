@@ -471,9 +471,9 @@
             >
           {/if}
         </fieldset>
-        <Button color="green" on:click={() => showInterviewForm = !showInterviewForm}>{showInterviewForm ? "Close Interview Form" : "Show Interview Form"}</Button>
         <div class="flex gap-3">
-          {#if disabled}
+          <Button color="green" on:click={() => showInterviewForm = !showInterviewForm}>{showInterviewForm ? "Close Interview Form" : "Show Interview Form"}</Button>
+          {#if disabled && !showInterviewForm}
             <Button on:click={handleEdit}>Edit</Button>
           {/if}
           <Button on:click={dialogEl.cancel}>Close</Button>
@@ -688,14 +688,6 @@
       {:else}
       <Form class="max-w-2xl">
       <div class="flex justify-start gap-8">
-        <Input
-          type="text"
-          bind:value={notes}
-          label="Notes"
-          floating
-          class="w-96"
-        />
-        <Button color="green" on:click={saveNotes}>Save Notes</Button>
       </div>
       <div>
         <Input
@@ -835,7 +827,16 @@
           required
         />
         <div>Thank them for speaking with you, and let them know that they can reach us at contact@gbstem.org. Additionally, tell them that if they are accepted, instructor orientation will be on Sept. 20th, so they should mark their calendars for that.</div>
-        <div>Once you have completed this form, click "Save Notes" to submit it!</div>
+        <div>Mark "Likely Yes" or "Likely No" depending on your decision recommendation. Be careful NOT to click "Interview", "Accept", "Waitlist", or "Reject".</div>  
+        <Textarea
+          bind:value={notes}
+          label="This is a space for notes on your recommendation, if you feel that it needs further explanation."
+        />
+      <div>Once you have completed this form, click "Save Notes" to submit it!</div>
+      <div class="flex justify-end">
+        <Button color="green" on:click={saveNotes}>Save Notes</Button>
+        <Button color="red" on:click={() => showInterviewForm = false}>Close Interview Form</Button> 
+      </div>
       </div>
      </Form>
       {/if}
