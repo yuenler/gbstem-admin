@@ -335,9 +335,9 @@
     <Card>
       <div class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
         <fieldset class="flex gap-3" disabled={loading}>
-          <Button color="green" on:click={interviewDialogEl.open}>Interview Form</Button>
+          <Button color="green" on:click={() => interviewDialogEl.open()}>Interview Form</Button>
           <Dialog bind:this={interviewDialogEl} size="full" alert>
-            <div class="sticky top-2 z-50 p-3 md:p-3">
+            <div class="sticky top-2 z-100 p-3 md:p-3">
               <Button on:click={interviewDialogEl.cancel}>Close</Button>
             <div class="flex justify-start gap-8">
               <Input
