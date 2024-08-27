@@ -32,6 +32,8 @@
     import { applicationsCollection, decisionsCollection, semesterDatesDocument } from '$lib/data/collections'
 
   export let dialogEl: Dialog
+  
+  let interviewDialogEl: Dialog
   export let id: string | undefined
 
   let loading = true
@@ -90,9 +92,31 @@
       updated: serverTimestamp() as Timestamp,
     },
   }
+
+  const defaultInterview: Data.Interview = {
+    date: '',
+    interviewer: '',
+    notes: '',
+    type: 'interview',
+    likelyDecision: 'likely waitlist',
+    attendance: 'noShow',
+    conversation: 0,
+    conversationNotes: '',
+    lastSemesterNotes: '',
+    mockLessonExplanations: 0,
+    mockLessonEngagement: 0,
+    mockLessonPace: 0,
+    mockLessonOverall: 0,
+    mockLessonNotes: '',
+    teachingPreferences: '',
+    availabilityNotes: '',
+  }
+
+  let interview: Data.Interview = cloneDeep(defaultInterview)
+
   let values: Data.Application<'client'> = cloneDeep(defaultValues)
   let decision: Data.Decision | null
-  let likelyDecision: 'likely yes' | 'likely no' | null
+  let likelyDecision: 'likely yes' | 'likely no' | 'likely waitlist' | null
   let notes = ''
   $: if (id !== undefined) {
     loading = true
@@ -105,15 +129,10 @@
         dbValues = cloneDeep(data)
         if (data.meta.decision) {
           getDoc(data.meta.decision).then((decisionSnapshot) => {
-            const data = decisionSnapshot.data() as {
-              type: Data.Decision
-              likelyDecision: 'likely yes' | 'likely no'
-              notes: string
-            }
+            const data = decisionSnapshot.data() as Data.Interview
             if (decisionSnapshot.exists()) {
+              interview = data
               decision = data.type ?? null
-              likelyDecision = data.likelyDecision ?? null
-              notes = data.notes ?? ''
             } else {
               decision = null
               likelyDecision = null
@@ -138,9 +157,7 @@
     loading = true
     if (frozenId !== undefined) {
       setDoc(doc(db, decisionsCollection, frozenId), {
-        likelyDecision,
-        type: decision,
-        notes,
+        interview,
       })
         .then(() => {
           updateDoc(doc(db, applicationsCollection, frozenId), {
@@ -304,6 +321,105 @@
     <Card>
       <div class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
         <fieldset class="flex gap-3" disabled={loading}>
+          <Button color="green" on:click={interviewDialogEl.open}>Interview Form</Button>
+          <Dialog bind:this={interviewDialogEl} size="full" alert>
+            <div class="sticky top-2 z-50 p-3 md:p-3">
+              <Button on:click={interviewDialogEl.cancel}>Close</Button>
+            <div class="flex justify-start gap-8">
+              <Input
+                type="text"
+                bind:value={notes}
+                label="Notes"
+                floating
+                class="w-96"
+              />
+              <Button color="green" on:click={saveNotes}>Save Notes</Button>
+            </div>
+            <div>
+              <Input
+                type="datetime-local"
+                bind:value={interview.date}
+                label="Interview Date"
+                floating
+                required
+              />
+              <Input 
+                type="text"
+                bind:value={interview.interviewer}
+                label="Interviewer"
+                floating
+                required
+              />
+              <Select
+                type="text"
+                bind:value={interview.attendance}
+                label="Attendance"
+                floating
+                required
+              />
+              <Input
+                type="number"
+                bind:value={interview.conversation}
+                min="-5"
+                max="5"
+                label="Please rank the camdidate's friendliness and how well you think they would work with children on a -5 to 5 scale, -5 being the worst and 5 being the best."
+                required
+              />
+              <Textarea
+                bind:value={interview.conversationNotes}
+                label="Conversation Notes"
+                required
+              />
+              <Input
+                type="number"
+                bind:value={interview.mockLessonExplanations}
+                min="-5"
+                max="5"
+                label="Please rank the clarity of the candidate's explanations of material in the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
+                required
+              />
+              <Input
+                type="number"
+                bind:value={interview.mockLessonEngagement}
+                min="-5"
+                max="5"
+                label="Please rank the candidate's engagement with the audience (asking questions, relating to students, etc.) in the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
+                required
+              />
+              <Input
+                type="number"
+                bind:value={interview.mockLessonPace}
+                min="-5"
+                max="5"
+                label="Please rank the pace of the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
+                required
+              />
+              <Input
+                type="number"
+                bind:value={interview.mockLessonOverall}
+                min="-5"
+                max="5"
+                label="Please rank the overall quality of the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
+                required
+              />
+              <Textarea
+                bind:value={interview.mockLessonNotes}
+                label="Mock lesson notes. What went well? What could be improved? If there was a low pacing score, why -- too fast or too slow?"
+                required
+              />
+              <Textarea
+                bind:value={interview.teachingPreferences}
+                label="What are the candidate's teaching preferences?"
+                required
+              />
+              <Textarea
+                bind:value={interview.availabilityNotes}
+                label="Availability notes. When is the candidate not available? Are there any potential concerns with the candidate's availability?"
+                required
+              />
+            </div>
+            </div>
+          </Dialog>
           {#if disabled}
             <Button
               color={!loading &&
@@ -447,17 +563,7 @@
           {/if}
           <Button on:click={dialogEl.cancel}>Close</Button>
         </div>
-      </div>
-      <div class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
-        <Input
-          type="text"
-          bind:value={notes}
-          label="Notes"
-          floating
-          class="w-96"
-        />
-        <Button color="green" on:click={saveNotes}>Save Notes</Button>
-      </div>
+      </div>    
     </Card>
     <div class="mt-4 flex justify-center">
       <Form class="max-w-2xl">

@@ -46,6 +46,25 @@ declare global {
 
     type Decision = 'accepted' | 'interview' | 'waitlisted' | 'rejected'
 
+    type Interview = {
+      date: string,
+      interviewer: string,
+      notes: string,
+      type: Decision,
+      likelyDecision: 'likely yes' | 'likely no' | 'likely waitlist',
+      attendance: 'onTime' | 'late' | 'noShow',
+      conversation: number,
+      conversationNotes: string,
+      lastSemesterNotes: string,
+      mockLessonExplanations: number,
+      mockLessonEngagement: number,
+      mockLessonPace: number,
+      mockLessonOverall: number,
+      mockLessonNotes: string,
+      teachingPreferences: string,
+      availabilityNotes: string,
+    }
+
     type EmailData = {
       Subject: string,
       From: string,
