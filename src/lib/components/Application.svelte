@@ -211,7 +211,6 @@
           })
             .then(() => {
               invalidate('app:applications').then(() => {
-                console.log(newDecision)
                 alert.trigger('success', 'Decision updated successfully.')
                 likelyDecision = newDecision
                 loading = false
