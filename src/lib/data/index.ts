@@ -16,6 +16,7 @@ import timeSlotsJson from './timeSlots.json'
 import coursesJson from './courses.json'
 import classesPerWeekJson from './classesPerWeek.json'
 import daysOfWeekJson from './daysOfWeek.json'
+import interviewAttendanceJson from './interviewAttendance.json'
 
 export {
   raceJson,
@@ -35,5 +36,6 @@ export {
   timeSlotsJson,
   coursesJson,
   classesPerWeekJson,
-  daysOfWeekJson
+  daysOfWeekJson,
+  interviewAttendanceJson,
 }
