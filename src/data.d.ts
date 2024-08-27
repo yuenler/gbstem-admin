@@ -52,7 +52,7 @@ declare global {
       notes: string,
       type: Decision,
       likelyDecision: 'likely yes' | 'likely no' | 'likely waitlist',
-      attendance: 'onTime' | 'late' | 'noShow',
+      attendance: 'On Time' | 'Late' | 'No-Show',
       conversation: number,
       conversationNotes: string,
       lastSemesterNotes: string,

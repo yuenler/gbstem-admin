@@ -17,6 +17,7 @@
     coursesJson,
     timeSlotsJson,
     classesPerWeekJson,
+    interviewAttendanceJson,
   } from '$lib/data'
   import Card from '$lib/components/Card.svelte'
   import Form from '$lib/components/Form.svelte'
@@ -98,7 +99,7 @@
     notes: '',
     type: 'interview',
     likelyDecision: 'likely waitlist',
-    attendance: 'noShow',
+    attendance: 'No-Show',
     conversation: 0,
     conversationNotes: '',
     lastSemesterNotes: '',
@@ -706,14 +707,15 @@
         <Select
           type="text"
           bind:value={interview.attendance}
+          options={interviewAttendanceJson}
           label="Attendance"
           floating
           required
         />
-        <ul class = "rounded-lg bg-gray-100 p-4 my-4 list-disc">          
+        <ul class = "rounded-lg bg-gray-100 p-4 px-12 my-4 list-disc">          
           <li>Greet the candidate when they arrive & ask them how they are, general conversational beginning. Try to be personable and make them comfortable!</li>
-          <li>Introduce yourself: name, grade, school, and role at gbSTEM. For example: “I’ll start by introducing myself. My name is __________, and I am a [GRADE] at [SCHOOL] high school. I have been an instructor at gbSTEM for [NUM SEMESTERS] semesters and am currently a [ROLE AT gbSTEM] at gbSTEM.”</li>
-          <li>If they are a new candidate: ask them to introduce themselves. For example: “Could you tell me a little about yourself?” Ask them some questions. In addition to getting to know them, we want to get a good idea of how they interact!</li>
+          <li>Introduce yourself: name, grade, school, and role at gbSTEM.”</li>
+          <li>If they are a new candidate: ask them to introduce themselves. Ask them some questions about their interests. In addition to getting to know them, we want to get a good idea of how they interact!</li>
         </ul>
         <Input
           type="number"
@@ -736,11 +738,17 @@
           label="What courses does the candidate want to teach?"
           required
         />
+        <Input 
+          type="checkbox"
+          bind:value={values.essay.taughtBefore}
+          label="Have they taught for gbSTEM before? (This should be pre-set to the correct value, but if not simply check/uncheck the box as needed)."
+          floating
+        />
         {#if values.essay.taughtBefore}
         <div class = "rounded-lg bg-gray-100 p-4 my-4">
           <div>Ask them about their experience as an instructor. For example, “You're a returning instructor, correct? I would like to take some time to talk about your experience last semester. Could you give me an overview of the good, the bad, anything that can be improved?” </div>
           <div class="font-bold">Followup questions about their experience, as needed:</div>
-          <ul class="list-disc">
+          <ul class="list-disc px-12">
             <li>How did you find the curriculum? Were there any parts that were too fast, too slow?</li>
             <li>Did your students enjoy the class? Were they engaged, and do you feel like they learned the content well?</li>
             <li>How was student attendance?</li>
@@ -757,7 +765,7 @@
         {:else}  
         <div class="rounded-lg bg-gray-100 p-4 my-4">
           <div class="font-bold">Talk a little about the logistics of being an instructor.</div>
-          <ul class="list-disc">
+          <ul class="list-disc px-12">
             <li>Classes meet twice a week; 60 min</li>
             <li>Most classes will take place through Microsoft Teams (link will be provided for you). This is something new we are trying this year, so we may fall back on Zoom/Google Meet if needed.</li>
             <li>Class sizes are usually between 5-15 students, but keep in mind that not every student will be able to attend every class session.</li>
@@ -769,15 +777,16 @@
         {/if}
         <div class="rounded-lg bg-gray-100 p-4 my-4">
         <div>Continue onto the mock lessons. Send the link for the candidate’s top subject to teach. Allow each candidate 3 minutes to familiarize themselves with the lesson before having them share their screen to present it to you. Note their delivery, audience engagement, ability to speak slowly and clearly, quality of explanations, as well as their attitude.</div>
-        <div class ="flex gap-4">
-          <Button class="bg-[#aaaaaa]" href="https://docs.google.com/presentation/d/1dtv0qWFLNg3pjnlPCkm8nKEkEU_m5-dcLVMNEJmwFjk/edit#slide=id.g11b679f5bf6_0_9">Math Mock Lesson Materials</Button>
-          <Button color="green" href="https://docs.google.com/presentation/d/15aI-M8eEPKsFGpodmZ_oi4MWQKzTJ8Jrup4C7oFgSls/edit#slide=id.g2085bab7786_0_0">Environmental Science Mock Lesson Materials</Button>
-          <Button color="yellow" href="https://docs.google.com/presentation/d/1yf3ZOVCFgwILyihaG_sJonevv3cIiUMNvDlwJVarCto/edit#slide=id.g2085d4bbb38_0_4125">Engineering Mock Lesson Materials</Button>
+        <div class="font-bold">Mock Lession Materials</div>
+        <div class ="flex gap-4 mt-8">
+          <Button class="bg-[#aaaaaa]" href="https://docs.google.com/presentation/d/1dtv0qWFLNg3pjnlPCkm8nKEkEU_m5-dcLVMNEJmwFjk/edit#slide=id.g11b679f5bf6_0_9">Math</Button>
+          <Button color="green" href="https://docs.google.com/presentation/d/15aI-M8eEPKsFGpodmZ_oi4MWQKzTJ8Jrup4C7oFgSls/edit#slide=id.g2085bab7786_0_0">Environmental Science</Button>
+          <Button color="yellow" href="https://docs.google.com/presentation/d/1yf3ZOVCFgwILyihaG_sJonevv3cIiUMNvDlwJVarCto/edit#slide=id.g2085d4bbb38_0_4125">Engineering</Button>
         </div>
         <div class = "flex gap-4 mt-4">
-          <Button color="blue" href="https://docs.google.com/document/d/1ruPmF-SRdWQ_LlilQz0PBFX1p7gDpfGZ1jVBmSpdgyI/edit#">Scratch Mock Lesson Materials</Button>
-          <Button color="blue" href="https://docs.google.com/document/d/1-Q40jjtKjt1dvX09qndC1ZEA7amiieAQgXF8qPDEvOE/edit">Python I Mock Lesson Materials</Button>
-          <Button color="blue" href="https://docs.google.com/document/d/1LonFfZTQOwjz_QeZbRHb_RFVq_EntkVu64BBca2TVGw/edit">Web Dev Mock Lesson Materials</Button>
+          <Button color="blue" href="https://docs.google.com/document/d/1ruPmF-SRdWQ_LlilQz0PBFX1p7gDpfGZ1jVBmSpdgyI/edit#">Scratch</Button>
+          <Button color="blue" href="https://docs.google.com/document/d/1-Q40jjtKjt1dvX09qndC1ZEA7amiieAQgXF8qPDEvOE/edit">Python I</Button>
+          <Button color="blue" href="https://docs.google.com/document/d/1LonFfZTQOwjz_QeZbRHb_RFVq_EntkVu64BBca2TVGw/edit">Web Dev</Button>
         </div>
         </div>
         <Input
@@ -821,7 +830,7 @@
         <div class="font-bold">
           Continue:
         </div>
-        <ul class="list-disc">
+        <ul class="list-disc px-12">
           <li>Outline that classes meet twice a week from September 29th to December 21st. Ask if they have any known scheduling conflicts, days they will have to miss, or days of the week they can't make.</li>
           <li>Remind them that, as the teacher, they are obviously required to go to all classes and show up on time, and they should also prepare for the class before the class happens by looking through the curriculum.</li>
           <li>Additionally, emphasize that we expect them to respond to emails and slack messages within 24 hours.</li>
@@ -835,13 +844,13 @@
         />
         <div class="rounded-lg bg-gray-100 p-4 my-4">
         <div>Thank them for speaking with you, and let them know that they can reach us at contact@gbstem.org. Additionally, tell them that if they are accepted, instructor orientation will be on Sept. 20th, so they should mark their calendars for that.</div>
-        <div>Mark "Likely Yes" or "Likely No" depending on your decision recommendation. Be careful NOT to click "Interview", "Accept", "Waitlist", or "Reject".</div>  
+        <div>Mark <strong>Likely Yes</strong> or <strong>Likely No</strong> depending on your decision recommendation. Be careful NOT to click "Interview", "Accept", "Waitlist", or "Reject".</div>  
         </div>
         <Textarea
           bind:value={notes}
           label="This is a space for notes on your recommendation, if you feel that it needs further explanation."
         />
-      <div class="mt-2 font-bold">Once you have completed this form, click "Save Notes" to submit it!</div>
+      <div class="my-2 mt-4 font-bold">Once you have completed this form, click "Save Notes" to submit it!</div>
       <div class="flex justify-start gap-4">
         <Button color="green" on:click={saveNotes}>Save Notes</Button>
         <Button color="red" on:click={() => showInterviewForm = false}>Close Interview Form</Button> 
