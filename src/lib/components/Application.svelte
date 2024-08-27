@@ -38,6 +38,7 @@
 
   let loading = true
   let disabled = true
+  let showInterviewForm = false
   // $: {
   //   if (loading) {
   //     nProgress.start()
@@ -335,105 +336,7 @@
     <Card>
       <div class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
         <fieldset class="flex gap-3" disabled={loading}>
-          <Button color="green" on:click={() => interviewDialogEl.open()}>Interview Form</Button>
-          <Dialog bind:this={interviewDialogEl} size="full" alert>
-            <div class="sticky top-2 z-100 p-3 md:p-3">
-              <Button on:click={interviewDialogEl.cancel}>Close</Button>
-            <div class="flex justify-start gap-8">
-              <Input
-                type="text"
-                bind:value={notes}
-                label="Notes"
-                floating
-                class="w-96"
-              />
-              <Button color="green" on:click={saveNotes}>Save Notes</Button>
-            </div>
-            <div>
-              <Input
-                type="datetime-local"
-                bind:value={interview.date}
-                label="Interview Date"
-                floating
-                required
-              />
-              <Input 
-                type="text"
-                bind:value={interview.interviewer}
-                label="Interviewer"
-                floating
-                required
-              />
-              <Select
-                type="text"
-                bind:value={interview.attendance}
-                label="Attendance"
-                floating
-                required
-              />
-              <Input
-                type="number"
-                bind:value={interview.conversation}
-                min="-5"
-                max="5"
-                label="Please rank the camdidate's friendliness and how well you think they would work with children on a -5 to 5 scale, -5 being the worst and 5 being the best."
-                required
-              />
-              <Textarea
-                bind:value={interview.conversationNotes}
-                label="Conversation Notes"
-                required
-              />
-              <Input
-                type="number"
-                bind:value={interview.mockLessonExplanations}
-                min="-5"
-                max="5"
-                label="Please rank the clarity of the candidate's explanations of material in the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
-                required
-              />
-              <Input
-                type="number"
-                bind:value={interview.mockLessonEngagement}
-                min="-5"
-                max="5"
-                label="Please rank the candidate's engagement with the audience (asking questions, relating to students, etc.) in the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
-                required
-              />
-              <Input
-                type="number"
-                bind:value={interview.mockLessonPace}
-                min="-5"
-                max="5"
-                label="Please rank the pace of the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
-                required
-              />
-              <Input
-                type="number"
-                bind:value={interview.mockLessonOverall}
-                min="-5"
-                max="5"
-                label="Please rank the overall quality of the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
-                required
-              />
-              <Textarea
-                bind:value={interview.mockLessonNotes}
-                label="Mock lesson notes. What went well? What could be improved? If there was a low pacing score, why -- too fast or too slow?"
-                required
-              />
-              <Textarea
-                bind:value={interview.teachingPreferences}
-                label="What are the candidate's teaching preferences?"
-                required
-              />
-              <Textarea
-                bind:value={interview.availabilityNotes}
-                label="Availability notes. When is the candidate not available? Are there any potential concerns with the candidate's availability?"
-                required
-              />
-            </div>
-            </div>
-          </Dialog>
+          <Button color="green" on:click={() => showInterviewForm = !showInterviewForm}>{showInterviewForm ? "Close Interview Form" : "Show Interview Form"}</Button>
           {#if disabled}
             <Button
               color={!loading &&
@@ -580,6 +483,7 @@
       </div>    
     </Card>
     <div class="mt-4 flex justify-center">
+      {#if showInterviewForm}
       <Form class="max-w-2xl">
         <fieldset class="space-y-14" {disabled}>
           <div class="grid gap-1">
@@ -783,6 +687,104 @@
           </div>
         </fieldset>
       </Form>
+      {:else}
+      <Form class="max-w-2xl">
+        <Button on:click={() => showInterviewForm = false}>Close</Button>
+      <div class="flex justify-start gap-8">
+        <Input
+          type="text"
+          bind:value={notes}
+          label="Notes"
+          floating
+          class="w-96"
+        />
+        <Button color="green" on:click={saveNotes}>Save Notes</Button>
+      </div>
+      <div>
+        <Input
+          type="datetime-local"
+          bind:value={interview.date}
+          label="Interview Date"
+          floating
+          required
+        />
+        <Input 
+          type="text"
+          bind:value={interview.interviewer}
+          label="Interviewer"
+          floating
+          required
+        />
+        <Select
+          type="text"
+          bind:value={interview.attendance}
+          label="Attendance"
+          floating
+          required
+        />
+        <Input
+          type="number"
+          bind:value={interview.conversation}
+          min="-5"
+          max="5"
+          label="Please rank the camdidate's friendliness and how well you think they would work with children on a -5 to 5 scale, -5 being the worst and 5 being the best."
+          required
+        />
+        <Textarea
+          bind:value={interview.conversationNotes}
+          label="Conversation Notes"
+          required
+        />
+        <Input
+          type="number"
+          bind:value={interview.mockLessonExplanations}
+          min="-5"
+          max="5"
+          label="Please rank the clarity of the candidate's explanations of material in the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
+          required
+        />
+        <Input
+          type="number"
+          bind:value={interview.mockLessonEngagement}
+          min="-5"
+          max="5"
+          label="Please rank the candidate's engagement with the audience (asking questions, relating to students, etc.) in the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
+          required
+        />
+        <Input
+          type="number"
+          bind:value={interview.mockLessonPace}
+          min="-5"
+          max="5"
+          label="Please rank the pace of the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
+          required
+        />
+        <Input
+          type="number"
+          bind:value={interview.mockLessonOverall}
+          min="-5"
+          max="5"
+          label="Please rank the overall quality of the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
+          required
+        />
+        <Textarea
+          bind:value={interview.mockLessonNotes}
+          label="Mock lesson notes. What went well? What could be improved? If there was a low pacing score, why -- too fast or too slow?"
+          required
+        />
+        <Textarea
+          bind:value={interview.teachingPreferences}
+          label="What are the candidate's teaching preferences?"
+          required
+        />
+        <Textarea
+          bind:value={interview.availabilityNotes}
+          label="Availability notes. When is the candidate not available? Are there any potential concerns with the candidate's availability?"
+          required
+        />
+      </div>
+     </Form>
+      {/if}
     </div>
   </div>
 </Dialog>
