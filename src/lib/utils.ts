@@ -164,3 +164,15 @@ export function copyEmails(email: string) {
       alert.trigger('error', 'Failed to copy emails to clipboard!')
     })
 }
+
+export function toLocalISOString(date: Date) {
+  const pad = (number: number) => (number < 10 ? '0' + number : number)
+
+  const year = date.getFullYear()
+  const month = pad(date.getMonth() + 1) // JavaScript months are 0-indexed.
+  const day = pad(date.getDate())
+  const hour = pad(date.getHours())
+  const minute = pad(date.getMinutes())
+
+  return `${year}-${month}-${day}T${hour}:${minute}`.slice(0, 16)
+}

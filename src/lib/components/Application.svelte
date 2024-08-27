@@ -29,7 +29,7 @@
   import { cloneDeep } from 'lodash-es'
   import type { FirebaseError } from 'firebase/app'
   import { invalidate } from '$app/navigation'
-    import { formatDateShort } from '$lib/utils'
+    import { formatDate, formatDateShort, timestampToDate, toLocalISOString } from '$lib/utils'
     import { applicationsCollection, decisionsCollection, semesterDatesDocument } from '$lib/data/collections'
 
   export let dialogEl: Dialog
@@ -131,7 +131,7 @@
           getDoc(data.meta.decision).then((decisionSnapshot) => {
             const data = decisionSnapshot.data() as Data.Interview
             if (decisionSnapshot.exists()) {
-              const { type, likelyDecision, notes, interviewer, attendance, conversation, conversationNotes, lastSemesterNotes, mockLessonEngagement, mockLessonExplanations, mockLessonNotes, mockLessonPace, mockLessonOverall, teachingPreferences, availabilityNotes } = data
+              const { type, likelyDecision, notes, interviewer, attendance, conversation, conversationNotes, lastSemesterNotes, mockLessonEngagement, mockLessonExplanations, mockLessonNotes, mockLessonPace, mockLessonOverall, teachingPreferences, availabilityNotes, date } = data
               decision = type ?? null
               interview.likelyDecision = likelyDecision ?? null
               interview.notes = notes ?? ''
@@ -147,6 +147,7 @@
               interview.teachingPreferences = teachingPreferences ?? ''
               interview.mockLessonEngagement = mockLessonEngagement ?? 0
               interview.availabilityNotes = availabilityNotes ?? ''
+              interview.date = toLocalISOString(timestampToDate(date)) ?? ''
             } else {
               decision = null
               likelyDecision = null
@@ -196,14 +197,13 @@
     }
   }
 
-  function handleLikelyDecision(newDecision: 'likely yes' | 'likely no') {
+  function handleLikelyDecision(newDecision: 'likely yes' | 'likely no' | 'likely waitlist') {
     const frozenId = id
     loading = true
     if (frozenId !== undefined) {
-      setDoc(doc(db, decisionsCollection, frozenId), {
+      updateDoc(doc(db, decisionsCollection, frozenId), {
         likelyDecision: newDecision,
         type: decision,
-        notes,
       })
         .then(() => {
           updateDoc(doc(db, applicationsCollection, frozenId), {
@@ -233,7 +233,8 @@
     let today = new Date();
 
     // Calculate the date 7 days from today
-    let weekDeadline = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);    let interviewDeadline = formatDateShort(weekDeadline)
+    let weekDeadline = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);    
+    let interviewDeadline = formatDateShort(weekDeadline)
 
     const dueDate = await getDoc(doc(db, 'semesterDates', semesterDatesDocument))
     if(dueDate.exists()) {
@@ -249,7 +250,7 @@
     const frozenId = id
     loading = true
     if (frozenId !== undefined) {
-      setDoc(doc(db, decisionsCollection, frozenId), {
+      updateDoc(doc(db, decisionsCollection, frozenId), {
         type: newDecision,
         likelyDecision,
         notes,

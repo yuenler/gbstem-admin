@@ -16,7 +16,7 @@
   import Card from '../Card.svelte'
   import { onMount } from 'svelte'
   import Loading from '../Loading.svelte'
-    import { formatDate } from '$lib/utils'
+    import { formatDate, toLocalISOString } from '$lib/utils'
 
   let className = ''
   export { className as class }
@@ -40,18 +40,6 @@
   }
   let currentUser: Data.User.Store
   let loading = true
-
-  function toLocalISOString(date: Date) {
-    const pad = (number: number) => (number < 10 ? '0' + number : number)
-
-    const year = date.getFullYear()
-    const month = pad(date.getMonth() + 1) // JavaScript months are 0-indexed.
-    const day = pad(date.getDate())
-    const hour = pad(date.getHours())
-    const minute = pad(date.getMinutes())
-
-    return `${year}-${month}-${day}T${hour}:${minute}`.slice(0, 16)
-  }
 
   async function getData() {
     const interviewSlots: Data.InterviewSlot[] = []
