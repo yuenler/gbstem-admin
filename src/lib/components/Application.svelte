@@ -482,8 +482,8 @@
         </div>
       </div>    
     </Card>
-    <div class="mt-4 flex justify-center">
-      {#if !showInterviewForm}
+    <div class="mt-4 flex justify-center flex-wrap gap-4">
+      <Card>
       <Form class="max-w-2xl">
         <fieldset class="space-y-14" {disabled}>
           <div class="grid gap-1">
@@ -687,7 +687,9 @@
           </div>
         </fieldset>
       </Form>
-      {:else}
+    </Card>
+      {#if showInterviewForm}
+      <Card>
       <Form class="max-w-2xl">
       <div>
         <h2 class = "text-2xl font-bold my-4">Interview Guide & Evaluation Form</h2>
@@ -721,9 +723,9 @@
         <Input
           type="number"
           bind:value={interview.conversation}
-          min="-5"
+          min="0"
           max="5"
-          label="Please rank the candidate's friendliness and how well you think they would work with children on a -5 to 5 scale, -5 being the worst and 5 being the best."
+          label="Please rate the candidate's friendliness and how well you think they would work with children on a -5 to 5 scale, -5 being the worst and 5 being the best."
           required
         />
         <Textarea
@@ -793,33 +795,33 @@
         <Input
           type="number"
           bind:value={interview.mockLessonExplanations}
-          min="-5"
+          min="0"
           max="5"
-          label="Please rank the clarity of the candidate's explanations of material in the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
+          label="Please rate the clarity of the candidate's explanations of material in the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 3."
           required
         />
         <Input
           type="number"
           bind:value={interview.mockLessonEngagement}
-          min="-5"
+          min="0"
           max="5"
-          label="Please rank the candidate's engagement with the audience (asking questions, relating to students, etc.) in the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
+          label="Please rate the candidate's engagement with the audience (asking questions, relating to students, etc.) in the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 3."
           required
         />
         <Input
           type="number"
           bind:value={interview.mockLessonPace}
-          min="-5"
+          min="0"
           max="5"
-          label="Please rank the pace of the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
+          label="Please rate the pace of the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 3."
           required
         />
         <Input
           type="number"
           bind:value={interview.mockLessonOverall}
-          min="-5"
+          min="0"
           max="5"
-          label="Please rank the overall quality of the mock lesson on a -5 to 5 scale, -5 being the worst and 5 being the best."
+          label="Please rate the overall quality of the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 3."
           required
         />
         <Textarea
@@ -859,6 +861,7 @@
       </div>
       </div>
      </Form>
+    </Card>
       {/if}
     </div>
   </div>
