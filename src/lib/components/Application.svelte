@@ -725,7 +725,7 @@
           bind:value={interview.conversation}
           min="0"
           max="5"
-          label="Please rate the candidate's friendliness and how well you think they would work with children on a -5 to 5 scale, -5 being the worst and 5 being the best."
+          label="Please rate the candidate's friendliness and how well you think they would work with children on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 3."
           required
         />
         <Textarea
