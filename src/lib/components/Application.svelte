@@ -483,7 +483,7 @@
       </div>    
     </Card>
     <div class="mt-4 flex justify-center flex-wrap gap-4">
-      <Card>
+      <Card class="w-fit">
       <Form class="max-w-2xl">
         <fieldset class="space-y-14" {disabled}>
           <div class="grid gap-1">
@@ -689,7 +689,7 @@
       </Form>
     </Card>
       {#if showInterviewForm}
-      <Card>
+      <Card class="w-fit">
       <Form class="max-w-2xl">
       <div>
         <h2 class = "text-2xl font-bold my-4">Interview Guide & Evaluation Form</h2>
