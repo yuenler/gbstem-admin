@@ -252,8 +252,9 @@
     if (frozenId !== undefined) {
       interview.likelyDecision = likelyDecision
       interview.type = newDecision
+      const { type, notes, interviewer, attendance, conversation, conversationNotes, lastSemesterNotes, mockLessonEngagement, mockLessonExplanations, mockLessonNotes, mockLessonPace, mockLessonOverall, teachingPreferences, availabilityNotes, date } = interview
       setDoc(doc(db, decisionsCollection, frozenId), {
-        interview
+        type, likelyDecision, notes, interviewer, attendance, conversation, conversationNotes, lastSemesterNotes, mockLessonEngagement, mockLessonExplanations, mockLessonNotes, mockLessonPace, mockLessonOverall, teachingPreferences, availabilityNotes, date
       })
         .then(() => {
           updateDoc(doc(db, applicationsCollection, frozenId), {
