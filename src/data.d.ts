@@ -51,7 +51,7 @@ declare global {
       interviewer: string,
       notes: string,
       type: Decision,
-      likelyDecision: 'likely yes' | 'likely no' | 'likely waitlist',
+      likelyDecision: 'likely yes' | 'likely no' | 'likely waitlist' | null,
       attendance: 'On Time' | 'Late' | 'No-Show',
       conversation: number,
       conversationNotes: string,

@@ -250,9 +250,10 @@
     const frozenId = id
     loading = true
     if (frozenId !== undefined) {
-      updateDoc(doc(db, decisionsCollection, frozenId), {
-        'type': newDecision,
-        'likelyDecision': likelyDecision,
+      interview.likelyDecision = likelyDecision
+      interview.type = newDecision
+      setDoc(doc(db, decisionsCollection, frozenId), {
+        interview
       })
         .then(() => {
           updateDoc(doc(db, applicationsCollection, frozenId), {
