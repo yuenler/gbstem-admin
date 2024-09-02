@@ -70,7 +70,6 @@
           querySnapshot.forEach((doc) => {
             if(doc.data()) {
               const user = doc.data() as Data.Application<"client">
-              console.log(user)
               if(user.meta.interview === false && user.meta.submitted === true) {
                 names.push({
                   name: `${user.personal.firstName} ${user.personal.lastName}`,
@@ -241,7 +240,7 @@
             label="Assign Interviewee (optional, use when fulfilling requested timeslots)"
             options={intervieweeNames}
           />
-          <Button color = "red" on:click={handleClear}>Clear Assigned Interviewee</Button>
+          <Button color = "red" on:click={() => {handleClear()}}>Clear Assigned Interviewee</Button>
           <div class="right-2 items-center">
             <Button
               color="blue"
