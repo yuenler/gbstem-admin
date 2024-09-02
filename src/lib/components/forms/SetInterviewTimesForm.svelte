@@ -8,6 +8,7 @@
     query,
     collection,
     getDocs,
+    updateDoc,
     setDoc,
     doc,
     deleteDoc,
@@ -136,6 +137,9 @@
       ...interviewSlotToAdd,
       date: new Date(interviewSlotToAdd.date),
     })
+    await updateDoc(doc(db, applicationsCollection, interviewSlotToAdd.intervieweeId), {
+      'meta.interview': true,
+    })
     await fetch('/api/assignInterview', {
       method: 'POST',
       headers: {
@@ -150,6 +154,7 @@
         date: interviewSlotToAdd.date,
       }),
     })
+    alert.trigger('success', 'Interviewee assigned and email sent.')
     let { intervieweeId, intervieweeEmail, intervieweeFirstName, intervieweeLastName, interviewSlotStatus, date, meetingLink } = interviewSlotToAdd
     meetingLink = ''
     date = ''
