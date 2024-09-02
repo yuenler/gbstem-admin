@@ -37,7 +37,7 @@
 
   let loading = true
   let disabled = true
-  let showInterviewForm = false
+  let showInterviewForm = true
   // $: {
   //   if (loading) {
   //     nProgress.start()
