@@ -85,7 +85,7 @@
           currentUser.object.displayName ?? ''
         interviewSlotToAdd.interviewerEmail = currentUser.object.email ?? ''
         loading = false
-        await getDocs(collection(db, applicationsCollection)).then((querySnapshot) => {
+        getDocs(query(collection(db, applicationsCollection))).then((querySnapshot) => {
           querySnapshot.forEach((doc) => {
             const user = doc.data() as Data.Application<"client">
             if(user.meta.interview) {
