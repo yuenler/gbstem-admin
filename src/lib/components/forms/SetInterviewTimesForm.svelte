@@ -85,15 +85,14 @@
     const selectedInterviewee = intervieweeOptions.find(
       (option) => `${option.personal.firstName} ${option.personal.lastName}` === interviewee,
     )
-    console.log(selectedInterviewee)
     if(selectedInterviewee) {
-      let { intervieweeId, intervieweeEmail, intervieweeFirstName, intervieweeLastName, interviewSlotStatus } = interviewSlotToAdd
+      console.log(selectedInterviewee)
       const { personal: { email, firstName, lastName }, meta: { uid } } = selectedInterviewee
-      intervieweeId = uid
-      intervieweeEmail = email
-      intervieweeFirstName = firstName
-      intervieweeLastName = lastName
-      interviewSlotStatus = 'pending'
+      interviewSlotToAdd.intervieweeId = uid
+      interviewSlotToAdd.intervieweeEmail = email
+      interviewSlotToAdd.intervieweeFirstName = firstName
+      interviewSlotToAdd.intervieweeLastName = lastName
+      interviewSlotToAdd.interviewSlotStatus = 'pending'
     }
     console.log(interviewSlotToAdd)
   }
@@ -157,14 +156,13 @@
       }),
     })
     alert.trigger('success', 'Interviewee assigned and email sent.')
-    let { intervieweeId, intervieweeEmail, intervieweeFirstName, intervieweeLastName, interviewSlotStatus, date, meetingLink } = interviewSlotToAdd
-    meetingLink = ''
-    date = ''
-    intervieweeId = ''
-    intervieweeEmail = ''
-    intervieweeFirstName = ''
-    intervieweeLastName = ''
-    interviewSlotStatus = 'available'
+    interviewSlotToAdd.meetingLink = ''
+    interviewSlotToAdd.date = ''
+    interviewSlotToAdd.intervieweeId = ''
+    interviewSlotToAdd.intervieweeEmail = ''
+    interviewSlotToAdd.intervieweeFirstName = ''
+    interviewSlotToAdd.intervieweeLastName = ''
+    interviewSlotToAdd.interviewSlotStatus = 'available'
     interviewee = ''
   }
 
