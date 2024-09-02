@@ -88,7 +88,8 @@
         getDocs(query(collection(db, applicationsCollection))).then((querySnapshot) => {
           querySnapshot.forEach((doc) => {
             const user = doc.data() as Data.Application<"client">
-            if(user.meta.interview) {
+            console.log(user)
+            if(user.meta.interview === false) {
               intervieweeNames.push({
                 name: `${user.personal.firstName} ${user.personal.lastName}`,
               })
