@@ -167,13 +167,12 @@
   }
 
   function handleClear() {
-    let { intervieweeId, intervieweeEmail, intervieweeFirstName, intervieweeLastName, interviewSlotStatus } = interviewSlotToAdd
     interviewee = ''
-    intervieweeId = ''
-    intervieweeEmail = ''
-    intervieweeFirstName = ''
-    intervieweeLastName = ''
-    interviewSlotStatus = 'available'
+    interviewSlotToAdd.intervieweeId = ''
+    interviewSlotToAdd.intervieweeEmail = ''
+    interviewSlotToAdd.intervieweeFirstName = ''
+    interviewSlotToAdd.intervieweeLastName = ''
+    interviewSlotToAdd.interviewSlotStatus = 'available'
     alert.trigger('success', 'Interviewee cleared.')
   }
 
