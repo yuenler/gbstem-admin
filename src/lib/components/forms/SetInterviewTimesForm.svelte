@@ -70,7 +70,7 @@
             if(doc.data()) {
               const user = doc.data() as Data.Application<"client">
               console.log(user)
-              if(user.meta.interview === false) {
+              if(user.meta.interview === false && user.meta.submitted === true) {
                 names.push({
                   name: `${user.personal.firstName} ${user.personal.lastName}`,
                 })
