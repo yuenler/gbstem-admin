@@ -241,7 +241,7 @@
             label="Assign Interviewee (optional, use when fulfilling requested timeslots)"
             options={intervieweeNames}
           />
-          <Button color = "red" on:click={() => {handleClear}}>Clear Assigned Interviewee</Button>
+          <Button color = "red" on:click={handleClear}>Clear Assigned Interviewee</Button>
           <div class="right-2 items-center">
             <Button
               color="blue"
