@@ -61,6 +61,26 @@
     return interviewSlots
   }
 
+  async function getInterviewees() {
+    const names: { name: string }[] = []
+    const options: Data.Application<"client">[] = []
+    const q = query(collection(db, applicationsCollection))
+        const querySnapshot = await getDocs(q)
+          querySnapshot.forEach((doc) => {
+            if(doc.data()) {
+              const user = doc.data() as Data.Application<"client">
+              console.log(user)
+              if(user.meta.interview === false) {
+                names.push({
+                  name: `${user.personal.firstName} ${user.personal.lastName}`,
+                })
+                options.push(user)
+              }
+            }
+          })
+    return { names, options }
+  }
+
   $: if (interviewee) {
     const selectedInterviewee = intervieweeOptions.find(
       (option) => `${option.personal.firstName} ${option.personal.lastName}` === interviewee,
@@ -81,24 +101,13 @@
       if (user) {
         currentUser = user
         allInterviewSlots = await getData()
+        const intervieweeInfo = await getInterviewees()
+        intervieweeNames = intervieweeInfo.names
+        intervieweeOptions = intervieweeInfo.options
         interviewSlotToAdd.interviewerName =
-          currentUser.object.displayName ?? ''
+        currentUser.object.displayName ?? ''
         interviewSlotToAdd.interviewerEmail = currentUser.object.email ?? ''
         loading = false
-        await getDocs(query(collection(db, applicationsCollection))).then((querySnapshot) => {
-          querySnapshot.forEach((doc) => {
-            if(doc.data()) {
-              const user = doc.data() as Data.Application<"client">
-              console.log(user)
-              if(user.meta.interview === false) {
-                intervieweeNames.push({
-                  name: `${user.personal.firstName} ${user.personal.lastName}`,
-                })
-                intervieweeOptions.push(user)
-              }
-            }
-          })
-        })
       }
     })
   })
