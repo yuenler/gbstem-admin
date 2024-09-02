@@ -8,6 +8,7 @@
     query,
     collection,
     getDocs,
+    updateDoc,
     setDoc,
     doc,
     deleteDoc,
@@ -16,12 +17,17 @@
   import Card from '../Card.svelte'
   import { onMount } from 'svelte'
   import Loading from '../Loading.svelte'
-    import { formatDate, toLocalISOString } from '$lib/utils'
+  import { formatDate, toLocalISOString } from '$lib/utils'
+  import { applicationsCollection } from '$lib/data/collections'
+  import Select from '../Select.svelte'
 
   let className = ''
   export { className as class }
 
   let editSlot = ''
+  let intervieweeNames: { name: string }[] = []
+  let intervieweeOptions: Data.Application<"client">[]
+  let interviewee: string 
   let onlyIncludeMyInterviews = true
   let onlyShowFutureSlots = true
   let showValidation = false
@@ -56,13 +62,51 @@
     return interviewSlots
   }
 
+  async function getInterviewees() {
+    const names: { name: string }[] = []
+    const options: Data.Application<"client">[] = []
+    const q = query(collection(db, applicationsCollection))
+        const querySnapshot = await getDocs(q)
+          querySnapshot.forEach((doc) => {
+            if(doc.data()) {
+              const user = doc.data() as Data.Application<"client">
+              if(user.meta.interview === false && user.meta.submitted === true) {
+                names.push({
+                  name: `${user.personal.firstName} ${user.personal.lastName}`,
+                })
+                options.push(user)
+              }
+            }
+          })
+    return { names, options }
+  }
+
+  $: if (interviewee) {
+    const selectedInterviewee = intervieweeOptions.find(
+      (option) => `${option.personal.firstName} ${option.personal.lastName}` === interviewee,
+    )
+    if(selectedInterviewee) {
+      console.log(selectedInterviewee)
+      const { personal: { email, firstName, lastName }, meta: { uid } } = selectedInterviewee
+      interviewSlotToAdd.intervieweeId = uid
+      interviewSlotToAdd.intervieweeEmail = email
+      interviewSlotToAdd.intervieweeFirstName = firstName
+      interviewSlotToAdd.intervieweeLastName = lastName
+      interviewSlotToAdd.interviewSlotStatus = 'pending'
+    }
+    console.log(interviewSlotToAdd)
+  }
+
   onMount(() => {
     return user.subscribe(async (user) => {
       if (user) {
         currentUser = user
         allInterviewSlots = await getData()
+        const intervieweeInfo = await getInterviewees()
+        intervieweeNames = intervieweeInfo.names
+        intervieweeOptions = intervieweeInfo.options
         interviewSlotToAdd.interviewerName =
-          currentUser.object.displayName ?? ''
+        currentUser.object.displayName ?? ''
         interviewSlotToAdd.interviewerEmail = currentUser.object.email ?? ''
         loading = false
       }
@@ -70,6 +114,14 @@
   })
 
   const addTime = async () => {
+    if(interviewSlotToAdd.intervieweeId != '') {
+      const confirmation = confirm(
+        `Are you sure you want to assign ${interviewSlotToAdd.intervieweeFirstName} ${interviewSlotToAdd.intervieweeLastName} as the interviewee for this slot? An email will be sent to the interviewee confirming the interview has been scheduled.`,
+      )
+      if (!confirmation) {
+        return
+      }
+    }
     const id = `${new Date(interviewSlotToAdd.date).getTime()}${
       currentUser.object.uid
     }`
@@ -85,8 +137,45 @@
       ...interviewSlotToAdd,
       date: new Date(interviewSlotToAdd.date),
     })
+    if(interviewSlotToAdd.intervieweeId != '') {
+      console.log(interviewSlotToAdd)
+      await updateDoc(doc(db, applicationsCollection, interviewSlotToAdd.intervieweeId), {
+        'meta.interview': true,
+      })
+      await fetch('/api/assignInterview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          intervieweeEmail: interviewSlotToAdd.intervieweeEmail,
+          firstName: interviewSlotToAdd.intervieweeFirstName,
+          interviewer: interviewSlotToAdd.interviewerName,
+          email: interviewSlotToAdd.interviewerEmail,
+          link: interviewSlotToAdd.meetingLink,
+          date: interviewSlotToAdd.date,
+        }),
+      })
+    }
+    alert.trigger('success', 'Interviewee assigned and email sent.')
     interviewSlotToAdd.meetingLink = ''
     interviewSlotToAdd.date = ''
+    interviewSlotToAdd.intervieweeId = ''
+    interviewSlotToAdd.intervieweeEmail = ''
+    interviewSlotToAdd.intervieweeFirstName = ''
+    interviewSlotToAdd.intervieweeLastName = ''
+    interviewSlotToAdd.interviewSlotStatus = 'available'
+    interviewee = ''
+  }
+
+  function handleClear() {
+    interviewee = ''
+    interviewSlotToAdd.intervieweeId = ''
+    interviewSlotToAdd.intervieweeEmail = ''
+    interviewSlotToAdd.intervieweeFirstName = ''
+    interviewSlotToAdd.intervieweeLastName = ''
+    interviewSlotToAdd.interviewSlotStatus = 'available'
+    alert.trigger('success', 'Interviewee cleared.')
   }
 
   async function updateTime(interview: Data.InterviewSlot) {
@@ -133,6 +222,7 @@
   <Loading />
 {:else}
   {#await allInterviewSlots then value}
+  {#await intervieweeNames then intervieweeNames}
     <Form class={clsx(showValidation && 'show-validation', className)}>
       <div class="right-2 items-center">
         <Card>
@@ -147,6 +237,14 @@
             bind:value={interviewSlotToAdd.meetingLink}
             label="Interview Meeting Link"
           />
+          <div class="flex gap-4 items-end">
+            <Select 
+             bind:value={interviewee}
+              label="Assign Interviewee (ONLY USE when fulfilling timeslots requested via email, or when asked to do so)"
+             options={intervieweeNames}
+            />
+            <Button color = "red" class="h-fit" on:click={() => {handleClear()}}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></Button>
+          </div>
           <div class="right-2 items-center">
             <Button
               color="blue"
@@ -263,5 +361,6 @@
         {/if}
       {/each}
     </Form>
+  {/await}
   {/await}
 {/if}
