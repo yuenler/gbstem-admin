@@ -85,6 +85,7 @@
     const selectedInterviewee = intervieweeOptions.find(
       (option) => `${option.personal.firstName} ${option.personal.lastName}` === interviewee,
     )
+    console.log(selectedInterviewee)
     if(selectedInterviewee) {
       let { intervieweeId, intervieweeEmail, intervieweeFirstName, intervieweeLastName, interviewSlotStatus } = interviewSlotToAdd
       const { personal: { email, firstName, lastName }, meta: { uid } } = selectedInterviewee
@@ -94,6 +95,7 @@
       intervieweeLastName = lastName
       interviewSlotStatus = 'pending'
     }
+    console.log(interviewSlotToAdd)
   }
 
   onMount(() => {
@@ -136,6 +138,7 @@
       ...interviewSlotToAdd,
       date: new Date(interviewSlotToAdd.date),
     })
+    console.log(interviewSlotToAdd)
     await updateDoc(doc(db, applicationsCollection, interviewSlotToAdd.intervieweeId), {
       'meta.interview': true,
     })
@@ -235,13 +238,13 @@
             bind:value={interviewSlotToAdd.meetingLink}
             label="Interview Meeting Link"
           />
-          <div class="flex gap-4">
+          <div class="flex gap-4 items-end">
             <Select 
              bind:value={interviewee}
               label="Assign Interviewee (optional, use when fulfilling requested timeslots)"
              options={intervieweeNames}
             />
-            <Button color = "red" on:click={() => {handleClear()}}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></Button>
+            <Button color = "red" class="h-fit" on:click={() => {handleClear()}}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></Button>
           </div>
           <div class="right-2 items-center">
             <Button
