@@ -138,23 +138,25 @@
       date: new Date(interviewSlotToAdd.date),
     })
     console.log(interviewSlotToAdd)
-    await updateDoc(doc(db, applicationsCollection, interviewSlotToAdd.intervieweeId), {
+    await updateDoc(doc(db, applicationsCollection, interviewSlotToAdd.id), {
       'meta.interview': true,
     })
-    await fetch('/api/assignInterview', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        intervieweeEmail: interviewSlotToAdd.intervieweeEmail,
-        firstName: interviewSlotToAdd.intervieweeFirstName,
-        interviewer: interviewSlotToAdd.interviewerName,
-        email: interviewSlotToAdd.interviewerEmail,
-        link: interviewSlotToAdd.meetingLink,
-        date: interviewSlotToAdd.date,
-      }),
-    })
+    if(interviewSlotToAdd.intervieweeId != '') {
+      await fetch('/api/assignInterview', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          intervieweeEmail: interviewSlotToAdd.intervieweeEmail,
+          firstName: interviewSlotToAdd.intervieweeFirstName,
+          interviewer: interviewSlotToAdd.interviewerName,
+          email: interviewSlotToAdd.interviewerEmail,
+          link: interviewSlotToAdd.meetingLink,
+          date: interviewSlotToAdd.date,
+        }),
+      })
+    }
     alert.trigger('success', 'Interviewee assigned and email sent.')
     interviewSlotToAdd.meetingLink = ''
     interviewSlotToAdd.date = ''
