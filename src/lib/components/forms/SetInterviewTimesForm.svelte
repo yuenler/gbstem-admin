@@ -16,12 +16,17 @@
   import Card from '../Card.svelte'
   import { onMount } from 'svelte'
   import Loading from '../Loading.svelte'
-    import { formatDate, toLocalISOString } from '$lib/utils'
+  import { formatDate, toLocalISOString } from '$lib/utils'
+  import { applicationsCollection } from '$lib/data/collections'
+  import Select from '../Select.svelte'
 
   let className = ''
   export { className as class }
 
   let editSlot = ''
+  let intervieweeNames: { name: string }[] = []
+  let intervieweeOptions: Data.Application<"client">[]
+  let interviewee: string 
   let onlyIncludeMyInterviews = true
   let onlyShowFutureSlots = true
   let showValidation = false
@@ -56,6 +61,21 @@
     return interviewSlots
   }
 
+  $: if (interviewee) {
+    const selectedInterviewee = intervieweeOptions.find(
+      (option) => `${option.personal.firstName} ${option.personal.lastName}` === interviewee,
+    )
+    if(selectedInterviewee) {
+      let { intervieweeId, intervieweeEmail, intervieweeFirstName, intervieweeLastName, interviewSlotStatus } = interviewSlotToAdd
+      const { personal: { email, firstName, lastName }, meta: { uid } } = selectedInterviewee
+      intervieweeId = uid
+      intervieweeEmail = email
+      intervieweeFirstName = firstName
+      intervieweeLastName = lastName
+      interviewSlotStatus = 'pending'
+    }
+  }
+
   onMount(() => {
     return user.subscribe(async (user) => {
       if (user) {
@@ -65,11 +85,30 @@
           currentUser.object.displayName ?? ''
         interviewSlotToAdd.interviewerEmail = currentUser.object.email ?? ''
         loading = false
+        await getDocs(collection(db, applicationsCollection)).then((querySnapshot) => {
+          querySnapshot.forEach((doc) => {
+            const user = doc.data() as Data.Application<"client">
+            if(user.meta.interview) {
+              intervieweeNames.push({
+                name: `${user.personal.firstName} ${user.personal.lastName}`,
+              })
+              intervieweeOptions.push(user)
+            }
+          })
+        })
       }
     })
   })
 
   const addTime = async () => {
+    if(interviewSlotToAdd.intervieweeId != '') {
+      const confirmation = confirm(
+        `Are you sure you want to assign ${interviewSlotToAdd.intervieweeFirstName} ${interviewSlotToAdd.intervieweeLastName} as the interviewee for this slot? An email will be sent to the interviewee confirming the interview has been scheduled.`,
+      )
+      if (!confirmation) {
+        return
+      }
+    }
     const id = `${new Date(interviewSlotToAdd.date).getTime()}${
       currentUser.object.uid
     }`
@@ -85,8 +124,40 @@
       ...interviewSlotToAdd,
       date: new Date(interviewSlotToAdd.date),
     })
-    interviewSlotToAdd.meetingLink = ''
-    interviewSlotToAdd.date = ''
+    await fetch('/api/assignInterview', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        intervieweeEmail: interviewSlotToAdd.intervieweeEmail,
+        firstName: interviewSlotToAdd.intervieweeFirstName,
+        interviewer: interviewSlotToAdd.interviewerName,
+        email: interviewSlotToAdd.interviewerEmail,
+        link: interviewSlotToAdd.meetingLink,
+        date: interviewSlotToAdd.date,
+      }),
+    })
+    let { intervieweeId, intervieweeEmail, intervieweeFirstName, intervieweeLastName, interviewSlotStatus, date, meetingLink } = interviewSlotToAdd
+    meetingLink = ''
+    date = ''
+    intervieweeId = ''
+    intervieweeEmail = ''
+    intervieweeFirstName = ''
+    intervieweeLastName = ''
+    interviewSlotStatus = 'available'
+    interviewee = ''
+  }
+
+  function handleClear() {
+    let { intervieweeId, intervieweeEmail, intervieweeFirstName, intervieweeLastName, interviewSlotStatus } = interviewSlotToAdd
+    interviewee = ''
+    intervieweeId = ''
+    intervieweeEmail = ''
+    intervieweeFirstName = ''
+    intervieweeLastName = ''
+    interviewSlotStatus = 'available'
+    alert.trigger('success', 'Interviewee cleared.')
   }
 
   async function updateTime(interview: Data.InterviewSlot) {
@@ -147,6 +218,12 @@
             bind:value={interviewSlotToAdd.meetingLink}
             label="Interview Meeting Link"
           />
+          <Select 
+            bind:value={interviewee}
+            label="Assign Interviewee (optional, use when fulfilling requested timeslots)"
+            options={intervieweeNames}
+          />
+          <Button color = "red" on:click={() => {handleClear}}>Clear Assigned Interviewee</Button>
           <div class="right-2 items-center">
             <Button
               color="blue"
