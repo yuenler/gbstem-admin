@@ -17,7 +17,7 @@
   import Card from '../Card.svelte'
   import { onMount } from 'svelte'
   import Loading from '../Loading.svelte'
-  import { formatDate, formatDateString, toLocalISOString } from '$lib/utils'
+  import { formatDate, formatDateLocal, toLocalISOString } from '$lib/utils'
   import { applicationsCollection } from '$lib/data/collections'
   import Select from '../Select.svelte'
 
@@ -153,7 +153,7 @@
           interviewer: interviewSlotToAdd.interviewerName,
           email: interviewSlotToAdd.interviewerEmail,
           link: interviewSlotToAdd.meetingLink,
-          date: formatDateString(interviewSlotToAdd.date),
+          date: formatDateLocal(interviewSlotToAdd.date),
         }),
       })
     }

@@ -121,6 +121,18 @@ export function formatDateString(dateString: string) {
   })
 }
 
+export function formatDateLocal(date: Date | string) {
+  return new Date(date).toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  })
+}
+
 export const formatDateShort = (date: Date) => {
   return date.toLocaleString('en-US', {
     weekday: 'short', // long, short, narrow
