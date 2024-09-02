@@ -137,11 +137,11 @@
       ...interviewSlotToAdd,
       date: new Date(interviewSlotToAdd.date),
     })
-    console.log(interviewSlotToAdd)
-    await updateDoc(doc(db, applicationsCollection, interviewSlotToAdd.id), {
-      'meta.interview': true,
-    })
     if(interviewSlotToAdd.intervieweeId != '') {
+      console.log(interviewSlotToAdd)
+      await updateDoc(doc(db, applicationsCollection, interviewSlotToAdd.intervieweeId), {
+        'meta.interview': true,
+      })
       await fetch('/api/assignInterview', {
         method: 'POST',
         headers: {
