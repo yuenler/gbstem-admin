@@ -88,7 +88,7 @@
         await getDocs(query(collection(db, applicationsCollection))).then((querySnapshot) => {
           querySnapshot.forEach((doc) => {
             if(doc.data()) {
-              const user = doc.data()
+              const user = doc.data() as Data.Application<"client">
               console.log(user)
               if(user.meta.interview === false) {
                 intervieweeNames.push({
@@ -207,6 +207,7 @@
   <Loading />
 {:else}
   {#await allInterviewSlots then value}
+  {#await intervieweeNames then intervieweeNames}
     <Form class={clsx(showValidation && 'show-validation', className)}>
       <div class="right-2 items-center">
         <Card>
@@ -343,5 +344,6 @@
         {/if}
       {/each}
     </Form>
+  {/await}
   {/await}
 {/if}
