@@ -224,7 +224,7 @@
     <Select
       bind:value={decisionFilter}
       label="Filter"
-      options={[{ name: 'all' }, { name: 'submitted' }, {name: 'enrolled'}]}
+      options={[{ name: 'all' }, { name: 'submitted' }, {name: 'enrolled'}, { name: 'inPerson' }]}
       floating
       required
     />

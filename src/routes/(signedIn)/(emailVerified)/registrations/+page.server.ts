@@ -12,7 +12,7 @@ export const load = (async ({ url, depends }) => {
   if (query === null || query === '') {
     const updated = url.searchParams.get('updated')
     const filter = url.searchParams.get('filter')
-    try {
+     try {
       let dbQuery;
       // if (filter === 'decided') {
       //   dbQuery = updated
@@ -50,6 +50,14 @@ export const load = (async ({ url, depends }) => {
           : adminDb
             .collection(collectionName)
             .where('enrolled', '==', true)
+      } else if (filter === 'inPerson') {
+        dbQuery = updated
+        ? adminDb
+          .collection(collectionName)
+          .where('program.inPerson', '==', true)
+        : adminDb
+          .collection(collectionName)
+          .where('program.inPerson', '==', true)
       } else {
         dbQuery = updated
           ? adminDb
