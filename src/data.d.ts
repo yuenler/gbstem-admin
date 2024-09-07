@@ -123,10 +123,15 @@ declare global {
         reason: string
         inPerson: boolean
       }
+      inPerson: {
+        allergies: string
+        parentPickup: string
+      }
       agreements: {
         entireProgram: boolean
         timeCommitment: boolean
         submitting: boolean
+        mediaRelease: boolean
         bypassAgeLimits:boolean
       }
       meta: {
