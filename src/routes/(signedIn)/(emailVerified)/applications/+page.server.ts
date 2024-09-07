@@ -48,8 +48,15 @@ export const load = (async ({ url, depends }) => {
             .orderBy('meta.decision')
             .where('meta.decision', '==', null)
             .orderBy('timestamps.updated', 'desc')
-      }
-      else {
+      } else if (filter === 'inPerson') {
+        dbQuery = updated
+          ? adminDb
+            .collection(collectionName)
+            .where('program.inPerson', '==', true)
+          : adminDb
+            .collection(collectionName)
+            .where('program.inPerson', '==', true)
+      } else {
         dbQuery = updated
           ? adminDb
             .collection(collectionName)
