@@ -174,7 +174,7 @@
       const { conversation, conversationNotes, mockLessonExplanations, mockLessonEngagement, mockLessonPace, mockLessonOverall, mockLessonNotes, teachingPreferences, availabilityNotes, notes, likelyDecision, lastSemesterNotes, date, interviewer, type, attendance } = interview
       setDoc(doc(db, decisionsCollection, frozenId), {
         conversation, conversationNotes, mockLessonExplanations, mockLessonEngagement, mockLessonPace, mockLessonOverall, mockLessonNotes, teachingPreferences, availabilityNotes, notes, likelyDecision, lastSemesterNotes, date, interviewer, type, attendance
-      })
+      }, {merge: true})
         .then(() => {
           updateDoc(doc(db, applicationsCollection, frozenId), {
             'meta.decision': doc(db, decisionsCollection, frozenId),
@@ -255,7 +255,7 @@
       const { type, notes, interviewer, attendance, conversation, conversationNotes, lastSemesterNotes, mockLessonEngagement, mockLessonExplanations, mockLessonNotes, mockLessonPace, mockLessonOverall, teachingPreferences, availabilityNotes, date } = interview
       setDoc(doc(db, decisionsCollection, frozenId), {
         type, likelyDecision, notes, interviewer, attendance, conversation, conversationNotes, lastSemesterNotes, mockLessonEngagement, mockLessonExplanations, mockLessonNotes, mockLessonPace, mockLessonOverall, teachingPreferences, availabilityNotes, date
-      })
+      }, {merge: true})
         .then(() => {
           updateDoc(doc(db, applicationsCollection, frozenId), {
             'meta.decision': doc(db, decisionsCollection, frozenId),
