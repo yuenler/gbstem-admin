@@ -133,6 +133,7 @@
             if (decisionSnapshot.exists()) {
               const { type, likelyDecision, notes, interviewer, attendance, conversation, conversationNotes, lastSemesterNotes, mockLessonEngagement, mockLessonExplanations, mockLessonNotes, mockLessonPace, mockLessonOverall, teachingPreferences, availabilityNotes, date } = data
               decision = type ?? null
+              interview.type = type ?? ''
               interview.likelyDecision = likelyDecision ?? null
               interview.notes = notes ?? ''
               interview.interviewer = interviewer ?? ''
@@ -171,10 +172,10 @@
     const frozenId = id
     loading = true
     if (frozenId !== undefined) {
-      const { conversation, conversationNotes, mockLessonExplanations, mockLessonEngagement, mockLessonPace, mockLessonOverall, mockLessonNotes, teachingPreferences, availabilityNotes, notes, likelyDecision, lastSemesterNotes, date, interviewer, type, attendance } = interview
+      const { conversation, conversationNotes, mockLessonExplanations, mockLessonEngagement, mockLessonPace, mockLessonOverall, mockLessonNotes, teachingPreferences, availabilityNotes, notes, lastSemesterNotes, date, interviewer, attendance } = interview
       setDoc(doc(db, decisionsCollection, frozenId), {
-        conversation, conversationNotes, mockLessonExplanations, mockLessonEngagement, mockLessonPace, mockLessonOverall, mockLessonNotes, teachingPreferences, availabilityNotes, notes, likelyDecision, lastSemesterNotes, date, interviewer, type, attendance
-      })
+        conversation, conversationNotes, mockLessonExplanations, mockLessonEngagement, mockLessonPace, mockLessonOverall, mockLessonNotes, teachingPreferences, availabilityNotes, notes, lastSemesterNotes, date, interviewer, attendance
+      }, {merge: true})
         .then(() => {
           updateDoc(doc(db, applicationsCollection, frozenId), {
             'meta.decision': doc(db, decisionsCollection, frozenId),
