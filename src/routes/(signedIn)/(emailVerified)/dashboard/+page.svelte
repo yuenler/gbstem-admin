@@ -119,6 +119,7 @@
           getDocs(q).then((snapshot) => {
           snapshot.forEach((doc) => {
           const meetingTimes: Timestamp[] = doc.data().meetingTimes;
+          if(meetingTimes === undefined) return;
           for (let i = 0; i < Object.values(meetingTimes).length; i++){
             const meetingTime = Object.values(meetingTimes).at(i) ? timestampToDate(Object.values(meetingTimes).at(i)) : new Date();
           if (meetingTime && new Date().toLocaleDateString() === meetingTime.toLocaleDateString()) {
