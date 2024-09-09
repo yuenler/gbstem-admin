@@ -14,7 +14,7 @@
   import { fade } from 'svelte/transition'
   import { alert } from '$lib/stores'
   import { classHeldToday, isClassUpcoming, formatDate, normalizeCapitals, timestampToDate, getNearestFutureClass, getNearestFutureClassIndex } from '$lib/utils'
-    import { applicationsCollection, classesCollection } from '$lib/data/collections'
+    import { applicationsCollection, classesCollection, registrationsCollection } from '$lib/data/collections'
     import sendClassReminder from '$lib/data/helpers/sendClassReminders'
 
   type DashboardData = {
@@ -53,7 +53,7 @@
         new Promise<void>((resolve) => {
           const applicationsColl = collection(db, applicationsCollection)
           const usersColl = collection(db, 'users')
-          const registrationsColl = collection(db, applicationsCollection)
+          const registrationsColl = collection(db, registrationsCollection)
           // get uncompleted registration emails
           getDocs(
             query(registrationsColl, where('meta.submitted', '==', false)),
