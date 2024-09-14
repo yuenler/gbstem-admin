@@ -20,7 +20,7 @@
   let search: string = data.query ?? ''
   let current: number | undefined
   let checked: Array<number> = []
-  let decisionFilter: 'all' | 'decided' | 'undecided' =
+  let decisionFilter: 'all' | 'decided' | 'undecided' | 'inPerson' =
     ($page.url.searchParams.get('filter') as any) ?? 'all'
 
   const csv = data.applications
@@ -245,7 +245,7 @@
     <Select
       bind:value={decisionFilter}
       label="Filter"
-      options={[{ name: 'all' }, { name: 'undecided' }]}
+      options={[{ name: 'all' }, { name: 'undecided' }, { name: 'inPerson' }]}
       floating
       required
     />
