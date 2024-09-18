@@ -251,13 +251,13 @@
           {#each interviewRequests as request}
             {#if intervieweeOptions.find((option) => option.meta.uid === request.id)?.meta.interview === false}
               {#if request.date > new Date()}
-                <div class="flex items-center justify-between rounded-lg p-4 bg-blue-100">
+                <div class="flex items-center justify-between rounded-lg p-4 bg-blue-100 mt-2">
                   <p>{formatDateLocal(request.date)}</p>
                   <p>{request.firstName}{' '}{request.lastName}</p>
                   <p>{request.email}</p>
                 </div>
               {:else}
-              <div class="flex items-center justify-between rounded-lg p-4 bg-red-100">
+              <div class="flex items-center justify-between rounded-lg p-4 bg-red-100 mt-2">
                 <p>{formatDateLocal(request.date)}</p>
                 <p>{request.firstName}{' '}{request.lastName}</p>
                 <p>{request.email}</p>
