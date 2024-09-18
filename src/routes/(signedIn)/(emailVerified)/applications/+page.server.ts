@@ -56,6 +56,16 @@ export const load = (async ({ url, depends }) => {
           : adminDb
             .collection(collectionName)
             .where('program.inPerson', '==', true)
+      } else if (filter === 'incomplete') {
+        dbQuery = updated
+          ? adminDb
+            .collection(collectionName)
+            .where('meta.submitted', '==', false)
+            .orderBy('timestamps.updated', 'desc')
+          : adminDb
+            .collection(collectionName)
+            .where('meta.submitted', '==', false)
+            .orderBy('timestamps.updated', 'desc')
       } else {
         dbQuery = updated
           ? adminDb
