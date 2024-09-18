@@ -246,7 +246,7 @@
   {#await intervieweeNames then intervieweeNames}
     <Form class={clsx(showValidation && 'show-validation', className)}>
       <div class="right-2 items-center">
-        <Card class="mb-2">
+        <Card class="mb-4">
           <h2 class="font-bold">Interview Time Requests</h2>
           {#each interviewRequests as request}
             {#if intervieweeOptions.find((option) => option.meta.uid === request.id)?.meta.interview === false}
@@ -281,7 +281,7 @@
           <div class="flex gap-4 items-end">
             <Select 
              bind:value={interviewee}
-              label="Assign Interviewee (ONLY USE when fulfilling timeslots requested via email, or when asked to do so)"
+              label="Assign Interviewee (ONLY USE when fulfilling that person's interview time request)"
              options={intervieweeNames}
             />
             <Button color = "red" class="h-fit" on:click={() => {handleClear()}}><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></Button>
