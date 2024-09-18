@@ -116,7 +116,6 @@
 
   let values: Data.Application<'client'> = cloneDeep(defaultValues)
   let decision: Data.Decision | null
-  let likelyDecision: 'likely yes' | 'likely no' | 'likely waitlist' | null
   let notes = ''
   $: if (id !== undefined) {
     loading = true
@@ -151,14 +150,14 @@
               interview.date = toLocalISOString(new Date(date)) ?? ''
             } else {
               decision = null
-              likelyDecision = null
+              interview.likelyDecision = null
               notes = ''
             }
             loading = false
           })
         } else {
           decision = null
-          likelyDecision = null
+          interview.likelyDecision = null
           notes = ''
           loading = false
         }
@@ -213,7 +212,7 @@
             .then(() => {
               invalidate('app:applications').then(() => {
                 alert.trigger('success', 'Decision updated successfully.')
-                likelyDecision = newDecision
+                interview.likelyDecision = newDecision
                 loading = false
               })
             })
@@ -251,9 +250,8 @@
     const frozenId = id
     loading = true
     if (frozenId !== undefined) {
-      interview.likelyDecision = likelyDecision
       interview.type = newDecision
-      const { type, notes, interviewer, attendance, conversation, conversationNotes, lastSemesterNotes, mockLessonEngagement, mockLessonExplanations, mockLessonNotes, mockLessonPace, mockLessonOverall, teachingPreferences, availabilityNotes, date } = interview
+      const { type, notes, interviewer, attendance, conversation, conversationNotes, lastSemesterNotes, mockLessonEngagement, mockLessonExplanations, mockLessonNotes, mockLessonPace, mockLessonOverall, teachingPreferences, availabilityNotes, date, likelyDecision } = interview
       setDoc(doc(db, decisionsCollection, frozenId), {
         type, likelyDecision, notes, interviewer, attendance, conversation, conversationNotes, lastSemesterNotes, mockLessonEngagement, mockLessonExplanations, mockLessonNotes, mockLessonPace, mockLessonOverall, teachingPreferences, availabilityNotes, date
       })
@@ -342,7 +340,7 @@
           {#if disabled}
             <Button
               color={!loading &&
-              (likelyDecision === null || likelyDecision === 'likely yes')
+              (interview.likelyDecision === null || interview.likelyDecision === 'likely yes')
                 ? 'green'
                 : 'gray'}
               class="flex items-center gap-1"
@@ -364,7 +362,7 @@
             >
             <Button
               color={!loading &&
-              (likelyDecision === null || likelyDecision === 'likely no')
+              (interview.likelyDecision === null || interview.likelyDecision === 'likely no')
                 ? 'red'
                 : 'gray'}
               class="flex items-center gap-1"

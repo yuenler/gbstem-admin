@@ -56,6 +56,42 @@ export const load = (async ({ url, depends }) => {
           : adminDb
             .collection(collectionName)
             .where('program.inPerson', '==', true)
+      } else if (filter === 'incomplete') {
+        dbQuery = updated
+          ? adminDb
+            .collection(collectionName)
+            .where('meta.submitted', '==', false)
+            .orderBy('timestamps.updated', 'desc')
+          : adminDb
+            .collection(collectionName)
+            .where('meta.submitted', '==', false)
+            .orderBy('timestamps.updated', 'desc')
+      } else if (filter === 'complete') {
+        try {
+        dbQuery = updated
+          ? adminDb
+            .collection(collectionName)
+            .where('agreements.entireProgram', '==', true)
+            .where('agreements.submitting', '==', true)
+            .where('agreements.timeCommitment', '==', true)
+            .where('essay.academicBackground', '!=', "")
+            .where('essay.teachingScenario', '!=', "")
+            .where('essay.why', '!=', "")
+            .where('program.timeSlots', '!=', "")
+            .orderBy('timestamps.updated', 'desc')
+          : adminDb
+            .collection(collectionName)
+            .where('agreements.entireProgram', '==', true)
+            .where('agreements.submitting', '==', true)
+            .where('agreements.timeCommitment', '==', true)
+            .where('essay.academicBackground', '!=', "")
+            .where('essay.teachingScenario', '!=', "")
+            .where('essay.why', '!=', "")
+            .where('program.timeSlots', '!=', "")
+            .orderBy('timestamps.updated', 'desc')
+        } catch (err) {
+          console.log(err)
+        }
       } else {
         dbQuery = updated
           ? adminDb
