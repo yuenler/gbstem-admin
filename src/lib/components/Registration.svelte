@@ -33,7 +33,8 @@
   import type { FirebaseError } from 'firebase/app'
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
-    import { registrationsCollection } from '$lib/data/collections'
+  import { registrationsCollection } from '$lib/data/collections'
+  import Link from '$lib/components/Link.svelte'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -75,7 +76,13 @@
       inPerson: false,
       reason: '',
     },
+    inPerson: {
+      allergies: '',
+      parentPickup: '',
+    },  
     agreements: {
+      mediaRelease: false,
+      bypassAgeLimits: false,
       entireProgram: false,
       timeCommitment: false,
       submitting: false,
@@ -381,6 +388,20 @@
                 required
               />
             </div>
+            <span
+            >Go to <Link
+              href="https://gbstem.org/#/robotics"
+              class="link mt-2"
+              target="_blank"
+              >https://gbstem.org/#/robotics
+            </Link> for more information</span
+            >
+            <Input
+              type="checkbox"
+              bind:value={values.program.inPerson}
+              label="For our in-person offering in the fall, gbSTEM is holding a new Lego Robotics competition program for students grade 5 and up. The program will meet weekly in-person at the Cambridge Public Library on Saturdays 1:00-3:00pm; parents are encouraged to help coach the robotics team. There are 10 slots available this year and will be more in the future. You may apply for this program on top of two courses, but if you are selected you will only be able to enroll in one additional course. Would you like to apply for the robotics program?"
+            />
+            <span class="font-bold mt-8">Additional Information</span>
             <div class="mt-2">
               <Select
                 bind:value={values.program.reason}
@@ -390,15 +411,36 @@
                 required
               />
             </div>
+            {#if values.program.inPerson}
             <Input
+            type="text"
+            bind:value={values.inPerson.allergies}
+            label="Please list any allergies the student has."
+            />
+            <Input
+            type="text"
+            bind:value={values.inPerson.parentPickup}
+            label="Please list the names, emails, and phone numbers of the people who are authorized to pick up the student from in-person classes."
+            required
+            />
+            {/if}
+            <!-- <Input
               type="checkbox"
               bind:value={values.program.inPerson}
               label="gbSTEM will offer in-person classes at the Cambridge Public Library on Saturdays 2:30-4:30pm. Would you like to opt for the in-person option if available for your child? Note that we cannot guarantee that in-person classes will be available for all students."
-            />
+            /> -->
           </div>
           <div class="grid gap-1">
             <span class="font-bold">Agreements</span>
             <div class="grid">
+              {#if values.program.inPerson}
+                <Input
+                type="checkbox"
+                bind:value={values.agreements.mediaRelease}
+                label="Do you give consent to your child's picture being used in gbSTEM publications, including website, newsletter, and social media posts? Names and personal information will not be shared."
+                required
+              />
+              {/if}
               <Input
                 type="checkbox"
                 bind:value={values.agreements.entireProgram}
