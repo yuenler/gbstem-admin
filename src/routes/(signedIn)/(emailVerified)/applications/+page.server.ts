@@ -67,6 +67,7 @@ export const load = (async ({ url, depends }) => {
             .where('meta.submitted', '==', false)
             .orderBy('timestamps.updated', 'desc')
       } else if (filter === 'complete') {
+        try {
         dbQuery = updated
           ? adminDb
             .collection(collectionName)
@@ -88,6 +89,9 @@ export const load = (async ({ url, depends }) => {
             .where('essay.why', '!=', "")
             .where('program.timeSlots', '!=', "")
             .orderBy('timestamps.updated', 'desc')
+        } catch (err) {
+          console.log(err)
+        }
       } else {
         dbQuery = updated
           ? adminDb
