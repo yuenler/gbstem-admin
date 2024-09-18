@@ -66,6 +66,28 @@ export const load = (async ({ url, depends }) => {
             .collection(collectionName)
             .where('meta.submitted', '==', false)
             .orderBy('timestamps.updated', 'desc')
+      } else if (filter === 'complete') {
+        dbQuery = updated
+          ? adminDb
+            .collection(collectionName)
+            .where('agreements.entireProgram', '==', true)
+            .where('agreements.submitting', '==', true)
+            .where('agreements.timeCommitment', '==', true)
+            .where('essay.academicBackground', '!=', "")
+            .where('essay.teachingScenario', '!=', "")
+            .where('essay.why', '!=', "")
+            .where('program.timeSlots', '!=', "")
+            .orderBy('timestamps.updated', 'desc')
+          : adminDb
+            .collection(collectionName)
+            .where('agreements.entireProgram', '==', true)
+            .where('agreements.submitting', '==', true)
+            .where('agreements.timeCommitment', '==', true)
+            .where('essay.academicBackground', '!=', "")
+            .where('essay.teachingScenario', '!=', "")
+            .where('essay.why', '!=', "")
+            .where('program.timeSlots', '!=', "")
+            .orderBy('timestamps.updated', 'desc')
       } else {
         dbQuery = updated
           ? adminDb
