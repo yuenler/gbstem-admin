@@ -32,6 +32,7 @@
   let onlyShowFutureSlots = true
   let showValidation = false
   let allInterviewSlots: Data.InterviewSlot[] = []
+  let interviewSlotRequests: Data.SlotRequest[] = []
   let interviewSlotToAdd: Data.InterviewSlot = {
     date: '',
     id: '',
@@ -60,6 +61,24 @@
       } as Data.InterviewSlot)
     })
     return interviewSlots
+  }
+
+  async function getTimeRequests() {
+    const slotRequests: Data.SlotRequest[] = []
+    const q = query(collection(db, 'interviewSlotRequests'))
+    const querySnapshot = await getDocs(q)
+    querySnapshot.forEach((doc) => {
+      const slotRequest = doc.data()
+      slotRequests.push({
+        date: new Date(slotRequest.date.seconds * 1000),
+        id: doc.id.split('-')[0],
+        firstName: slotRequest.firstName,
+        lastName: slotRequest.lastName,
+        email: slotRequest.email,
+      } as Data.SlotRequest)
+    })
+    slotRequests.sort((a, b) => a.date.getTime() - b.date.getTime())
+    return slotRequests
   }
 
   async function getInterviewees() {
@@ -102,6 +121,7 @@
       if (user) {
         currentUser = user
         allInterviewSlots = await getData()
+        interviewSlotRequests = await getTimeRequests()
         const intervieweeInfo = await getInterviewees()
         intervieweeNames = intervieweeInfo.names
         intervieweeOptions = intervieweeInfo.options
@@ -222,7 +242,28 @@
   <Loading />
 {:else}
   {#await allInterviewSlots then value}
+  {#await interviewSlotRequests then interviewRequests}
   {#await intervieweeNames then intervieweeNames}
+    <Card class="mb-2">
+      <h2 class="font-bold">Interview Time Requests</h2>
+      {#each interviewRequests as request}
+        {#if intervieweeOptions.find((option) => option.meta.uid === request.id)?.meta.interview === false}
+          {#if request.date > new Date()}
+            <div class="flex items-center justify-between rounded-lg p-4 bg-blue-100">
+              <p>{request.date}</p>
+              <p>{request.firstName}{' '}{request.lastName}</p>
+              <p>{request.email}</p>
+            </div>
+          {:else}
+          <div class="flex items-center justify-between rounded-lg p-4 bg-red-100">
+            <p>{request.date}</p>
+            <p>{request.firstName}{' '}{request.lastName}</p>
+            <p>{request.email}</p>
+          </div>
+          {/if}
+        {/if}
+      {/each}
+    </Card>
     <Form class={clsx(showValidation && 'show-validation', className)}>
       <div class="right-2 items-center">
         <Card>
@@ -361,6 +402,7 @@
         {/if}
       {/each}
     </Form>
+  {/await}
   {/await}
   {/await}
 {/if}

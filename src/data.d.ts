@@ -88,6 +88,14 @@ declare global {
       meetingLink: string,
     }
 
+    type SlotRequest = {
+      date: Date,
+      id: string,
+      firstName: string,
+      lastName: string,
+      email: string,
+    }
+
     type TimeRange = {
       start: number,
       end: number,
