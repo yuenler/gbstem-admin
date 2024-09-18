@@ -32,7 +32,7 @@
   let onlyShowFutureSlots = true
   let showValidation = false
   let allInterviewSlots: Data.InterviewSlot[] = []
-  let interviewSlotRequests: Data.SlotRequest[] = []
+  let interviewSlotRequests: Data.SlotRequest[]
   let interviewSlotToAdd: Data.InterviewSlot = {
     date: '',
     id: '',
@@ -249,7 +249,14 @@
       <div class="right-2 items-center">
         <Card class="mb-2">
           <h2 class="font-bold">Interview Time Requests</h2>
+          <p>{interviewRequests.length}</p>
           {#each interviewRequests as request}
+          <div>
+            {#each intervieweeOptions as option}
+              <div class="flex items-center justify-between rounded-lg p-4 bg-blue-100"><p>{option.meta.interview}</p><p>{option.meta.uid}</p></div>
+            {/each}
+            <div>{request.id}</div>
+          </div>
             {#if intervieweeOptions.find((option) => option.meta.uid === request.id)?.meta.interview === false}
               {#if request.date > new Date()}
                 <div class="flex items-center justify-between rounded-lg p-4 bg-blue-100">
