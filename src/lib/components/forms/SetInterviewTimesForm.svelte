@@ -78,7 +78,6 @@
       } as Data.SlotRequest)
     })
     slotRequests.sort((a, b) => a.date.getTime() - b.date.getTime())
-    console.log(slotRequests)
     return slotRequests
   }
 
@@ -249,24 +248,17 @@
       <div class="right-2 items-center">
         <Card class="mb-2">
           <h2 class="font-bold">Interview Time Requests</h2>
-          <p>{interviewRequests.length}</p>
           {#each interviewRequests as request}
-          <div>
-            {#each intervieweeOptions as option}
-              <div class="flex items-center justify-between rounded-lg p-4 bg-blue-100"><p>{option.meta.interview}</p><p>{option.meta.uid}</p></div>
-            {/each}
-            <div>{request.id}</div>
-          </div>
             {#if intervieweeOptions.find((option) => option.meta.uid === request.id)?.meta.interview === false}
               {#if request.date > new Date()}
                 <div class="flex items-center justify-between rounded-lg p-4 bg-blue-100">
-                  <p>{request.date}</p>
+                  <p>{formatDateLocal(request.date)}</p>
                   <p>{request.firstName}{' '}{request.lastName}</p>
                   <p>{request.email}</p>
                 </div>
               {:else}
               <div class="flex items-center justify-between rounded-lg p-4 bg-red-100">
-                <p>{request.date}</p>
+                <p>{formatDateLocal(request.date)}</p>
                 <p>{request.firstName}{' '}{request.lastName}</p>
                 <p>{request.email}</p>
               </div>
