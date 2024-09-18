@@ -65,7 +65,7 @@
 
   async function getTimeRequests() {
     const slotRequests: Data.SlotRequest[] = []
-    const q = query(collection(db, 'interviewSlotRequests'))
+    const q = query(collection(db, 'interviewTimeRequests'))
     const querySnapshot = await getDocs(q)
     querySnapshot.forEach((doc) => {
       const slotRequest = doc.data()
