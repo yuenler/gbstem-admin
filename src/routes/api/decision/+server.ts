@@ -9,6 +9,7 @@ import { addDataToHtmlTemplate } from '$lib/utils'
 import { rejectionEmailTemplate } from '$lib/data/emailTemplates/rejectionEmailTemplate'
 import { waitlistEmailTemplate } from '$lib/data/emailTemplates/waitlistEmailTemplate'
 import { acceptEmailTemplate } from '$lib/data/emailTemplates/acceptEmailTemplate'
+import { subEmailTemplate } from '$lib/data/emailTemplates/subEmailTemplate'
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   let topError
@@ -39,6 +40,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
             break;
           case "waitlisted":
             htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template);
+            break;
+          case "substitute":
+            htmlBody = addDataToHtmlTemplate(subEmailTemplate, template);
             break;
           case "accepted":
             htmlBody = addDataToHtmlTemplate(acceptEmailTemplate, template);

@@ -65,6 +65,8 @@
       createDecisionAction('accepted'),
       createDecisionAction('waitlisted'),
       createDecisionAction('rejected'),
+      createDecisionAction('interview'),
+      createDecisionAction('substitute'),
     ])
   } else {
     actions.set(null)
@@ -99,8 +101,8 @@
   }
 
   function createDecisionAction(decision: Data.Decision) {
-    let name: 'Accept' | 'Waitlist' | 'Reject' | 'Interview'
-    let color: 'green' | 'yellow' | 'red' | 'blue'
+    let name: 'Accept' | 'Waitlist' | 'Reject' | 'Interview' | 'Substitute'
+    let color: 'green' | 'yellow' | 'red' | 'blue' | 'purple'
     switch (decision) {
       case 'accepted': {
         name = 'Accept'
@@ -120,6 +122,11 @@
       case 'interview': {
         name = 'Interview'
         color = 'blue'
+        break
+      }
+      case 'substitute': {
+        name = 'Substitute'
+        color = 'purple'
         break
       }
     }
@@ -337,6 +344,19 @@
                   clip-rule="evenodd"
                 />
               </svg>
+            {:else if application.values.meta.decision?.likelyDecision === 'likely waitlist'}
+              <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              class="w-5 h-5 text-yellow-300"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
+                clip-rule="evenodd"
+              />
+            </svg>
             {/if}
           {:else}
             None
@@ -416,6 +436,22 @@
                 <path
                   fill-rule="evenodd"
                   d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
+                  clip-rule="evenodd"
+                />
+              </svg> 
+            {:else if application.values.meta.decision.type === 'substitute'}
+            <svg
+                class="w-5 h-5 text-purple-300"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z"
                   clip-rule="evenodd"
                 />
               </svg>
