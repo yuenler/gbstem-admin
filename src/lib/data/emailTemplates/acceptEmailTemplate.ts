@@ -172,7 +172,7 @@ export const acceptEmailTemplate = `<!doctype html>
                           style="font-family:Open Sans, Helvetica, Arial, sans-serif;font-size:16px;line-height:22px;text-align:left;color:#000000;">
                           <p style="margin:20px 0"> Hello {{app.firstName}}, </p>
                           <p style="margin: 20px 0"> 
-We are happy to announce that you have been accepted as an instructor for the upcoming semester. This was our most selective semester yet, so congratulations on your acceptance! You will soon receive an email with details about the mandatory instructor orientation for the semester. Thank you for your dedication to our program!
+We are happy to announce that you have been accepted as an instructor for the upcoming semester. This was our most selective semester yet, so congratulations on your acceptance! As a next step, please attend our <strong>MANDATORY</strong> instructor orientation for the semester on <strong>Friday, September 20th at 7 pm EDT</strong>. If you cannot make that time, there will be a make up session on <strong>Saturday, September 21st at 3 pm EDT.</strong> However, you are strongly encouraged to attend the first session. Please email and let us know <strong>IMMEDIATELY</strong> if neither of these times work for you. The link to join is here: https://uchicago.zoom.us/j/5405925135?pwd=bFd1a3Q2ZWpEY1lzN0tVYXEvRDI2QT09. Thank you for your dedication to our program!
                           </p>
                           <p style="margin: 30px 0">If you have any questions or concerns,
                             visit our FAQs, or you can reach us at <a target="_blank" rel="noopener noreferrer"
