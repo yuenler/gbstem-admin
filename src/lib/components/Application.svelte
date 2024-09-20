@@ -555,15 +555,21 @@
               class="flex items-center gap-1"
               on:click={() => handleDecision('substitute')}
               ><svg
+                class="w-5 h-5 text-purple-300"
+                aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
+                width="24"
+                height="24"
                 fill="currentColor"
-                class="w-5 h-5"
+                viewBox="0 0 24 24"
               >
-                <path d="M2.5 2v6h6M21.5 22v-6h-6" /><path
-                  d="M22 11.5A10 10 0 0 0 3.2 7.2M2 12.5a10 10 0 0 0 18.8 4.2"
-                /></svg
-              ><span>Substitute</span></Button
+                <path
+                  fill-rule="evenodd"
+                  d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>Substitute</span></Button
             >
             <Button
               color={!loading &&
