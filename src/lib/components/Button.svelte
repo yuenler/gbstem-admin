@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cn } from '$lib/utils'
 
-  type ButtonColor = 'red' | 'blue' | 'gray' | 'green' | 'yellow'
+  type ButtonColor = 'red' | 'blue' | 'gray' | 'green' | 'yellow' | 'purple'
   type ButtonType = 'button' | 'submit' | 'reset'
 
   let className = ''
@@ -25,6 +25,8 @@
       'bg-green-100 text-green-900 hover:bg-green-200 disabled:bg-green-200 disabled:text-green-700',
     color === 'yellow' &&
       'bg-yellow-100 text-yellow-900 hover:bg-yellow-200 disabled:bg-yellow-200 disabled:text-yellow-700',
+    color === 'purple' &&
+      'bg-purple-100 text-purple-900 hover:bg-purple-200 disabled:bg-purple-200 disabled:text-purple-700',
     className,
   )}
   {href}

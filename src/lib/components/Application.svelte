@@ -29,8 +29,17 @@
   import { cloneDeep } from 'lodash-es'
   import type { FirebaseError } from 'firebase/app'
   import { invalidate } from '$app/navigation'
-    import { formatDate, formatDateShort, timestampToDate, toLocalISOString } from '$lib/utils'
-    import { applicationsCollection, decisionsCollection, semesterDatesDocument } from '$lib/data/collections'
+  import {
+    formatDate,
+    formatDateShort,
+    timestampToDate,
+    toLocalISOString,
+  } from '$lib/utils'
+  import {
+    applicationsCollection,
+    decisionsCollection,
+    semesterDatesDocument,
+  } from '$lib/data/collections'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -130,7 +139,24 @@
           getDoc(data.meta.decision).then((decisionSnapshot) => {
             const data = decisionSnapshot.data() as Data.Interview
             if (decisionSnapshot.exists()) {
-              const { type, likelyDecision, notes, interviewer, attendance, conversation, conversationNotes, lastSemesterNotes, mockLessonEngagement, mockLessonExplanations, mockLessonNotes, mockLessonPace, mockLessonOverall, teachingPreferences, availabilityNotes, date } = data
+              const {
+                type,
+                likelyDecision,
+                notes,
+                interviewer,
+                attendance,
+                conversation,
+                conversationNotes,
+                lastSemesterNotes,
+                mockLessonEngagement,
+                mockLessonExplanations,
+                mockLessonNotes,
+                mockLessonPace,
+                mockLessonOverall,
+                teachingPreferences,
+                availabilityNotes,
+                date,
+              } = data
               decision = type ?? null
               interview.type = type ?? ''
               interview.likelyDecision = likelyDecision ?? null
@@ -171,10 +197,42 @@
     const frozenId = id
     loading = true
     if (frozenId !== undefined) {
-      const { conversation, conversationNotes, mockLessonExplanations, mockLessonEngagement, mockLessonPace, mockLessonOverall, mockLessonNotes, teachingPreferences, availabilityNotes, notes, lastSemesterNotes, date, interviewer, attendance } = interview
-      setDoc(doc(db, decisionsCollection, frozenId), {
-        conversation, conversationNotes, mockLessonExplanations, mockLessonEngagement, mockLessonPace, mockLessonOverall, mockLessonNotes, teachingPreferences, availabilityNotes, notes, lastSemesterNotes, date, interviewer, attendance
-      }, {merge: true})
+      const {
+        conversation,
+        conversationNotes,
+        mockLessonExplanations,
+        mockLessonEngagement,
+        mockLessonPace,
+        mockLessonOverall,
+        mockLessonNotes,
+        teachingPreferences,
+        availabilityNotes,
+        notes,
+        lastSemesterNotes,
+        date,
+        interviewer,
+        attendance,
+      } = interview
+      setDoc(
+        doc(db, decisionsCollection, frozenId),
+        {
+          conversation,
+          conversationNotes,
+          mockLessonExplanations,
+          mockLessonEngagement,
+          mockLessonPace,
+          mockLessonOverall,
+          mockLessonNotes,
+          teachingPreferences,
+          availabilityNotes,
+          notes,
+          lastSemesterNotes,
+          date,
+          interviewer,
+          attendance,
+        },
+        { merge: true },
+      )
         .then(() => {
           updateDoc(doc(db, applicationsCollection, frozenId), {
             'meta.decision': doc(db, decisionsCollection, frozenId),
@@ -197,13 +255,15 @@
     }
   }
 
-  function handleLikelyDecision(newDecision: 'likely yes' | 'likely no' | 'likely waitlist') {
+  function handleLikelyDecision(
+    newDecision: 'likely yes' | 'likely no' | 'likely waitlist',
+  ) {
     const frozenId = id
     loading = true
     if (frozenId !== undefined) {
       updateDoc(doc(db, decisionsCollection, frozenId), {
         likelyDecision: newDecision,
-        'type': decision,
+        type: decision,
       })
         .then(() => {
           updateDoc(doc(db, applicationsCollection, frozenId), {
@@ -230,15 +290,24 @@
 
   async function handleDecision(newDecision: Data.Decision) {
     // Get today's date
-    let today = new Date();
+    let today = new Date()
 
     // Calculate the date 7 days from today
-    let weekDeadline = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);    
+    let weekDeadline = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
     let interviewDeadline = formatDateShort(weekDeadline)
 
-    const dueDate = await getDoc(doc(db, 'semesterDates', semesterDatesDocument))
-    if(dueDate.exists()) {
-      interviewDeadline = formatDateShort(new Date(Math.min(weekDeadline, new Date(dueDate.data().instructorOrientation))))
+    const dueDate = await getDoc(
+      doc(db, 'semesterDates', semesterDatesDocument),
+    )
+    if (dueDate.exists()) {
+      interviewDeadline = formatDateShort(
+        new Date(
+          Math.min(
+            weekDeadline,
+            new Date(dueDate.data().instructorOrientation),
+          ),
+        ),
+      )
     }
 
     const confirmation = confirm(
@@ -251,9 +320,41 @@
     loading = true
     if (frozenId !== undefined) {
       interview.type = newDecision
-      const { type, notes, interviewer, attendance, conversation, conversationNotes, lastSemesterNotes, mockLessonEngagement, mockLessonExplanations, mockLessonNotes, mockLessonPace, mockLessonOverall, teachingPreferences, availabilityNotes, date, likelyDecision } = interview
+      const {
+        type,
+        notes,
+        interviewer,
+        attendance,
+        conversation,
+        conversationNotes,
+        lastSemesterNotes,
+        mockLessonEngagement,
+        mockLessonExplanations,
+        mockLessonNotes,
+        mockLessonPace,
+        mockLessonOverall,
+        teachingPreferences,
+        availabilityNotes,
+        date,
+        likelyDecision,
+      } = interview
       setDoc(doc(db, decisionsCollection, frozenId), {
-        type, likelyDecision, notes, interviewer, attendance, conversation, conversationNotes, lastSemesterNotes, mockLessonEngagement, mockLessonExplanations, mockLessonNotes, mockLessonPace, mockLessonOverall, teachingPreferences, availabilityNotes, date
+        type,
+        likelyDecision,
+        notes,
+        interviewer,
+        attendance,
+        conversation,
+        conversationNotes,
+        lastSemesterNotes,
+        mockLessonEngagement,
+        mockLessonExplanations,
+        mockLessonNotes,
+        mockLessonPace,
+        mockLessonOverall,
+        teachingPreferences,
+        availabilityNotes,
+        date,
       })
         .then(() => {
           updateDoc(doc(db, applicationsCollection, frozenId), {
@@ -340,7 +441,8 @@
           {#if disabled}
             <Button
               color={!loading &&
-              (interview.likelyDecision === null || interview.likelyDecision === 'likely yes')
+              (interview.likelyDecision === null ||
+                interview.likelyDecision === 'likely yes')
                 ? 'green'
                 : 'gray'}
               class="flex items-center gap-1"
@@ -362,7 +464,31 @@
             >
             <Button
               color={!loading &&
-              (interview.likelyDecision === null || interview.likelyDecision === 'likely no')
+              (interview.likelyDecision === null ||
+                interview.likelyDecision === 'likely no')
+                ? 'yellow'
+                : 'gray'}
+              class="flex items-center gap-1"
+              on:click={() => handleLikelyDecision('likely waitlist')}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>Likely Waitlist</span></Button
+            >
+            <Button
+              color={!loading &&
+              (interview.likelyDecision === null ||
+                interview.likelyDecision === 'likely no')
                 ? 'red'
                 : 'gray'}
               class="flex items-center gap-1"
@@ -423,6 +549,24 @@
             >
             <Button
               color={!loading &&
+              (decision === null || decision === 'substitute')
+                ? 'purple'
+                : 'gray'}
+              class="flex items-center gap-1"
+              on:click={() => handleDecision('substitute')}
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5"
+              >
+                <path d="M2.5 2v6h6M21.5 22v-6h-6" /><path
+                  d="M22 11.5A10 10 0 0 0 3.2 7.2M2 12.5a10 10 0 0 0 18.8 4.2"
+                /></svg
+              ><span>Substitute</span></Button
+            >
+            <Button
+              color={!loading &&
               (decision === null || decision === 'waitlisted')
                 ? 'yellow'
                 : 'gray'}
@@ -475,394 +619,519 @@
           {/if}
         </fieldset>
         <div class="flex gap-3">
-          <Button color="green" on:click={() => showInterviewForm = !showInterviewForm}>{showInterviewForm ? "Close Interview Form" : "Show Interview Form"}</Button>
+          <Button
+            color="green"
+            on:click={() => (showInterviewForm = !showInterviewForm)}
+            >{showInterviewForm
+              ? 'Close Interview Form'
+              : 'Show Interview Form'}</Button
+          >
           {#if disabled && !showInterviewForm}
             <Button on:click={handleEdit}>Edit</Button>
           {/if}
           <Button on:click={dialogEl.cancel}>Close</Button>
         </div>
-      </div>    
+      </div>
     </Card>
     <div class="mt-4 flex justify-center flex-wrap gap-4">
       <Card class="w-fit">
-      <Form class="max-w-2xl">
-        <fieldset class="space-y-14" {disabled}>
-          <div class="grid gap-1">
-            <span class="font-bold">Personal</span>
-            <Card class="my-2 grid gap-3">
-              <div class="rounded-md bg-gray-100 px-3 py-2 shadow-sm">
-                {`Name: ${values.personal.firstName} ${values.personal.lastName}`}
-              </div>
-              <div class="rounded-md bg-gray-100 px-3 py-2 shadow-sm">
-                {`Email: ${values.personal.email}`}
-              </div>
-              <div class="text-sm">
-                Wrong name or email? Go to your <a class="link" href="/profile"
-                  >profile</a
-                > to update your information.
-              </div>
-            </Card>
-            <Input
-              type="tel"
-              bind:value={values.personal.phoneNumber}
-              label="Phone number"
-              floating
-              required
-              pattern="[\d\s\-\+]+"
-            />
-            <Input
-              type="date"
-              bind:value={values.personal.dateOfBirth}
-              label="Date of birth"
-              floating
-              required
-            />
-
-            <Select
-              bind:value={values.personal.gender}
-              label="Gender"
-              options={gendersJson}
-              floating
-              required
-            />
+        <Form class="max-w-2xl">
+          <fieldset class="space-y-14" {disabled}>
             <div class="grid gap-1">
-              <span>Race / ethnicity (check all that apply)</span>
-              <div class="grid grid-cols-2">
-                {#each raceJson as race}
-                  <Input
-                    type="checkbox"
-                    bind:value={values.personal.race}
-                    label={race.name}
-                  />
-                {/each}
+              <span class="font-bold">Personal</span>
+              <Card class="my-2 grid gap-3">
+                <div class="rounded-md bg-gray-100 px-3 py-2 shadow-sm">
+                  {`Name: ${values.personal.firstName} ${values.personal.lastName}`}
+                </div>
+                <div class="rounded-md bg-gray-100 px-3 py-2 shadow-sm">
+                  {`Email: ${values.personal.email}`}
+                </div>
+                <div class="text-sm">
+                  Wrong name or email? Go to your <a
+                    class="link"
+                    href="/profile">profile</a
+                  > to update your information.
+                </div>
+              </Card>
+              <Input
+                type="tel"
+                bind:value={values.personal.phoneNumber}
+                label="Phone number"
+                floating
+                required
+                pattern="[\d\s\-\+]+"
+              />
+              <Input
+                type="date"
+                bind:value={values.personal.dateOfBirth}
+                label="Date of birth"
+                floating
+                required
+              />
+
+              <Select
+                bind:value={values.personal.gender}
+                label="Gender"
+                options={gendersJson}
+                floating
+                required
+              />
+              <div class="grid gap-1">
+                <span>Race / ethnicity (check all that apply)</span>
+                <div class="grid grid-cols-2">
+                  {#each raceJson as race}
+                    <Input
+                      type="checkbox"
+                      bind:value={values.personal.race}
+                      label={race.name}
+                    />
+                  {/each}
+                </div>
               </div>
             </div>
-          </div>
-          <div class="grid gap-1">
-            <span class="font-bold">Academic</span>
-            <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
-              <div class="sm:col-span-2">
+            <div class="grid gap-1">
+              <span class="font-bold">Academic</span>
+              <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
+                <div class="sm:col-span-2">
+                  <Input
+                    type="text"
+                    bind:value={values.academic.school}
+                    label="Current school"
+                    floating
+                    required
+                  />
+                </div>
                 <Input
-                  type="text"
-                  bind:value={values.academic.school}
-                  label="Current school"
+                  type="number"
+                  bind:value={values.academic.graduationYear}
+                  label="Graduation year"
+                  min={new Date().getFullYear()}
+                  max={new Date().getFullYear() + 20}
                   floating
                   required
                 />
               </div>
-              <Input
-                type="number"
-                bind:value={values.academic.graduationYear}
-                label="Graduation year"
-                min={new Date().getFullYear()}
-                max={new Date().getFullYear() + 20}
-                floating
-                required
-              />
-            </div>
-          </div>
-          <div class="grid gap-1">
-            <div class="mt-3 grid gap-1">
-              <span class="font-bold"
-                >Which of the following courses are you comfortable teaching?
-                Check all that apply. Course descriptions are on our website.</span
-              >
-              <div class="grid grid-cols-2 gap-2">
-                {#each coursesJson as course}
-                  <Input
-                    type="checkbox"
-                    bind:value={values.program.courses}
-                    label={course.name}
-                    required
-                  />
-                {/each}
-              </div>
-            </div>
-
-            <div class="mt-4">
-              <span class="font-bold"
-                >If you have any preferences for the courses you teach, please
-                list them here.</span
-              >
-              <Input
-                type="text"
-                bind:value={values.program.preferences}
-                label="Preferences"
-                floating
-              />
-            </div>
-
-            <div class="mt-3 grid gap-1">
-              <span class="font-bold">Timeslots</span>
-              <Input
-                type="text"
-                bind:value={values.program.timeSlots}
-                label="Please describe your weekly availability. For example, 'weekdays after 4pm' or 'weekends anytime'."
-                required
-              />
-            </div>
-
-            <div class="mt-2">
-              <Textarea
-                bind:value={values.program.notAvailable}
-                label="When will you not be available to teach classes during the semester? Include potential conflicts such as medical absences, vacations, and athletic events."
-                required
-              />
-            </div>
-
-            <Input
-              type="checkbox"
-              bind:value={values.program.inPerson}
-              label="For our in-person offering in the fall, gbSTEM is holding a new Lego Robotics competition program for students grade 5 and up. The program will meet weekly in-person at the Cambridge Public Library on Saturdays 1:00-3:00pm; parents are encouraged to help coach the robotics team. There are 10 slots available this year and will be more in the future. You may apply for this program on top of two courses, but if you are selected you will only be able to enroll in one additional course. Would you like to apply for the robotics program?"
-            />
-
-            <div class="mt-2">
-              <Select
-                bind:value={values.program.reason}
-                label="How did you learn about gbSTEM?"
-                options={reasonsJson}
-                floating
-                required
-              />
-            </div>
-
-            <div class="mt-5">
-              <span class="font-bold">Essays</span>
-              <div class="mt-2">
-                <Input
-                  type="checkbox"
-                  bind:value={values.essay.taughtBefore}
-                  label="Have you taught for gbSTEM before?"
-                />
-              </div>
-              <div class="mt-2">
-                <Textarea
-                  bind:value={values.essay.academicBackground}
-                  label="Describe your academic background in any of the classes you said you were comfortable teaching. List any relevant coursework, projects, or extracurriculars. (500 char limit)"
-                  required
-                  maxlength={500}
-                />
-              </div>
-              {#if !values.essay.taughtBefore}
-                <div class="mt-2">
-                  <Textarea
-                    bind:value={values.essay.teachingScenario}
-                    label="Suppose your students are not engaging in the class. What would you do? (500 char limit)"
-                    required
-                    maxlength={500}
-                  />
-                </div>
-                <div class="mt-2">
-                  <Textarea
-                    bind:value={values.essay.why}
-                    label="Why do you want to teach for gbSTEM? (500 char limit)"
-                    required
-                    maxlength={500}
-                  />
-                </div>
-              {/if}
             </div>
             <div class="grid gap-1">
-              <span class="font-bold">Agreements</span>
-              <div class="grid">
+              <div class="mt-3 grid gap-1">
+                <span class="font-bold"
+                  >Which of the following courses are you comfortable teaching?
+                  Check all that apply. Course descriptions are on our website.</span
+                >
+                <div class="grid grid-cols-2 gap-2">
+                  {#each coursesJson as course}
+                    <Input
+                      type="checkbox"
+                      bind:value={values.program.courses}
+                      label={course.name}
+                      required
+                    />
+                  {/each}
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <span class="font-bold"
+                  >If you have any preferences for the courses you teach, please
+                  list them here.</span
+                >
                 <Input
-                  type="checkbox"
-                  bind:value={values.agreements.entireProgram}
-                  label="gbSTEM will run from September 29th to December 21st. Do you confirm that you will be able to teach for the entirety of the program?"
-                  required
+                  type="text"
+                  bind:value={values.program.preferences}
+                  label="Preferences"
+                  floating
                 />
+              </div>
+
+              <div class="mt-3 grid gap-1">
+                <span class="font-bold">Timeslots</span>
                 <Input
-                  type="checkbox"
-                  bind:value={values.agreements.timeCommitment}
-                  label="Do you hereby confirm that if you are selected as an instructor, that you will be able to make the weekly time commitment of 2 hours a week for each class you teach? "
-                  required
-                />
-                <Input
-                  type="checkbox"
-                  bind:value={values.agreements.submitting}
-                  label="I understand submitting means I can no longer make changes to my application. Don't check this box until you are sure that you are ready to submit."
+                  type="text"
+                  bind:value={values.program.timeSlots}
+                  label="Please describe your weekly availability. For example, 'weekdays after 4pm' or 'weekends anytime'."
                   required
                 />
               </div>
+
+              <div class="mt-2">
+                <Textarea
+                  bind:value={values.program.notAvailable}
+                  label="When will you not be available to teach classes during the semester? Include potential conflicts such as medical absences, vacations, and athletic events."
+                  required
+                />
+              </div>
+
+              <Input
+                type="checkbox"
+                bind:value={values.program.inPerson}
+                label="For our in-person offering in the fall, gbSTEM is holding a new Lego Robotics competition program for students grade 5 and up. The program will meet weekly in-person at the Cambridge Public Library on Saturdays 1:00-3:00pm; parents are encouraged to help coach the robotics team. There are 10 slots available this year and will be more in the future. You may apply for this program on top of two courses, but if you are selected you will only be able to enroll in one additional course. Would you like to apply for the robotics program?"
+              />
+
+              <div class="mt-2">
+                <Select
+                  bind:value={values.program.reason}
+                  label="How did you learn about gbSTEM?"
+                  options={reasonsJson}
+                  floating
+                  required
+                />
+              </div>
+
+              <div class="mt-5">
+                <span class="font-bold">Essays</span>
+                <div class="mt-2">
+                  <Input
+                    type="checkbox"
+                    bind:value={values.essay.taughtBefore}
+                    label="Have you taught for gbSTEM before?"
+                  />
+                </div>
+                <div class="mt-2">
+                  <Textarea
+                    bind:value={values.essay.academicBackground}
+                    label="Describe your academic background in any of the classes you said you were comfortable teaching. List any relevant coursework, projects, or extracurriculars. (500 char limit)"
+                    required
+                    maxlength={500}
+                  />
+                </div>
+                {#if !values.essay.taughtBefore}
+                  <div class="mt-2">
+                    <Textarea
+                      bind:value={values.essay.teachingScenario}
+                      label="Suppose your students are not engaging in the class. What would you do? (500 char limit)"
+                      required
+                      maxlength={500}
+                    />
+                  </div>
+                  <div class="mt-2">
+                    <Textarea
+                      bind:value={values.essay.why}
+                      label="Why do you want to teach for gbSTEM? (500 char limit)"
+                      required
+                      maxlength={500}
+                    />
+                  </div>
+                {/if}
+              </div>
+              <div class="grid gap-1">
+                <span class="font-bold">Agreements</span>
+                <div class="grid">
+                  <Input
+                    type="checkbox"
+                    bind:value={values.agreements.entireProgram}
+                    label="gbSTEM will run from September 29th to December 21st. Do you confirm that you will be able to teach for the entirety of the program?"
+                    required
+                  />
+                  <Input
+                    type="checkbox"
+                    bind:value={values.agreements.timeCommitment}
+                    label="Do you hereby confirm that if you are selected as an instructor, that you will be able to make the weekly time commitment of 2 hours a week for each class you teach? "
+                    required
+                  />
+                  <Input
+                    type="checkbox"
+                    bind:value={values.agreements.submitting}
+                    label="I understand submitting means I can no longer make changes to my application. Don't check this box until you are sure that you are ready to submit."
+                    required
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-        </fieldset>
-      </Form>
-    </Card>
+          </fieldset>
+        </Form>
+      </Card>
       {#if showInterviewForm}
-      <Card class="w-fit">
-      <Form class="max-w-2xl">
-      <div>
-        <h2 class = "text-2xl font-bold my-4">Interview Guide & Evaluation Form</h2>
-        <Input
-          type="datetime-local"
-          bind:value={interview.date}
-          label="Interview Date"
-          floating
-          required
-        />
-        <Input 
-          type="text"
-          bind:value={interview.interviewer}
-          label="Interviewer"
-          floating
-          required
-        />
-        <Select
-          type="text"
-          bind:value={interview.attendance}
-          options={interviewAttendanceJson}
-          label="Attendance"
-          floating
-          required
-        />
-        <ul class = "rounded-lg bg-gray-100 p-4 px-8 my-4 list-disc">          
-          <li>Greet the candidate when they arrive & ask them how they are, general conversational beginning. Try to be personable and make them comfortable!</li>
-          <li>Introduce yourself: name, grade, school, and role at gbSTEM.”</li>
-          <li>If they are a new candidate: ask them to introduce themselves. Ask them some questions about their interests. In addition to getting to know them, we want to get a good idea of how they interact!</li>
-        </ul>
-        <Input
-          type="number"
-          bind:value={interview.conversation}
-          min="0"
-          max="5"
-          label="Please rate the candidate's friendliness and how well you think they would work with children on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 2."
-          required
-        />
-        <Textarea
-          bind:value={interview.conversationNotes}
-          label="Conversation Notes"
-          optional
-        />
-        <div class = "rounded-lg bg-gray-100 p-4 my-4">
-          Clarify the subject they are applying to teach for (plus the level), clarify if there are other subjects that they could be considered for. Ask them to state their preferences, such as top 3.
-        </div>
-        <Textarea
-          bind:value={interview.teachingPreferences}
-          label="What courses does the candidate want to teach?"
-          required
-        />
-        <Input 
-          type="checkbox"
-          bind:value={values.essay.taughtBefore}
-          label="Have they taught for gbSTEM before? (This should be pre-set to the correct value, but if not simply check/uncheck the box as needed)."
-          floating
-        />
-        {#if values.essay.taughtBefore}
-        <div class = "rounded-lg bg-gray-100 p-4 my-4">
-          <div>Ask them about their experience as an instructor. For example, “You're a returning instructor, correct? I would like to take some time to talk about your experience last semester. Could you give me an overview of the good, the bad, anything that can be improved?” </div>
-          <div class="font-bold">Followup questions about their experience, as needed:</div>
-          <ul class="list-disc px-8">
-            <li>How did you find the curriculum? Were there any parts that were too fast, too slow?</li>
-            <li>Did your students enjoy the class? Were they engaged, and do you feel like they learned the content well?</li>
-            <li>How was student attendance?</li>
-            <li>Did you have any issues with technology, such as the Free Zoom limit, WiFi, anything?</li>
-            <li>Did you feel supported by your track leadership if you had questions, and informed about events?</li>
-            <li>How do you think you can improve as an instructor this semester?</li>
-          </ul>
-        </div>
-          <Textarea
-            bind:value={interview.lastSemesterNotes}
-            label="Last semester notes"
-            required
-          />   
-        {:else}  
-        <div class="rounded-lg bg-gray-100 p-4 my-4">
-          <div class="font-bold">Talk a little about the logistics of being an instructor.</div>
-          <ul class="list-disc px-8">
-            <li>Classes meet twice a week; 60 min</li>
-            <li>Most classes will take place through Microsoft Teams (link will be provided for you). This is something new we are trying this year, so we may fall back on Zoom/Google Meet if needed.</li>
-            <li>Class sizes are usually between 5-15 students, but keep in mind that not every student will be able to attend every class session.</li>
-            <li>The curriculum for your classes will be provided to you and accessible on the portal.</li>
-            <li>You'll be able to check in with the curriculum developer and director for your course regularly to give feedback & ask questions</li>
-            <li>Do you have any questions?</li>
-          </ul>
-        </div>
-        {/if}
-        <div class="rounded-lg bg-gray-100 p-4 my-4">
-        <div>Continue onto the mock lessons. Send the link for the candidate’s top subject to teach. Allow each candidate 3 minutes to familiarize themselves with the lesson before having them share their screen to present it to you. Note their delivery, audience engagement, ability to speak slowly and clearly, quality of explanations, as well as their attitude.</div>
-        <div class="font-bold mt-8">Mock Lesson Materials</div>
-        <div class ="flex gap-4">
-          <Button class="bg-gray-200" href="https://docs.google.com/presentation/d/1dtv0qWFLNg3pjnlPCkm8nKEkEU_m5-dcLVMNEJmwFjk/edit#slide=id.g11b679f5bf6_0_9" target="_blank">Math</Button>
-          <Button color="green" href="https://docs.google.com/presentation/d/15aI-M8eEPKsFGpodmZ_oi4MWQKzTJ8Jrup4C7oFgSls/edit#slide=id.g2085bab7786_0_0" target="_blank">Environmental Science</Button>
-          <Button color="yellow" href="https://docs.google.com/presentation/d/1yf3ZOVCFgwILyihaG_sJonevv3cIiUMNvDlwJVarCto/edit#slide=id.g2085d4bbb38_0_4125" target="_blank">Engineering</Button>
-        </div>
-        <div class = "flex gap-4 mt-4">
-          <Button color="blue" href="https://docs.google.com/document/d/1ruPmF-SRdWQ_LlilQz0PBFX1p7gDpfGZ1jVBmSpdgyI/edit#" target="_blank">Scratch</Button>
-          <Button color="blue" href="https://docs.google.com/document/d/1-Q40jjtKjt1dvX09qndC1ZEA7amiieAQgXF8qPDEvOE/edit" target="_blank">Python I</Button>
-          <Button color="blue" href="https://docs.google.com/document/d/1LonFfZTQOwjz_QeZbRHb_RFVq_EntkVu64BBca2TVGw/edit" target="_blank">Web Dev</Button>
-        </div>
-        </div>
-        <Input
-          type="number"
-          bind:value={interview.mockLessonExplanations}
-          min="0"
-          max="5"
-          label="Please rate the clarity of the candidate's explanations of material in the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 2."
-          required
-        />
-        <Input
-          type="number"
-          bind:value={interview.mockLessonEngagement}
-          min="0"
-          max="5"
-          label="Please rate the candidate's engagement with the audience (asking questions, relating to students, etc.) in the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 2."
-          required
-        />
-        <Input
-          type="number"
-          bind:value={interview.mockLessonPace}
-          min="0"
-          max="5"
-          label="Please rate the pace of the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 2."
-          required
-        />
-        <Input
-          type="number"
-          bind:value={interview.mockLessonOverall}
-          min="0"
-          max="5"
-          label="Please rate the overall quality of the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 2."
-          required
-        />
-        <Textarea
-          bind:value={interview.mockLessonNotes}
-          label="Mock lesson notes. What went well? What could be improved? If there was a low pacing score, why -- too fast or too slow?"
-          required
-        />
-        <div class="rounded-lg bg-gray-100 p-4 my-4">
-        <div class="font-bold">
-          Continue:
-        </div>
-        <ul class="list-disc px-8">
-          <li>Outline that classes meet twice a week from September 29th to December 21st. Ask if they have any known scheduling conflicts, days they will have to miss, or days of the week they can't make.</li>
-          <li>Remind them that, as the teacher, they are obviously required to go to all classes and show up on time, and they should also prepare for the class before the class happens by looking through the curriculum.</li>
-          <li>Additionally, emphasize that we expect them to respond to emails and slack messages within 24 hours.</li>
-          <li>Ask if they are meet all of the above expectations, and if there is anything we can help them with to make sure they are able to do all this.”</li>
-        </ul>
-      </div>
-        <Textarea
-          bind:value={interview.availabilityNotes}
-          label="Availability notes. When is the candidate not available? Are there any potential concerns with the candidate's availability?"
-          required
-        />
-        <div class="rounded-lg bg-gray-100 p-4 my-4">
-        <div>Thank them for speaking with you, and let them know that they can reach us at contact@gbstem.org. Additionally, tell them that if they are accepted, instructor orientation will be on Sept. 20th, so they should mark their calendars for that.</div>
-        <div>Mark <strong>Likely Yes</strong> or <strong>Likely No</strong> depending on your decision recommendation. Be careful NOT to click "Interview", "Accept", "Waitlist", or "Reject".</div>  
-        </div>
-        <Textarea
-          bind:value={interview.notes}
-          label="Please briefly summarize the reasoning behind your recommendation."
-          required 
-        />
-      <div class="my-2 mt-4 font-bold">Once you have completed this form, click "Save Notes" to submit it!</div>
-      <div class="flex justify-start gap-4">
-        <Button color="green" on:click={saveNotes}>Save Notes</Button>
-        <Button color="red" on:click={() => showInterviewForm = false}>Close Interview Form</Button> 
-      </div>
-      </div>
-     </Form>
-    </Card>
+        <Card class="w-fit">
+          <Form class="max-w-2xl">
+            <div>
+              <h2 class="text-2xl font-bold my-4">
+                Interview Guide & Evaluation Form
+              </h2>
+              <Input
+                type="datetime-local"
+                bind:value={interview.date}
+                label="Interview Date"
+                floating
+                required
+              />
+              <Input
+                type="text"
+                bind:value={interview.interviewer}
+                label="Interviewer"
+                floating
+                required
+              />
+              <Select
+                type="text"
+                bind:value={interview.attendance}
+                options={interviewAttendanceJson}
+                label="Attendance"
+                floating
+                required
+              />
+              <ul class="rounded-lg bg-gray-100 p-4 px-8 my-4 list-disc">
+                <li>
+                  Greet the candidate when they arrive & ask them how they are,
+                  general conversational beginning. Try to be personable and
+                  make them comfortable!
+                </li>
+                <li>
+                  Introduce yourself: name, grade, school, and role at gbSTEM.”
+                </li>
+                <li>
+                  If they are a new candidate: ask them to introduce themselves.
+                  Ask them some questions about their interests. In addition to
+                  getting to know them, we want to get a good idea of how they
+                  interact!
+                </li>
+              </ul>
+              <Input
+                type="number"
+                bind:value={interview.conversation}
+                min="0"
+                max="5"
+                label="Please rate the candidate's friendliness and how well you think they would work with children on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 2."
+                required
+              />
+              <Textarea
+                bind:value={interview.conversationNotes}
+                label="Conversation Notes"
+                optional
+              />
+              <div class="rounded-lg bg-gray-100 p-4 my-4">
+                Clarify the subject they are applying to teach for (plus the
+                level), clarify if there are other subjects that they could be
+                considered for. Ask them to state their preferences, such as top
+                3.
+              </div>
+              <Textarea
+                bind:value={interview.teachingPreferences}
+                label="What courses does the candidate want to teach?"
+                required
+              />
+              <Input
+                type="checkbox"
+                bind:value={values.essay.taughtBefore}
+                label="Have they taught for gbSTEM before? (This should be pre-set to the correct value, but if not simply check/uncheck the box as needed)."
+                floating
+              />
+              {#if values.essay.taughtBefore}
+                <div class="rounded-lg bg-gray-100 p-4 my-4">
+                  <div>
+                    Ask them about their experience as an instructor. For
+                    example, “You're a returning instructor, correct? I would
+                    like to take some time to talk about your experience last
+                    semester. Could you give me an overview of the good, the
+                    bad, anything that can be improved?”
+                  </div>
+                  <div class="font-bold">
+                    Followup questions about their experience, as needed:
+                  </div>
+                  <ul class="list-disc px-8">
+                    <li>
+                      How did you find the curriculum? Were there any parts that
+                      were too fast, too slow?
+                    </li>
+                    <li>
+                      Did your students enjoy the class? Were they engaged, and
+                      do you feel like they learned the content well?
+                    </li>
+                    <li>How was student attendance?</li>
+                    <li>
+                      Did you have any issues with technology, such as the Free
+                      Zoom limit, WiFi, anything?
+                    </li>
+                    <li>
+                      Did you feel supported by your track leadership if you had
+                      questions, and informed about events?
+                    </li>
+                    <li>
+                      How do you think you can improve as an instructor this
+                      semester?
+                    </li>
+                  </ul>
+                </div>
+                <Textarea
+                  bind:value={interview.lastSemesterNotes}
+                  label="Last semester notes"
+                  required
+                />
+              {:else}
+                <div class="rounded-lg bg-gray-100 p-4 my-4">
+                  <div class="font-bold">
+                    Talk a little about the logistics of being an instructor.
+                  </div>
+                  <ul class="list-disc px-8">
+                    <li>Classes meet twice a week; 60 min</li>
+                    <li>
+                      Most classes will take place through Microsoft Teams (link
+                      will be provided for you). This is something new we are
+                      trying this year, so we may fall back on Zoom/Google Meet
+                      if needed.
+                    </li>
+                    <li>
+                      Class sizes are usually between 5-15 students, but keep in
+                      mind that not every student will be able to attend every
+                      class session.
+                    </li>
+                    <li>
+                      The curriculum for your classes will be provided to you
+                      and accessible on the portal.
+                    </li>
+                    <li>
+                      You'll be able to check in with the curriculum developer
+                      and director for your course regularly to give feedback &
+                      ask questions
+                    </li>
+                    <li>Do you have any questions?</li>
+                  </ul>
+                </div>
+              {/if}
+              <div class="rounded-lg bg-gray-100 p-4 my-4">
+                <div>
+                  Continue onto the mock lessons. Send the link for the
+                  candidate’s top subject to teach. Allow each candidate 3
+                  minutes to familiarize themselves with the lesson before
+                  having them share their screen to present it to you. Note
+                  their delivery, audience engagement, ability to speak slowly
+                  and clearly, quality of explanations, as well as their
+                  attitude.
+                </div>
+                <div class="font-bold mt-8">Mock Lesson Materials</div>
+                <div class="flex gap-4">
+                  <Button
+                    class="bg-gray-200"
+                    href="https://docs.google.com/presentation/d/1dtv0qWFLNg3pjnlPCkm8nKEkEU_m5-dcLVMNEJmwFjk/edit#slide=id.g11b679f5bf6_0_9"
+                    target="_blank">Math</Button
+                  >
+                  <Button
+                    color="green"
+                    href="https://docs.google.com/presentation/d/15aI-M8eEPKsFGpodmZ_oi4MWQKzTJ8Jrup4C7oFgSls/edit#slide=id.g2085bab7786_0_0"
+                    target="_blank">Environmental Science</Button
+                  >
+                  <Button
+                    color="yellow"
+                    href="https://docs.google.com/presentation/d/1yf3ZOVCFgwILyihaG_sJonevv3cIiUMNvDlwJVarCto/edit#slide=id.g2085d4bbb38_0_4125"
+                    target="_blank">Engineering</Button
+                  >
+                </div>
+                <div class="flex gap-4 mt-4">
+                  <Button
+                    color="blue"
+                    href="https://docs.google.com/document/d/1ruPmF-SRdWQ_LlilQz0PBFX1p7gDpfGZ1jVBmSpdgyI/edit#"
+                    target="_blank">Scratch</Button
+                  >
+                  <Button
+                    color="blue"
+                    href="https://docs.google.com/document/d/1-Q40jjtKjt1dvX09qndC1ZEA7amiieAQgXF8qPDEvOE/edit"
+                    target="_blank">Python I</Button
+                  >
+                  <Button
+                    color="blue"
+                    href="https://docs.google.com/document/d/1LonFfZTQOwjz_QeZbRHb_RFVq_EntkVu64BBca2TVGw/edit"
+                    target="_blank">Web Dev</Button
+                  >
+                </div>
+              </div>
+              <Input
+                type="number"
+                bind:value={interview.mockLessonExplanations}
+                min="0"
+                max="5"
+                label="Please rate the clarity of the candidate's explanations of material in the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 2."
+                required
+              />
+              <Input
+                type="number"
+                bind:value={interview.mockLessonEngagement}
+                min="0"
+                max="5"
+                label="Please rate the candidate's engagement with the audience (asking questions, relating to students, etc.) in the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 2."
+                required
+              />
+              <Input
+                type="number"
+                bind:value={interview.mockLessonPace}
+                min="0"
+                max="5"
+                label="Please rate the pace of the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 2."
+                required
+              />
+              <Input
+                type="number"
+                bind:value={interview.mockLessonOverall}
+                min="0"
+                max="5"
+                label="Please rate the overall quality of the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 2."
+                required
+              />
+              <Textarea
+                bind:value={interview.mockLessonNotes}
+                label="Mock lesson notes. What went well? What could be improved? If there was a low pacing score, why -- too fast or too slow?"
+                required
+              />
+              <div class="rounded-lg bg-gray-100 p-4 my-4">
+                <div class="font-bold">Continue:</div>
+                <ul class="list-disc px-8">
+                  <li>
+                    Outline that classes meet twice a week from September 29th
+                    to December 21st. Ask if they have any known scheduling
+                    conflicts, days they will have to miss, or days of the week
+                    they can't make.
+                  </li>
+                  <li>
+                    Remind them that, as the teacher, they are obviously
+                    required to go to all classes and show up on time, and they
+                    should also prepare for the class before the class happens
+                    by looking through the curriculum.
+                  </li>
+                  <li>
+                    Additionally, emphasize that we expect them to respond to
+                    emails and slack messages within 24 hours.
+                  </li>
+                  <li>
+                    Ask if they are meet all of the above expectations, and if
+                    there is anything we can help them with to make sure they
+                    are able to do all this.”
+                  </li>
+                </ul>
+              </div>
+              <Textarea
+                bind:value={interview.availabilityNotes}
+                label="Availability notes. When is the candidate not available? Are there any potential concerns with the candidate's availability?"
+                required
+              />
+              <div class="rounded-lg bg-gray-100 p-4 my-4">
+                <div>
+                  Thank them for speaking with you, and let them know that they
+                  can reach us at contact@gbstem.org. Additionally, tell them
+                  that if they are accepted, instructor orientation will be on
+                  Sept. 20th, so they should mark their calendars for that.
+                </div>
+                <div>
+                  Mark <strong>Likely Yes</strong> or <strong>Likely No</strong>
+                  depending on your decision recommendation. Be careful NOT to click
+                  "Interview", "Accept", "Waitlist", or "Reject".
+                </div>
+              </div>
+              <Textarea
+                bind:value={interview.notes}
+                label="Please briefly summarize the reasoning behind your recommendation."
+                required
+              />
+              <div class="my-2 mt-4 font-bold">
+                Once you have completed this form, click "Save Notes" to submit
+                it!
+              </div>
+              <div class="flex justify-start gap-4">
+                <Button color="green" on:click={saveNotes}>Save Notes</Button>
+                <Button color="red" on:click={() => (showInterviewForm = false)}
+                  >Close Interview Form</Button
+                >
+              </div>
+            </div>
+          </Form>
+        </Card>
       {/if}
     </div>
   </div>
