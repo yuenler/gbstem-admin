@@ -55,11 +55,23 @@
           const usersColl = collection(db, 'users')
           const registrationsColl = collection(db, registrationsCollection)
           // get uncompleted registration emails
+          const submittedEmails: string[] = []
+          getDocs(
+            query(registrationsColl, where('meta.submitted', '==', true)),
+          ).then((snapshot) => {
+            snapshot.forEach((doc) => {
+              submittedEmails.push(doc.data().personal.email)
+            })
+            resolve()
+          })
+
           getDocs(
             query(registrationsColl, where('meta.submitted', '==', false)),
           ).then((snapshot) => {
             snapshot.forEach((doc) => {
-              uncompletedRegistrationsEmails += doc.data().personal.email + ', '
+              if(!submittedEmails.includes(doc.data().personal.email)) {
+                uncompletedRegistrationsEmails += doc.data().personal.email + ', '
+              }
             })
             resolve()
           })
