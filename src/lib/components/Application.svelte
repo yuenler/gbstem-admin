@@ -465,7 +465,7 @@
             <Button
               color={!loading &&
               (interview.likelyDecision === null ||
-                interview.likelyDecision === 'likely no')
+                interview.likelyDecision === 'likely waitlist')
                 ? 'yellow'
                 : 'gray'}
               class="flex items-center gap-1"
