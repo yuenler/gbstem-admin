@@ -50,6 +50,14 @@ export const load = (async ({ url, depends }) => {
           : adminDb
             .collection(collectionName)
             .where('enrolled', '==', true)
+      } else if (filter === 'not enrolled') {
+        dbQuery = updated
+          ? adminDb
+            .collection(collectionName)
+            .where('enrolled', '==', false)
+          : adminDb
+            .collection(collectionName)
+            .where('enrolled', '==', false)
       } else if (filter === 'inPerson') {
         dbQuery = updated
         ? adminDb

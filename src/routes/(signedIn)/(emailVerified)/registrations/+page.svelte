@@ -23,7 +23,7 @@
   let search: string = data.query ?? ''
   let current: number | undefined
   let checked: Array<number> = []
-  let decisionFilter: 'all' | 'submitted' | 'enrolled' | 'inPerson' | 'incomplete' =
+  let decisionFilter: 'all' | 'submitted' | 'enrolled' | 'inPerson' | 'incomplete' | 'not enrolled' =
     ($page.url.searchParams.get('filter') as any) ?? 'all'
 
   // const mathCourseMap = {
@@ -224,7 +224,7 @@
     <Select
       bind:value={decisionFilter}
       label="Filter"
-      options={[{ name: 'all' }, { name: 'submitted' }, {name: 'enrolled'}, { name: 'inPerson' }, { name: 'incomplete' }]}
+      options={[{ name: 'all' }, { name: 'submitted' }, {name: 'enrolled'}, { name: 'inPerson' }, { name: 'incomplete' }, { name: 'not enrolled' }]}
       floating
       required
     />
