@@ -55,17 +55,21 @@ export const load = (async ({ url, depends }) => {
           ? adminDb
             .collection(collectionName)
             .where('enrolled', '==', false)
+            .where('meta.submitted', '==', true)
           : adminDb
             .collection(collectionName)
             .where('enrolled', '==', false)
+            .where('meta.submitted', '==', true)
       } else if (filter === 'inPerson') {
         dbQuery = updated
         ? adminDb
           .collection(collectionName)
           .where('program.inPerson', '==', true)
+          .where('meta.submitted', '==', true)
         : adminDb
           .collection(collectionName)
           .where('program.inPerson', '==', true)
+          .where('meta.submitted', '==', true)
       } else if (filter === 'incomplete') {
         dbQuery = updated
         ? adminDb
