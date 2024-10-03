@@ -10,6 +10,7 @@
     getDocs,
     collection,
     where,
+    onSnapshot,
   } from 'firebase/firestore'
   import Input from '$lib/components/Input.svelte'
   import Select from '$lib/components/Select.svelte'
@@ -25,7 +26,7 @@
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
-  import {onMount} from 'svelte'
+  import {onDestroy, onMount} from 'svelte'
   import { copyEmails, formatClassTimes, formatDateString, formatTime24to12, getNearestFutureClass, normalizeCapitals, timestampToDate } from '$lib/utils'
   import { classesCollection, instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
   import type ClassData from '$lib/data/types/ClassData'
@@ -49,7 +50,8 @@
   let attendance: Data.InstructorFeedback[] = []
   let classes: ClassData[] = [] 
 
-    $: if (id !== undefined && loading) {
+    $: if (id !== undefined) {
+       loading = true;
         const studentDocRef = doc(db, registrationsCollection, id);
         getDoc(studentDocRef).then((studentDoc) => {
             if (studentDoc.exists()) {
@@ -101,12 +103,15 @@
         }).then(() => {
             loading = false;
         });
+        onDestroy(() => {
+          unsubscribe();
+        });
     }
 
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
-    <svelte:fragment slot="title"><div class="flex" style="justify-content:space-between;"><div style="align-content:center;">Student Attendance and Information</div><div><Button color = 'red' on:click={dialogEl.cancel}>Close</Button></div></div></svelte:fragment>
+    <svelte:fragment slot="title"><div class="flex" style="justify-content:space-between;"><div style="align-content:center;">Student Attendance and Information</div><div><Button color = 'red' on:click={() => {loading = false; dialogEl.cancel()}}>Close</Button></div></div></svelte:fragment>
     <div slot="description">
     <div class="mt-4 justify-center">
     {#each classes as value, i}
