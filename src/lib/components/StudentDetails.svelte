@@ -49,7 +49,7 @@
   let attendance: Data.InstructorFeedback[] = []
   let classes: ClassData[] = [] 
 
-    $: if (id !== undefined && loading) {
+    $: if (id !== undefined) {
         const studentDocRef = doc(db, registrationsCollection, id);
         getDoc(studentDocRef).then((studentDoc) => {
             if (studentDoc.exists()) {
