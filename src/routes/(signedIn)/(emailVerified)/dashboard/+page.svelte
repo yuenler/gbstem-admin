@@ -121,7 +121,7 @@
           const meetingTimes: Timestamp[] = doc.data().meetingTimes;
           if(meetingTimes === undefined) return;
           for (let i = 0; i < Object.values(meetingTimes).length; i++){
-            const meetingTime = Object.values(meetingTimes).at(i) ? timestampToDate(Object.values(meetingTimes).at(i)) : new Date();
+            const meetingTime = timestampToDate(Object.values(meetingTimes).at(i)) ? timestampToDate(Object.values(meetingTimes).at(i)) : new Date();
           if (meetingTime && new Date().toLocaleDateString() === meetingTime.toLocaleDateString()) {
             const classSession = doc.data() as Data.Class;
             classesToday.push({class: classSession, classNumber: i});
