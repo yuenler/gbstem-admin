@@ -290,11 +290,12 @@
         </tr>
         {/if}
         {/await}
-        <StudentDetails bind:dialogEl id={registration.id} />
       {/each}
     </svelte:fragment>
   </Table>
   
+  <StudentDetails bind:dialogEl id={registration?.id} />
+
   <div class="flex justify-end mt-4">
     <Button href={nextHref}>Next</Button>
   </div>

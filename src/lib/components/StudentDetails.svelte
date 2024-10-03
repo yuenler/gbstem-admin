@@ -10,6 +10,7 @@
     getDocs,
     collection,
     where,
+    onSnapshot,
   } from 'firebase/firestore'
   import Input from '$lib/components/Input.svelte'
   import Select from '$lib/components/Select.svelte'
@@ -25,7 +26,7 @@
   import { invalidate } from '$app/navigation'
   import nProgress from 'nprogress'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
-  import {onMount} from 'svelte'
+  import {onDestroy, onMount} from 'svelte'
   import { copyEmails, formatClassTimes, formatDateString, formatTime24to12, getNearestFutureClass, normalizeCapitals, timestampToDate } from '$lib/utils'
   import { classesCollection, instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
   import type ClassData from '$lib/data/types/ClassData'
@@ -50,7 +51,7 @@
   let classes: ClassData[] = [] 
 
     $: if (id !== undefined) {
-        loading = true
+       loading = true;
         const studentDocRef = doc(db, registrationsCollection, id);
         getDoc(studentDocRef).then((studentDoc) => {
             if (studentDoc.exists()) {
@@ -101,6 +102,9 @@
             });
         }).then(() => {
             loading = false;
+        });
+        onDestroy(() => {
+          unsubscribe();
         });
     }
 
