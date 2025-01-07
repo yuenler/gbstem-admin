@@ -3,10 +3,11 @@ import type { RequestHandler } from './$types'
 import postmark from 'postmark'
 import type { FirebaseError } from 'firebase-admin'
 import {
-  POSTMARK_API_TOKEN,
+  SENDGRID_API_TOKEN,
 } from '$env/static/private'
 import { addDataToHtmlTemplate } from '$lib/utils'
 import { teachingReminderEmailTemplate } from '$lib/data/emailTemplates/teachingReminderEmailTemplate'
+import MailService, { type MailDataRequired } from '@sendgrid/mail'
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   let topError
@@ -33,23 +34,24 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
         const htmlBody = addDataToHtmlTemplate(teachingReminderEmailTemplate, template);
 
-        const emailData: Data.EmailData = {
-          From: 'donotreply@gbstem.org',
-          To: email,
-          Cc: otherEmails,
-          Subject: String(template.data.subject),
-          HTMLBody: htmlBody,
-          ReplyTo: 'contact@gbstem.org',
-          MessageStream: 'outbound'
+        const emailData: MailDataRequired = {
+          from: 'donotreply@gbstem.org',
+          to: email,
+          cc: otherEmails,
+          subject: String(template.data.subject),
+          html: htmlBody,
+          replyTo: 'contact@gbstem.org',
+          text: 'Remind Instructor'
         }
-        try {
-          const client = new postmark.ServerClient(POSTMARK_API_TOKEN);
-          await client.sendEmail(emailData);
-
-          return new Response()
-        } catch (err) {
-          throw error(400, 'Failed to send email.')
-        }
+        MailService.setApiKey(SENDGRID_API_TOKEN)
+        MailService
+        .send(emailData)
+        .then(() => {
+          console.log('Email sent')
+        })
+        .catch((error) => {
+          console.error(error.toString())
+        })
       }
     } catch (err) {
       if (typeof err === 'string') {
