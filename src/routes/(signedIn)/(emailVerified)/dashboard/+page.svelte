@@ -25,6 +25,7 @@
       decided: number
       registered: number
       totalRegistrationsStarted: number
+      enrolled: number
     }
     users: {
       total: number
@@ -88,6 +89,9 @@
               query(registrationsColl, where('meta.submitted', '==', true)),
             ),
             getCountFromServer(registrationsColl),
+            getCountFromServer(
+              query(registrationsColl, where('enrolled', '==', true)),
+            ),
           ]).then(
             ([
               totalApplicationsSnapshot,
@@ -96,6 +100,7 @@
               totalUsersSnapshot,
               submittedRegistrationsSnapshot,
               totalRegistrationsSnapshot,
+              enrolledRegistrationsSnapshot,
             ]) => {
               data = {
                 applications: {
@@ -104,7 +109,8 @@
                   decided: decidedApplicationsSnapshot.data().count,
                   registered: submittedRegistrationsSnapshot.data().count,
                   totalRegistrationsStarted:
-                    totalRegistrationsSnapshot.data().count,
+                  totalRegistrationsSnapshot.data().count,
+                  enrolled: enrolledRegistrationsSnapshot.data().count,
                 },
                 users: {
                   total: totalUsersSnapshot.data().count,
@@ -191,6 +197,7 @@
             <li>
               {data.applications.totalRegistrationsStarted} pre-registrations started.
             </li>
+            <li>{data.applications.enrolled} students enrolled.</li>
           </ol>
           <Button
             on:click={() => {
