@@ -164,7 +164,7 @@ declare global {
     type InstructorFeedback = {
       instructorName: string
       students: string[]
-      attendanceList: string[]
+      attendanceList: boolean[]
       date: string
       courseName: string
       feedback: string
