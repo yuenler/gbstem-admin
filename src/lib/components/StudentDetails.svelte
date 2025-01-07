@@ -111,7 +111,7 @@
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
-    <svelte:fragment slot="title"><div class="flex" style="justify-content:space-between;"><div style="align-content:center;">Student Attendance and Information</div><div><Button color = 'red' on:click={() => {loading = false; dialogEl.cancel()}}>Close</Button></div></div></svelte:fragment>
+    <svelte:fragment slot="title"><div class="flex" style="justify-content:space-between;"><div style="align-content:center;">Student Attendance and Information</div><div><Button color = 'red' on:click={() => {loading = true; id = undefined; dialogEl.cancel()}}>Close</Button></div></div></svelte:fragment>
     <div slot="description">
     <div class="mt-4 justify-center">
     {#each classes as value, i}
