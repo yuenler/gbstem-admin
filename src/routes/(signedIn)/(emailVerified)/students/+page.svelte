@@ -22,10 +22,11 @@
     let dialogEl: Dialog
     let search: string = data.query ?? ''
     let current: number | undefined
+    let clickedRegistration: any
     let checked: Array<number> = []
     let decisionFilter: 'all' | 'submitted' | 'enrolled' =
       ($page.url.searchParams.get('filter') as any) ?? 'all'
-  
+
     const csv = data.registrations
       .map((registration) => {
         const {
@@ -69,12 +70,13 @@
     const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
   
-    $: registration =
+    $: clickedRegistration =
       data.registrations.length === 0
         ? undefined
         : current === undefined
         ? undefined
         : data.registrations[current]
+
     let nextHref = ''
     let filterRef = ''
     $: {
@@ -294,7 +296,7 @@
     </svelte:fragment>
   </Table>
   
-  <StudentDetails bind:dialogEl id={registration?.id} />
+  <StudentDetails bind:dialogEl id={clickedRegistration?.id} />
 
   <div class="flex justify-end mt-4">
     <Button href={nextHref}>Next</Button>

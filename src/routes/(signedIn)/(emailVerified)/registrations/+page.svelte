@@ -81,6 +81,18 @@
   const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)
 
+  const schools: string[] = data.registrations
+    .map((registration) => registration.values.academic.school.trim().toLocaleLowerCase()).sort()
+  let uniqueSchools: string[] = []
+  schools.map((school: string) => {
+      if (!uniqueSchools.includes(school)) {
+        uniqueSchools.push(school)
+      }
+    })
+
+  const schoolsBlob = new Blob([uniqueSchools.join('\n')], { type: 'text/csv' })
+  const schoolsUrl = URL.createObjectURL(schoolsBlob)
+
   $: registration =
     data.registrations.length === 0
       ? undefined
@@ -340,7 +352,8 @@
   </svelte:fragment>
 </Table>
 
-<div class="flex justify-end mt-4">
+<div class="flex justify-between mt-4 w-full">
+  <Button><a href={schoolsUrl}>Download Schools List</a></Button>
   <Button href={nextHref}>Next</Button>
 </div>
 

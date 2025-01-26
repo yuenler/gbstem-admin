@@ -52,7 +52,7 @@ declare global {
       notes: string,
       type: Decision,
       likelyDecision: 'likely yes' | 'likely no' | 'likely waitlist' | null,
-      attendance: 'On Time' | 'Late' | 'No-Show',
+      attendance: 'On Time' | 'Late' | 'No-Show' | 'Null',
       conversation: number,
       conversationNotes: string,
       lastSemesterNotes: string,
@@ -164,7 +164,7 @@ declare global {
     type InstructorFeedback = {
       instructorName: string
       students: string[]
-      attendanceList: string[]
+      attendanceList: boolean[]
       date: string
       courseName: string
       feedback: string

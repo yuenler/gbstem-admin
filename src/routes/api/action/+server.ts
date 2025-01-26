@@ -4,9 +4,9 @@ import { adminAuth, adminDb } from '$lib/server/firebase'
 import type { FirebaseError } from 'firebase-admin'
 import postmark from 'postmark'
 import {
-  POSTMARK_API_TOKEN,
+  SENDGRID_API_TOKEN,
 } from '$env/static/private'
-
+import MailService, { type MailDataRequired } from '@sendgrid/mail'
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   let topError
@@ -112,22 +112,24 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 
 
-      const emailData: Data.EmailData = {
-        From: 'donotreply@gbstem.org',
-        To: to,
-        Subject: String(template.data.subject),
-        HTMLBody: htmlBody,
-        ReplyTo: 'contact@gbstem.org',
-        MessageStream: 'outbound'
+      const emailData: MailDataRequired = {
+        from: 'donotreply@gbstem.org',
+        to: to,
+        subject: String(template.data.subject),
+        html: htmlBody,
+        replyTo: 'contact@gbstem.org',
+        text: 'Action Required',
       }
 
-      try {
-        const client = new postmark.ServerClient(POSTMARK_API_TOKEN);
-        await client.sendEmail(emailData);
-        return new Response()
-      } catch (err) {
-        topError = error(400, 'Failed to send email.')
-      }
+      MailService.setApiKey(SENDGRID_API_TOKEN)
+      MailService
+      .send(emailData)
+      .then(() => {
+        console.log('Email sent')
+      })
+      .catch((error) => {
+        console.error(error.toString())
+      })
     } catch (err) {
       if (typeof err === 'string') {
         topError = error(400, err)
