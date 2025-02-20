@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit'
+import { error, json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 import { adminAuth, adminDb } from '$lib/server/firebase'
 import type { FirebaseError } from 'firebase-admin'
@@ -122,14 +122,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       }
 
       MailService.setApiKey(SENDGRID_API_TOKEN)
-      MailService
-      .send(emailData)
-      .then(() => {
-        console.log('Email sent')
-      })
-      .catch((error) => {
-        console.error(error.toString())
-      })
+     try {
+      await MailService.send(emailData);
+      console.log('Email sent');
+    } catch (mailError) {
+      console.error('Error sending email:', mailError);
+      return json({ error: 'Failed to send email. Please try again later.' }, { status: 500 });
+    }
+      return json({ message: 'Email sent successfully.' });
     } catch (err) {
       if (typeof err === 'string') {
         topError = error(400, err)
