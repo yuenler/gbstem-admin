@@ -56,10 +56,10 @@
           secondaryEmail,
           school.replace(/,/g, ''),
           grade,
-          csCourse.toLowerCase().replace(/ /g, '-'),
-          engineeringCourse.toLowerCase().replace(/ /g, '-'),
+          csCourse,
+          engineeringCourse,
           kebabCase(mathCourse),
-          scienceCourse.toLowerCase().replace(/ /g, '-'),
+          scienceCourse,
           inPerson ? 'Yes' : 'No',
         ].join(',')
       })
