@@ -40,6 +40,7 @@
     decisionsCollection,
     semesterDatesDocument,
   } from '$lib/data/collections'
+  import { afterUpdate } from 'svelte'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -47,6 +48,10 @@
   let loading = true
   let disabled = true
   let showInterviewForm = true
+  let semesterStartDate = ''
+  let semesterEndDate = ''
+  let autosaveTimeout: ReturnType<typeof setTimeout> | null = null
+  let lastAutosaved = ''
   // $: {
   //   if (loading) {
   //     nProgress.start()
@@ -191,7 +196,55 @@
         alert.trigger('error', 'Application not found.')
       }
     })
+    getDoc(doc(db, 'semesterDates', semesterDatesDocument)).then((dateSnap) => {
+      if(dateSnap.exists()) {
+        semesterStartDate = formatDateShort(
+        new Date(
+          dateSnap.data().classesStart
+        )
+      )
+      semesterEndDate = formatDateShort(
+        new Date(
+          dateSnap.data().classesEnd
+        )
+      )
+      }
+    })
   }
+
+  function autosaveValues() {
+  if (id !== undefined && !disabled) {
+    setDoc(doc(db, applicationsCollection, id), values, { merge: true })
+      .then(() => {
+        lastAutosaved = new Date().toLocaleTimeString()
+      })
+      .catch((err: FirebaseError) => {
+        console.log('Autosave error:', err)
+      })
+  }
+}
+
+// Autosave handler for interview notes
+function autosaveInterview() {
+  if (id !== undefined && !disabled && showInterviewForm) {
+    setDoc(doc(db, decisionsCollection, id), interview, { merge: true })
+      .then(() => {
+        lastAutosaved = new Date().toLocaleTimeString()
+      })
+      .catch((err: FirebaseError) => {
+        console.log('Autosave error:', err)
+      })
+  }
+}
+
+afterUpdate(() => {
+  console.log("DSFKSDJFHDSKJhf")
+    if (autosaveTimeout) clearTimeout(autosaveTimeout)
+    autosaveTimeout = setTimeout(() => {
+      autosaveValues()
+      if (showInterviewForm) autosaveInterview()
+    }, 1000) // 1 second debounce
+})
 
   function saveNotes() {
     const frozenId = id
@@ -849,7 +902,7 @@
                   <Input
                     type="checkbox"
                     bind:value={values.agreements.entireProgram}
-                    label="gbSTEM will run from September 29th to December 21st. Do you confirm that you will be able to teach for the entirety of the program?"
+                    label='gbSTEM will run from {semesterStartDate} to {semesterEndDate}. Do you confirm that you will be able to teach for the entirety of the program?'
                     required
                   />
                   <Input
@@ -877,6 +930,9 @@
               <h2 class="text-2xl font-bold my-4">
                 Interview Guide & Evaluation Form
               </h2>
+                <div class="text-xs text-gray-500 mt-2">
+                  Autosaved at {lastAutosaved}
+                </div>
               <Input
                 type="datetime-local"
                 bind:value={interview.date}
@@ -1104,8 +1160,8 @@
                 <div class="font-bold">Continue:</div>
                 <ul class="list-disc px-8">
                   <li>
-                    Outline that classes meet twice a week from September 29th
-                    to December 21st. Ask if they have any known scheduling
+                    Outline that classes meet twice a week from {semesterStartDate}
+                    to {semesterEndDate}. Ask if they have any known scheduling
                     conflicts, days they will have to miss, or days of the week
                     they can't make.
                   </li>
