@@ -122,6 +122,7 @@
     mockLessonPace: 0,
     mockLessonOverall: 0,
     mockLessonNotes: '',
+    techNotes: '',
     teachingPreferences: '',
     availabilityNotes: '',
   }
@@ -156,6 +157,7 @@
                 mockLessonEngagement,
                 mockLessonExplanations,
                 mockLessonNotes,
+                techNotes,
                 mockLessonPace,
                 mockLessonOverall,
                 teachingPreferences,
@@ -173,6 +175,7 @@
               interview.lastSemesterNotes = lastSemesterNotes ?? ''
               interview.mockLessonExplanations = mockLessonExplanations ?? 0
               interview.mockLessonNotes = mockLessonNotes ?? ''
+              interview.techNotes = techNotes ?? ''
               interview.mockLessonPace = mockLessonPace ?? 0
               interview.mockLessonOverall = mockLessonOverall ?? 0
               interview.teachingPreferences = teachingPreferences ?? ''
@@ -1154,6 +1157,11 @@ afterUpdate(() => {
               <Textarea
                 bind:value={interview.mockLessonNotes}
                 label="Mock lesson notes. What went well? What could be improved? If there was a low pacing score, why -- too fast or too slow?"
+                required
+              />
+              <Textarea
+                bind:value={interview.techNotes}
+                label="Any tech or other issues that could hinder their ability to be a good instructor?"
                 required
               />
               <div class="rounded-lg bg-gray-100 p-4 my-4">

@@ -61,6 +61,7 @@ declare global {
       mockLessonPace: number,
       mockLessonOverall: number,
       mockLessonNotes: string,
+      techNotes: string,
       teachingPreferences: string,
       availabilityNotes: string,
     }
