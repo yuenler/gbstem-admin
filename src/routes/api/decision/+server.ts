@@ -30,6 +30,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
               firstName: body.name,
               name: 'Portal',
               link: 'https://portal.gbstem.org',
+              orientation: 'Saturday, September 20th at 8 pm ET',
+              orientationLink: 'https://mit.zoom.us/j/96665070393'
             },
           },
         }
