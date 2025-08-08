@@ -265,6 +265,7 @@ afterUpdate(() => {
         availabilityNotes,
         notes,
         lastSemesterNotes,
+        techNotes,
         date,
         interviewer,
         attendance,
@@ -282,6 +283,7 @@ afterUpdate(() => {
           teachingPreferences,
           availabilityNotes,
           notes,
+          techNotes,
           lastSemesterNotes,
           date,
           interviewer,
@@ -396,6 +398,7 @@ afterUpdate(() => {
         mockLessonOverall,
         teachingPreferences,
         availabilityNotes,
+        techNotes,
         date,
         likelyDecision,
       } = interview
@@ -414,6 +417,7 @@ afterUpdate(() => {
         mockLessonPace,
         mockLessonOverall,
         teachingPreferences,
+        techNotes,
         availabilityNotes,
         date,
       })
