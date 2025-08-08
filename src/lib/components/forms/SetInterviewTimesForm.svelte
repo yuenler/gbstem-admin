@@ -20,6 +20,7 @@
   import { formatDate, formatDateLocal, toLocalISOString } from '$lib/utils'
   import { applicationsCollection } from '$lib/data/collections'
   import Select from '../Select.svelte'
+  import { interviewTimesCollection } from '$lib/data/collections'
 
   let className = ''
   export { className as class }
@@ -50,15 +51,17 @@
 
   async function getData() {
     const interviewSlots: Data.InterviewSlot[] = []
-    const q = query(collection(db, 'instructorInterviewTimes'))
+    const q = query(collection(db, interviewTimesCollection))
     const querySnapshot = await getDocs(q)
     querySnapshot.forEach((doc) => {
       const interviewInfo = doc.data()
-      interviewSlots.push({
-        ...interviewInfo,
-        date: toLocalISOString(new Date(interviewInfo.date.seconds * 1000)),
-        id: doc.id,
-      } as Data.InterviewSlot)
+      if(interviewInfo.date) {
+        interviewSlots.push({
+          ...interviewInfo,
+          date: toLocalISOString(new Date(interviewInfo.date.seconds * 1000)),
+          id: doc.id,
+        } as Data.InterviewSlot)
+      }
     })
     return interviewSlots
   }
@@ -89,7 +92,7 @@
           querySnapshot.forEach((doc) => {
             if(doc.data()) {
               const user = doc.data() as Data.Application<"client">
-              if(user.meta.interview === false && user.meta.submitted === true) {
+              if(user.meta && user.meta.interview === false && user.meta.submitted === true) {
                 names.push({
                   name: `${user.personal.firstName} ${user.personal.lastName}`,
                 })
@@ -153,7 +156,7 @@
       },
     ]
 
-    await setDoc(doc(db, 'instructorInterviewTimes', interviewSlotToAdd.id), {
+    await setDoc(doc(db, interviewTimesCollection, interviewSlotToAdd.id), {
       ...interviewSlotToAdd,
       date: new Date(interviewSlotToAdd.date),
     })
@@ -209,7 +212,7 @@
       )
       return
     }
-    setDoc(doc(db, 'instructorInterviewTimes', interview.id), {
+    setDoc(doc(db, interviewTimesCollection, interview.id), {
       ...interview,
       date: new Date(interview.date),
     })
@@ -227,7 +230,7 @@
         'This interview does not belong to you and you are not an admin!',
       )
     } else {
-      deleteDoc(doc(db, 'instructorInterviewTimes', interview.id)).then(
+      deleteDoc(doc(db, interviewTimesCollection, interview.id)).then(
         async () => {
           allInterviewSlots = await getData()
           alert.trigger('success', 'Timeslot successfully deleted.')
@@ -256,7 +259,7 @@
                   <p>{request.firstName}{' '}{request.lastName}</p>
                   <p>{request.email}</p>
                 </div>
-              {:else}
+              {:else if request.date > new Date(new Date().setDate(new Date().getDate() - 30))}
               <div class="flex items-center justify-between rounded-lg p-4 bg-red-100 mt-2">
                 <p>{formatDateLocal(request.date)}</p>
                 <p>{request.firstName}{' '}{request.lastName}</p>
