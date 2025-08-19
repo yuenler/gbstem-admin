@@ -38,6 +38,7 @@
 
   export let dialogEl: Dialog
   export let id: string | undefined
+  export let collection: string = registrationsCollection
 
   let loading = true
   let disabled = true
@@ -103,7 +104,7 @@
     loading = true
     disabled = true
     values = cloneDeep(defaultValues)
-    getDoc(doc(db, registrationsCollection, id)).then(
+    getDoc(doc(db, collection, id)).then(
       (registrationSnapshot) => {
         const data = registrationSnapshot.data() as Data.Registration<'client'>
         if (registrationSnapshot.exists()) {
