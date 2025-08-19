@@ -32,7 +32,7 @@ export const load = (async ({ url, depends }) => {
       // }
       // else
 
-      const collectionName = applicationsCollection
+     const collectionName = url.searchParams.get('collection') ?? applicationsCollection
       if (filter === 'undecided') {
         dbQuery = updated
           ? adminDb

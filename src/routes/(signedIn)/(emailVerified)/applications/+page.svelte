@@ -13,7 +13,8 @@
   import { db } from '$lib/client/firebase'
   import { doc, setDoc, updateDoc } from 'firebase/firestore'
   import Select from '$lib/components/Select.svelte'
-    import { applicationsCollection } from '$lib/data/collections'
+  import { applicationsCollection } from '$lib/data/collections'
+  import { writable } from 'svelte/store'
 
   export let data: PageData
   let dialogEl: Dialog
@@ -41,7 +42,7 @@
         submitted ? 'Submitted' : 'Not Submitted',
         decision?.type ?? 'Undecided',
         decision?.likelyDecision ?? 'Undecided',
-        decision?.notes.replace(/,/g, '') ?? '',
+        decision?.notes?.replace(/,/g, '') ?? '',
         firstName,
         lastName,
         email,
@@ -79,8 +80,10 @@
       : data.applications[current]
   let nextHref = ''
   let filterRef = ''
-  $: {
-    const base = $page.url.searchParams
+ $: {
+  const base = $page.url.searchParams
+  base.delete('updated')
+  if (data.applications.length > 0) {
     base.set(
       'updated',
       data.applications[
@@ -88,7 +91,10 @@
       ].values.timestamps.updated.toString(),
     )
     nextHref = `?${base.toString()}`
+  } else {
+    nextHref = '?'
   }
+}
   $: {
     const base = $page.url.searchParams
     if (decisionFilter !== 'all') {
@@ -146,7 +152,7 @@
                   type: decision,
                 })
                   .then(() => {
-                    updateDoc(doc(db, applicationsCollection, id), {
+                    updateDoc(doc(db, selectedCollection, id), {
                       'meta.decision': doc(db, 'decisions', id),
                     })
                       .then(resolve)
@@ -199,6 +205,7 @@
     } else {
       const base = $page.url.searchParams
       base.set('query', search)
+      base.delete('updated')
       goto(`?${base.toString()}`)
     }
   }
@@ -206,6 +213,26 @@
     goto('/applications').then(() => {
       search = ''
     })
+  }
+
+  // Add your collection options here
+  const collectionOptions = [
+    { name: 'Fall 2025', value: 'applicationsFall25' },
+    { name: 'Spring 2025', value: 'applicationsSpring25' },
+    { name: 'Fall 2024', value: 'applicationsFall24' },
+    { name: 'Spring 2024', value: 'applicationsSpring24'},
+  ]
+
+  // Default to the current collection or 'applications'
+  let selectedCollection =
+    $page.url.searchParams.get('collection') ?? applicationsCollection
+
+  // When the dropdown changes, reload with the new collection as a query param
+  function handleCollectionChange() {
+    const base = $page.url.searchParams
+    base.set('collection', selectedCollection)
+    base.delete('updated')
+    goto(`?${base.toString()}`)
   }
 </script>
 
@@ -247,6 +274,28 @@
       />
     </svg>
   </Button>
+
+<div class="flex items-center">
+  <label for="collection-select" class="sr-only">Collection</label>
+  <div class="relative">
+    <select
+      id="collection-select"
+      bind:value={selectedCollection}
+      on:change={handleCollectionChange}
+      class="block w-full h-12 px-4 pr-10 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white appearance-none transition"
+    >
+      {#each collectionOptions as option}
+        <option value={option.value}>{option.name}</option>
+      {/each}
+    </select>
+    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+      <!-- Down arrow SVG -->
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+      </svg>
+    </span>
+  </div>
+</div>
 
   <div class="flex">
     <Select
@@ -518,7 +567,7 @@
   <Button href={nextHref}>Next</Button>
 </div>
 
-<Application bind:dialogEl id={application?.id} />
+<Application bind:dialogEl id={application?.id} collection={selectedCollection} />
 
 <style>
   input:checked {

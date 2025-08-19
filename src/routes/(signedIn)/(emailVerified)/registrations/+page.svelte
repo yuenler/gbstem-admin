@@ -15,8 +15,9 @@
   import fi from 'date-fns/locale/fi'
   import Select from '$lib/components/Select.svelte'
   import { kebabCase } from 'lodash-es'
-    import { normalizeCapitals } from '$lib/utils'
-    import { classesCollection, registrationsCollection } from '$lib/data/collections'
+  import { normalizeCapitals } from '$lib/utils'
+  import { classesCollection, registrationsCollection } from '$lib/data/collections'
+  import { writable } from 'svelte/store'
 
   export let data: PageData
   let dialogEl: Dialog
@@ -33,6 +34,24 @@
   //   'Mathematics 2b': 'mathematics-ii',
   //   'Mathematics 1b': 'mathematics-i',
   // }
+
+  const collectionOptions = [
+    { name: 'Fall 2025', value: 'registrationsFall25' },
+    { name: 'Spring 2025', value: 'registrationsSpring25' },
+    { name: 'Fall 2024', value: 'registrationsFall24' },
+    { name: 'Spring 2024', value: 'registrationsSpring24' },
+  ]
+
+  // Default to the current collection or the default
+  let selectedCollection =
+    $page.url.searchParams.get('collection') ?? registrationsCollection
+
+  function handleCollectionChange() {
+    const base = $page.url.searchParams
+    base.set('collection', selectedCollection)
+    base.delete('updated') // Remove pagination param if present
+    goto(`?${base.toString()}`)
+  }
 
   const csv = data.registrations
     .map((registration) => {
@@ -67,10 +86,10 @@
         secondaryEmail,
         school.replace(/,/g, ''),
         grade,
-        csCourse.toLowerCase().replace(/ /g, '-'),
-        engineeringCourse.toLowerCase().replace(/ /g, '-'),
-        kebabCase(mathCourse),
-        scienceCourse.toLowerCase().replace(/ /g, '-'),
+        (csCourse ?? '').toLowerCase().replace(/ /g, '-'),
+        (engineeringCourse ?? '').toLowerCase().replace(/ /g, '-'),
+        kebabCase(mathCourse ?? ''),
+        (scienceCourse ?? '').toLowerCase().replace(/ /g, '-'),
         inPerson ? 'Yes' : 'No',
       ].join(',')
     })
@@ -168,10 +187,10 @@
   function getInterestedClasses(registration:any) {
     let interestedClasses = ''
     if(registration) {
-      interestedClasses += registration.values.program.csCourse.includes('I am not interested') ? '' : registration.values.program.csCourse + ', '
-      interestedClasses += registration.values.program.engineeringCourse.includes('I am not interested') ? '' : registration.values.program.engineeringCourse + ', '
-      interestedClasses += registration.values.program.mathCourse.includes('I am not interested') ? '' : registration.values.program.mathCourse + ', '
-      interestedClasses += registration.values.program.scienceCourse.includes('I am not interested') ? '' : registration.values.program.scienceCourse
+      interestedClasses += (registration.values.program.csCourse ?? '').includes('I am not interested') ? '' : registration.values.program.csCourse + ', '
+      interestedClasses += (registration.values.program.engineeringCourse ?? '').includes('I am not interested') ? '' : registration.values.program.engineeringCourse + ', '
+      interestedClasses += (registration.values.program.mathCourse ?? '').includes('I am not interested') ? '' : registration.values.program.mathCourse + ', '
+      interestedClasses += (registration.values.program.scienceCourse ?? '').includes('I am not interested') ? '' : registration.values.program.scienceCourse
     }
     return interestedClasses
   }
@@ -231,6 +250,26 @@
       />
     </svg>
   </Button>
+
+<div class="relative flex items-end">
+  <select
+    id="collection-select"
+    bind:value={selectedCollection}
+    on:change={handleCollectionChange}
+    class="block w-full h-12 px-4 pr-10 text-base bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition appearance-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+    required
+  >
+    <option value="" disabled hidden selected>Select collection…</option>
+    {#each collectionOptions as option}
+      <option value={option.value}>{option.name}</option>
+    {/each}
+  </select>
+  <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+  </span>
+</div>
 
   <div class="flex">
     <Select
@@ -357,7 +396,7 @@
   <Button href={nextHref}>Next</Button>
 </div>
 
-<Registration bind:dialogEl id={registration?.id} />
+<Registration bind:dialogEl id={registration?.id} collection={selectedCollection} />
 
 <style>
   input:checked {

@@ -32,7 +32,7 @@ export const load = (async ({ url, depends }) => {
       // }
       // else
 
-      const collectionName = registrationsCollection
+      const collectionName = url.searchParams.get('collection') ?? registrationsCollection
       if (filter === 'submitted') {
         dbQuery = updated
           ? adminDb

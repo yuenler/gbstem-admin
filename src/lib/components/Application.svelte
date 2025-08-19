@@ -44,6 +44,7 @@
 
   export let dialogEl: Dialog
   export let id: string | undefined
+  export let collection: string = applicationsCollection
 
   let loading = true
   let disabled = true
@@ -136,7 +137,7 @@
     loading = true
     disabled = true
     values = cloneDeep(defaultValues)
-    getDoc(doc(db, applicationsCollection, id)).then((applicationSnapshot) => {
+    getDoc(doc(db, collection, id)).then((applicationSnapshot) => {
       const data = applicationSnapshot.data() as Data.Application<'client'>
       if (applicationSnapshot.exists()) {
         values = cloneDeep(data)
@@ -726,7 +727,7 @@ afterUpdate(() => {
     <div class="mt-4 flex justify-center flex-wrap gap-4">
       <Card class="w-fit">
         <Form class="max-w-2xl">
-          <fieldset class="space-y-14" {disabled}>
+          <fieldset class="space-y-14">
             <div class="grid gap-1">
               <span class="font-bold">Personal</span>
               <Card class="my-2 grid gap-3">
