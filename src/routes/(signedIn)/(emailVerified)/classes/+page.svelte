@@ -28,9 +28,9 @@
   let dialogEl: Dialog
 
     $: {
-      const base = $page.url.searchParams
-        base.set('filter', courseFilter)
-        base.delete('updated')
+      const base = new URLSearchParams($page.url.searchParams)
+      base.set('filter', courseFilter)
+      base.delete('updated')
       filterRef = `?${base.toString()}`
     }
 
