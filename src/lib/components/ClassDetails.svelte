@@ -349,7 +349,7 @@
         </div>
       </Card>
       <div>
-        <table
+        <div
           class="grid grid-cols-1 justify-between gap-1"
           style="margin-top:1rem;"
         >
@@ -405,7 +405,7 @@
               {/each}
             {/if}
           </div>
-        </table>
+        </div>
       </div>
     </div>
   </div>

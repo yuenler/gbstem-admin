@@ -107,6 +107,7 @@
           <button
             class="text-black hover:text-gray-700 transition-colors duration-300"
             type="button"
+            aria-label="Copy user ID to clipboard"
             on:click={() => {
               if ($user) {
                 navigator.clipboard.writeText(data.user.uid)
