@@ -58,25 +58,42 @@
     id: '',
   }
 
-  $: if (id !== undefined) {
+  // Handle id changes without causing infinite loops
+  let previousId = id
+  $: if (id !== previousId) {
+    previousId = id
+    if (id !== undefined) {
+      loadClassData(id)
+    }
+  }
+
+  async function loadClassData(classId: string) {
     studentList = []
     loading = true
     disabled = true
-    getDoc(doc(db, classesCollection, id)).then((snapshot) => {
-      let data = snapshot.data() as ClassData
-
-      values.meetingTimes = data.meetingTimes.sort((a:Date, b:Date) => a - b)
-
-      const studentUids = data.students
-      if (studentUids) {
-        getStudentList(studentUids)
-      }
+    
+    try {
+      const snapshot = await getDoc(doc(db, classesCollection, classId))
       if (snapshot.exists()) {
-        values = data
+        const data = snapshot.data() as ClassData
+        
+        values = { ...data }
+        values.meetingTimes = data.meetingTimes.sort((a:Date, b:Date) => a - b)
+
+        const studentUids = data.students
+        if (studentUids) {
+          getStudentList(studentUids)
+        }
+        checkStatuses()
       } else {
         alert.trigger('error', 'Registration not found.')
       }
-    }).then(checkStatuses)
+    } catch (error) {
+      console.error('Error loading class data:', error)
+      alert.trigger('error', 'Failed to load class data.')
+    } finally {
+      loading = false
+    }
   }
 
   function handleEdit() {
@@ -349,7 +366,7 @@
         </div>
       </Card>
       <div>
-        <table
+        <div
           class="grid grid-cols-1 justify-between gap-1"
           style="margin-top:1rem;"
         >
@@ -405,7 +422,7 @@
               {/each}
             {/if}
           </div>
-        </table>
+        </div>
       </div>
     </div>
   </div>

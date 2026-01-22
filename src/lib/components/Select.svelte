@@ -47,26 +47,35 @@
     }
   }, 150)
 
-  $: if (open) {
-    // close any other open select element
-    if (current && current.id !== id) {
-      current.setOpen(false)
-    }
-    current = {
-      id,
-      setOpen: (value) => {
-        open = value
-      },
-    }
-  } else {
-    // validate value before close
-    if (!options.includes(value)) {
-      value = ''
+  // Handle open state changes without causing infinite loops
+  let previousOpenState = false
+  $: if (open !== previousOpenState) {
+    previousOpenState = open
+    if (open) {
+      // close any other open select element
+      if (current && current.id !== id) {
+        current.setOpen(false)
+      }
+      current = {
+        id,
+        setOpen: (newValue) => {
+          if (newValue !== open) {
+            open = newValue
+          }
+        },
+      }
+    } else {
+      // validate value before close
+      if (!options.includes(value)) {
+        value = ''
+      }
     }
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  $: ((_) => {
-    // validate updated value
+
+  // Handle value validation separately to prevent loops
+  let previousValue = value
+  $: if (value !== previousValue) {
+    previousValue = value
     filterOptionsBy(value)
     if (self) {
       if (value === '' && required) {
@@ -79,7 +88,7 @@
         }
       }
     }
-  })(value)
+  }
 
   filterOptionsBy(value)
 

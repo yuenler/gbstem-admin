@@ -26,9 +26,17 @@
   // if file input
   export let accept: Array<string> | undefined = undefined
   export let maxSize = 0
-  $: if (self && focus) {
-    self.focus()
+  // Handle focus without causing infinite loops
+  let previousFocus = focus
+  $: if (focus !== previousFocus && self) {
+    previousFocus = focus
+    if (focus) {
+      self.focus()
+    }
   }
+
+  // Handle validation without causing infinite loops
+  let previousValidationState = ''
   $: {
     if (self) {
       const state = (
@@ -46,7 +54,11 @@
           ...validations,
         ] as Array<Validation>
       ).find((validation) => validation[0])
-      self.setCustomValidity(state === undefined ? '' : state[1])
+      const validationMessage = state === undefined ? '' : state[1]
+      if (validationMessage !== previousValidationState) {
+        previousValidationState = validationMessage
+        self.setCustomValidity(validationMessage)
+      }
     }
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1,21 +1,39 @@
 [
   {
-    "name": "Scratch"
+    "name": "Scratch 1a"
   },
   {
-    "name": "Python I"
+    "name": "Scratch 1b"
   },
   {
-    "name": "Python II"
+    "name": "Scratch 2a"
   },
   {
-    "name": "Java"
+    "name": "Scratch 2b"
   },
   {
-    "name": "Web Development"
+    "name": "Python 1a"
+  },
+  {
+    "name": "Python 1b"
+  },
+  {
+    "name": "Python 2a"
+  },
+  {
+    "name": "Python 2b"
+  },
+  {
+    "name": "Web Development A"
+  },
+  {
+    "name": "Web Development B"
   },
   {
     "name": "Mathematics 1a"
+  },
+  {
+    "name": "Mathematics 1b"
   },
   {
     "name": "Mathematics 2a"
@@ -30,18 +48,48 @@
     "name": "Mathematics 5a"
   },
   {
-    "name": "Engineering I"
+    "name": "Mathematics 2b"
   },
   {
-    "name": "Engineering II"
+    "name": "Mathematics 3b"
   },
   {
-    "name": "Engineering III"
+    "name": "Mathematics 4b"
   },
   {
-    "name": "Environmental Science"
+    "name": "Mathematics 5b"
+  },
+  {
+    "name": "Engineering 1a"
+  },
+  {
+    "name": "Engineering 1b"
+  },
+  {
+    "name": "Engineering 2a"
+  },
+  {
+    "name": "Engineering 2b"
+  },
+  {
+    "name": "Engineering 3a"
+  },
+  {
+    "name": "Engineering 3b"
   },
   {
     "name": "Lego Robotics Competition"
+  },
+  {
+    "name": "Environmental Science A"
+  },
+  {
+    "name": "Environmental Science B"
+  },
+  {
+    "name": "Physics A"
+  },
+  {
+    "name": "Physics B"
   }
 ]

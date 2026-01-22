@@ -241,14 +241,8 @@ function autosaveInterview() {
   }
 }
 
-afterUpdate(() => {
-  console.log("DSFKSDJFHDSKJhf")
-    if (autosaveTimeout) clearTimeout(autosaveTimeout)
-    autosaveTimeout = setTimeout(() => {
-      autosaveValues()
-      if (showInterviewForm) autosaveInterview()
-    }, 1000) // 1 second debounce
-})
+// Remove the problematic afterUpdate that causes infinite loops in Svelte 5
+// The autosave will be handled by specific reactive statements instead
 
   function saveNotes() {
     const frozenId = id

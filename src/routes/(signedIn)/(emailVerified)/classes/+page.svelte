@@ -1,7 +1,4 @@
 <script lang="ts">
-  import { collection, query, getDocs, updateDoc, doc } from 'firebase/firestore'
-  import { db, user } from '$lib/client/firebase'
-  import { onMount } from 'svelte'
   import Table from '$lib/components/Table.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
   import {copyEmails, formatTime24to12 } from '$lib/utils'
@@ -14,7 +11,6 @@
     import Input from '$lib/components/Input.svelte'
     import { goto } from '$app/navigation'
     import { page } from '$app/stores'
-    import {alert} from '$lib/stores'
     import { ClassStatus } from '$lib/data/types/ClassStatus'
 
   export let data: PageData
@@ -32,9 +28,9 @@
   let dialogEl: Dialog
 
     $: {
-      const base = $page.url.searchParams
-        base.set('filter', courseFilter)
-        base.delete('updated')
+      const base = new URLSearchParams($page.url.searchParams)
+      base.set('filter', courseFilter)
+      base.delete('updated')
       filterRef = `?${base.toString()}`
     }
 
