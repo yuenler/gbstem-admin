@@ -36,6 +36,7 @@
   // }
 
   const collectionOptions = [
+    { name: 'Spring 2026', value: 'registrationsSpring26' },
     { name: 'Fall 2025', value: 'registrationsFall25' },
     { name: 'Spring 2025', value: 'registrationsSpring25' },
     { name: 'Fall 2024', value: 'registrationsFall24' },

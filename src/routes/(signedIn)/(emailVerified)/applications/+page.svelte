@@ -217,6 +217,7 @@
 
   // Add your collection options here
   const collectionOptions = [
+    { name: 'Spring 2026', value: 'applicationsSpring26' },
     { name: 'Fall 2025', value: 'applicationsFall25' },
     { name: 'Spring 2025', value: 'applicationsSpring25' },
     { name: 'Fall 2024', value: 'applicationsFall24' },
