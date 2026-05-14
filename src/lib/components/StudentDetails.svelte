@@ -45,7 +45,8 @@
   let selectedClassId = ''
   let selectedDropClass = ''
   let selectedDropClassId = ''
-  const nameToUid: Record<string, string> = {}
+  let currentStudentId = ''
+  let nameToUid: Record<string, string> = {}
 
   // Load student classes and info
   async function loadStudentClasses(studentId: string) {
@@ -53,6 +54,11 @@
     classesOptions = []
     dropClassesOptions = []
     attendance = []
+
+    selectedClass = ''
+    selectedDropClass = ''
+    selectedClassId = ''
+    selectedDropClassId = ''
 
     // Get student registration info
     const studentDocRef = doc(db, registrationsCollection, studentId)
@@ -73,6 +79,25 @@
       }
     }
 
+    // Get classes
+    const classesSnap = await getDocs(query(collection(db, classesCollection)))
+    classes = []
+    classesOptions = []
+    dropClassesOptions = []
+    classesSnap.forEach((doc) => {
+      const data = doc.data() as ClassData
+      if (data) {
+        data.id = doc.id
+        const name = `${data.course} taught by ${data.instructorFirstName} ${data.instructorLastName} at ${data.classTime1} ${data.classDay1} and ${data.classTime2} ${data.classDay2}`.trim()
+        nameToUid[name] = data.id
+        classesOptions.push({ name })
+        if (data.students.includes(studentId)) {
+          classes.push(data)
+          dropClassesOptions.push({ name })
+        }
+      }
+    })
+
     // Get attendance
     const attendanceSnap = await getDocs(query(collection(db, instructorFeedbackCollection)))
     attendance = []
@@ -92,32 +117,18 @@
       }
     })
     attendance.sort((a, b) => a.classNumber - b.classNumber)
-
-    // Get classes
-    const classesSnap = await getDocs(query(collection(db, classesCollection)))
-    classes = []
-    classesOptions = []
-    dropClassesOptions = []
-    classesSnap.forEach((doc) => {
-      const data = doc.data() as ClassData
-      if (data) {
-        data.id = doc.id
-        const name = `${data.course} taught by ${data.instructorFirstName} ${data.instructorLastName} at ${data.classTime1} ${data.classDay1} and ${data.classTime2} ${data.classDay2}`.trim()
-        nameToUid[name] = data.id
-        classesOptions.push({ name })
-        if (data.students.includes(studentId)) {
-          classes.push(data)
-          dropClassesOptions.push({ name })
-        }
-      }
-    })
   }
 
   // // Watch for id changes and reload
-  // $: if (id) {
-  //   loading = true
-  //   loadStudentClasses(id).then(() => loading = false)
-  // }
+$: if (id && id !== currentStudentId) {
+  currentStudentId = id
+
+  loading = true
+
+  loadStudentClasses(id).then(() => {
+    loading = false
+  })
+}
 
   // Update selected class IDs
   $: {
@@ -171,8 +182,6 @@
           studentName: studentData.name,
         }),
       })
-      dialogEl.close()
-      window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error) {
       console.error('Error adding class:', error)
       alert.trigger('error', 'Failed to add class.')
@@ -203,11 +212,20 @@
   }
 </script>
 
-<Dialog bind:this={dialogEl} size="full" alert on:open={() => { if (id) { loading = true; loadStudentClasses(id).then(() => loading = false) } }}>
+<Dialog bind:this={dialogEl} size="full" alert>
   <svelte:fragment slot="title">
     <div class="flex justify-between">
       <div>Student Attendance and Information</div>
-      <Button color="red" on:click={() => { loading = true; id = undefined; dialogEl.cancel() }}>Close</Button>
+      <Button
+      color="red"
+      on:click={() => {
+        loading = true
+        currentStudentId = ''
+        dialogEl.cancel()
+      }}
+    >
+      Close
+    </Button>
     </div>
   </svelte:fragment>
   <div slot="description">
@@ -319,6 +337,7 @@
           </tbody>
         </table>
       </div>
+      {#if !loading}
       <div class="lg:w-1/2">
         <Select bind:value={selectedClass} options={classesOptions} label="Select a class" floating />
       </div>
@@ -327,6 +346,9 @@
         <Select bind:value={selectedDropClass} options={dropClassesOptions} label="Select a class" floating />
       </div>
       <Button color="red" on:click={() => dropClass(selectedDropClassId)} class="mt-4">Drop Class</Button>
+      {:else}
+        <div class="p-4 text-gray-500">Loading classes…</div>
+      {/if}
     </Card>
   </div>
 </Dialog>
