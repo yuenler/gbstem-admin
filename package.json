@@ -11,11 +11,15 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier . --check . && eslint .",
     "format": "prettier --write --plugin prettier-plugin-svelte --plugin prettier-plugin-tailwindcss .",
-    "deploy": "npm run build && firebase deploy"
+    "test": "jest",
+    "deploy": "npm run build && firebase deploy",
+    "prepare": "husky || true"
   },
   "devDependencies": {
     "@sveltejs/adapter-vercel": "^5.10.2",
     "@sveltejs/kit": "^2.43.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@types/jest": "^30.0.0",
     "@types/lodash-es": "^4.17.8",
     "@types/nprogress": "^0.2.0",
     "@typescript-eslint/eslint-plugin": "^6.2.1",
@@ -24,6 +28,8 @@
     "eslint": "^8.46.0",
     "eslint-config-prettier": "^8.10.0",
     "eslint-plugin-svelte": "^2.32.4",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
     "postcss": "^8.4.27",
     "prettier": "^3.0.1",
     "prettier-plugin-svelte": "^3.0.3",
@@ -31,6 +37,7 @@
     "svelte": "^5.39.3",
     "svelte-check": "^3.4.6",
     "tailwindcss": "^3.3.3",
+    "ts-jest": "^29.4.11",
     "tslib": "^2.6.1",
     "typescript": "^5.1.6",
     "vite": "^7.1.6"
