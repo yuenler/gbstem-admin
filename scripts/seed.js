@@ -28,13 +28,7 @@ const interviewTimesCollection = 'instructorInterviewTimesSpring26'
 const classFeedbackCollection = 'classFeedbackSpring26'
 const instructorFeedbackCollection = 'instructorFeedbackSpring26'
 
-async function seed() {
-  // Create/Update Admin User
-  const email = 'demo@gbstem.org'
-  const password = 'penguin'
-  const displayName = 'Demo Admin'
-  const role = 'admin'
-
+async function createOrUpdateUser(uid, email, password, displayName, role) {
   let user
   try {
     console.log(`Checking if user ${email} already exists...`)
@@ -50,12 +44,16 @@ async function seed() {
   } catch (err) {
     if (err.code === 'auth/user-not-found') {
       console.log(`User does not exist. Creating new user ${email}...`)
-      user = await auth.createUser({
+      const options = {
         email: email,
         password: password,
         displayName: displayName,
         emailVerified: true,
-      })
+      }
+      if (uid) {
+        options.uid = uid
+      }
+      user = await auth.createUser(options)
     } else {
       throw err
     }
@@ -65,7 +63,58 @@ async function seed() {
     `Setting custom user claims: { role: '${role}' } for UID: ${user.uid}...`,
   )
   await auth.setCustomUserClaims(user.uid, { role: role })
-  console.log('Custom user claims successfully set.')
+  console.log(`Custom user claims successfully set for ${email}.`)
+  return user
+}
+
+async function seed() {
+  // Create/Update Seed Users
+  const adminUser = await createOrUpdateUser(
+    null,
+    'demo@gbstem.org',
+    'penguin',
+    'Demo Admin',
+    'admin',
+  )
+  await createOrUpdateUser(
+    'instructor-demo-uid',
+    'instructor@gbstem.org',
+    'penguin',
+    'Demo Instructor',
+    'instructor',
+  )
+  await createOrUpdateUser(
+    'student-demo-uid',
+    'student@gbstem.org',
+    'penguin',
+    'Demo Student',
+    'student',
+  )
+
+  console.log('Seeding mock profiles in "users" and "ids" collections...')
+  await db.collection('ids').doc('1111111').set({})
+  await db.collection('users').doc('instructor-demo-uid').set({
+    id: '1111111',
+    role: 'instructor',
+    firstName: 'Demo',
+    lastName: 'Instructor',
+  })
+
+  await db.collection('ids').doc('2222222').set({})
+  await db.collection('users').doc('student-demo-uid').set({
+    id: '2222222',
+    role: 'student',
+    firstName: 'Demo',
+    lastName: 'Student',
+  })
+
+  await db.collection('ids').doc('3333333').set({})
+  await db.collection('users').doc(adminUser.uid).set({
+    id: '3333333',
+    role: 'admin',
+    firstName: 'Demo',
+    lastName: 'Admin',
+  })
 
   // Create Signup Token
   console.log('Creating a demo signup token in "tokens" collection...')
@@ -87,6 +136,15 @@ async function seed() {
     classesStart: '2026-03-01T09:00:00Z',
     classesEnd: '2026-06-30T17:00:00Z',
     instructorOrientation: '2026-02-20T09:00:00Z',
+    studentOrientation: '2026-02-25T09:00:00Z',
+    newInstructorAppsDue: '2026-02-15T23:59:59Z',
+    registrationsDue: '2026-02-15T23:59:59Z',
+    leadershipAppsDue: '2026-02-15T23:59:59Z',
+    returningInstructorAppsDue: '2026-02-15T23:59:59Z',
+    newInstructorAppsOpen: '2026-01-01T09:00:00Z',
+    returningInstructorAppsOpen: '2026-01-01T09:00:00Z',
+    parentOrientation: '2026-02-22T09:00:00Z',
+    registrationsOpen: '2026-01-01T09:00:00Z',
   })
 
   // Create Mock Classes
@@ -101,11 +159,11 @@ async function seed() {
       classTime1: '16:00',
       classTime2: '16:00',
       course: 'Python I',
-      instructorEmail: 'instructor1@gbstem.org',
+      instructorEmail: 'instructor@gbstem.org',
       otherInstructorEmails: '',
-      instructorFirstName: 'Alice',
-      instructorLastName: 'Smith',
-      meetingLink: 'https:// zoom.us/j/123456789',
+      instructorFirstName: 'Demo',
+      instructorLastName: 'Instructor',
+      meetingLink: 'https://zoom.us/j/123456789',
       meetingTimes: [
         admin.firestore.Timestamp.fromDate(new Date('2026-03-02T16:00:00Z')),
         admin.firestore.Timestamp.fromDate(new Date('2026-03-04T16:00:00Z')),
@@ -114,7 +172,7 @@ async function seed() {
       classStatuses: ['scheduled', 'scheduled'],
       feedbackCompleted: [false, false],
       online: true,
-      students: ['student1', 'student2'],
+      students: ['student-demo-uid-1', 'student1', 'student2'],
     })
 
   await db
@@ -250,6 +308,61 @@ async function seed() {
       },
     })
 
+  console.log(`Seeding mock registration for student-demo-uid...`)
+  await db
+    .collection(registrationsCollection)
+    .doc('student-demo-uid-1')
+    .set({
+      personal: {
+        email: 'student@gbstem.org',
+        studentFirstName: 'Demo Student',
+        studentLastName: 'One',
+        parentFirstName: 'Parent',
+        parentLastName: 'Demo',
+        secondaryEmail: '',
+        dateOfBirth: '2016-01-01',
+        gender: 'Female',
+        race: ['Asian'],
+        phoneNumber: '555-1111',
+        frlp: 'No',
+        parentEducation: "Bachelor's Degree",
+      },
+      academic: {
+        school: 'Pinecrest Elementary',
+        grade: '3',
+      },
+      program: {
+        csCourse: 'Python I',
+        mathCourse: '',
+        engineeringCourse: '',
+        scienceCourse: '',
+        reason: 'Excited to learn python.',
+        inPerson: false,
+      },
+      inPerson: {
+        allergies: 'None',
+        parentPickup: 'Parent Demo',
+      },
+      agreements: {
+        entireProgram: true,
+        timeCommitment: true,
+        submitting: true,
+        mediaRelease: true,
+        bypassAgeLimits: false,
+      },
+      meta: {
+        id: 'student-demo-uid-1',
+        uid: 'student-demo-uid',
+        submitted: true,
+      },
+      enrolled: true,
+      classes: ['class-python1'],
+      timestamps: {
+        created: admin.firestore.FieldValue.serverTimestamp(),
+        updated: admin.firestore.FieldValue.serverTimestamp(),
+      },
+    })
+
   // Create Mock Applications
   console.log(`Seeding mock applications in "${applicationsCollection}"...`)
   await db
@@ -300,6 +413,74 @@ async function seed() {
         created: admin.firestore.FieldValue.serverTimestamp(),
         updated: admin.firestore.FieldValue.serverTimestamp(),
       },
+    })
+
+  console.log(`Seeding mock application for instructor-demo-uid...`)
+  await db
+    .collection(applicationsCollection)
+    .doc('instructor-demo-uid')
+    .set({
+      personal: {
+        email: 'instructor@gbstem.org',
+        firstName: 'Demo',
+        lastName: 'Instructor',
+        dateOfBirth: '2000-01-01',
+        gender: 'Non-binary',
+        race: ['Other'],
+        phoneNumber: '555-0000',
+      },
+      academic: {
+        school: 'gbSTEM University',
+        graduationYear: '2028',
+      },
+      program: {
+        courses: ['Python I'],
+        preferences: 'None',
+        numClasses: '1',
+        timeSlots: 'Monday/Wednesday',
+        notAvailable: '',
+        inPerson: false,
+        reason: 'Love teaching',
+      },
+      essay: {
+        taughtBefore: true,
+        academicBackground: 'CS Major',
+        teachingScenario: 'Coding exercises',
+        why: 'To help kids',
+      },
+      agreements: {
+        entireProgram: true,
+        timeCommitment: true,
+        submitting: true,
+      },
+      meta: {
+        id: 'instructor-demo-uid',
+        uid: 'instructor-demo-uid',
+        interview: true,
+        submitted: true,
+        decision: db.collection(decisionsCollection).doc('instructor-demo-uid'),
+      },
+      timestamps: {
+        created: admin.firestore.FieldValue.serverTimestamp(),
+        updated: admin.firestore.FieldValue.serverTimestamp(),
+      },
+    })
+
+  console.log(`Seeding mock decision for instructor-demo-uid...`)
+  await db.collection(decisionsCollection).doc('instructor-demo-uid').set({
+    type: 'accepted',
+    likelyDecision: 'likely yes',
+    course: 'Python I',
+    time: 'Monday/Wednesday 16:00',
+    notes: 'Welcome to the team!',
+  })
+
+  console.log(`Seeding instructor-to-class mapping...`)
+  await db
+    .collection('instructorClasses')
+    .doc('instructor@gbstem.org')
+    .set({
+      classIds: ['class-python1'],
     })
 
   // Create Mock Sub-Requests
@@ -382,10 +563,11 @@ async function seed() {
 
   console.log('\nSeeding completed successfully!')
   console.log('--------------------------------------------------')
-  console.log(`Login Email:    ${email}`)
-  console.log(`Login Password: ${password}`)
-  console.log(`Sign-up Token:  demo-token`)
-  console.log(`Role:           ${role}`)
+  console.log('Seeded Users (Password: penguin):')
+  console.log('- Admin:      demo@gbstem.org')
+  console.log('- Instructor: instructor@gbstem.org')
+  console.log('- Student:    student@gbstem.org')
+  console.log('Sign-up Token:  demo-token')
   console.log('--------------------------------------------------')
 }
 
