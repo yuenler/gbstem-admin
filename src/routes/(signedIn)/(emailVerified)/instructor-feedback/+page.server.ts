@@ -33,9 +33,9 @@ export const load = (async ({ url, depends }) => {
         feedback: snapshot.docs.map((doc) => {
           const data = doc.data() as Data.InstructorFeedback
 
-          let attendanceList: boolean[] = []
+          const attendanceList: boolean[] = []
 
-          for(var propt in data.attendanceList){
+          for(const propt in data.attendanceList){
             attendanceList.push(data.attendanceList[propt].present)
         }
 
@@ -64,9 +64,9 @@ export const load = (async ({ url, depends }) => {
         query,
         feedback: hits.map((hit) => {
 
-          let attendanceList: boolean[] = []
+          const attendanceList: boolean[] = []
 
-          for(var propt in hit.attendanceList){
+          for(const propt in hit.attendanceList){
             attendanceList.push(hit.attendanceList[propt].present)
           }
 

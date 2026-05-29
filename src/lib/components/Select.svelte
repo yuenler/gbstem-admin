@@ -8,7 +8,7 @@
 
 <script lang="ts">
   import { clickOutside, cn } from '$lib/utils'
-  import { uniqueId, debounce, kebabCase } from 'lodash-es'
+  import { debounce, kebabCase, uniqueId } from 'lodash-es'
   import { fade } from 'svelte/transition'
 
   let className = ''
@@ -25,7 +25,6 @@
   type SelectOption = string
   type SelectOptionJson = {
     name: string
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any
   }
   let optionsJson: Array<SelectOptionJson> = []

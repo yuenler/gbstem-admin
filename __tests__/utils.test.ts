@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // Set timezone to America/New_York so that date formatting tests are deterministic
 process.env.TZ = 'America/New_York'
 
