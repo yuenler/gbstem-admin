@@ -11,12 +11,22 @@
   import Table from '$lib/components/Table.svelte'
   import { actions, alert } from '$lib/stores'
   import { db, user } from '$lib/client/firebase'
-  import { doc, updateDoc, getDoc, collection, query, getDocs, where} from 'firebase/firestore'
-  import fi from 'date-fns/locale/fi'
+  import {
+    doc,
+    updateDoc,
+    getDoc,
+    collection,
+    query,
+    getDocs,
+    where,
+  } from 'firebase/firestore'
   import Select from '$lib/components/Select.svelte'
   import { kebabCase } from 'lodash-es'
   import { normalizeCapitals } from '$lib/utils'
-  import { classesCollection, registrationsCollection } from '$lib/data/collections'
+  import {
+    classesCollection,
+    registrationsCollection,
+  } from '$lib/data/collections'
   import { writable } from 'svelte/store'
 
   export let data: PageData
@@ -24,8 +34,13 @@
   let search: string = data.query ?? ''
   let current: number | undefined
   let checked: Array<number> = []
-  let decisionFilter: 'all' | 'submitted' | 'enrolled' | 'inPerson' | 'incomplete' | 'not enrolled' =
-    ($page.url.searchParams.get('filter') as any) ?? 'all'
+  let decisionFilter:
+    | 'all'
+    | 'submitted'
+    | 'enrolled'
+    | 'inPerson'
+    | 'incomplete'
+    | 'not enrolled' = ($page.url.searchParams.get('filter') as any) ?? 'all'
 
   // const mathCourseMap = {
   //   'Mathematics 5b': 'mathematics-v',
@@ -102,13 +117,16 @@
   const url = URL.createObjectURL(blob)
 
   const schools: string[] = data.registrations
-    .map((registration) => registration.values.academic.school.trim().toLocaleLowerCase()).sort()
+    .map((registration) =>
+      registration.values.academic.school.trim().toLocaleLowerCase(),
+    )
+    .sort()
   let uniqueSchools: string[] = []
   schools.map((school: string) => {
-      if (!uniqueSchools.includes(school)) {
-        uniqueSchools.push(school)
-      }
-    })
+    if (!uniqueSchools.includes(school)) {
+      uniqueSchools.push(school)
+    }
+  })
 
   const schoolsBlob = new Blob([uniqueSchools.join('\n')], { type: 'text/csv' })
   const schoolsUrl = URL.createObjectURL(schoolsBlob)
@@ -117,8 +135,8 @@
     data.registrations.length === 0
       ? undefined
       : current === undefined
-      ? undefined
-      : data.registrations[current]
+        ? undefined
+        : data.registrations[current]
   let nextHref = ''
   let filterRef = ''
   $: {
@@ -172,11 +190,14 @@
       goto(`?${base.toString()}`)
     }
   }
-  function bypassAgeLimits(id:string) {
+  function bypassAgeLimits(id: string) {
     getDoc(doc(db, registrationsCollection, id)).then((applicationSnapshot) => {
       if (applicationSnapshot.exists()) {
         console.log(applicationSnapshot.data().agreements.bypassAgeLimits)
-        updateDoc(doc(db, registrationsCollection, id), {'agreements.bypassAgeLimits': !applicationSnapshot.data().agreements.bypassAgeLimits});
+        updateDoc(doc(db, registrationsCollection, id), {
+          'agreements.bypassAgeLimits':
+            !applicationSnapshot.data().agreements.bypassAgeLimits,
+        })
       }
     })
   }
@@ -185,32 +206,50 @@
       search = ''
     })
   }
-  function getInterestedClasses(registration:any) {
+  function getInterestedClasses(registration: any) {
     let interestedClasses = ''
-    if(registration) {
-      interestedClasses += (registration.values.program.csCourse ?? '').includes('I am not interested') ? '' : registration.values.program.csCourse + ', '
-      interestedClasses += (registration.values.program.engineeringCourse ?? '').includes('I am not interested') ? '' : registration.values.program.engineeringCourse + ', '
-      interestedClasses += (registration.values.program.mathCourse ?? '').includes('I am not interested') ? '' : registration.values.program.mathCourse + ', '
-      interestedClasses += (registration.values.program.scienceCourse ?? '').includes('I am not interested') ? '' : registration.values.program.scienceCourse
+    if (registration) {
+      interestedClasses += (
+        registration.values.program.csCourse ?? ''
+      ).includes('I am not interested')
+        ? ''
+        : registration.values.program.csCourse + ', '
+      interestedClasses += (
+        registration.values.program.engineeringCourse ?? ''
+      ).includes('I am not interested')
+        ? ''
+        : registration.values.program.engineeringCourse + ', '
+      interestedClasses += (
+        registration.values.program.mathCourse ?? ''
+      ).includes('I am not interested')
+        ? ''
+        : registration.values.program.mathCourse + ', '
+      interestedClasses += (
+        registration.values.program.scienceCourse ?? ''
+      ).includes('I am not interested')
+        ? ''
+        : registration.values.program.scienceCourse
     }
     return interestedClasses
   }
 
   async function getCourses(id: string) {
     let enrolled = true
-    const q = query(collection(db, classesCollection), where('students', 'array-contains', id))
+    const q = query(
+      collection(db, classesCollection),
+      where('students', 'array-contains', id),
+    )
     const snapshot = await getDocs(q)
     const courses = snapshot.docs.map((doc) => doc.data().course)
     if (courses.length === 0) {
       enrolled = false
     }
 
-     const registrationDocRef = doc(db, registrationsCollection, id)  
-      updateDoc(registrationDocRef, { enrolled: enrolled })
+    const registrationDocRef = doc(db, registrationsCollection, id)
+    updateDoc(registrationDocRef, { enrolled: enrolled })
 
-    return enrolled? courses : "NO CLASS ENROLLMENT FOUND"
+    return enrolled ? courses : 'NO CLASS ENROLLMENT FOUND'
   }
-
 </script>
 
 <svelte:head>
@@ -252,31 +291,50 @@
     </svg>
   </Button>
 
-<div class="relative flex items-end">
-  <select
-    id="collection-select"
-    bind:value={selectedCollection}
-    on:change={handleCollectionChange}
-    class="block w-full h-12 px-4 pr-10 text-base bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition appearance-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-    required
-  >
-    <option value="" disabled hidden selected>Select collection…</option>
-    {#each collectionOptions as option}
-      <option value={option.value}>{option.name}</option>
-    {/each}
-  </select>
-  <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-    </svg>
-  </span>
-</div>
+  <div class="relative flex items-end">
+    <select
+      id="collection-select"
+      bind:value={selectedCollection}
+      on:change={handleCollectionChange}
+      class="block w-full h-12 px-4 pr-10 text-base bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition appearance-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+      required
+    >
+      <option value="" disabled hidden selected>Select collection…</option>
+      {#each collectionOptions as option}
+        <option value={option.value}>{option.name}</option>
+      {/each}
+    </select>
+    <span
+      class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400"
+    >
+      <svg
+        class="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M19 9l-7 7-7-7"
+        />
+      </svg>
+    </span>
+  </div>
 
   <div class="flex">
     <Select
       bind:value={decisionFilter}
       label="Filter"
-      options={[{ name: 'all' }, { name: 'submitted' }, {name: 'enrolled'}, { name: 'inPerson' }, { name: 'incomplete' }, { name: 'not enrolled' }]}
+      options={[
+        { name: 'all' },
+        { name: 'submitted' },
+        { name: 'enrolled' },
+        { name: 'inPerson' },
+        { name: 'incomplete' },
+        { name: 'not enrolled' },
+      ]}
       floating
       required
     />
@@ -370,22 +428,24 @@
           {registration.values.academic.grade}
         </td>
         <td class="px-6 py-4">
-          {normalizeCapitals(registration.values.personal.parentFirstName + ' ' + registration.values.personal.parentLastName)}
-        <td class="px-6 py-4">{getInterestedClasses(registration)}</td>
+          {normalizeCapitals(
+            registration.values.personal.parentFirstName +
+              ' ' +
+              registration.values.personal.parentLastName,
+          )}
+        </td><td class="px-6 py-4">{getInterestedClasses(registration)}</td>
         <td class="px-6 py-4">
-        <input
-          id={`check-${i}`}
-          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
-          type="checkbox"
-          checked={registration.values.agreements.bypassAgeLimits}
-          on:input={() => bypassAgeLimits(registration.id)}
-          on:click|stopPropagation
-        />
+          <input
+            id={`check-${i}`}
+            class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+            type="checkbox"
+            checked={registration.values.agreements.bypassAgeLimits}
+            on:input={() => bypassAgeLimits(registration.id)}
+            on:click|stopPropagation
+          />
         </td>
         {#await getCourses(registration.id) then courses}
-        <td class="px-6 py-4"
-          >{courses}</td
-        >
+          <td class="px-6 py-4">{courses}</td>
         {/await}
       </tr>
     {/each}
@@ -397,7 +457,11 @@
   <Button href={nextHref}>Next</Button>
 </div>
 
-<Registration bind:dialogEl id={registration?.id} collection={selectedCollection} />
+<Registration
+  bind:dialogEl
+  id={registration?.id}
+  collection={selectedCollection}
+/>
 
 <style>
   input:checked {
