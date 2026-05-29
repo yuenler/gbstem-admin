@@ -1,7 +1,7 @@
+import { alert } from '$lib/stores'
 import type { ClassValue } from 'clsx'
 import clsx from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { alert } from '$lib/stores'
 
 export function cn(...classes: Array<ClassValue>) {
   return twMerge(clsx(...classes))
@@ -150,7 +150,7 @@ export const classHeldToday = (datesHeld: Date[], classTimeToday: Date) => {
 }
 
 export const isClassUpcoming = (date: Date) => {
-  return date.getTime() > Date.now() && Math.abs(date.getTime() - new Date().getTime()) / (1000*60) < 30
+  return date.getTime() > Date.now() && Math.abs(date.getTime() - new Date().getTime()) / (1000 * 60) < 30
 }
 
 export function normalizeCapitals(name: string) {
@@ -158,8 +158,8 @@ export function normalizeCapitals(name: string) {
 }
 
 export const getNearestFutureClass = (meetingTimes: Date[]) => {
-   const nextIndex = meetingTimes.findIndex(schedule => new Date(timestampToDate(schedule)) > new Date())
-   return nextIndex === -1 ? 'No Upcoming Classes' : formatDate(timestampToDate(meetingTimes[nextIndex]))
+  const nextIndex = meetingTimes.findIndex(schedule => new Date(timestampToDate(schedule)) > new Date())
+  return nextIndex === -1 ? 'No Upcoming Classes' : formatDate(timestampToDate(meetingTimes[nextIndex]))
 }
 
 export const getNearestFutureClassIndex = (meetingTimes: Date[]) => {
@@ -187,4 +187,22 @@ export function toLocalISOString(date: Date) {
   const minute = pad(date.getMinutes())
 
   return `${year}-${month}-${day}T${hour}:${minute}`.slice(0, 16)
+}
+
+export function cleanEnvVar(value: string | undefined): string | undefined {
+  if (!value) return '';
+
+  const trimmed = value.trim();
+  const firstChar = trimmed[0];
+  const lastChar = trimmed[trimmed.length - 1];
+
+  // Check if the string is wrapped in matching single or double quotes
+  if (
+    (firstChar === '"' && lastChar === '"') ||
+    (firstChar === "'" && lastChar === "'")
+  ) {
+    return trimmed.slice(1, -1);
+  }
+
+  return trimmed;
 }

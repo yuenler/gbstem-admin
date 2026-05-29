@@ -9,24 +9,25 @@ jest.mock('$lib/stores', () => ({
 
 import { alert } from '$lib/stores'
 import {
-  cn,
-  clickOutside,
-  trapFocus,
   addDataToHtmlTemplate,
-  formatTime24to12,
+  classHeldToday,
+  cleanEnvVar,
+  clickOutside,
+  cn,
+  copyEmails,
   formatClassTimes,
   formatDate,
-  formatDateString,
   formatDateLocal,
   formatDateShort,
-  timestampToDate,
-  classHeldToday,
-  isClassUpcoming,
-  normalizeCapitals,
+  formatDateString,
+  formatTime24to12,
   getNearestFutureClass,
   getNearestFutureClassIndex,
-  copyEmails,
+  isClassUpcoming,
+  normalizeCapitals,
+  timestampToDate,
   toLocalISOString,
+  trapFocus,
 } from '../src/lib/utils'
 
 describe('utils', () => {
@@ -374,7 +375,7 @@ describe('utils', () => {
     })
 
     it('triggers success alert when email copying succeeds', async () => {
-      ;(navigator.clipboard.writeText as jest.Mock).mockResolvedValue(undefined)
+      ; (navigator.clipboard.writeText as jest.Mock).mockResolvedValue(undefined)
 
       copyEmails('test@example.com')
 
@@ -391,7 +392,7 @@ describe('utils', () => {
     })
 
     it('triggers error alert when email copying fails', async () => {
-      ;(navigator.clipboard.writeText as jest.Mock).mockRejectedValue(
+      ; (navigator.clipboard.writeText as jest.Mock).mockRejectedValue(
         new Error('Permission denied'),
       )
 
@@ -407,6 +408,40 @@ describe('utils', () => {
         'error',
         'Failed to copy emails to clipboard!',
       )
+    })
+  })
+
+  describe('cleanEnvVar', () => {
+    it('removes double quotes', () => {
+      expect(cleanEnvVar('"value"')).toBe('value')
+    })
+
+    it('removes single quotes', () => {
+      expect(cleanEnvVar("'value'")).toBe('value')
+    })
+
+    it('trims whitespace', () => {
+      expect(cleanEnvVar('  value  ')).toBe('value')
+    })
+
+    it('removes both quotes and whitespace', () => {
+      expect(cleanEnvVar('  "value"  ')).toBe('value')
+    })
+
+    it('returns empty string for empty input', () => {
+      expect(cleanEnvVar('')).toBe('')
+    })
+
+    it('returns empty string for undefined', () => {
+      expect(cleanEnvVar(undefined)).toBe('')
+    })
+
+    it('returns value unchanged if not quoted', () => {
+      expect(cleanEnvVar('value')).toBe('value')
+    })
+
+    it('handles special characters in value', () => {
+      expect(cleanEnvVar('"user-agent: Mozilla..."')).toBe('user-agent: Mozilla...')
     })
   })
 })
