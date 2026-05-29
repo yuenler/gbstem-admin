@@ -73,101 +73,104 @@
 <svelte:window on:scroll={updateShadow} />
 <nav
   class={clsx(
-    'px-d fixed left-0 top-0 z-40 flex h-20 w-full items-center justify-between border-b bg-white transition-all',
+    'px-4 md:px-6 lg:px-8 fixed left-0 top-0 z-40 flex h-20 w-full items-center justify-between border-b bg-white transition-all gap-2 md:gap-4 lg:gap-6',
     shadow && !open ? 'shadow-b border-gray-200' : 'border-white',
   )}
 >
-  <div class="flex items-center gap-8 w-full">
-    <Brand />
-    {#if user.emailVerified}
-      {#if $actions === null}
-        <div class="hidden items-center gap-3 sm:flex">
-          {#each pages as page}
-            <a
-              class={clsx(
-                'rounded-md px-4 py-2 transition-colors',
-                pathname === page.href ? 'bg-gray-200' : 'hover:bg-gray-100',
-              )}
-              href={page.href}
-            >
-              {page.name}
-            </a>
-          {/each}
-        </div>
-      {:else}
-        <div
-          class="hidden sm:flex items-center justify-between w-full gap-3 overflow-x-auto"
+  <!-- Left Brand logo -->
+  <Brand />
+
+  <!-- Middle Pages Links (visible on sm and larger, scales down spacing/text size) -->
+  {#if user.emailVerified && $actions === null}
+    <div
+      class="hidden sm:flex flex-1 items-center justify-start lg:justify-center min-w-0 gap-0.5 md:gap-1 lg:gap-1.5 xl:gap-2 overflow-x-auto no-scrollbar py-1 px-2"
+    >
+      {#each pages as page}
+        <a
+          class={clsx(
+            'rounded-md px-1.5 py-1 text-[11px] md:px-2 md:py-1 md:text-xs lg:px-2.5 lg:py-1.5 lg:text-[13px] xl:text-[14px] transition-colors text-center leading-tight flex items-center justify-center min-h-[2.5rem] max-w-[100px] shrink-0',
+            pathname === page.href ? 'bg-gray-200' : 'hover:bg-gray-100',
+          )}
+          href={page.href}
         >
-          <fieldset class="flex items-center gap-3" {disabled}>
-            {#each $actions as action}
-              <Button
-                class="rounded py-1 px-3 whitespace-nowrap"
-                color={action.color}
-                on:click={() => {
-                  progress.start()
-                  disabled = true
-                  action.callback().finally(() => {
-                    progress.done()
-                    disabled = false
-                  })
-                }}
-              >
-                {action.name}
-              </Button>
-            {/each}
-          </fieldset>
-          <Button on:click={() => ($actions = null)}>Close</Button>
-        </div>
-      {/if}
-    {/if}
-  </div>
-  {#if $actions === null}
-    <div class="flex items-center gap-1 sm:gap-3 md:gap-4">
-      <!-- {#if user.emailVerified}
-        <AnnouncementsBell />
-      {/if} -->
-      <ProfileMenu class="hidden sm:block" />
-      <button
-        class="sm:hidden hover:bg-gray-200 rounded-full h-10 w-10 flex items-center justify-center transition-colors"
-        type="button"
-        on:click={() => {
-          open = !open
-        }}
-      >
-        {#if open}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="h-8 w-8"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        {:else}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="h-8 w-8"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M3.75 9h16.5m-16.5 6.75h16.5"
-            />
-          </svg>
-        {/if}
-      </button>
+          {page.name}
+        </a>
+      {/each}
     </div>
   {/if}
+
+  <!-- Middle Active Actions (visible on sm and larger, takes up remaining middle space) -->
+  {#if user.emailVerified && $actions !== null}
+    <div
+      class="hidden sm:flex flex-1 items-center justify-between gap-3 overflow-x-auto min-w-0"
+    >
+      <fieldset class="flex items-center gap-3" {disabled}>
+        {#each $actions as action}
+          <Button
+            class="rounded py-1 px-3 whitespace-nowrap"
+            color={action.color}
+            on:click={() => {
+              progress.start()
+              disabled = true
+              action.callback().finally(() => {
+                progress.done()
+                disabled = false
+              })
+            }}
+          >
+            {action.name}
+          </Button>
+        {/each}
+      </fieldset>
+      <Button on:click={() => ($actions = null)}>Close</Button>
+    </div>
+  {/if}
+
+  <!-- Right Profile and Mobile Menu button -->
+  <div class="flex items-center gap-1 sm:gap-3 md:gap-4 shrink-0">
+    {#if $actions === null}
+      <ProfileMenu class="hidden sm:block" />
+    {/if}
+    <button
+      class="sm:hidden hover:bg-gray-200 rounded-full h-10 w-10 flex items-center justify-center transition-colors"
+      type="button"
+      on:click={() => {
+        open = !open
+      }}
+    >
+      {#if open}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="h-8 w-8"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      {:else}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="h-8 w-8"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3.75 9h16.5m-16.5 6.75h16.5"
+          />
+        </svg>
+      {/if}
+    </button>
+  </div>
 </nav>
 {#if open}
   <div
@@ -199,5 +202,12 @@
 <style>
   .shadow-b {
     box-shadow: 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 </style>
