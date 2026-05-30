@@ -2,7 +2,6 @@ import { error, json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 import { adminAuth, adminDb } from '$lib/server/firebase'
 import type { FirebaseError } from 'firebase-admin'
-import postmark from 'postmark'
 import {
   SENDGRID_API_TOKEN,
 } from '$env/static/private'

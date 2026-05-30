@@ -68,11 +68,6 @@ jest.mock('algoliasearch', () => {
   return jest.fn().mockReturnValue({ initIndex: mockInitIndex })
 })
 
-// Mock postmark (unused but imported)
-jest.mock('postmark', () => ({
-  ServerClient: jest.fn(),
-}))
-
 // Mock firebase-admin
 const mockAdminAuth = {
   verifyIdToken: jest.fn(),

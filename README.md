@@ -21,7 +21,7 @@ This project relies on several key modern web technologies:
 - **[Firebase](https://firebase.google.com/)**: Client-side SDK used for interacting with the database (Cloud Firestore) and Firebase Authentication.
 - **[Firebase Admin SDK](https://firebase.google.com/docs/admin)**: Node.js SDK used for server-side management tasks, backend hooks, and admin-level database operations.
 - **[Algolia Search](https://www.algolia.com/)**: Integrated search client (`algoliasearch`) used for indexing and searching portal entries efficiently.
-- **[Postmark](https://postmarkapp.com/) / [SendGrid](https://sendgrid.com/)**: Transactional email services used to send system notifications, confirmations, and reminders.
+- **[SendGrid](https://sendgrid.com/)**: Transactional email service used to send system notifications, confirmations, and reminders.
 - **[Jest](https://jestjs.io/) & [Svelte Testing Tools](https://testing-library.com/)**: Our primary testing suite. We use Jest to write unit tests for utility functions and helper files.
 
 ## Getting Started with Development
