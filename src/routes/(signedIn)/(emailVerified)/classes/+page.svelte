@@ -1,17 +1,17 @@
 <script lang="ts">
   import Table from '$lib/components/Table.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
-  import {copyEmails, formatTime24to12 } from '$lib/utils'
+  import { copyEmails, formatTime24to12 } from '$lib/utils'
   import { format } from 'date-fns'
   import ClassDetails from '$lib/components/ClassDetails.svelte'
   import type { PageData } from './$types'
-    import Select from '$lib/components/Select.svelte'
-    import Button from '$lib/components/Button.svelte'
-    import Form from '$lib/components/Form.svelte'
-    import Input from '$lib/components/Input.svelte'
-    import { goto } from '$app/navigation'
-    import { page } from '$app/stores'
-    import { ClassStatus } from '$lib/data/types/ClassStatus'
+  import Select from '$lib/components/Select.svelte'
+  import Button from '$lib/components/Button.svelte'
+  import Form from '$lib/components/Form.svelte'
+  import Input from '$lib/components/Input.svelte'
+  import { goto } from '$app/navigation'
+  import { page } from '$app/stores'
+  import { ClassStatus } from '$lib/data/types/ClassStatus'
 
   export let data: PageData
   let showValidation = false
@@ -21,75 +21,93 @@
   let selectedClassId: string | undefined = undefined
   let search: string = data.query ?? ''
   let checked: Array<number> = []
-  let courseFilter: 'Scratch' | 'Python' | 'Python II' | 'Web Development' | 'Engineering I' | 'Engineering II' | 'Engineering III' | 'Math I' | 'Math II' | 'Math III' | 'Math IV' | 'Math V' | 'Environmental Science' =
+  let courseFilter:
+    | 'Scratch'
+    | 'Python'
+    | 'Python II'
+    | 'Web Development'
+    | 'Engineering I'
+    | 'Engineering II'
+    | 'Engineering III'
+    | 'Math I'
+    | 'Math II'
+    | 'Math III'
+    | 'Math IV'
+    | 'Math V'
+    | 'Environmental Science' =
     ($page.url.searchParams.get('filter') as any) ?? 'all'
-  
+
   let filterRef = ''
   let dialogEl: Dialog
 
-    $: {
-      const base = new URLSearchParams($page.url.searchParams)
-      base.set('filter', courseFilter)
-      base.delete('updated')
-      filterRef = `?${base.toString()}`
-    }
+  $: {
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('filter', courseFilter)
+    base.delete('updated')
+    filterRef = `?${base.toString()}`
+  }
 
   const csv = data.classes
-      .map((classes) => {
-        const {
-          id,
-          name,
-          email,
-          courses,
-          students,
-          classStatuses,
-          meetingLink,
-          classTimes,
-        } = classes
-        return [
-          id,
-          name,
-          email,
-          courses,
-          students.join(', '),
-          classStatuses.filter((status) => status === ClassStatus.EverythingComplete).length,
-          classStatuses.filter((status) => status === ClassStatus.FeedbackIncomplete).length,
-          classStatuses.filter((status) => status === ClassStatus.ClassNotHeld).length,
-          meetingLink,
-          classTimes.map((value) => value.toString()).join(', ')
-        ].join(',')
-      })
-      .join('\n')
+    .map((classes) => {
+      const {
+        id,
+        name,
+        email,
+        courses,
+        students,
+        classStatuses,
+        meetingLink,
+        classTimes,
+      } = classes
+      return [
+        id,
+        name,
+        email,
+        courses,
+        students.join(', '),
+        classStatuses.filter(
+          (status) => status === ClassStatus.EverythingComplete,
+        ).length,
+        classStatuses.filter(
+          (status) => status === ClassStatus.FeedbackIncomplete,
+        ).length,
+        classStatuses.filter((status) => status === ClassStatus.ClassNotHeld)
+          .length,
+        meetingLink,
+        classTimes.map((value) => value.toString()).join(', '),
+      ].join(',')
+    })
+    .join('\n')
 
   const csvWithHeaders = `id,name,email,class,students,classes complete, classes missing feedback, classes missed, meeting link, class times\n${csv}`
-  
-    const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
+
+  const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
 
   function handleCheckAll(
-      e: Event & { currentTarget: EventTarget & HTMLInputElement },
-    ) {
-      const target = e.target as HTMLInputElement
-      if (target.checked) {
-        checked = Array.from({ length: data.classes.length }, (_, i) => i)
-      } else {
-        checked = []
-      }
+    e: Event & { currentTarget: EventTarget & HTMLInputElement },
+  ) {
+    const target = e.target as HTMLInputElement
+    if (target.checked) {
+      checked = Array.from({ length: data.classes.length }, (_, i) => i)
+    } else {
+      checked = []
     }
-    function handleSearch() {
-      if (search === '') {
-        goto('/registrations')
-      } else {
-        const base = $page.url.searchParams
-        base.set('query', search)
-        goto(`?${base.toString()}`)
-      }
+  }
+  function handleSearch() {
+    if (search === '') {
+      goto('/registrations')
+    } else {
+      const base = $page.url.searchParams
+      base.set('query', search)
+      goto(`?${base.toString()}`)
     }
-    async function handleClear() {
-      goto('/registrations').then(() => {
-        search = ''
-      })
-    }
+  }
+  async function handleClear() {
+    goto('/registrations').then(() => {
+      search = ''
+    })
+  }
 </script>
 
 <ClassDetails bind:dialogEl id={selectedClassId} />
@@ -133,7 +151,21 @@
     <Select
       bind:value={courseFilter}
       label="Filter"
-      options={[{ name: 'Scratch' }, { name: 'Python I' }, {name: 'Python II'}, {name: 'Web Development'}, {name: 'Math I'}, {name: 'Math II'}, {name: 'Math III'}, {name: 'Math IV'}, {name: 'Math V'}, {name: 'Engineering I'}, {name: 'Engineering II'}, {name: 'Engineering III'}, {name: 'Environmental Science'}]}
+      options={[
+        { name: 'Scratch' },
+        { name: 'Python I' },
+        { name: 'Python II' },
+        { name: 'Web Development' },
+        { name: 'Math I' },
+        { name: 'Math II' },
+        { name: 'Math III' },
+        { name: 'Math IV' },
+        { name: 'Math V' },
+        { name: 'Engineering I' },
+        { name: 'Engineering II' },
+        { name: 'Engineering III' },
+        { name: 'Environmental Science' },
+      ]}
       floating
       required
     />
@@ -144,8 +176,14 @@
       Filter
     </a>
   </div>
-  <Button color = 'blue'><a href={url}>Download</a></Button>
-  <Button on:click={ () => copyEmails (data.classes.map((instructor) =>`${instructor.email}`,).join(', '))} class="flex items-center gap-1">
+  <Button color="blue"><a href={url}>Download</a></Button>
+  <Button
+    on:click={() =>
+      copyEmails(
+        data.classes.map((instructor) => `${instructor.email}`).join(', '),
+      )}
+    class="flex items-center gap-1"
+  >
     <svg
       fill="#000000"
       height="20"
@@ -210,10 +248,14 @@
             {value.students ? value.students.length : 0}
           </td>
           <td class="px-6 py-4">
-            {value.classStatuses.filter((status) => status === ClassStatus.ClassNotHeld).length}
+            {value.classStatuses.filter(
+              (status) => status === ClassStatus.ClassNotHeld,
+            ).length}
           </td>
           <td class="px-6 py-4">
-            {value.classStatuses.filter((status) => status === ClassStatus.FeedbackIncomplete).length}
+            {value.classStatuses.filter(
+              (status) => status === ClassStatus.FeedbackIncomplete,
+            ).length}
           </td>
         </tr>
       {/each}

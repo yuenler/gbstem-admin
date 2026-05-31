@@ -13,7 +13,7 @@ export const load = (async ({ url, depends }) => {
   if (query === null || query === '') {
     const updated = url.searchParams.get('updated')
     const filter = url.searchParams.get('filter')
-     try {
+    try {
       let dbQuery: Query
       // if (filter === 'decided') {
       //   dbQuery = updated
@@ -33,71 +33,66 @@ export const load = (async ({ url, depends }) => {
       // }
       // else
 
-      const collectionName = url.searchParams.get('collection') ?? registrationsCollection
+      const collectionName =
+        url.searchParams.get('collection') ?? registrationsCollection
       if (filter === 'submitted') {
         dbQuery = updated
           ? adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
-            .startAfter(new Date(updated))
+              .collection(collectionName)
+              .where('meta.submitted', '==', true)
+              .startAfter(new Date(updated))
           : adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
+              .collection(collectionName)
+              .where('meta.submitted', '==', true)
       } else if (filter === 'enrolled') {
         dbQuery = updated
-          ? adminDb
-            .collection(collectionName)
-            .where('enrolled', '==', true)
-          : adminDb
-            .collection(collectionName)
-            .where('enrolled', '==', true)
+          ? adminDb.collection(collectionName).where('enrolled', '==', true)
+          : adminDb.collection(collectionName).where('enrolled', '==', true)
       } else if (filter === 'not enrolled') {
         dbQuery = updated
           ? adminDb
-            .collection(collectionName)
-            .where('enrolled', '==', false)
-            .where('meta.submitted', '==', true)
+              .collection(collectionName)
+              .where('enrolled', '==', false)
+              .where('meta.submitted', '==', true)
           : adminDb
-            .collection(collectionName)
-            .where('enrolled', '==', false)
-            .where('meta.submitted', '==', true)
+              .collection(collectionName)
+              .where('enrolled', '==', false)
+              .where('meta.submitted', '==', true)
       } else if (filter === 'inPerson') {
         dbQuery = updated
-        ? adminDb
-          .collection(collectionName)
-          .where('program.inPerson', '==', true)
-          .where('meta.submitted', '==', true)
-        : adminDb
-          .collection(collectionName)
-          .where('program.inPerson', '==', true)
-          .where('meta.submitted', '==', true)
+          ? adminDb
+              .collection(collectionName)
+              .where('program.inPerson', '==', true)
+              .where('meta.submitted', '==', true)
+          : adminDb
+              .collection(collectionName)
+              .where('program.inPerson', '==', true)
+              .where('meta.submitted', '==', true)
       } else if (filter === 'incomplete') {
         dbQuery = updated
-        ? adminDb
-          .collection(collectionName)
-          .where('meta.submitted', '==', false)
-        : adminDb
-          .collection(collectionName)
-          .where('meta.submitted', '==', false)
+          ? adminDb
+              .collection(collectionName)
+              .where('meta.submitted', '==', false)
+          : adminDb
+              .collection(collectionName)
+              .where('meta.submitted', '==', false)
       } else {
         dbQuery = updated
           ? adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
-            .orderBy('timestamps.updated', 'desc')
-            .startAfter(new Date(updated))
+              .collection(collectionName)
+              .where('meta.submitted', '==', true)
+              .orderBy('timestamps.updated', 'desc')
+              .startAfter(new Date(updated))
           : adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
-            .orderBy('timestamps.updated', 'desc')
+              .collection(collectionName)
+              .where('meta.submitted', '==', true)
+              .orderBy('timestamps.updated', 'desc')
       }
-
 
       // const snapshot = await dbQuery.limit(25).get()
       const snapshot = await dbQuery.get()
 
       // const snapshot = await dbQuery.get()
-
 
       return {
         registrations: snapshot.docs.map((doc: QueryDocumentSnapshot) => {
@@ -120,7 +115,8 @@ export const load = (async ({ url, depends }) => {
     } catch (err: any) {
       console.error('[Load Error] registrations page load:', err)
       throw error(500, {
-        message: 'Something went wrong while fetching registrations. Please try again later.',
+        message:
+          'Something went wrong while fetching registrations. Please try again later.',
         details: err.message || err.toString(),
         code: err.code || 'UNKNOWN',
       })

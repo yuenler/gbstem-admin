@@ -1,9 +1,7 @@
 import { error, json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 import type { FirebaseError } from 'firebase-admin'
-import {
-  SENDGRID_API_TOKEN,
-} from '$env/static/private'
+import { SENDGRID_API_TOKEN } from '$env/static/private'
 import { addDataToHtmlTemplate } from '$lib/utils'
 import { rejectionEmailTemplate } from '$lib/data/emailTemplates/rejectionEmailTemplate'
 import { waitlistEmailTemplate } from '$lib/data/emailTemplates/waitlistEmailTemplate'
@@ -16,8 +14,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   try {
     const body = await request.json()
     try {
-      const intervieweeEmail = body.email;
-      const decision = body.decision;
+      const intervieweeEmail = body.email
+      const decision = body.decision
       if (locals.user === null) {
         throw error(400, 'User not signed in.')
       } else {
@@ -30,27 +28,27 @@ export const POST: RequestHandler = async ({ request, locals }) => {
               name: 'Portal',
               link: 'https://portal.gbstem.org',
               orientation: 'Thursday, March 5th at 7:00 PM EST',
-              orientationLink: 'https://mit.zoom.us/j/95024505441'
+              orientationLink: 'https://mit.zoom.us/j/95024505441',
             },
           },
         }
 
         let htmlBody
         switch (decision) {
-          case "rejected":
-            htmlBody = addDataToHtmlTemplate(rejectionEmailTemplate, template);
-            break;
-          case "waitlisted":
-            htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template);
-            break;
-          case "substitute":
-            htmlBody = addDataToHtmlTemplate(subEmailTemplate, template);
-            break;
-          case "accepted":
-            htmlBody = addDataToHtmlTemplate(acceptEmailTemplate, template);
-            break;
+          case 'rejected':
+            htmlBody = addDataToHtmlTemplate(rejectionEmailTemplate, template)
+            break
+          case 'waitlisted':
+            htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template)
+            break
+          case 'substitute':
+            htmlBody = addDataToHtmlTemplate(subEmailTemplate, template)
+            break
+          case 'accepted':
+            htmlBody = addDataToHtmlTemplate(acceptEmailTemplate, template)
+            break
           default:
-            htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template);
+            htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template)
         }
 
         const emailData: MailDataRequired = {
@@ -59,17 +57,20 @@ export const POST: RequestHandler = async ({ request, locals }) => {
           subject: String(template.data.subject),
           html: htmlBody,
           replyTo: 'contact@gbstem.org',
-          text: 'Decision'
+          text: 'Decision',
         }
         MailService.setApiKey(SENDGRID_API_TOKEN)
         try {
-          await MailService.send(emailData);
-          console.log('Email sent');
+          await MailService.send(emailData)
+          console.log('Email sent')
         } catch (mailError) {
-          console.error('Error sending email:', mailError);
-          return json({ error: 'Failed to send email. Please try again later.' }, { status: 500 });
+          console.error('Error sending email:', mailError)
+          return json(
+            { error: 'Failed to send email. Please try again later.' },
+            { status: 500 },
+          )
         }
-          return json({ message: 'Email sent successfully.' });
+        return json({ message: 'Email sent successfully.' })
       }
     } catch (err) {
       if (typeof err === 'string') {
@@ -78,14 +79,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         const typedErr = err as
           | FirebaseError
           | {
-            errorInfo: FirebaseError
-            codePrefix: string
-          }
+              errorInfo: FirebaseError
+              codePrefix: string
+            }
         if ('errorInfo' in typedErr) {
           topError = error(
             400,
             typedErr.errorInfo.message ||
-            'Please wait a few minutes before trying again.',
+              'Please wait a few minutes before trying again.',
           )
         } else if ('message' in typedErr) {
           topError = error(400, typedErr.message)
@@ -98,5 +99,4 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     topError = error(400, 'Invalid request body.')
   }
   throw topError
-
 }

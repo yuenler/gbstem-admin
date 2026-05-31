@@ -20,39 +20,33 @@ export const load = (async ({ url, depends }) => {
       if (filter === 'submitted') {
         dbQuery = updated
           ? adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
-            .startAfter(new Date(updated))
+              .collection(collectionName)
+              .where('meta.submitted', '==', true)
+              .startAfter(new Date(updated))
           : adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
+              .collection(collectionName)
+              .where('meta.submitted', '==', true)
       } else if (filter === 'enrolled') {
         dbQuery = updated
-          ? adminDb
-            .collection(collectionName)
-            .where('enrolled', '==', true)
-          : adminDb
-            .collection(collectionName)
-            .where('enrolled', '==', true)
+          ? adminDb.collection(collectionName).where('enrolled', '==', true)
+          : adminDb.collection(collectionName).where('enrolled', '==', true)
       } else {
         dbQuery = updated
           ? adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
-            .orderBy('timestamps.updated', 'desc')
-            .startAfter(new Date(updated))
+              .collection(collectionName)
+              .where('meta.submitted', '==', true)
+              .orderBy('timestamps.updated', 'desc')
+              .startAfter(new Date(updated))
           : adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
-            .orderBy('timestamps.updated', 'desc')
+              .collection(collectionName)
+              .where('meta.submitted', '==', true)
+              .orderBy('timestamps.updated', 'desc')
       }
-
 
       // const snapshot = await dbQuery.limit(25).get()
       const snapshot = await dbQuery.get()
 
       // const snapshot = await dbQuery.get()
-
 
       return {
         registrations: snapshot.docs.map((doc: QueryDocumentSnapshot) => {
@@ -75,7 +69,8 @@ export const load = (async ({ url, depends }) => {
     } catch (err: any) {
       console.error('[Load Error] students page load:', err)
       throw error(500, {
-        message: 'Something went wrong while fetching students. Please try again later.',
+        message:
+          'Something went wrong while fetching students. Please try again later.',
         details: err.message || err.toString(),
         code: err.code || 'UNKNOWN',
       })

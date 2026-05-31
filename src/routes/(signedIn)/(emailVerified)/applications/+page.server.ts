@@ -3,7 +3,11 @@ import { applicationsCollection } from '$lib/data/collections'
 import { adminDb } from '$lib/server/firebase'
 import { error } from '@sveltejs/kit'
 import algoliasearch from 'algoliasearch'
-import type { DocumentSnapshot, Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
+import type {
+  DocumentSnapshot,
+  Query,
+  QueryDocumentSnapshot,
+} from 'firebase-admin/firestore'
 import type { PageServerLoad } from './$types'
 // import { db } from '$lib/client/firebase'
 
@@ -33,82 +37,80 @@ export const load = (async ({ url, depends }) => {
       // }
       // else
 
-      const collectionName = url.searchParams.get('collection') ?? applicationsCollection
+      const collectionName =
+        url.searchParams.get('collection') ?? applicationsCollection
       if (filter === 'undecided') {
         dbQuery = updated
           ? adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
-            .orderBy('timestamps.updated', 'desc')
-            .orderBy('meta.decision')
-            .where('meta.decision', '==', null)
-            .startAfter(new Date(updated))
+              .collection(collectionName)
+              .where('meta.submitted', '==', true)
+              .orderBy('timestamps.updated', 'desc')
+              .orderBy('meta.decision')
+              .where('meta.decision', '==', null)
+              .startAfter(new Date(updated))
           : adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
-            .orderBy('meta.decision')
-            .where('meta.decision', '==', null)
-            .orderBy('timestamps.updated', 'desc')
+              .collection(collectionName)
+              .where('meta.submitted', '==', true)
+              .orderBy('meta.decision')
+              .where('meta.decision', '==', null)
+              .orderBy('timestamps.updated', 'desc')
       } else if (filter === 'inPerson') {
         dbQuery = updated
           ? adminDb
-            .collection(collectionName)
-            .where('program.inPerson', '==', true)
+              .collection(collectionName)
+              .where('program.inPerson', '==', true)
           : adminDb
-            .collection(collectionName)
-            .where('program.inPerson', '==', true)
+              .collection(collectionName)
+              .where('program.inPerson', '==', true)
       } else if (filter === 'incomplete') {
         dbQuery = updated
           ? adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', false)
-            .orderBy('timestamps.updated', 'desc')
+              .collection(collectionName)
+              .where('meta.submitted', '==', false)
+              .orderBy('timestamps.updated', 'desc')
           : adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', false)
-            .orderBy('timestamps.updated', 'desc')
+              .collection(collectionName)
+              .where('meta.submitted', '==', false)
+              .orderBy('timestamps.updated', 'desc')
       } else if (filter === 'complete') {
         dbQuery = updated
           ? adminDb
-            .collection(collectionName)
-            .where('agreements.entireProgram', '==', true)
-            .where('agreements.submitting', '==', true)
-            .where('agreements.timeCommitment', '==', true)
-            .where('essay.academicBackground', '!=', "")
-            .where('essay.teachingScenario', '!=', "")
-            .where('essay.why', '!=', "")
-            .where('program.timeSlots', '!=', "")
-            .orderBy('timestamps.updated', 'desc')
+              .collection(collectionName)
+              .where('agreements.entireProgram', '==', true)
+              .where('agreements.submitting', '==', true)
+              .where('agreements.timeCommitment', '==', true)
+              .where('essay.academicBackground', '!=', '')
+              .where('essay.teachingScenario', '!=', '')
+              .where('essay.why', '!=', '')
+              .where('program.timeSlots', '!=', '')
+              .orderBy('timestamps.updated', 'desc')
           : adminDb
-            .collection(collectionName)
-            .where('agreements.entireProgram', '==', true)
-            .where('agreements.submitting', '==', true)
-            .where('agreements.timeCommitment', '==', true)
-            .where('essay.academicBackground', '!=', "")
-            .where('essay.teachingScenario', '!=', "")
-            .where('essay.why', '!=', "")
-            .where('program.timeSlots', '!=', "")
-            .orderBy('timestamps.updated', 'desc')
+              .collection(collectionName)
+              .where('agreements.entireProgram', '==', true)
+              .where('agreements.submitting', '==', true)
+              .where('agreements.timeCommitment', '==', true)
+              .where('essay.academicBackground', '!=', '')
+              .where('essay.teachingScenario', '!=', '')
+              .where('essay.why', '!=', '')
+              .where('program.timeSlots', '!=', '')
+              .orderBy('timestamps.updated', 'desc')
       } else {
         dbQuery = updated
           ? adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
-            .orderBy('timestamps.updated', 'desc')
-            .startAfter(new Date(updated))
+              .collection(collectionName)
+              .where('meta.submitted', '==', true)
+              .orderBy('timestamps.updated', 'desc')
+              .startAfter(new Date(updated))
           : adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
-            .orderBy('timestamps.updated', 'desc')
+              .collection(collectionName)
+              .where('meta.submitted', '==', true)
+              .orderBy('timestamps.updated', 'desc')
       }
-
 
       // const snapshot = await dbQuery.limit(25).get()
       const snapshot = await dbQuery.get()
 
-
       // const snapshot = await dbQuery.get()
-
 
       const decisions = (
         await Promise.all(
@@ -119,33 +121,41 @@ export const load = (async ({ url, depends }) => {
           }),
         )
       ).map((doc: DocumentSnapshot | null) =>
-        doc ? (doc.data() as { type: Data.Decision, likelyDecision: string, notes: string }) : null,
+        doc
+          ? (doc.data() as {
+              type: Data.Decision
+              likelyDecision: string
+              notes: string
+            })
+          : null,
       )
 
-
       return {
-        applications: snapshot.docs.map((doc: QueryDocumentSnapshot, i: number) => {
-          const data = doc.data() as Data.Application<'server'>
-          return {
-            id: doc.id,
-            values: {
-              ...data,
-              meta: {
-                ...data.meta,
-                decision: decisions.at(i),
+        applications: snapshot.docs.map(
+          (doc: QueryDocumentSnapshot, i: number) => {
+            const data = doc.data() as Data.Application<'server'>
+            return {
+              id: doc.id,
+              values: {
+                ...data,
+                meta: {
+                  ...data.meta,
+                  decision: decisions.at(i),
+                },
+                timestamps: {
+                  updated: data.timestamps.updated.toDate(),
+                  created: data.timestamps.created.toDate(),
+                },
               },
-              timestamps: {
-                updated: data.timestamps.updated.toDate(),
-                created: data.timestamps.created.toDate(),
-              },
-            },
-          }
-        }),
+            }
+          },
+        ),
       }
     } catch (err: any) {
       console.error('[Load Error] applications page load:', err)
       throw error(500, {
-        message: 'Something went wrong while fetching applications. Please try again later.',
+        message:
+          'Something went wrong while fetching applications. Please try again later.',
         details: err.message || err.toString(),
         code: err.code || 'UNKNOWN',
       })
@@ -177,7 +187,13 @@ export const load = (async ({ url, depends }) => {
           }),
         )
       ).map((doc: DocumentSnapshot | null) =>
-        doc ? (doc.data() as { type: Data.Decision, likelyDecision: string, notes: string }) : null,
+        doc
+          ? (doc.data() as {
+              type: Data.Decision
+              likelyDecision: string
+              notes: string
+            })
+          : null,
       )
       return {
         query,

@@ -21,8 +21,13 @@
   let search: string = data.query ?? ''
   let current: number | undefined
   let checked: Array<number> = []
-  let decisionFilter: 'all' | 'decided' | 'undecided' | 'inPerson' | 'incomplete' | 'complete' =
-    ($page.url.searchParams.get('filter') as any) ?? 'all'
+  let decisionFilter:
+    | 'all'
+    | 'decided'
+    | 'undecided'
+    | 'inPerson'
+    | 'incomplete'
+    | 'complete' = ($page.url.searchParams.get('filter') as any) ?? 'all'
 
   const csv = data.applications
     .map((application) => {
@@ -76,25 +81,25 @@
     data.applications.length === 0
       ? undefined
       : current === undefined
-      ? undefined
-      : data.applications[current]
+        ? undefined
+        : data.applications[current]
   let nextHref = ''
   let filterRef = ''
- $: {
-  const base = $page.url.searchParams
-  base.delete('updated')
-  if (data.applications.length > 0) {
-    base.set(
-      'updated',
-      data.applications[
-        data.applications.length - 1
-      ].values.timestamps.updated.toString(),
-    )
-    nextHref = `?${base.toString()}`
-  } else {
-    nextHref = '?'
+  $: {
+    const base = $page.url.searchParams
+    base.delete('updated')
+    if (data.applications.length > 0) {
+      base.set(
+        'updated',
+        data.applications[
+          data.applications.length - 1
+        ].values.timestamps.updated.toString(),
+      )
+      nextHref = `?${base.toString()}`
+    } else {
+      nextHref = '?'
+    }
   }
-}
   $: {
     const base = $page.url.searchParams
     if (decisionFilter !== 'all') {
@@ -221,7 +226,7 @@
     { name: 'Fall 2025', value: 'applicationsFall25' },
     { name: 'Spring 2025', value: 'applicationsSpring25' },
     { name: 'Fall 2024', value: 'applicationsFall24' },
-    { name: 'Spring 2024', value: 'applicationsSpring24'},
+    { name: 'Spring 2024', value: 'applicationsSpring24' },
   ]
 
   // Default to the current collection or 'applications'
@@ -276,33 +281,51 @@
     </svg>
   </Button>
 
-<div class="flex items-center">
-  <label for="collection-select" class="sr-only">Collection</label>
-  <div class="relative">
-    <select
-      id="collection-select"
-      bind:value={selectedCollection}
-      on:change={handleCollectionChange}
-      class="block w-full h-12 px-4 pr-10 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white appearance-none transition"
-    >
-      {#each collectionOptions as option}
-        <option value={option.value}>{option.name}</option>
-      {/each}
-    </select>
-    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-      <!-- Down arrow SVG -->
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-      </svg>
-    </span>
+  <div class="flex items-center">
+    <label for="collection-select" class="sr-only">Collection</label>
+    <div class="relative">
+      <select
+        id="collection-select"
+        bind:value={selectedCollection}
+        on:change={handleCollectionChange}
+        class="block w-full h-12 px-4 pr-10 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white appearance-none transition"
+      >
+        {#each collectionOptions as option}
+          <option value={option.value}>{option.name}</option>
+        {/each}
+      </select>
+      <span
+        class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400"
+      >
+        <!-- Down arrow SVG -->
+        <svg
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </span>
+    </div>
   </div>
-</div>
 
   <div class="flex">
     <Select
       bind:value={decisionFilter}
       label="Filter"
-      options={[{ name: 'all' }, { name: 'undecided' }, { name: 'inPerson' }, { name: 'incomplete' }, { name: 'complete' }]}
+      options={[
+        { name: 'all' },
+        { name: 'undecided' },
+        { name: 'inPerson' },
+        { name: 'incomplete' },
+        { name: 'complete' },
+      ]}
       floating
       required
     />
@@ -396,17 +419,17 @@
               </svg>
             {:else if application.values.meta.decision?.likelyDecision === 'likely waitlist'}
               <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              class="w-5 h-5 text-yellow-300"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
-                clip-rule="evenodd"
-              />
-            </svg>
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5 text-yellow-300"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
+                  clip-rule="evenodd"
+                />
+              </svg>
             {/if}
           {:else}
             None
@@ -488,9 +511,9 @@
                   d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
                   clip-rule="evenodd"
                 />
-              </svg> 
+              </svg>
             {:else if application.values.meta.decision.type === 'substitute'}
-            <svg
+              <svg
                 class="w-5 h-5 text-purple-300"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
@@ -568,7 +591,11 @@
   <Button href={nextHref}>Next</Button>
 </div>
 
-<Application bind:dialogEl id={application?.id} collection={selectedCollection} />
+<Application
+  bind:dialogEl
+  id={application?.id}
+  collection={selectedCollection}
+/>
 
 <style>
   input:checked {

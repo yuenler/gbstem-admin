@@ -80,7 +80,7 @@
     inPerson: {
       allergies: '',
       parentPickup: '',
-    },  
+    },
     agreements: {
       mediaRelease: false,
       bypassAgeLimits: false,
@@ -104,17 +104,15 @@
     loading = true
     disabled = true
     values = cloneDeep(defaultValues)
-    getDoc(doc(db, collection, id)).then(
-      (registrationSnapshot) => {
-        const data = registrationSnapshot.data() as Data.Registration<'client'>
-        if (registrationSnapshot.exists()) {
-          values = cloneDeep(data)
-          dbValues = cloneDeep(data)
-        } else {
-          alert.trigger('error', 'Registration not found.')
-        }
-      },
-    )
+    getDoc(doc(db, collection, id)).then((registrationSnapshot) => {
+      const data = registrationSnapshot.data() as Data.Registration<'client'>
+      if (registrationSnapshot.exists()) {
+        values = cloneDeep(data)
+        dbValues = cloneDeep(data)
+      } else {
+        alert.trigger('error', 'Registration not found.')
+      }
+    })
   }
 
   function handleEdit() {
@@ -390,12 +388,12 @@
               />
             </div>
             <span
-            >Go to <Link
-              href="https://gbstem.org/#/robotics"
-              class="link mt-2"
-              target="_blank"
-              >https://gbstem.org/#/robotics
-            </Link> for more information</span
+              >Go to <Link
+                href="https://gbstem.org/#/robotics"
+                class="link mt-2"
+                target="_blank"
+                >https://gbstem.org/#/robotics
+              </Link> for more information</span
             >
             <Input
               type="checkbox"
@@ -413,17 +411,17 @@
               />
             </div>
             {#if values.program.inPerson}
-            <Input
-            type="text"
-            bind:value={values.inPerson.allergies}
-            label="Please list any allergies the student has."
-            />
-            <Input
-            type="text"
-            bind:value={values.inPerson.parentPickup}
-            label="Please list the names, emails, and phone numbers of the people who are authorized to pick up the student from in-person classes."
-            required
-            />
+              <Input
+                type="text"
+                bind:value={values.inPerson.allergies}
+                label="Please list any allergies the student has."
+              />
+              <Input
+                type="text"
+                bind:value={values.inPerson.parentPickup}
+                label="Please list the names, emails, and phone numbers of the people who are authorized to pick up the student from in-person classes."
+                required
+              />
             {/if}
             <!-- <Input
               type="checkbox"
@@ -436,11 +434,11 @@
             <div class="grid">
               {#if values.program.inPerson}
                 <Input
-                type="checkbox"
-                bind:value={values.agreements.mediaRelease}
-                label="Do you give consent to your child's picture being used in gbSTEM publications, including website, newsletter, and social media posts? Names and personal information will not be shared."
-                required
-              />
+                  type="checkbox"
+                  bind:value={values.agreements.mediaRelease}
+                  label="Do you give consent to your child's picture being used in gbSTEM publications, including website, newsletter, and social media posts? Names and personal information will not be shared."
+                  required
+                />
               {/if}
               <Input
                 type="checkbox"

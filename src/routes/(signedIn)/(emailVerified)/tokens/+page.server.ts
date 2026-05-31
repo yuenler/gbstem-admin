@@ -23,7 +23,8 @@ export const load = (async ({ depends, locals }) => {
     } catch (err: any) {
       console.error('[Load Error] tokens page load:', err)
       throw error(500, {
-        message: 'Something went wrong while fetching tokens. Please try again later.',
+        message:
+          'Something went wrong while fetching tokens. Please try again later.',
         details: err.message || err.toString(),
         code: err.code || 'UNKNOWN',
       })

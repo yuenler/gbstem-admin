@@ -20,4 +20,4 @@ type ClassData = {
   id: string
 }
 
-export type { ClassData as default };
+export type { ClassData as default }

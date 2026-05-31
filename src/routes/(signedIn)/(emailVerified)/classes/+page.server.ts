@@ -17,14 +17,26 @@ export const load = (async ({ url, depends }) => {
       let dbQuery: Query
 
       const collectionName = classesCollection
-      if (filter === 'Python I' || filter === 'Python II' || filter === 'Scratch' || filter === 'Web Development' || filter === 'Engineering I' || filter === 'Engineering II' || filter === 'Engineering III' || filter === 'Math I' || filter === 'Math II' || filter === 'Math III' || filter === 'Math IV' || filter === 'Math V' || filter === 'Environmental Science'){ 
+      if (
+        filter === 'Python I' ||
+        filter === 'Python II' ||
+        filter === 'Scratch' ||
+        filter === 'Web Development' ||
+        filter === 'Engineering I' ||
+        filter === 'Engineering II' ||
+        filter === 'Engineering III' ||
+        filter === 'Math I' ||
+        filter === 'Math II' ||
+        filter === 'Math III' ||
+        filter === 'Math IV' ||
+        filter === 'Math V' ||
+        filter === 'Environmental Science'
+      ) {
         dbQuery = adminDb
-            .collection(collectionName)
-            .where('course', '==', filter)
+          .collection(collectionName)
+          .where('course', '==', filter)
       } else {
-        dbQuery = adminDb
-        .collection(collectionName)
-        .orderBy('course')
+        dbQuery = adminDb.collection(collectionName).orderBy('course')
       }
 
       const snapshot = await dbQuery.get()
@@ -33,7 +45,7 @@ export const load = (async ({ url, depends }) => {
         classes: snapshot.docs.map((doc: QueryDocumentSnapshot) => {
           const data = doc.data() as Data.Class
 
-        return {
+          return {
             id: doc.id,
             name: data.instructorFirstName + ' ' + data.instructorLastName,
             email: data.instructorEmail,
@@ -42,16 +54,17 @@ export const load = (async ({ url, depends }) => {
             meetingLink: data.meetingLink,
             classStatuses: data.classStatuses,
             classTimes: formatClassTimes(
-                [data.classDay1, data.classDay2],
-                [data.classTime1, data.classTime2],
+              [data.classDay1, data.classDay2],
+              [data.classTime1, data.classTime2],
             ),
-        }
+          }
         }),
       }
     } catch (err: any) {
       console.error('[Load Error] classes page load:', err)
       throw error(500, {
-        message: 'Something went wrong while fetching classes. Please try again later.',
+        message:
+          'Something went wrong while fetching classes. Please try again later.',
         details: err.message || err.toString(),
         code: err.code || 'UNKNOWN',
       })
@@ -86,11 +99,11 @@ export const load = (async ({ url, depends }) => {
             classStatuses: hit.classStatuses,
             meetingLink: hit.meetingLink,
             classTimes: formatClassTimes(
-                [hit.classDay1, hit.classDay2],
-                [hit.classTime1, hit.classTime2],
+              [hit.classDay1, hit.classDay2],
+              [hit.classTime1, hit.classTime2],
             ),
-          
-        }})
+          }
+        }),
       }
     } catch (err: any) {
       console.error('[Search Error] classes search load:', err)

@@ -30,7 +30,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     }
 
     const classes = body.classDays.map(
-      (day: string, index: number) => `${day} at ${formatTime24to12(body.classTimes[index])}`
+      (day: string, index: number) =>
+        `${day} at ${formatTime24to12(body.classTimes[index])}`,
     )
     const class1Time = classes[0]
     const class2Time = classes[1]
@@ -51,7 +52,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
           instructorEmail: body.instructorEmail,
           online: body.online,
           studentName: body.studentName,
-        }
+        },
       },
     }
 
@@ -79,7 +80,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       return json({ message: 'Email sent successfully.' })
     } catch (mailError) {
       console.error('Error sending email:', mailError)
-      return json({ error: 'Failed to send email. Please try again later.' }, { status: 500 })
+      return json(
+        { error: 'Failed to send email. Please try again later.' },
+        { status: 500 },
+      )
     }
   } catch (err: unknown) {
     if (typeof err === 'string') {
@@ -87,7 +91,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     } else if (err instanceof Error) {
       topError = error(400, err.message)
     } else if (err && typeof err === 'object' && 'message' in err) {
-      topError = error(400, String((err as { message?: unknown }).message ?? ''))
+      topError = error(
+        400,
+        String((err as { message?: unknown }).message ?? ''),
+      )
     } else {
       topError = error(400, 'Invalid request body or unknown error.')
     }

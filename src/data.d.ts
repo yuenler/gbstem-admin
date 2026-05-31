@@ -15,10 +15,10 @@ declare global {
     type Token<T extends 'client' | 'server' | 'pojo'> = {
       role: Role
       expires: T extends 'client'
-      ? ClientTimestamp
-      : T extends 'server'
-      ? ServerTimestamp
-      : Date
+        ? ClientTimestamp
+        : T extends 'server'
+          ? ServerTimestamp
+          : Date
       consumable: boolean
       consumers: Array<string>
     }
@@ -44,65 +44,70 @@ declare global {
       name: string
     }
 
-    type Decision = 'accepted' | 'interview' | 'waitlisted' | 'rejected' | 'substitute'
+    type Decision =
+      | 'accepted'
+      | 'interview'
+      | 'waitlisted'
+      | 'rejected'
+      | 'substitute'
 
     type Interview = {
-      date: string,
-      interviewer: string,
-      notes: string,
-      type: Decision,
-      likelyDecision: 'likely yes' | 'likely no' | 'likely waitlist' | null,
-      attendance: 'On Time' | 'Late' | 'No-Show' | 'Null',
-      conversation: number,
-      conversationNotes: string,
-      lastSemesterNotes: string,
-      mockLessonExplanations: number,
-      mockLessonEngagement: number,
-      mockLessonPace: number,
-      mockLessonOverall: number,
-      mockLessonNotes: string,
-      techNotes: string,
-      teachingPreferences: string,
-      availabilityNotes: string,
+      date: string
+      interviewer: string
+      notes: string
+      type: Decision
+      likelyDecision: 'likely yes' | 'likely no' | 'likely waitlist' | null
+      attendance: 'On Time' | 'Late' | 'No-Show' | 'Null'
+      conversation: number
+      conversationNotes: string
+      lastSemesterNotes: string
+      mockLessonExplanations: number
+      mockLessonEngagement: number
+      mockLessonPace: number
+      mockLessonOverall: number
+      mockLessonNotes: string
+      techNotes: string
+      teachingPreferences: string
+      availabilityNotes: string
     }
 
     type EmailData = {
-      Subject: string,
-      From: string,
-      To: string,
-      Cc: string,
-      HTMLBody: string,
-      ReplyTo: string,
+      Subject: string
+      From: string
+      To: string
+      Cc: string
+      HTMLBody: string
+      ReplyTo: string
       MessageStream: 'outbound'
     }
 
     type InterviewSlot = {
-      date: string,
-      id: string,
-      interviewerName: string,
-      intervieweeFirstName: string,
-      intervieweeLastName: string,
-      intervieweeEmail: string,
-      intervieweeId: string,
-      interviewerEmail: string,
-      interviewSlotStatus: string,
-      meetingLink: string,
+      date: string
+      id: string
+      interviewerName: string
+      intervieweeFirstName: string
+      intervieweeLastName: string
+      intervieweeEmail: string
+      intervieweeId: string
+      interviewerEmail: string
+      interviewSlotStatus: string
+      meetingLink: string
     }
 
     type SlotRequest = {
-      date: Date,
-      id: string,
-      firstName: string,
-      lastName: string,
-      email: string,
+      date: Date
+      id: string
+      firstName: string
+      lastName: string
+      email: string
     }
 
     type TimeRange = {
-      start: number,
-      end: number,
-      timegap: number,
-      date: Date,
-      link: string,
+      start: number
+      end: number
+      timegap: number
+      date: Date
+      link: string
     }
 
     type Registration<T extends 'client' | 'server' | 'pojo'> = {
@@ -141,7 +146,7 @@ declare global {
         timeCommitment: boolean
         submitting: boolean
         mediaRelease: boolean
-        bypassAgeLimits:boolean
+        bypassAgeLimits: boolean
       }
       meta: {
         id: string
@@ -150,15 +155,15 @@ declare global {
       }
       timestamps: {
         created: T extends 'client'
-        ? ClientTimestamp
-        : T extends 'server'
-        ? ServerTimestamp
-        : Date
+          ? ClientTimestamp
+          : T extends 'server'
+            ? ServerTimestamp
+            : Date
         updated: T extends 'client'
-        ? ClientTimestamp
-        : T extends 'server'
-        ? ServerTimestamp
-        : Date
+          ? ClientTimestamp
+          : T extends 'server'
+            ? ServerTimestamp
+            : Date
       }
     }
 
@@ -222,24 +227,24 @@ declare global {
         interview: boolean
         submitted: boolean
         decision:
-        | (T extends 'client'
-          ? ClientDocumentReference
-          : T extends 'server'
-          ? ServerDocumentReference
-          : Decision)
-        | null
+          | (T extends 'client'
+              ? ClientDocumentReference
+              : T extends 'server'
+                ? ServerDocumentReference
+                : Decision)
+          | null
       }
       timestamps: {
         created: T extends 'client'
-        ? ClientTimestamp
-        : T extends 'server'
-        ? ServerTimestamp
-        : Date
+          ? ClientTimestamp
+          : T extends 'server'
+            ? ServerTimestamp
+            : Date
         updated: T extends 'client'
-        ? ClientTimestamp
-        : T extends 'server'
-        ? ServerTimestamp
-        : Date
+          ? ClientTimestamp
+          : T extends 'server'
+            ? ServerTimestamp
+            : Date
       }
     }
 
@@ -255,10 +260,10 @@ declare global {
       title: string
       content: string
       timestamp: T extends 'client'
-      ? ClientTimestamp
-      : T extends 'server'
-      ? ServerTimestamp
-      : Date
+        ? ClientTimestamp
+        : T extends 'server'
+          ? ServerTimestamp
+          : Date
     }
 
     type Class = {

@@ -375,7 +375,7 @@ describe('utils', () => {
     })
 
     it('triggers success alert when email copying succeeds', async () => {
-      ; (navigator.clipboard.writeText as jest.Mock).mockResolvedValue(undefined)
+      ;(navigator.clipboard.writeText as jest.Mock).mockResolvedValue(undefined)
 
       copyEmails('test@example.com')
 
@@ -392,7 +392,7 @@ describe('utils', () => {
     })
 
     it('triggers error alert when email copying fails', async () => {
-      ; (navigator.clipboard.writeText as jest.Mock).mockRejectedValue(
+      ;(navigator.clipboard.writeText as jest.Mock).mockRejectedValue(
         new Error('Permission denied'),
       )
 
@@ -441,7 +441,9 @@ describe('utils', () => {
     })
 
     it('handles special characters in value', () => {
-      expect(cleanEnvVar('"user-agent: Mozilla..."')).toBe('user-agent: Mozilla...')
+      expect(cleanEnvVar('"user-agent: Mozilla..."')).toBe(
+        'user-agent: Mozilla...',
+      )
     })
   })
 })

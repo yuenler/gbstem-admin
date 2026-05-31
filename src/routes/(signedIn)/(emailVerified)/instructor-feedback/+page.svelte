@@ -30,15 +30,28 @@
   let dialogEl: Dialog
   let selectedFeedbackId: string | undefined = undefined
 
-  let courseFilter: 'Scratch' | 'Python' | 'Python II' | 'Web Development' | 'Engineering I' | 'Engineering II' | 'Engineering III' | 'Math I' | 'Math II' | 'Math III' | 'Math IV' | 'Math V' | 'Environmental Science' | 'all'=
-    ($page.url.searchParams.get('filter') as any) ?? 'all'
-  
+  let courseFilter:
+    | 'Scratch'
+    | 'Python'
+    | 'Python II'
+    | 'Web Development'
+    | 'Engineering I'
+    | 'Engineering II'
+    | 'Engineering III'
+    | 'Math I'
+    | 'Math II'
+    | 'Math III'
+    | 'Math IV'
+    | 'Math V'
+    | 'Environmental Science'
+    | 'all' = ($page.url.searchParams.get('filter') as any) ?? 'all'
+
   let filterRef = ''
 
   $: {
     const base = $page.url.searchParams
-      base.set('filter', courseFilter)
-      base.delete('updated')
+    base.set('filter', courseFilter)
+    base.delete('updated')
     filterRef = `?${base.toString()}`
   }
 
@@ -67,7 +80,7 @@
   //         classNumber: 0,
   //         id: document.id,
   //       }
-  //       tempClass.students = Object.keys(session.attendanceList)        
+  //       tempClass.students = Object.keys(session.attendanceList)
   //       tempClass.instructorName = session.instructorName
   //       tempClass.date = session.date
   //       tempClass.feedback = session.feedback
@@ -82,11 +95,12 @@
   // }
 
   function getAttendancePercent(value: boolean[]) {
-    const attended = value.filter((attended:boolean) => attended === true).length
+    const attended = value.filter(
+      (attended: boolean) => attended === true,
+    ).length
     const total = value.length
     return `${(attended / total) * 100}%`
   }
-
 </script>
 
 <ClassFeedbackDetails bind:dialogEl id={selectedFeedbackId} />
@@ -95,7 +109,22 @@
   <Select
     bind:value={courseFilter}
     label="Filter"
-    options={[{ name: 'Scratch' }, { name: 'Python I' }, {name: 'Python II'}, {name: 'Web Development'}, {name: 'Math I'}, {name: 'Math II'}, {name: 'Math III'}, {name: 'Math IV'}, {name: 'Math V'}, {name: 'Engineering I'}, {name: 'Engineering II'}, {name: 'Engineering III'}, {name: 'Environmental Science'}, {name: 'all'}]}
+    options={[
+      { name: 'Scratch' },
+      { name: 'Python I' },
+      { name: 'Python II' },
+      { name: 'Web Development' },
+      { name: 'Math I' },
+      { name: 'Math II' },
+      { name: 'Math III' },
+      { name: 'Math IV' },
+      { name: 'Math V' },
+      { name: 'Engineering I' },
+      { name: 'Engineering II' },
+      { name: 'Engineering III' },
+      { name: 'Environmental Science' },
+      { name: 'all' },
+    ]}
     floating
     required
   />
@@ -126,20 +155,21 @@
             dialogEl.open()
           }}
         >
-        <td class="px-6 py-4">
-          {`${value.instructorName}`}
-        </td>
-        <td class="px-6 py-4">
-          {value.courseName}
-        </td>
-        <td class="px-6 py-4">
-          {value.classNumber}
-        </td>
-        <td class="px-6 py-4">{value.date}</td>
-        <td class="px-6 py-4">{getAttendancePercent(value.attendanceList)}</td>
-        <td class="px-6 py-4">
-          {value.feedback}
-        </td>
+          <td class="px-6 py-4">
+            {`${value.instructorName}`}
+          </td>
+          <td class="px-6 py-4">
+            {value.courseName}
+          </td>
+          <td class="px-6 py-4">
+            {value.classNumber}
+          </td>
+          <td class="px-6 py-4">{value.date}</td>
+          <td class="px-6 py-4">{getAttendancePercent(value.attendanceList)}</td
+          >
+          <td class="px-6 py-4">
+            {value.feedback}
+          </td>
         </tr>
       {/each}
     </svelte:fragment>

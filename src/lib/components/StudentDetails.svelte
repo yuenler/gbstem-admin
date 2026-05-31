@@ -16,8 +16,16 @@
   import Dialog from './Dialog.svelte'
   import { alert } from '$lib/stores'
   import { tick, onMount } from 'svelte'
-  import { copyEmails, formatClassTimes, getNearestFutureClass } from '$lib/utils'
-  import { classesCollection, instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
+  import {
+    copyEmails,
+    formatClassTimes,
+    getNearestFutureClass,
+  } from '$lib/utils'
+  import {
+    classesCollection,
+    instructorFeedbackCollection,
+    registrationsCollection,
+  } from '$lib/data/collections'
   import type ClassData from '$lib/data/types/ClassData'
   import type Student from '$lib/data/types/Student'
 
@@ -99,7 +107,8 @@
       const data = doc.data() as ClassData
       if (data) {
         data.id = doc.id
-        const name = `${data.course} taught by ${data.instructorFirstName} ${data.instructorLastName} at ${data.classTime1} ${data.classDay1} and ${data.classTime2} ${data.classDay2}`.trim()
+        const name =
+          `${data.course} taught by ${data.instructorFirstName} ${data.instructorLastName} at ${data.classTime1} ${data.classDay1} and ${data.classTime2} ${data.classDay2}`.trim()
         nameToUid[name] = data.id
         classesOptions.push({ name })
         if (data.students.includes(studentId)) {
@@ -110,7 +119,9 @@
     })
 
     // Get attendance
-    const attendanceSnap = await getDocs(query(collection(db, instructorFeedbackCollection)))
+    const attendanceSnap = await getDocs(
+      query(collection(db, instructorFeedbackCollection)),
+    )
     attendance = []
     attendanceSnap.forEach((doc) => {
       const data = doc.data()
@@ -131,26 +142,34 @@
   }
 
   // // Watch for id changes and reload
-$: if (id && id !== currentStudentId) {
-  currentStudentId = id
+  $: if (id && id !== currentStudentId) {
+    currentStudentId = id
 
-  loading = true
+    loading = true
 
-  loadStudentClasses(id).then(() => {
-    loading = false
-  })
-}
+    loadStudentClasses(id).then(() => {
+      loading = false
+    })
+  }
 
   // Update selected class IDs
   $: {
-    const selectedClassOption = classesOptions.find(opt => opt.name === selectedClass)
-    selectedClassId = selectedClassOption ? nameToUid[selectedClassOption.name] : ''
-    const selectedDropClassOption = dropClassesOptions.find(opt => opt.name === selectedDropClass)
-    selectedDropClassId = selectedDropClassOption ? nameToUid[selectedDropClassOption.name] : ''
-    if(selectedDropClassOption) {
+    const selectedClassOption = classesOptions.find(
+      (opt) => opt.name === selectedClass,
+    )
+    selectedClassId = selectedClassOption
+      ? nameToUid[selectedClassOption.name]
+      : ''
+    const selectedDropClassOption = dropClassesOptions.find(
+      (opt) => opt.name === selectedDropClass,
+    )
+    selectedDropClassId = selectedDropClassOption
+      ? nameToUid[selectedDropClassOption.name]
+      : ''
+    if (selectedDropClassOption) {
       console.log(nameToUid[selectedDropClassOption.name])
     }
-    if(selectedClassOption) {
+    if (selectedClassOption) {
       console.log(nameToUid[selectedClassOption.name])
     }
   }
@@ -228,15 +247,15 @@ $: if (id && id !== currentStudentId) {
     <div class="flex justify-between">
       <div>Student Attendance and Information</div>
       <Button
-      color="red"
-      on:click={() => {
-        loading = true
-        currentStudentId = ''
-        dialogEl.cancel()
-      }}
-    >
-      Close
-    </Button>
+        color="red"
+        on:click={() => {
+          loading = true
+          currentStudentId = ''
+          dialogEl.cancel()
+        }}
+      >
+        Close
+      </Button>
     </div>
   </svelte:fragment>
   <div slot="description">
@@ -245,16 +264,20 @@ $: if (id && id !== currentStudentId) {
         <Card>
           <div class="flex justify-between">
             <h2 class="font-bold">Class {i + 1} Information</h2>
-            <Button color="blue" on:click={() => sendClassReminder({
-              studentList: [studentData],
-              studentName: studentData.name,
-              studentEmail: studentData.email,
-              instructorName: value.instructorFirstName,
-              instructorEmail: value.instructorEmail,
-              otherInstructorEmails: value.otherInstructorEmails,
-              className: value.course,
-              nextMeetingTime: getNearestFutureClass(value.meetingTimes)
-            })}>
+            <Button
+              color="blue"
+              on:click={() =>
+                sendClassReminder({
+                  studentList: [studentData],
+                  studentName: studentData.name,
+                  studentEmail: studentData.email,
+                  instructorName: value.instructorFirstName,
+                  instructorEmail: value.instructorEmail,
+                  otherInstructorEmails: value.otherInstructorEmails,
+                  className: value.course,
+                  nextMeetingTime: getNearestFutureClass(value.meetingTimes),
+                })}
+            >
               Send {value.course} Class Reminder To Student?
             </Button>
           </div>
@@ -273,11 +296,18 @@ $: if (id && id !== currentStudentId) {
               <tbody>
                 <tr class="border-b">
                   <td class="p-2">{value.course}</td>
-                  <td class="p-2">{value.instructorFirstName} {value.instructorLastName}</td>
+                  <td class="p-2"
+                    >{value.instructorFirstName} {value.instructorLastName}</td
+                  >
                   <td class="p-2">{value.instructorEmail}</td>
                   <td class="p-2">{value.meetingLink}</td>
                   <td class="p-2">{value.online ? 'Online' : 'In-Person'}</td>
-                  <td class="p-2">{formatClassTimes([value.classDay1, value.classDay2], [value.classTime1, value.classTime2])}</td>
+                  <td class="p-2"
+                    >{formatClassTimes(
+                      [value.classDay1, value.classDay2],
+                      [value.classTime1, value.classTime2],
+                    )}</td
+                  >
                 </tr>
               </tbody>
             </table>
@@ -297,7 +327,11 @@ $: if (id && id !== currentStudentId) {
                     <tr class="border-b">
                       <td class="p-2">{att.classNumber}</td>
                       <td class="p-2">{att.date}</td>
-                      <td class="p-2">{att.attendanceList[studentData.name]?.present ? 'Yes' : 'No'}</td>
+                      <td class="p-2"
+                        >{att.attendanceList[studentData.name]?.present
+                          ? 'Yes'
+                          : 'No'}</td
+                      >
                       <td class="p-2">{att.feedback}</td>
                     </tr>
                   </tbody>
@@ -312,13 +346,25 @@ $: if (id && id !== currentStudentId) {
     <Card class="mb-4 mt-5">
       <div class="mb-4 flex items-center justify-between">
         <h2 class="font-bold">Student Information</h2>
-        <Button on:click={() => copyEmails(studentData.email.concat(studentData.secondaryEmail ? ', ' + studentData.secondaryEmail : ''))} class="flex items-center gap-1">
+        <Button
+          on:click={() =>
+            copyEmails(
+              studentData.email.concat(
+                studentData.secondaryEmail
+                  ? ', ' + studentData.secondaryEmail
+                  : '',
+              ),
+            )}
+          class="flex items-center gap-1"
+        >
           <svg fill="#000" height="20" width="20" viewBox="0 0 352.804 352.804">
             <g>
-              <path d="M318.54,57.282h-47.652V15c0-8.284-6.716-15-15-15H34.264c-8.284,0-15,6.716-15,15v265.522c0,8.284,6.716,15,15,15h47.651
+              <path
+                d="M318.54,57.282h-47.652V15c0-8.284-6.716-15-15-15H34.264c-8.284,0-15,6.716-15,15v265.522c0,8.284,6.716,15,15,15h47.651
          v42.281c0,8.284,6.716,15,15,15H318.54c8.284,0,15-6.716,15-15V72.282C333.54,63.998,326.824,57.282,318.54,57.282z
           M49.264,265.522V30h191.623v27.282H96.916c-8.284,0-15,6.716-15,15v193.24H49.264z M303.54,322.804H111.916V87.282H303.54V322.804
-         z"/>
+         z"
+              />
             </g>
           </svg>
           <span>Copy</span>
@@ -349,14 +395,32 @@ $: if (id && id !== currentStudentId) {
         </table>
       </div>
       {#if !loading}
-      <div class="lg:w-1/2">
-        <Select bind:value={selectedClass} options={classesOptions} label="Select a class" floating />
-      </div>
-      <Button color="green" on:click={() => addClass(selectedClassId)} class="mt-4">Add Class</Button>
-      <div class="lg:w-1/2">
-        <Select bind:value={selectedDropClass} options={dropClassesOptions} label="Select a class" floating />
-      </div>
-      <Button color="red" on:click={() => dropClass(selectedDropClassId)} class="mt-4">Drop Class</Button>
+        <div class="lg:w-1/2">
+          <Select
+            bind:value={selectedClass}
+            options={classesOptions}
+            label="Select a class"
+            floating
+          />
+        </div>
+        <Button
+          color="green"
+          on:click={() => addClass(selectedClassId)}
+          class="mt-4">Add Class</Button
+        >
+        <div class="lg:w-1/2">
+          <Select
+            bind:value={selectedDropClass}
+            options={dropClassesOptions}
+            label="Select a class"
+            floating
+          />
+        </div>
+        <Button
+          color="red"
+          on:click={() => dropClass(selectedDropClassId)}
+          class="mt-4">Drop Class</Button
+        >
       {:else}
         <div class="p-4 text-gray-500">Loading classes…</div>
       {/if}

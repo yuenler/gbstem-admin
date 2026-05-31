@@ -61,7 +61,7 @@
       }
     }
   }
-   
+
   function handleInput(e: any) {
     if (e.target instanceof HTMLInputElement) {
       if (type === 'checkbox') {

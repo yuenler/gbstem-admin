@@ -201,48 +201,42 @@
       }
     })
     getDoc(doc(db, 'semesterDates', semesterDatesDocument)).then((dateSnap) => {
-      if(dateSnap.exists()) {
+      if (dateSnap.exists()) {
         semesterStartDate = formatDateShort(
-        new Date(
-          dateSnap.data().classesStart
+          new Date(dateSnap.data().classesStart),
         )
-      )
-      semesterEndDate = formatDateShort(
-        new Date(
-          dateSnap.data().classesEnd
-        )
-      )
+        semesterEndDate = formatDateShort(new Date(dateSnap.data().classesEnd))
       }
     })
   }
 
   function autosaveValues() {
-  if (id !== undefined && !disabled) {
-    setDoc(doc(db, applicationsCollection, id), values, { merge: true })
-      .then(() => {
-        lastAutosaved = new Date().toLocaleTimeString()
-      })
-      .catch((err: FirebaseError) => {
-        console.log('Autosave error:', err)
-      })
+    if (id !== undefined && !disabled) {
+      setDoc(doc(db, applicationsCollection, id), values, { merge: true })
+        .then(() => {
+          lastAutosaved = new Date().toLocaleTimeString()
+        })
+        .catch((err: FirebaseError) => {
+          console.log('Autosave error:', err)
+        })
+    }
   }
-}
 
-// Autosave handler for interview notes
-function autosaveInterview() {
-  if (id !== undefined && !disabled && showInterviewForm) {
-    setDoc(doc(db, decisionsCollection, id), interview, { merge: true })
-      .then(() => {
-        lastAutosaved = new Date().toLocaleTimeString()
-      })
-      .catch((err: FirebaseError) => {
-        console.log('Autosave error:', err)
-      })
+  // Autosave handler for interview notes
+  function autosaveInterview() {
+    if (id !== undefined && !disabled && showInterviewForm) {
+      setDoc(doc(db, decisionsCollection, id), interview, { merge: true })
+        .then(() => {
+          lastAutosaved = new Date().toLocaleTimeString()
+        })
+        .catch((err: FirebaseError) => {
+          console.log('Autosave error:', err)
+        })
+    }
   }
-}
 
-// Remove the problematic afterUpdate that causes infinite loops in Svelte 5
-// The autosave will be handled by specific reactive statements instead
+  // Remove the problematic afterUpdate that causes infinite loops in Svelte 5
+  // The autosave will be handled by specific reactive statements instead
 
   function saveNotes() {
     const frozenId = id
@@ -569,24 +563,24 @@ function autosaveInterview() {
               <span>Likely No</span></Button
             >
             <Button
-            color={'gray'}
-            class="flex items-center gap-1"
-            on:click={() => handleLikelyDecision(null)}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              class="w-5 h-5"
+              color={'gray'}
+              class="flex items-center gap-1"
+              on:click={() => handleLikelyDecision(null)}
             >
-              <path
-                fill-rule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <span>Clear Likely Decision</span></Button
-          >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-5 h-5"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>Clear Likely Decision</span></Button
+            >
             <Button
               color={!loading && (decision === null || decision === 'interview')
                 ? 'blue'
@@ -904,7 +898,7 @@ function autosaveInterview() {
                   <Input
                     type="checkbox"
                     bind:value={values.agreements.entireProgram}
-                    label='gbSTEM will run from {semesterStartDate} to {semesterEndDate}. Do you confirm that you will be able to teach for the entirety of the program?'
+                    label="gbSTEM will run from {semesterStartDate} to {semesterEndDate}. Do you confirm that you will be able to teach for the entirety of the program?"
                     required
                   />
                   <Input
@@ -932,9 +926,9 @@ function autosaveInterview() {
               <h2 class="text-2xl font-bold my-4">
                 Interview Guide & Evaluation Form
               </h2>
-                <div class="text-xs text-gray-500 mt-2">
-                  Autosaved at {lastAutosaved}
-                </div>
+              <div class="text-xs text-gray-500 mt-2">
+                Autosaved at {lastAutosaved}
+              </div>
               <Input
                 type="datetime-local"
                 bind:value={interview.date}

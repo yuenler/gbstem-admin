@@ -1,6 +1,4 @@
-import {
-  SENDGRID_API_TOKEN,
-} from '$env/static/private'
+import { SENDGRID_API_TOKEN } from '$env/static/private'
 import { adminAuth, adminDb } from '$lib/server/firebase'
 import { addDataToHtmlTemplate } from '$lib/utils'
 import MailService, { type MailDataRequired } from '@sendgrid/mail'
@@ -93,8 +91,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       }
 
       // get html template from firebase
-      const document = await adminDb.collection('templates').doc(template.name).get()
-      const html = document.data()?.html as string ?? ''
+      const document = await adminDb
+        .collection('templates')
+        .doc(template.name)
+        .get()
+      const html = (document.data()?.html as string) ?? ''
 
       // replace html template with data
       const htmlBody = addDataToHtmlTemplate(html, template)
@@ -110,13 +111,16 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
       MailService.setApiKey(SENDGRID_API_TOKEN)
       try {
-        await MailService.send(emailData);
-        console.log('Email sent');
+        await MailService.send(emailData)
+        console.log('Email sent')
       } catch (mailError) {
-        console.error('Error sending email:', mailError);
-        return json({ error: 'Failed to send email. Please try again later.' }, { status: 500 });
+        console.error('Error sending email:', mailError)
+        return json(
+          { error: 'Failed to send email. Please try again later.' },
+          { status: 500 },
+        )
       }
-      return json({ message: 'Email sent successfully.' });
+      return json({ message: 'Email sent successfully.' })
     } catch (err) {
       if (typeof err === 'string') {
         topError = error(400, err)
@@ -124,14 +128,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         const typedErr = err as
           | FirebaseError
           | {
-            errorInfo: FirebaseError
-            codePrefix: string
-          }
+              errorInfo: FirebaseError
+              codePrefix: string
+            }
         if ('errorInfo' in typedErr) {
           topError = error(
             400,
             typedErr.errorInfo.message ||
-            'Please wait a few minutes before trying again.',
+              'Please wait a few minutes before trying again.',
           )
         } else if ('message' in typedErr) {
           topError = error(400, typedErr.message)
