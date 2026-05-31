@@ -1,6 +1,7 @@
 <a
   class="transition-colors flex hover:bg-gray-200 h-10 w-10 justify-center items-center rounded-full sm:border-2 sm:border-black"
   href="/announcements"
+  aria-label="Announcements"
 >
   <svg
     xmlns="http://www.w3.org/2000/svg"
