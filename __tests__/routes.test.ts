@@ -62,10 +62,13 @@ jest.mock(
 )
 
 // Mock algoliasearch
-const mockSearch = jest.fn().mockResolvedValue({ hits: [] })
-const mockInitIndex = jest.fn().mockReturnValue({ search: mockSearch })
+const mockSearchSingleIndex = jest.fn().mockResolvedValue({ hits: [] })
 jest.mock('algoliasearch', () => {
-  return jest.fn().mockReturnValue({ initIndex: mockInitIndex })
+  return {
+    algoliasearch: jest.fn().mockReturnValue({
+      searchSingleIndex: mockSearchSingleIndex,
+    }),
+  }
 })
 
 // Mock firebase-admin

@@ -88,7 +88,7 @@
       {#each pages as page}
         <a
           class={clsx(
-            'rounded-md px-1.5 py-1 text-[11px] md:px-2 md:py-1 md:text-xs lg:px-2.5 lg:py-1.5 lg:text-[13px] xl:text-[14px] transition-colors text-center leading-tight flex items-center justify-center min-h-[2.5rem] max-w-[100px] shrink-0',
+            'rounded-md px-1.5 py-1 text-[11px] md:px-2 md:py-1 md:text-xs lg:px-2.5 lg:py-1.5 lg:text-[13px] xl:text-[14px] transition-colors text-center leading-tight flex items-center justify-center min-h-10 max-w-[100px] shrink-0',
             pathname === page.href ? 'bg-gray-200' : 'hover:bg-gray-100',
           )}
           href={page.href}
@@ -107,7 +107,7 @@
       <fieldset class="flex items-center gap-3" {disabled}>
         {#each $actions as action}
           <Button
-            class="rounded py-1 px-3 whitespace-nowrap"
+            class="rounded-sm py-1 px-3 whitespace-nowrap"
             color={action.color}
             on:click={() => {
               progress.start()

@@ -66,7 +66,7 @@
   <div class="max-w-2xl grid gap-6 w-full">
     {#if !data.user.emailVerified}
       <div
-        class="mt-2 flex w-full items-center gap-4 rounded-md bg-red-200 px-5 py-4 shadow"
+        class="mt-2 flex w-full items-center gap-4 rounded-md bg-red-200 px-5 py-4 shadow-sm"
         transition:fade
       >
         <svg

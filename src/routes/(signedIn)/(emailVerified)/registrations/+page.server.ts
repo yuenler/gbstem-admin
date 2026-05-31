@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit'
 import type { PageServerLoad } from './$types'
 import { adminDb } from '$lib/server/firebase'
 import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
-import algoliasearch from 'algoliasearch'
+import { algoliasearch } from 'algoliasearch'
 import { registrationsCollection } from '$lib/data/collections'
 import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 // import { db } from '$lib/client/firebase'
@@ -124,8 +124,7 @@ export const load = (async ({ url, depends }) => {
   } else {
     try {
       const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY)
-      const index = client.initIndex(registrationsCollection)
-      const { hits } = await index.search<
+      const { hits } = await client.searchSingleIndex<
         Omit<Data.Registration<'server'>, 'meta' | 'timestamps'> & {
           meta: {
             hhid: string
@@ -138,7 +137,12 @@ export const load = (async ({ url, depends }) => {
             created: Date
           }
         }
-      >(query)
+      >({
+        indexName: registrationsCollection,
+        searchParams: {
+          query,
+        },
+      })
       const decisions = (
         await Promise.all(
           hits.map((hit) => {

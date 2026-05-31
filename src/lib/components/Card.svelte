@@ -7,7 +7,7 @@
 
 <div
   class={cn(
-    'w-full rounded-md border border-gray-200 p-4 md:p-6 shadow bg-white',
+    'w-full rounded-md border border-gray-200 p-4 md:p-6 shadow-sm bg-white',
     className,
   )}
 >

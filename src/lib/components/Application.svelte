@@ -719,10 +719,10 @@
             <div class="grid gap-1">
               <span class="font-bold">Personal</span>
               <Card class="my-2 grid gap-3">
-                <div class="rounded-md bg-gray-100 px-3 py-2 shadow-sm">
+                <div class="rounded-md bg-gray-100 px-3 py-2 shadow-xs">
                   {`Name: ${values.personal.firstName} ${values.personal.lastName}`}
                 </div>
-                <div class="rounded-md bg-gray-100 px-3 py-2 shadow-sm">
+                <div class="rounded-md bg-gray-100 px-3 py-2 shadow-xs">
                   {`Email: ${values.personal.email}`}
                 </div>
                 <div class="text-sm">

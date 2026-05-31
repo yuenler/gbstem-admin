@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit'
 import type { PageServerLoad } from './$types'
 import { adminDb } from '$lib/server/firebase'
 import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
-import algoliasearch from 'algoliasearch'
+import { algoliasearch } from 'algoliasearch'
 import { classesCollection } from '$lib/data/collections'
 import { formatClassTimes } from '$lib/utils'
 import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
@@ -72,8 +72,7 @@ export const load = (async ({ url, depends }) => {
   } else {
     try {
       const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY)
-      const index = client.initIndex(classesCollection)
-      const { hits } = await index.search<
+      const { hits } = await client.searchSingleIndex<
         Omit<Data.Class, 'classCap' | 'meetingTimes' | 'feedbackCompleted'> & {
           meta: {
             id: string
@@ -86,7 +85,12 @@ export const load = (async ({ url, depends }) => {
             created: Date
           }
         }
-      >(query)
+      >({
+        indexName: classesCollection,
+        searchParams: {
+          query,
+        },
+      })
       return {
         query,
         classes: hits.map((hit) => {

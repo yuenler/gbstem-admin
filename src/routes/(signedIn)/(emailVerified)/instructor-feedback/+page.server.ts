@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit'
 import type { PageServerLoad } from './$types'
 import { adminDb } from '$lib/server/firebase'
 import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
-import algoliasearch from 'algoliasearch'
+import { algoliasearch } from 'algoliasearch'
 import { instructorFeedbackCollection } from '$lib/data/collections'
 import { formatClassTimes } from '$lib/utils'
 import { at } from 'lodash-es'
@@ -86,8 +86,12 @@ export const load = (async ({ url, depends }) => {
   } else {
     try {
       const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY)
-      const index = client.initIndex(instructorFeedbackCollection)
-      const { hits } = await index.search<DBInstructorFeedback>(query)
+      const { hits } = await client.searchSingleIndex<DBInstructorFeedback>({
+        indexName: instructorFeedbackCollection,
+        searchParams: {
+          query,
+        },
+      })
       return {
         query,
         feedback: hits.map((hit) => {
