@@ -1,11 +1,12 @@
-import { error, json } from '@sveltejs/kit'
-import type { RequestHandler } from './$types'
-import { adminAuth, adminDb } from '$lib/server/firebase'
-import type { FirebaseError } from 'firebase-admin'
 import {
   SENDGRID_API_TOKEN,
 } from '$env/static/private'
+import { adminAuth, adminDb } from '$lib/server/firebase'
+import { addDataToHtmlTemplate } from '$lib/utils'
 import MailService, { type MailDataRequired } from '@sendgrid/mail'
+import { error, json } from '@sveltejs/kit'
+import type { FirebaseError } from 'firebase-admin'
+import type { RequestHandler } from './$types'
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   let topError
@@ -93,23 +94,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
       // get html template from firebase
       const document = await adminDb.collection('templates').doc(template.name).get()
-
-      const html = document.data()?.html
+      const html = document.data()?.html as string ?? ''
 
       // replace html template with data
-      const htmlBody = html.replace(/{{(.*?)}}/g, (_, key) => {
-        const keys = key.trim().split('.');
-        let value = template.data;
-        for (const k of keys) {
-          value = value[k];
-          if (value === undefined) {
-            return '';
-          }
-        }
-        return value;
-      });
-
-
+      const htmlBody = addDataToHtmlTemplate(html, template)
 
       const emailData: MailDataRequired = {
         from: 'donotreply@gbstem.org',
@@ -121,13 +109,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       }
 
       MailService.setApiKey(SENDGRID_API_TOKEN)
-     try {
-      await MailService.send(emailData);
-      console.log('Email sent');
-    } catch (mailError) {
-      console.error('Error sending email:', mailError);
-      return json({ error: 'Failed to send email. Please try again later.' }, { status: 500 });
-    }
+      try {
+        await MailService.send(emailData);
+        console.log('Email sent');
+      } catch (mailError) {
+        console.error('Error sending email:', mailError);
+        return json({ error: 'Failed to send email. Please try again later.' }, { status: 500 });
+      }
       return json({ message: 'Email sent successfully.' });
     } catch (err) {
       if (typeof err === 'string') {

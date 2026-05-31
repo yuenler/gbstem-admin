@@ -20,13 +20,24 @@
   let loading = true
   let disabled = true
 
-  let values: Data.InstructorFeedback = {
+  interface ClientInstructorFeedback {
+    courseName: string
+    instructorName: string
+    feedback: string
+    date: string
+    classNumber: number
+    attendanceList: Record<string, { present: boolean }>
+    id: string
+    students: string[]
+  }
+
+  let values: ClientInstructorFeedback = {
     courseName: '',
     instructorName: '',
     feedback: '',
     date: '',
     classNumber: 0,
-    attendanceList: [],
+    attendanceList: {},
     id: '',
     students: [],
   }
@@ -35,7 +46,7 @@
     loading = true
     disabled = true
     getDoc(doc(db, instructorFeedbackCollection, id)).then((snapshot) => {
-      let data = snapshot.data() as Data.InstructorFeedback
+      let data = snapshot.data() as ClientInstructorFeedback
       if (snapshot.exists()) {
         values = data
       } else {
@@ -112,7 +123,7 @@
                   <tr style="border-bottom: 1px solid #ccc;">
                     <td style="padding: 8px;">{attendance}</td>
                     <td style="padding: 8px;"
-                      >{values.attendanceList[attendance].present}</td
+                      >{values.attendanceList[attendance]?.present ? 'Yes' : 'No'}</td
                     >
                   </tr>
                 {/each}

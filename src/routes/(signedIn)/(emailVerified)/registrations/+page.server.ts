@@ -4,6 +4,7 @@ import { adminDb } from '$lib/server/firebase'
 import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
 import algoliasearch from 'algoliasearch'
 import { registrationsCollection } from '$lib/data/collections'
+import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 // import { db } from '$lib/client/firebase'
 
 export const load = (async ({ url, depends }) => {
@@ -13,7 +14,7 @@ export const load = (async ({ url, depends }) => {
     const updated = url.searchParams.get('updated')
     const filter = url.searchParams.get('filter')
      try {
-      let dbQuery;
+      let dbQuery: Query
       // if (filter === 'decided') {
       //   dbQuery = updated
       //     ? adminDb
@@ -99,7 +100,7 @@ export const load = (async ({ url, depends }) => {
 
 
       return {
-        registrations: snapshot.docs.map((doc) => {
+        registrations: snapshot.docs.map((doc: QueryDocumentSnapshot) => {
           const data = doc.data() as Data.Registration<'server'>
           return {
             id: doc.id,
@@ -116,9 +117,13 @@ export const load = (async ({ url, depends }) => {
           }
         }),
       }
-    } catch (err) {
-      console.log(err)
-      throw error(400, 'Something went wrong. Please try again later.')
+    } catch (err: any) {
+      console.error('[Load Error] registrations page load:', err)
+      throw error(500, {
+        message: 'Something went wrong while fetching registrations. Please try again later.',
+        details: err.message || err.toString(),
+        code: err.code || 'UNKNOWN',
+      })
     }
   } else {
     try {
@@ -167,8 +172,13 @@ export const load = (async ({ url, depends }) => {
           }
         }),
       }
-    } catch (err) {
-      throw error(400, 'The search failed. Please try again later.')
+    } catch (err: any) {
+      console.error('[Search Error] registrations search load:', err)
+      throw error(500, {
+        message: 'The search failed. Please try again later.',
+        details: err.message || err.toString(),
+        code: err.code || 'UNKNOWN',
+      })
     }
   }
 }) satisfies PageServerLoad

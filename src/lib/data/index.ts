@@ -19,7 +19,7 @@ import classesPerWeekJson from './classesPerWeek.json'
 import daysOfWeekJson from './daysOfWeek.json'
 import interviewAttendanceJson from './interviewAttendance.json'
 
-const coursesJson = []
+const coursesJson: Array<{ name: string }> = []
 
 if (new Date().getMonth() >= 7) {
   coursesJson.push(...fallCourses)

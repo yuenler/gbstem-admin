@@ -1,9 +1,10 @@
-import { error } from '@sveltejs/kit'
-import type { PageServerLoad } from './$types'
-import { adminDb } from '$lib/server/firebase'
 import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
-import algoliasearch from 'algoliasearch'
 import { applicationsCollection } from '$lib/data/collections'
+import { adminDb } from '$lib/server/firebase'
+import { error } from '@sveltejs/kit'
+import algoliasearch from 'algoliasearch'
+import type { DocumentSnapshot, Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
+import type { PageServerLoad } from './$types'
 // import { db } from '$lib/client/firebase'
 
 export const load = (async ({ url, depends }) => {
@@ -13,7 +14,7 @@ export const load = (async ({ url, depends }) => {
     const updated = url.searchParams.get('updated')
     const filter = url.searchParams.get('filter')
     try {
-      let dbQuery;
+      let dbQuery: Query
       // if (filter === 'decided') {
       //   dbQuery = updated
       //     ? adminDb
@@ -32,7 +33,7 @@ export const load = (async ({ url, depends }) => {
       // }
       // else
 
-     const collectionName = url.searchParams.get('collection') ?? applicationsCollection
+      const collectionName = url.searchParams.get('collection') ?? applicationsCollection
       if (filter === 'undecided') {
         dbQuery = updated
           ? adminDb
@@ -67,7 +68,6 @@ export const load = (async ({ url, depends }) => {
             .where('meta.submitted', '==', false)
             .orderBy('timestamps.updated', 'desc')
       } else if (filter === 'complete') {
-        try {
         dbQuery = updated
           ? adminDb
             .collection(collectionName)
@@ -89,9 +89,6 @@ export const load = (async ({ url, depends }) => {
             .where('essay.why', '!=', "")
             .where('program.timeSlots', '!=', "")
             .orderBy('timestamps.updated', 'desc')
-        } catch (err) {
-          console.log(err)
-        }
       } else {
         dbQuery = updated
           ? adminDb
@@ -115,19 +112,19 @@ export const load = (async ({ url, depends }) => {
 
       const decisions = (
         await Promise.all(
-          snapshot.docs.map((doc) => {
+          snapshot.docs.map((doc: QueryDocumentSnapshot) => {
             const decision = (doc.data() as Data.Application<'server'>).meta
               .decision
             return decision ? decision.get() : null
           }),
         )
-      ).map((doc) =>
+      ).map((doc: DocumentSnapshot | null) =>
         doc ? (doc.data() as { type: Data.Decision, likelyDecision: string, notes: string }) : null,
       )
 
 
       return {
-        applications: snapshot.docs.map((doc, i) => {
+        applications: snapshot.docs.map((doc: QueryDocumentSnapshot, i: number) => {
           const data = doc.data() as Data.Application<'server'>
           return {
             id: doc.id,
@@ -145,9 +142,13 @@ export const load = (async ({ url, depends }) => {
           }
         }),
       }
-    } catch (err) {
-      console.log(err)
-      throw error(400, 'Something went wrong. Please try again later.')
+    } catch (err: any) {
+      console.error('[Load Error] applications page load:', err)
+      throw error(500, {
+        message: 'Something went wrong while fetching applications. Please try again later.',
+        details: err.message || err.toString(),
+        code: err.code || 'UNKNOWN',
+      })
     }
   } else {
     try {
@@ -158,6 +159,7 @@ export const load = (async ({ url, depends }) => {
           meta: {
             id: string
             uid: string
+            interview: boolean
             submitted: boolean
             decision: string | null
           }
@@ -174,7 +176,7 @@ export const load = (async ({ url, depends }) => {
             return decision ? adminDb.doc(decision).get() : null
           }),
         )
-      ).map((doc) =>
+      ).map((doc: DocumentSnapshot | null) =>
         doc ? (doc.data() as { type: Data.Decision, likelyDecision: string, notes: string }) : null,
       )
       return {
@@ -197,8 +199,13 @@ export const load = (async ({ url, depends }) => {
           }
         }),
       }
-    } catch (err) {
-      throw error(400, 'The search failed. Please try again later.')
+    } catch (err: any) {
+      console.error('[Search Error] applications search load:', err)
+      throw error(500, {
+        message: 'The search failed. Please try again later.',
+        details: err.message || err.toString(),
+        code: err.code || 'UNKNOWN',
+      })
     }
   }
 }) satisfies PageServerLoad

@@ -78,7 +78,7 @@
         const data = snapshot.data() as ClassData
         
         values = { ...data }
-        values.meetingTimes = data.meetingTimes.sort((a:Date, b:Date) => a - b)
+        values.meetingTimes = data.meetingTimes.sort((a:Date, b:Date) => a.getTime() - b.getTime())
 
         const studentUids = data.students
         if (studentUids) {
@@ -125,6 +125,7 @@
    * Update the status of each class session in the array based on the current time. 
    */
   function checkStatuses() {
+    if (id === undefined) return
     const { meetingTimes, classStatuses, feedbackCompleted } = values
     for (let i = 0; i < meetingTimes.length; i++) {
       if (

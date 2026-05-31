@@ -361,8 +361,8 @@ function autosaveInterview() {
       interviewDeadline = formatDateShort(
         new Date(
           Math.min(
-            weekDeadline,
-            new Date(dueDate.data().instructorOrientation),
+            weekDeadline.getTime(),
+            new Date(dueDate.data().instructorOrientation).getTime(),
           ),
         ),
       )

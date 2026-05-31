@@ -1,6 +1,6 @@
 import { error, json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
-import MailService, { MailDataRequired } from '@sendgrid/mail'
+import MailService, { type MailDataRequired } from '@sendgrid/mail'
 import { SENDGRID_API_TOKEN } from '$env/static/private'
 import { addDataToHtmlTemplate, formatTime24to12 } from '$lib/utils'
 import { onlineClassEnrolledEmailTemplate } from '$lib/data/emailTemplates/onlineClassEnrolledEmailTemplate'
@@ -81,11 +81,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       console.error('Error sending email:', mailError)
       return json({ error: 'Failed to send email. Please try again later.' }, { status: 500 })
     }
-  } catch (err) {
+  } catch (err: unknown) {
     if (typeof err === 'string') {
       topError = error(400, err)
-    } else if ('message' in err) {
+    } else if (err instanceof Error) {
       topError = error(400, err.message)
+    } else if (err && typeof err === 'object' && 'message' in err) {
+      topError = error(400, String((err as { message?: unknown }).message ?? ''))
     } else {
       topError = error(400, 'Invalid request body or unknown error.')
     }

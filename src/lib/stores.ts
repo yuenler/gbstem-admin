@@ -50,7 +50,7 @@ export const dialog = writable<string | null>(null)
 
 type Action = {
   name: string
-  color: 'red' | 'blue' | 'gray' | 'green' | 'yellow'
+  color: 'red' | 'blue' | 'gray' | 'green' | 'yellow' | 'purple'
   callback: () => Promise<void>
 }
 

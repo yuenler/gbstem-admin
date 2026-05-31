@@ -20,6 +20,17 @@
   import { classesCollection, instructorFeedbackCollection, registrationsCollection } from '$lib/data/collections'
   import type ClassData from '$lib/data/types/ClassData'
   import type Student from '$lib/data/types/Student'
+
+  interface ClientInstructorFeedback {
+    instructorName: string
+    students: string[]
+    attendanceList: Record<string, { present: boolean }>
+    date: string
+    courseName: string
+    feedback: string
+    classNumber: number
+    id: string
+  }
   import sendClassReminder from '$lib/data/helpers/sendClassReminders'
   import { db } from '$lib/client/firebase'
 
@@ -37,7 +48,7 @@
     school: '',
     parentName: '',
   }
-  let attendance: Data.InstructorFeedback[] = []
+  let attendance: ClientInstructorFeedback[] = []
   let classes: ClassData[] = []
   let classesOptions: { name: string }[] = []
   let dropClassesOptions: { name: string }[] = []
@@ -171,7 +182,7 @@ $: if (id && id !== currentStudentId) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: studentData.email,
-          firstName: studentData.parentName.split(' ')[0],
+          firstName: (studentData.parentName || '').split(' ')[0],
           instructor: `${classSelected.instructorFirstName} ${classSelected.instructorLastName}`,
           instructorEmail: classSelected.instructorEmail,
           classTimes: [classSelected.classTime1, classSelected.classTime2],
@@ -286,7 +297,7 @@ $: if (id && id !== currentStudentId) {
                     <tr class="border-b">
                       <td class="p-2">{att.classNumber}</td>
                       <td class="p-2">{att.date}</td>
-                      <td class="p-2">{att.attendanceList[studentData.name] ? 'Yes' : 'No'}</td>
+                      <td class="p-2">{att.attendanceList[studentData.name]?.present ? 'Yes' : 'No'}</td>
                       <td class="p-2">{att.feedback}</td>
                     </tr>
                   </tbody>

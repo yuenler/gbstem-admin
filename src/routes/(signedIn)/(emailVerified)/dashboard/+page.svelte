@@ -126,12 +126,16 @@
           getDocs(q).then((snapshot) => {
           snapshot.forEach((doc) => {
           const meetingTimes: Timestamp[] = doc.data().meetingTimes;
-          if(meetingTimes === undefined) return;
-          for (let i = 0; i < Object.values(meetingTimes).length; i++){
-            const meetingTime = timestampToDate(Object.values(meetingTimes).at(i)) ? timestampToDate(Object.values(meetingTimes).at(i)) : new Date();
-          if (meetingTime && new Date().toLocaleDateString() === meetingTime.toLocaleDateString()) {
-            const classSession = doc.data() as Data.Class;
-            classesToday.push({class: classSession, classNumber: i});
+          if (meetingTimes !== undefined && Array.isArray(meetingTimes)) {
+            for (let i = 0; i < meetingTimes.length; i++){
+              const rawTime = meetingTimes[i];
+              if (rawTime) {
+                const meetingTime = timestampToDate(rawTime);
+                if (meetingTime && new Date().toLocaleDateString() === meetingTime.toLocaleDateString()) {
+                  const classSession = doc.data() as Data.Class;
+                  classesToday.push({class: classSession, classNumber: i});
+                }
+              }
             }
           }
         });

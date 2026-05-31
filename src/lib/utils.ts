@@ -2,6 +2,7 @@ import { alert } from '$lib/stores'
 import type { ClassValue } from 'clsx'
 import clsx from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import type { Timestamp } from 'firebase/firestore'
 
 export function cn(...classes: Array<ClassValue>) {
   return twMerge(clsx(...classes))
@@ -55,17 +56,18 @@ export function trapFocus(node: HTMLElement) {
   }
 }
 
-export function addDataToHtmlTemplate(html, template) {
-  const htmlBody = html.replace(/{{(.*?)}}/g, (_, key) => {
+export function addDataToHtmlTemplate(html: string, template: { data: Record<string, any> }): string {
+  const htmlBody = html.replace(/{{(.*?)}}/g, (_: string, key: string) => {
     const keys = key.trim().split('.');
-    let value = template.data;
+    let value: any = template.data;
     for (const k of keys) {
-      value = value[k];
-      if (value === undefined) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
         return '';
       }
     }
-    return value;
+    return String(value ?? '');
   });
   return htmlBody;
 }
@@ -142,7 +144,13 @@ export const formatDateShort = (date: Date) => {
 }
 
 export const timestampToDate = (timestamp: Timestamp | Date) => {
-  return new Date(timestamp.seconds * 1000)
+  if (timestamp instanceof Date) {
+    return timestamp
+  }
+  if (timestamp && typeof timestamp === 'object' && 'seconds' in timestamp) {
+    return new Date(timestamp.seconds * 1000)
+  }
+  return new Date(timestamp)
 }
 
 export const classHeldToday = (datesHeld: Date[], classTimeToday: Date) => {

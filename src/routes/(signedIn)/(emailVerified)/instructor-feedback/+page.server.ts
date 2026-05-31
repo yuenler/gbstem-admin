@@ -6,7 +6,18 @@ import algoliasearch from 'algoliasearch'
 import { instructorFeedbackCollection } from '$lib/data/collections'
 import { formatClassTimes } from '$lib/utils'
 import { at } from 'lodash-es'
+import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 // import { db } from '$lib/client/firebase'
+
+interface DBInstructorFeedback {
+  instructorName: string
+  students: string[]
+  attendanceList: Record<string, { present: boolean }>
+  date: string
+  courseName: string
+  feedback: string
+  classNumber: number
+}
 
 export const load = (async ({ url, depends }) => {
   depends('app:instructorFeedbackFall24')
@@ -14,7 +25,7 @@ export const load = (async ({ url, depends }) => {
   if (query === null || query === '') {
     const filter = url.searchParams.get('filter')
     try {
-      let dbQuery;
+      let dbQuery: Query
 
       const collectionName = instructorFeedbackCollection
       if (filter === 'Python I' || filter === 'Python II' || filter === 'Scratch' || filter === 'Web Development' || filter === 'Engineering I' || filter === 'Engineering II' || filter === 'Engineering III' || filter === 'Math I' || filter === 'Math II' || filter === 'Math III' || filter === 'Math IV' || filter === 'Math V' || filter === 'Environmental Science'){ 
@@ -30,8 +41,8 @@ export const load = (async ({ url, depends }) => {
       const snapshot = await dbQuery.get()
 
       return {
-        feedback: snapshot.docs.map((doc) => {
-          const data = doc.data() as Data.InstructorFeedback
+        feedback: snapshot.docs.map((doc: QueryDocumentSnapshot) => {
+          const data = doc.data() as DBInstructorFeedback
 
           const attendanceList: boolean[] = []
 
@@ -51,15 +62,19 @@ export const load = (async ({ url, depends }) => {
         }
         }),
       }
-    } catch (err) {
-      console.log(err)
-      throw error(400, 'Something went wrong. Please try again later.')
+    } catch (err: any) {
+      console.error('[Load Error] instructor-feedback page load:', err)
+      throw error(500, {
+        message: 'Something went wrong while fetching instructor feedback. Please try again later.',
+        details: err.message || err.toString(),
+        code: err.code || 'UNKNOWN',
+      })
     }
   } else {
     try {
       const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY)
       const index = client.initIndex(instructorFeedbackCollection)
-      const { hits } = await index.search<Data.InstructorFeedback>(query)
+      const { hits } = await index.search<DBInstructorFeedback>(query)
       return {
         query,
         feedback: hits.map((hit) => {
@@ -82,8 +97,13 @@ export const load = (async ({ url, depends }) => {
           
         }})
       }
-    } catch (err) {
-      throw error(400, 'The search failed. Please try again later.')
+    } catch (err: any) {
+      console.error('[Search Error] instructor-feedback search load:', err)
+      throw error(500, {
+        message: 'The search failed. Please try again later.',
+        details: err.message || err.toString(),
+        code: err.code || 'UNKNOWN',
+      })
     }
   }
 }) satisfies PageServerLoad

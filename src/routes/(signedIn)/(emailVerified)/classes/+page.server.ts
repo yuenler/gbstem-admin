@@ -5,6 +5,7 @@ import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
 import algoliasearch from 'algoliasearch'
 import { classesCollection } from '$lib/data/collections'
 import { formatClassTimes } from '$lib/utils'
+import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 // import { db } from '$lib/client/firebase'
 
 export const load = (async ({ url, depends }) => {
@@ -13,7 +14,7 @@ export const load = (async ({ url, depends }) => {
   if (query === null || query === '') {
     const filter = url.searchParams.get('filter')
     try {
-      let dbQuery;
+      let dbQuery: Query
 
       const collectionName = classesCollection
       if (filter === 'Python I' || filter === 'Python II' || filter === 'Scratch' || filter === 'Web Development' || filter === 'Engineering I' || filter === 'Engineering II' || filter === 'Engineering III' || filter === 'Math I' || filter === 'Math II' || filter === 'Math III' || filter === 'Math IV' || filter === 'Math V' || filter === 'Environmental Science'){ 
@@ -29,7 +30,7 @@ export const load = (async ({ url, depends }) => {
       const snapshot = await dbQuery.get()
 
       return {
-        classes: snapshot.docs.map((doc) => {
+        classes: snapshot.docs.map((doc: QueryDocumentSnapshot) => {
           const data = doc.data() as Data.Class
 
         return {
@@ -47,9 +48,13 @@ export const load = (async ({ url, depends }) => {
         }
         }),
       }
-    } catch (err) {
-      console.log(err)
-      throw error(400, 'Something went wrong. Please try again later.')
+    } catch (err: any) {
+      console.error('[Load Error] classes page load:', err)
+      throw error(500, {
+        message: 'Something went wrong while fetching classes. Please try again later.',
+        details: err.message || err.toString(),
+        code: err.code || 'UNKNOWN',
+      })
     }
   } else {
     try {
@@ -87,8 +92,13 @@ export const load = (async ({ url, depends }) => {
           
         }})
       }
-    } catch (err) {
-      throw error(400, 'The search failed. Please try again later.')
+    } catch (err: any) {
+      console.error('[Search Error] classes search load:', err)
+      throw error(500, {
+        message: 'The search failed. Please try again later.',
+        details: err.message || err.toString(),
+        code: err.code || 'UNKNOWN',
+      })
     }
   }
 }) satisfies PageServerLoad
