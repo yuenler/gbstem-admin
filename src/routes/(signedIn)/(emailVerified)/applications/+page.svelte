@@ -30,7 +30,7 @@
     | 'complete' = ($page.url.searchParams.get('filter') as any) ?? 'all'
 
   const csv = data.applications
-    .map((application) => {
+    .map((application: PageData['applications'][number]) => {
       const {
         id,
         values: {
@@ -331,7 +331,7 @@
     />
     <a
       href={filterRef}
-      class="flex items-center inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
+      class="inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
     >
       Filter
     </a>
