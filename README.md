@@ -61,6 +61,15 @@ For local development and testing, you can use the **Firebase Emulator Suite** t
    - Password: `penguin`
    - Signup Token: `demo-token`
 
+> [!WARNING]
+> By default, the Firestore emulator runs in-memory. This means all seeded data and modifications are lost whenever you restart the emulator. If you want to persist the database state across restarts, start the emulator with the `--import` and `--export-on-exit` flags:
+>
+> ```bash
+> firebase emulators:start --import=./emulator-data --export-on-exit
+> ```
+>
+> Otherwise, you must re-run the seed script every time you restart the emulator.
+
 ### 3. Run the Development Server
 
 ```bash
