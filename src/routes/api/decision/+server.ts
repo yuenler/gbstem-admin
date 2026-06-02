@@ -1,13 +1,12 @@
-import { error, json } from '@sveltejs/kit'
-import type { RequestHandler } from './$types'
-import type { FirebaseError } from 'firebase-admin'
-import { SENDGRID_API_TOKEN } from '$env/static/private'
-import { addDataToHtmlTemplate } from '$lib/utils'
-import { rejectionEmailTemplate } from '$lib/data/emailTemplates/rejectionEmailTemplate'
-import { waitlistEmailTemplate } from '$lib/data/emailTemplates/waitlistEmailTemplate'
 import { acceptEmailTemplate } from '$lib/data/emailTemplates/acceptEmailTemplate'
+import { rejectionEmailTemplate } from '$lib/data/emailTemplates/rejectionEmailTemplate'
 import { subEmailTemplate } from '$lib/data/emailTemplates/subEmailTemplate'
-import MailService, { type MailDataRequired } from '@sendgrid/mail'
+import { waitlistEmailTemplate } from '$lib/data/emailTemplates/waitlistEmailTemplate'
+import { sendEmail } from '$lib/server/email'
+import { addDataToHtmlTemplate } from '$lib/utils'
+import { error, json } from '@sveltejs/kit'
+import type { FirebaseError } from 'firebase-admin'
+import type { RequestHandler } from './$types'
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   let topError
@@ -51,20 +50,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
             htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template)
         }
 
-        const emailData: MailDataRequired = {
-          from: 'donotreply@gbstem.org',
-          to: intervieweeEmail,
-          subject: String(template.data.subject),
-          html: htmlBody,
-          replyTo: 'contact@gbstem.org',
-          text: 'Decision',
-        }
-        MailService.setApiKey(SENDGRID_API_TOKEN)
         try {
-          await MailService.send(emailData)
-          console.log('Email sent')
+          await sendEmail({
+            to: intervieweeEmail,
+            subject: String(template.data.subject),
+            html: htmlBody,
+          })
         } catch (mailError) {
-          console.error('Error sending email:', mailError)
           return json(
             { error: 'Failed to send email. Please try again later.' },
             { status: 500 },

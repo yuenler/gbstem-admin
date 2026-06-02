@@ -1,7 +1,6 @@
-import { SENDGRID_API_TOKEN } from '$env/static/private'
+import { sendEmail } from '$lib/server/email'
 import { adminAuth, adminDb } from '$lib/server/firebase'
 import { addDataToHtmlTemplate } from '$lib/utils'
-import MailService, { type MailDataRequired } from '@sendgrid/mail'
 import { error, json } from '@sveltejs/kit'
 import type { FirebaseError } from 'firebase-admin'
 import type { RequestHandler } from './$types'
@@ -100,21 +99,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       // replace html template with data
       const htmlBody = addDataToHtmlTemplate(html, template)
 
-      const emailData: MailDataRequired = {
-        from: 'donotreply@gbstem.org',
-        to: to,
-        subject: String(template.data.subject),
-        html: htmlBody,
-        replyTo: 'contact@gbstem.org',
-        text: 'Action Required',
-      }
-
-      MailService.setApiKey(SENDGRID_API_TOKEN)
       try {
-        await MailService.send(emailData)
-        console.log('Email sent')
+        await sendEmail({
+          to: to,
+          subject: String(template.data.subject),
+          html: htmlBody,
+        })
       } catch (mailError) {
-        console.error('Error sending email:', mailError)
         return json(
           { error: 'Failed to send email. Please try again later.' },
           { status: 500 },
