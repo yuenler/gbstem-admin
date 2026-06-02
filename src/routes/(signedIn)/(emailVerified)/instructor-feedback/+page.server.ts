@@ -1,12 +1,9 @@
-import { error } from '@sveltejs/kit'
-import type { PageServerLoad } from './$types'
-import { adminDb } from '$lib/server/firebase'
-import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
-import { algoliasearch } from 'algoliasearch'
 import { instructorFeedbackCollection } from '$lib/data/collections'
-import { formatClassTimes } from '$lib/utils'
-import { at } from 'lodash-es'
+import { adminDb } from '$lib/server/firebase'
+import { searchIndex } from '$lib/server/search'
+import { error } from '@sveltejs/kit'
 import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
+import type { PageServerLoad } from './$types'
 // import { db } from '$lib/client/firebase'
 
 interface DBInstructorFeedback {
@@ -85,13 +82,10 @@ export const load = (async ({ url, depends }) => {
     }
   } else {
     try {
-      const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY)
-      const { hits } = await client.searchSingleIndex<DBInstructorFeedback>({
-        indexName: instructorFeedbackCollection,
-        searchParams: {
-          query,
-        },
-      })
+      const hits = await searchIndex<DBInstructorFeedback>(
+        instructorFeedbackCollection,
+        query,
+      )
       return {
         query,
         feedback: hits.map((hit) => {

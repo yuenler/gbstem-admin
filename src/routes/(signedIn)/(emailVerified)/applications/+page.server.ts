@@ -1,8 +1,7 @@
-import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
 import { applicationsCollection } from '$lib/data/collections'
 import { adminDb } from '$lib/server/firebase'
+import { searchIndex } from '$lib/server/search'
 import { error } from '@sveltejs/kit'
-import { algoliasearch } from 'algoliasearch'
 import type {
   DocumentSnapshot,
   Query,
@@ -162,8 +161,7 @@ export const load = (async ({ url, depends }) => {
     }
   } else {
     try {
-      const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY)
-      const { hits } = await client.searchSingleIndex<
+      const hits = await searchIndex<
         Omit<Data.Application<'server'>, 'meta' | 'timestamps'> & {
           meta: {
             id: string
@@ -177,12 +175,7 @@ export const load = (async ({ url, depends }) => {
             created: Date
           }
         }
-      >({
-        indexName: applicationsCollection,
-        searchParams: {
-          query,
-        },
-      })
+      >(applicationsCollection, query)
       const decisions = (
         await Promise.all(
           hits.map((hit) => {
