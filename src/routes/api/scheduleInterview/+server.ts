@@ -5,10 +5,16 @@ import { error, json } from '@sveltejs/kit'
 import type { FirebaseError } from 'firebase-admin'
 import type { RequestHandler } from './$types'
 
+export interface ScheduleInterviewRequestBody {
+  email: string
+  name: string
+  deadline: string
+}
+
 export const POST: RequestHandler = async ({ request, locals }) => {
   let topError
   try {
-    const body = await request.json()
+    const body = (await request.json()) as ScheduleInterviewRequestBody
     try {
       const intervieweeEmail = body.email
       if (locals.user === null) {

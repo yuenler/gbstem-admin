@@ -1,5 +1,7 @@
 import { alert } from '$lib/stores'
 import { normalizeCapitals } from '$lib/utils'
+import type { RemindInstructorRequestBody } from '../../../routes/api/remindInstructor/+server'
+import type { RemindStudentsRequestBody } from '../../../routes/api/remindStudents/+server'
 import type Student from '../types/Student'
 
 /**
@@ -44,18 +46,19 @@ function sendClassReminder(opts: {
         alert.trigger('error', 'No upcoming classes found!')
         return
       }
+      const payload: RemindInstructorRequestBody = {
+        name: normalizeCapitals(instructorName),
+        email: instructorEmail,
+        otherInstructorEmails: otherInstructorEmails,
+        class: className,
+        classTime: nextMeetingTime,
+      }
       fetch('/api/remindInstructor', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: normalizeCapitals(instructorName),
-          email: instructorEmail,
-          otherInstructorEmails: otherInstructorEmails,
-          class: className,
-          classTime: nextMeetingTime,
-        }),
+        body: JSON.stringify(payload),
       }).then(async (res) => {
         if (res.ok) {
           alert.trigger('success', 'A reminder email was sent!')
@@ -74,20 +77,20 @@ function sendClassReminder(opts: {
           return
         }
         studentList.map((student) => {
+          const payload: RemindStudentsRequestBody = {
+            name: normalizeCapitals(student.name),
+            email: student.email,
+            otherInstructorEmails: otherInstructorEmails,
+            class: className,
+            classTime: nextMeetingTime,
+            instructorName: normalizeCapitals(instructorName),
+          }
           fetch('/api/remindStudents', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              name: normalizeCapitals(student.name),
-              email: student.email,
-              instructorEmail: instructorEmail,
-              otherInstructorEmails: otherInstructorEmails,
-              class: className,
-              classTime: nextMeetingTime,
-              instructorName: normalizeCapitals(instructorName),
-            }),
+            body: JSON.stringify(payload),
           }).then(async (res) => {
             if (res.ok) {
               alert.trigger('success', 'Reminder emails were sent!')
@@ -107,20 +110,20 @@ function sendClassReminder(opts: {
           alert.trigger('error', 'No upcoming classes found!')
           return
         }
+        const payload: RemindStudentsRequestBody = {
+          name: studentName || '',
+          email: studentEmail || '',
+          otherInstructorEmails: otherInstructorEmails,
+          class: className,
+          classTime: nextMeetingTime,
+          instructorName: normalizeCapitals(instructorName),
+        }
         fetch('/api/remindStudents', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            name: studentName,
-            email: studentEmail,
-            instructorEmail: instructorEmail,
-            otherInstructorEmails: otherInstructorEmails,
-            class: className,
-            classTime: nextMeetingTime,
-            instructorName: normalizeCapitals(instructorName),
-          }),
+          body: JSON.stringify(payload),
         }).then(async (res) => {
           if (res.ok) {
             alert.trigger(

@@ -5,10 +5,23 @@ import { addDataToHtmlTemplate, formatTime24to12 } from '$lib/utils'
 import { error, json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 
+export interface EnrollRequestBody {
+  email: string
+  firstName: string
+  instructor: string
+  instructorEmail: string
+  classTimes: string[]
+  classDays: string[]
+  course: string
+  studentName: string
+  meetingLink: string
+  online: boolean
+}
+
 export const POST: RequestHandler = async ({ request, locals }) => {
   let topError
   try {
-    const body = await request.json()
+    const body = (await request.json()) as EnrollRequestBody
 
     if (locals.user === null) {
       throw error(400, 'User not signed in.')

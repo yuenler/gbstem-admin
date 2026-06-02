@@ -28,6 +28,8 @@
   import { alert } from '$lib/stores'
   import { cloneDeep } from 'lodash-es'
   import type { FirebaseError } from 'firebase/app'
+  import type { ScheduleInterviewRequestBody } from '../../routes/api/scheduleInterview/+server'
+  import type { DecisionRequestBody } from '../../routes/api/decision/+server'
   import { invalidate } from '$app/navigation'
   import {
     formatDate,
@@ -421,30 +423,34 @@
                 loading = false
               })
               if (newDecision === 'interview') {
+                const payload: ScheduleInterviewRequestBody = {
+                  email: values.personal.email,
+                  name: values.personal.firstName,
+                  deadline: interviewDeadline,
+                }
                 fetch('/api/scheduleInterview', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
                   },
-                  body: JSON.stringify({
-                    type: 'scheduleInterview',
-                    email: values.personal.email,
-                    name: values.personal.firstName,
-                    deadline: interviewDeadline,
-                  }),
+                  body: JSON.stringify(payload),
                 })
               } else {
+                const payload: DecisionRequestBody = {
+                  decision: newDecision as
+                    | 'rejected'
+                    | 'waitlisted'
+                    | 'substitute'
+                    | 'accepted',
+                  email: values.personal.email,
+                  name: values.personal.firstName,
+                }
                 fetch('/api/decision', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
                   },
-                  body: JSON.stringify({
-                    type: 'decision',
-                    decision: newDecision,
-                    email: values.personal.email,
-                    name: values.personal.firstName,
-                  }),
+                  body: JSON.stringify(payload),
                 })
               }
             })

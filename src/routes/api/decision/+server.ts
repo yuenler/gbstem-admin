@@ -8,10 +8,16 @@ import { error, json } from '@sveltejs/kit'
 import type { FirebaseError } from 'firebase-admin'
 import type { RequestHandler } from './$types'
 
+export interface DecisionRequestBody {
+  email: string
+  decision: 'rejected' | 'waitlisted' | 'substitute' | 'accepted'
+  name: string
+}
+
 export const POST: RequestHandler = async ({ request, locals }) => {
   let topError
   try {
-    const body = await request.json()
+    const body = (await request.json()) as DecisionRequestBody
     try {
       const intervieweeEmail = body.email
       const decision = body.decision

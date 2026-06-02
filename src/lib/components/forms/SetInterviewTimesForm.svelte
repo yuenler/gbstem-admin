@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { AssignInterviewRequestBody } from '../../../routes/api/assignInterview/+server'
   import Input from '$lib/components/Input.svelte'
   import clsx from 'clsx'
   import { alert } from '$lib/stores'
@@ -177,19 +178,20 @@
           'meta.interview': true,
         },
       )
+      const payload: AssignInterviewRequestBody = {
+        intervieweeEmail: interviewSlotToAdd.intervieweeEmail || '',
+        firstName: interviewSlotToAdd.intervieweeFirstName || '',
+        interviewer: interviewSlotToAdd.interviewerName || '',
+        email: interviewSlotToAdd.interviewerEmail || '',
+        link: interviewSlotToAdd.meetingLink || '',
+        date: formatDateLocal(interviewSlotToAdd.date),
+      }
       await fetch('/api/assignInterview', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          intervieweeEmail: interviewSlotToAdd.intervieweeEmail,
-          firstName: interviewSlotToAdd.intervieweeFirstName,
-          interviewer: interviewSlotToAdd.interviewerName,
-          email: interviewSlotToAdd.interviewerEmail,
-          link: interviewSlotToAdd.meetingLink,
-          date: formatDateLocal(interviewSlotToAdd.date),
-        }),
+        body: JSON.stringify(payload),
       })
     }
     alert.trigger('success', 'Interviewee assigned and email sent.')

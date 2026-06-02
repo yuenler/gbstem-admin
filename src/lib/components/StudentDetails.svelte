@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { EnrollRequestBody } from '../../routes/api/enroll/+server'
   import {
     doc,
     getDoc,
@@ -196,21 +197,22 @@
       selectedClassId = ''
       await tick()
       await loadStudentClasses(studentID)
+      const payload: EnrollRequestBody = {
+        email: studentData.email,
+        firstName: (studentData.parentName || '').split(' ')[0],
+        instructor: `${classSelected.instructorFirstName} ${classSelected.instructorLastName}`,
+        instructorEmail: classSelected.instructorEmail,
+        classTimes: [classSelected.classTime1, classSelected.classTime2],
+        classDays: [classSelected.classDay1, classSelected.classDay2],
+        course: classSelected.course,
+        meetingLink: classSelected.meetingLink,
+        online: classSelected.online,
+        studentName: studentData.name,
+      }
       await fetch('/api/enroll', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: studentData.email,
-          firstName: (studentData.parentName || '').split(' ')[0],
-          instructor: `${classSelected.instructorFirstName} ${classSelected.instructorLastName}`,
-          instructorEmail: classSelected.instructorEmail,
-          classTimes: [classSelected.classTime1, classSelected.classTime2],
-          classDays: [classSelected.classDay1, classSelected.classDay2],
-          course: classSelected.course,
-          meetingLink: classSelected.meetingLink,
-          online: classSelected.online,
-          studentName: studentData.name,
-        }),
+        body: JSON.stringify(payload),
       })
     } catch (error) {
       console.error('Error adding class:', error)

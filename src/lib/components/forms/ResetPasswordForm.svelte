@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { ActionRequestBody } from '../../../routes/api/action/+server'
   import Input from '$lib/components/Input.svelte'
   import clsx from 'clsx'
   import { alert } from '$lib/stores'
@@ -16,15 +17,16 @@
     if (e.detail.error === null) {
       showValidation = false
       disabled = true
+      const payload: ActionRequestBody = {
+        type: 'resetPassword',
+        email: values.email,
+      }
       fetch('/api/action', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          type: 'resetPassword',
-          email: values.email,
-        }),
+        body: JSON.stringify(payload),
       }).then(async (res) => {
         if (res.ok) {
           alert.trigger(

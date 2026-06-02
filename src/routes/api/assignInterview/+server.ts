@@ -5,10 +5,19 @@ import { error, json } from '@sveltejs/kit'
 import type { FirebaseError } from 'firebase-admin'
 import type { RequestHandler } from './$types'
 
+export interface AssignInterviewRequestBody {
+  email: string
+  date: string
+  link: string
+  interviewer: string
+  firstName: string
+  intervieweeEmail: string
+}
+
 export const POST: RequestHandler = async ({ request, locals }) => {
   let topError
   try {
-    const body = await request.json()
+    const body = (await request.json()) as AssignInterviewRequestBody
     try {
       const interviewerEmail = body.email
       const interviewDate = body.date
