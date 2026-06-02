@@ -32,15 +32,99 @@ describe('email service', () => {
     expect(MailService.setApiKey).toHaveBeenCalledWith('test-token')
     expect(MailService.send).toHaveBeenCalledWith({
       from: 'donotreply@gbstem.org',
-      to: 'test@example.com',
+      to: ['test@example.com'],
       subject: 'Test Subject',
       html: '<p>Test HTML</p>',
-      cc: 'cc@example.com',
+      cc: ['cc@example.com'],
       replyTo: 'reply@example.com',
     })
     expect(logSpy).toHaveBeenCalledWith(
       expect.stringContaining(
         'Email sent to: test@example.com | Subject: Test Subject',
+      ),
+    )
+    expect(warnSpy).not.toHaveBeenCalled()
+
+    warnSpy.mockRestore()
+    logSpy.mockRestore()
+  })
+
+  it('sends email when to and cc are arrays', async () => {
+    jest.doMock(
+      '$env/static/private',
+      () => ({
+        SENDGRID_API_TOKEN: 'test-token',
+      }),
+      { virtual: true },
+    )
+
+    const { sendEmail } = await import('../src/lib/server/email')
+    const MailService = (await import('@sendgrid/mail')).default
+
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
+
+    await sendEmail({
+      to: ['test1@example.com', 'test2@example.com'],
+      subject: 'Test Subject',
+      html: '<p>Test HTML</p>',
+      cc: ['cc1@example.com', 'cc2@example.com'],
+    })
+
+    expect(MailService.setApiKey).toHaveBeenCalledWith('test-token')
+    expect(MailService.send).toHaveBeenCalledWith({
+      from: 'donotreply@gbstem.org',
+      to: ['test1@example.com', 'test2@example.com'],
+      subject: 'Test Subject',
+      html: '<p>Test HTML</p>',
+      cc: ['cc1@example.com', 'cc2@example.com'],
+      replyTo: 'contact@gbstem.org',
+    })
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Email sent to: test1@example.com, test2@example.com | Subject: Test Subject',
+      ),
+    )
+    expect(warnSpy).not.toHaveBeenCalled()
+
+    warnSpy.mockRestore()
+    logSpy.mockRestore()
+  })
+
+  it('parses and trims comma-separated string emails into arrays', async () => {
+    jest.doMock(
+      '$env/static/private',
+      () => ({
+        SENDGRID_API_TOKEN: 'test-token',
+      }),
+      { virtual: true },
+    )
+
+    const { sendEmail } = await import('../src/lib/server/email')
+    const MailService = (await import('@sendgrid/mail')).default
+
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
+
+    await sendEmail({
+      to: ' test1@example.com , test2@example.com ',
+      subject: 'Test Subject',
+      html: '<p>Test HTML</p>',
+      cc: ' cc1@example.com , cc2@example.com ',
+    })
+
+    expect(MailService.setApiKey).toHaveBeenCalledWith('test-token')
+    expect(MailService.send).toHaveBeenCalledWith({
+      from: 'donotreply@gbstem.org',
+      to: ['test1@example.com', 'test2@example.com'],
+      subject: 'Test Subject',
+      html: '<p>Test HTML</p>',
+      cc: ['cc1@example.com', 'cc2@example.com'],
+      replyTo: 'contact@gbstem.org',
+    })
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Email sent to: test1@example.com, test2@example.com | Subject: Test Subject',
       ),
     )
     expect(warnSpy).not.toHaveBeenCalled()
