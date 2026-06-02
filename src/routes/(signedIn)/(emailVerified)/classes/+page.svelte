@@ -1,17 +1,14 @@
 <script lang="ts">
-  import Table from '$lib/components/Table.svelte'
-  import Dialog from '$lib/components/Dialog.svelte'
-  import { copyEmails, formatTime24to12 } from '$lib/utils'
-  import { format } from 'date-fns'
-  import ClassDetails from '$lib/components/ClassDetails.svelte'
-  import type { PageData } from './$types'
-  import Select from '$lib/components/Select.svelte'
-  import Button from '$lib/components/Button.svelte'
-  import Form from '$lib/components/Form.svelte'
-  import Input from '$lib/components/Input.svelte'
-  import { goto } from '$app/navigation'
   import { page } from '$app/stores'
+  import Button from '$lib/components/Button.svelte'
+  import ClassDetails from '$lib/components/ClassDetails.svelte'
+  import Dialog from '$lib/components/Dialog.svelte'
+  import SearchBox from '$lib/components/SearchBox.svelte'
+  import Select from '$lib/components/Select.svelte'
+  import Table from '$lib/components/Table.svelte'
   import { ClassStatus } from '$lib/data/types/ClassStatus'
+  import { copyEmails } from '$lib/utils'
+  import type { PageData } from './$types'
 
   export let data: PageData
   let showValidation = false
@@ -19,7 +16,6 @@
   let scheduled = false
   let loading = true
   let selectedClassId: string | undefined = undefined
-  let search: string = data.query ?? ''
   let checked: Array<number> = []
   let courseFilter:
     | 'Scratch'
@@ -94,58 +90,12 @@
       checked = []
     }
   }
-  function handleSearch() {
-    if (search === '') {
-      goto('/registrations')
-    } else {
-      const base = $page.url.searchParams
-      base.set('query', search)
-      goto(`?${base.toString()}`)
-    }
-  }
-  async function handleClear() {
-    goto('/registrations').then(() => {
-      search = ''
-    })
-  }
 </script>
 
 <ClassDetails bind:dialogEl id={selectedClassId} />
 
-<Form class="flex gap-4" on:submit={handleSearch}>
-  <div class="relative grow">
-    <Input
-      class={{
-        container: 'mt-0',
-        input: 'mt-0 pr-20',
-      }}
-      bind:value={search}
-      placeholder="Search"
-    />
-    <div class="absolute right-2 top-0 flex h-12 items-center">
-      <Button class="uppercase px-2 py-1" on:click={handleClear}>Clear</Button>
-    </div>
-  </div>
-
-  <Button
-    class="shrink-0 h-12 w-12 p-0 flex items-center justify-center"
-    type="submit"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke-width="1.5"
-      stroke="currentColor"
-      class="w-6 h-6"
-    >
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-      />
-    </svg>
-  </Button>
+<div class="flex gap-4">
+  <SearchBox basePath="/classes" />
 
   <div class="flex">
     <Select
@@ -206,7 +156,7 @@
     </svg>
     <span>Copy Emails</span>
   </Button>
-</Form>
+</div>
 
 {#await data then feedback}
   <Table>

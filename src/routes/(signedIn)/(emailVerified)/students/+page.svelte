@@ -1,36 +1,30 @@
 <script lang="ts">
-  import StudentDetails from '$lib/components/StudentDetails.svelte'
-  import type Dialog from '$lib/components/Dialog.svelte'
-  import { format } from 'date-fns'
-  import Input from '$lib/components/Input.svelte'
-  import Form from '$lib/components/Form.svelte'
-  import Button from '$lib/components/Button.svelte'
-  import type { PageData } from './$types'
-  import { goto, invalidate } from '$app/navigation'
   import { page } from '$app/stores'
-  import Table from '$lib/components/Table.svelte'
-  import { actions, alert } from '$lib/stores'
-  import { db, user } from '$lib/client/firebase'
-  import {
-    doc,
-    updateDoc,
-    getDoc,
-    collection,
-    query,
-    getDocs,
-    where,
-  } from 'firebase/firestore'
+  import { db } from '$lib/client/firebase'
+  import Button from '$lib/components/Button.svelte'
+  import type Dialog from '$lib/components/Dialog.svelte'
+  import SearchBox from '$lib/components/SearchBox.svelte'
   import Select from '$lib/components/Select.svelte'
-  import { kebabCase } from 'lodash-es'
-  import { normalizeCapitals } from '$lib/utils'
+  import StudentDetails from '$lib/components/StudentDetails.svelte'
+  import Table from '$lib/components/Table.svelte'
   import {
     classesCollection,
     registrationsCollection,
   } from '$lib/data/collections'
+  import { normalizeCapitals } from '$lib/utils'
+  import {
+    collection,
+    doc,
+    getDocs,
+    query,
+    updateDoc,
+    where,
+  } from 'firebase/firestore'
+  import { kebabCase } from 'lodash-es'
+  import type { PageData } from './$types'
 
   export let data: PageData
   let dialogEl: Dialog
-  let search: string = data.query ?? ''
   let current: number | undefined
   let clickedRegistration: any
   let checked: Array<number> = []
@@ -131,30 +125,6 @@
       checked = []
     }
   }
-  function handleSearch() {
-    if (search === '') {
-      goto('/registrations')
-    } else {
-      const base = $page.url.searchParams
-      base.set('query', search)
-      goto(`?${base.toString()}`)
-    }
-  }
-  function bypassAgeLimits(id: string) {
-    getDoc(doc(db, registrationsCollection, id)).then((applicationSnapshot) => {
-      if (applicationSnapshot.exists()) {
-        updateDoc(doc(db, registrationsCollection, id), {
-          'agreements.bypassAgeLimits':
-            !applicationSnapshot.data().agreements.bypassAgeLimits,
-        })
-      }
-    })
-  }
-  async function handleClear() {
-    goto('/registrations').then(() => {
-      search = ''
-    })
-  }
   function getInterestedClasses(registration: any) {
     let interestedClasses = ''
     if (registration) {
@@ -206,40 +176,8 @@
   <title>registrations</title>
 </svelte:head>
 
-<Form class="flex gap-4" on:submit={handleSearch}>
-  <div class="relative grow">
-    <Input
-      class={{
-        container: 'mt-0',
-        input: 'mt-0 pr-20',
-      }}
-      bind:value={search}
-      placeholder="Search"
-    />
-    <div class="absolute right-2 top-0 flex h-12 items-center">
-      <Button class="uppercase px-2 py-1" on:click={handleClear}>Clear</Button>
-    </div>
-  </div>
-
-  <Button
-    class="shrink-0 h-12 w-12 p-0 flex items-center justify-center"
-    type="submit"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke-width="1.5"
-      stroke="currentColor"
-      class="w-6 h-6"
-    >
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-      />
-    </svg>
-  </Button>
+<div class="flex gap-4">
+  <SearchBox basePath="/students" />
 
   <div class="flex">
     <Select
@@ -257,7 +195,7 @@
     </a>
   </div>
   <Button><a href={url}>Download</a></Button>
-</Form>
+</div>
 
 <Table>
   <svelte:fragment slot="head">
