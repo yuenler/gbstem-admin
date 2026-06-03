@@ -4,6 +4,7 @@
     doc,
     getDoc,
     updateDoc,
+    setDoc,
     query,
     getDocs,
     collection,
@@ -22,6 +23,7 @@
     formatClassTimes,
     getNearestFutureClass,
   } from '$lib/utils'
+  import { format } from 'date-fns'
   import {
     classesCollection,
     instructorFeedbackCollection,
@@ -68,6 +70,12 @@
   let currentStudentId = ''
   let nameToUid: Record<string, string> = {}
 
+  let checkInLoading = true
+  let confirmed = false
+  let checkedIn = false
+  let checkedInAt: any = null
+  let food: Record<string, Record<string, boolean>> = {}
+
   // Load student classes and info
   async function loadStudentClasses(studentId: string) {
     classes = []
@@ -96,6 +104,35 @@
           parentName: `${data.personal.parentFirstName} ${data.personal.parentLastName}`,
         }
         studentID = studentDoc.id
+
+        // Load check-in details
+        try {
+          checkInLoading = true
+          confirmed = false
+          checkedIn = false
+          checkedInAt = null
+          food = {}
+
+          if (data.meta?.uid) {
+            const confirmedDoc = await getDoc(doc(db, 'confirmations', data.meta.uid))
+            confirmed = confirmedDoc.exists()
+          }
+
+          const hhidDocRef = doc(db, 'hhids', studentId)
+          const hhidDoc = await getDoc(hhidDocRef)
+          if (hhidDoc.exists()) {
+            const hhidData = hhidDoc.data()
+            if (hhidData) {
+              checkedIn = hhidData.checkedIn
+              checkedInAt = hhidData.checkedInAt?.toDate ? hhidData.checkedInAt.toDate() : hhidData.checkedInAt
+              food = hhidData.food || {}
+            }
+          }
+        } catch (err) {
+          console.error('Error loading check-in:', err)
+        } finally {
+          checkInLoading = false
+        }
       }
     }
 
@@ -240,6 +277,57 @@
     } catch (error) {
       console.error('Error dropping class:', error)
       alert.trigger('error', 'Failed to drop class.')
+    }
+  }
+
+  async function handleCheckIn() {
+    if (!studentID) return
+    const hhidRef = doc(db, 'hhids', studentID)
+    const now = new Date()
+    try {
+      await setDoc(hhidRef, {
+        checkedIn: true,
+        checkedInAt: now,
+        food: {
+          '2023-10-20': {
+            dinner: false,
+          },
+          '2023-10-21': {
+            breakfast: false,
+            lunch: false,
+            dinner: false,
+          },
+          '2023-10-22': {
+            breakfast: false,
+          },
+        },
+      }, { merge: true })
+      checkedIn = true
+      checkedInAt = now
+      food = {
+        '2023-10-20': { dinner: false },
+        '2023-10-21': { breakfast: false, lunch: false, dinner: false },
+        '2023-10-22': { breakfast: false }
+      }
+      alert.trigger('success', 'Student checked in successfully!')
+    } catch (error) {
+      console.error('Error checking in:', error)
+      alert.trigger('error', 'Failed to check in.')
+    }
+  }
+
+  async function handleMeal(date: string, meal: string, state: boolean) {
+    if (!studentID) return
+    const hhidRef = doc(db, 'hhids', studentID)
+    try {
+      await updateDoc(hhidRef, {
+        [`food.${date}.${meal}`]: !state,
+      })
+      food[date][meal] = !state
+      food = { ...food }
+    } catch (error) {
+      console.error('Error updating meal:', error)
+      alert.trigger('error', 'Failed to update meal.')
     }
   }
 </script>
@@ -439,6 +527,74 @@
         >
       {:else}
         <div class="p-4 text-gray-500">Loading classes…</div>
+      {/if}
+    </Card>
+
+    <Card class="mb-4 mt-5">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="font-bold">Check In & Meals</h2>
+      </div>
+      {#if checkInLoading}
+        <div class="p-4 text-gray-500">Loading check-in details…</div>
+      {:else if confirmed}
+        <div>
+          <div class="mb-4 text-green-700 font-medium">Confirmation form was submitted.</div>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="font-semibold">Checked in:</span>
+            <div>
+              {#if checkedIn}
+                <span class="text-green-600 font-medium">
+                  {checkedInAt ? format(checkedInAt, 'yyyy.MM.dd p') : 'Yes'}
+                </span>
+              {:else}
+                <div class="flex items-center text-red-500 gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-5 h-5"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span>No</span>
+                </div>
+              {/if}
+            </div>
+          </div>
+          <div class="mb-4">
+            {#if !checkedIn}
+              <Button color="green" on:click={handleCheckIn}>Check In</Button>
+            {/if}
+          </div>
+          <div class="space-y-4">
+            {#if checkedIn}
+              <div class="font-bold border-b pb-1">Meal Status</div>
+              {#each Object.keys(food).sort() as date}
+                <div class="bg-gray-50 p-3 rounded-md">
+                  <div class="font-semibold text-gray-700 mb-2">{date}</div>
+                  <div class="flex flex-wrap gap-2">
+                    {#each Object.keys(food[date]) as meal}
+                      <Button
+                        color={food[date][meal] ? 'gray' : 'blue'}
+                        on:click={() => handleMeal(date, meal, food[date][meal])}
+                      >
+                        {meal}: {food[date][meal] ? 'already eaten' : 'available'}
+                      </Button>
+                    {/each}
+                  </div>
+                </div>
+              {/each}
+            {/if}
+          </div>
+        </div>
+      {:else}
+        <div class="text-red-500 font-medium">Did not send in a confirmation form.</div>
       {/if}
     </Card>
   </div>
