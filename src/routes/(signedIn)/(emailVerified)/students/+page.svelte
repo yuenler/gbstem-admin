@@ -4,9 +4,12 @@
   import Button from '$lib/components/Button.svelte'
   import type Dialog from '$lib/components/Dialog.svelte'
   import SearchBox from '$lib/components/SearchBox.svelte'
-  import Select from '$lib/components/Select.svelte'
+  import StatusFilter from '$lib/components/StatusFilter.svelte'
+  import CourseFilter from '$lib/components/CourseFilter.svelte'
+  import PerPageControl from '$lib/components/PerPageControl.svelte'
   import StudentDetails from '$lib/components/StudentDetails.svelte'
   import Table from '$lib/components/Table.svelte'
+  import { goto } from '$app/navigation'
   import {
     classesCollection,
     registrationsCollection,
@@ -28,8 +31,6 @@
   let current: number | undefined
   let clickedRegistration: any
   let checked: Array<number> = []
-  let decisionFilter: 'all' | 'submitted' | 'enrolled' =
-    ($page.url.searchParams.get('filter') as any) ?? 'all'
 
   const csv = data.registrations
     .map((registration) => {
@@ -81,28 +82,22 @@
         ? undefined
         : data.registrations[current]
 
-  let nextHref = ''
-  let filterRef = ''
-  $: {
-    const base = $page.url.searchParams
-    base.set(
-      'updated',
-      data.registrations[
-        data.registrations.length - 1
-      ].values.timestamps.updated.toString(),
-    )
-    nextHref = `?${base.toString()}`
-  }
-  $: {
-    const base = $page.url.searchParams
-    if (decisionFilter !== 'all') {
-      base.set('filter', decisionFilter)
-      base.delete('updated')
-    } else {
-      base.delete('filter')
-    }
-    filterRef = `?${base.toString()}`
-  }
+  $: currentPage = data.page ?? 1
+  $: currentLimit = data.limit ?? 25
+
+  $: prevHref = (() => {
+    if (currentPage <= 1) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage - 1))
+    return `?${base.toString()}`
+  })()
+
+  $: nextHref = (() => {
+    if (data.registrations.length < currentLimit) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage + 1))
+    return `?${base.toString()}`
+  })()
 
   function handleCheck(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
@@ -176,25 +171,12 @@
   <title>registrations</title>
 </svelte:head>
 
-<div class="flex gap-4">
+<div class="flex flex-wrap items-center gap-4">
   <SearchBox basePath="/students" />
-
-  <div class="flex">
-    <Select
-      bind:value={decisionFilter}
-      label="Filter"
-      options={[{ name: 'all' }, { name: 'submitted' }, { name: 'enrolled' }]}
-      floating
-      required
-    />
-    <a
-      href={filterRef}
-      class="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
-    >
-      Filter
-    </a>
-  </div>
-  <Button><a href={url}>Download</a></Button>
+  <CourseFilter paramName="course" />
+  <StatusFilter type="students" />
+  <PerPageControl />
+  <Button class="h-12 flex items-center"><a href={url}>Download</a></Button>
 </div>
 
 <Table>
@@ -222,48 +204,50 @@
   <svelte:fragment slot="body">
     {#each data.registrations as registration, i}
       {#await getCourses(registration.id) then courses}
-        {#if courses !== 'NO CLASS ENROLLMENT FOUND'}
-          <tr
-            class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
-            on:click={() => {
-              current = i
-              dialogEl.open()
-            }}
-          >
-            <td class="w-4 p-4">
-              <div class="flex items-center">
-                <input
-                  id={`check-${i}`}
-                  class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-hidden focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
-                  type="checkbox"
-                  checked={checked.includes(i)}
-                  on:input={(e) => handleCheck(e, i)}
-                  on:click|stopPropagation
-                />
-                <label for="check-all" class="sr-only">checkbox</label>
-              </div>
-            </td>
-            <td class="px-6 py-4">
-              {`${normalizeCapitals(registration.values.personal.studentFirstName + ' ' + registration.values.personal.studentLastName)}`}
-            </td>
+        <tr
+          class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
+          on:click={() => {
+            current = i
+            dialogEl.open()
+          }}
+        >
+          <td class="w-4 p-4">
+            <div class="flex items-center">
+              <input
+                id={`check-${i}`}
+                class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-hidden focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+                type="checkbox"
+                checked={checked.includes(i)}
+                on:input={(e) => handleCheck(e, i)}
+                on:click|stopPropagation
+              />
+              <label for={`check-${i}`} class="sr-only">checkbox</label>
+            </div>
+          </td>
+          <td class="px-6 py-4">
+            {`${normalizeCapitals(registration.values.personal.studentFirstName + ' ' + registration.values.personal.studentLastName)}`}
+          </td>
 
-            <td class="px-6 py-4">{courses}</td>
-            <td class="px-6 py-4"> {registration.values.personal.email} </td>
-            <td class="px-6 py-4">
-              {registration.values.academic.school}
-            </td>
-            <td class="px-6 py-4">
-              {registration.values.academic.grade}
-            </td>
-            <td class="px-6 py-4">
-              {normalizeCapitals(
-                registration.values.personal.parentFirstName +
-                  ' ' +
-                  registration.values.personal.parentLastName,
-              )}
-            </td></tr
-          >
-        {/if}
+          <td class="px-6 py-4">
+            {courses === 'NO CLASS ENROLLMENT FOUND'
+              ? 'Not Enrolled'
+              : courses.join(', ')}
+          </td>
+          <td class="px-6 py-4"> {registration.values.personal.email} </td>
+          <td class="px-6 py-4">
+            {registration.values.academic.school}
+          </td>
+          <td class="px-6 py-4">
+            {registration.values.academic.grade}
+          </td>
+          <td class="px-6 py-4">
+            {normalizeCapitals(
+              registration.values.personal.parentFirstName +
+                ' ' +
+                registration.values.personal.parentLastName,
+            )}
+          </td>
+        </tr>
       {/await}
     {/each}
   </svelte:fragment>
@@ -271,9 +255,16 @@
 
 <StudentDetails bind:dialogEl id={clickedRegistration?.id} />
 
-<div class="flex justify-end mt-4">
-  <Button href={nextHref}>Next</Button>
-</div>
+{#if !data.query && data.registrations}
+  <div class="flex justify-end gap-2 mt-4">
+    {#if currentPage > 1}
+      <Button href={prevHref}>Previous</Button>
+    {/if}
+    {#if data.registrations.length >= currentLimit}
+      <Button href={nextHref}>Next</Button>
+    {/if}
+  </div>
+{/if}
 
 <style>
   input:checked {

@@ -1,71 +1,38 @@
 <script lang="ts">
-  import Registration from '$lib/components/Registration.svelte'
-  import type Dialog from '$lib/components/Dialog.svelte'
-  import { format } from 'date-fns'
-  import Button from '$lib/components/Button.svelte'
-  import SearchBox from '$lib/components/SearchBox.svelte'
-  import type { PageData } from './$types'
-  import { goto, invalidate } from '$app/navigation'
   import { page } from '$app/stores'
+  import { db } from '$lib/client/firebase'
+  import Button from '$lib/components/Button.svelte'
+  import CollectionFilter from '$lib/components/CollectionFilter.svelte'
+  import type Dialog from '$lib/components/Dialog.svelte'
+  import PerPageControl from '$lib/components/PerPageControl.svelte'
+  import Registration from '$lib/components/Registration.svelte'
+  import SearchBox from '$lib/components/SearchBox.svelte'
+  import StatusFilter from '$lib/components/StatusFilter.svelte'
   import Table from '$lib/components/Table.svelte'
-  import { actions, alert } from '$lib/stores'
-  import { db, user } from '$lib/client/firebase'
-  import {
-    doc,
-    updateDoc,
-    getDoc,
-    collection,
-    query,
-    getDocs,
-    where,
-  } from 'firebase/firestore'
-  import Select from '$lib/components/Select.svelte'
-  import { kebabCase } from 'lodash-es'
-  import { normalizeCapitals } from '$lib/utils'
   import {
     classesCollection,
     registrationsCollection,
   } from '$lib/data/collections'
-  import { writable } from 'svelte/store'
+  import { normalizeCapitals } from '$lib/utils'
+  import { format } from 'date-fns'
+  import {
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    query,
+    updateDoc,
+    where,
+  } from 'firebase/firestore'
+  import { kebabCase } from 'lodash-es'
+  import type { PageData } from './$types'
 
   export let data: PageData
   let dialogEl: Dialog
   let current: number | undefined
   let checked: Array<number> = []
-  let decisionFilter:
-    | 'all'
-    | 'submitted'
-    | 'enrolled'
-    | 'inPerson'
-    | 'incomplete'
-    | 'not enrolled' = ($page.url.searchParams.get('filter') as any) ?? 'all'
-
-  // const mathCourseMap = {
-  //   'Mathematics 5b': 'mathematics-v',
-  //   'Mathematics 4b': 'mathematics-iv',
-  //   'Mathematics 3b': 'mathematics-iii',
-  //   'Mathematics 2b': 'mathematics-ii',
-  //   'Mathematics 1b': 'mathematics-i',
-  // }
-
-  const collectionOptions = [
-    { name: 'Spring 2026', value: 'registrationsSpring26' },
-    { name: 'Fall 2025', value: 'registrationsFall25' },
-    { name: 'Spring 2025', value: 'registrationsSpring25' },
-    { name: 'Fall 2024', value: 'registrationsFall24' },
-    { name: 'Spring 2024', value: 'registrationsSpring24' },
-  ]
-
-  // Default to the current collection or the default
-  let selectedCollection =
+  $: selectedCollection =
     $page.url.searchParams.get('collection') ?? registrationsCollection
-
-  function handleCollectionChange() {
-    const base = $page.url.searchParams
-    base.set('collection', selectedCollection)
-    base.delete('updated') // Remove pagination param if present
-    goto(`?${base.toString()}`)
-  }
 
   const csv = data.registrations
     .map((registration) => {
@@ -135,28 +102,22 @@
       : current === undefined
         ? undefined
         : data.registrations[current]
-  let nextHref = ''
-  let filterRef = ''
-  $: {
-    const base = $page.url.searchParams
-    base.set(
-      'updated',
-      data.registrations[
-        data.registrations.length - 1
-      ].values.timestamps.updated.toString(),
-    )
-    nextHref = `?${base.toString()}`
-  }
-  $: {
-    const base = $page.url.searchParams
-    if (decisionFilter !== 'all') {
-      base.set('filter', decisionFilter)
-      base.delete('updated')
-    } else {
-      base.delete('filter')
-    }
-    filterRef = `?${base.toString()}`
-  }
+  $: currentPage = data.page ?? 1
+  $: currentLimit = data.limit ?? 25
+
+  $: prevHref = (() => {
+    if (currentPage <= 1) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage - 1))
+    return `?${base.toString()}`
+  })()
+
+  $: nextHref = (() => {
+    if (data.registrations.length < currentLimit) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage + 1))
+    return `?${base.toString()}`
+  })()
 
   function handleCheck(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
@@ -240,64 +201,12 @@
   <title>registrations</title>
 </svelte:head>
 
-<div class="flex gap-4">
+<div class="flex flex-wrap items-center gap-4">
   <SearchBox basePath="/registrations" />
-
-  <div class="relative flex items-end">
-    <select
-      id="collection-select"
-      bind:value={selectedCollection}
-      on:change={handleCollectionChange}
-      class="block w-full h-12 px-4 pr-10 text-base bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition appearance-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-      required
-    >
-      <option value="" disabled hidden selected>Select collection…</option>
-      {#each collectionOptions as option}
-        <option value={option.value}>{option.name}</option>
-      {/each}
-    </select>
-    <span
-      class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400"
-    >
-      <svg
-        class="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M19 9l-7 7-7-7"
-        />
-      </svg>
-    </span>
-  </div>
-
-  <div class="flex">
-    <Select
-      bind:value={decisionFilter}
-      label="Filter"
-      options={[
-        { name: 'all' },
-        { name: 'submitted' },
-        { name: 'enrolled' },
-        { name: 'inPerson' },
-        { name: 'incomplete' },
-        { name: 'not enrolled' },
-      ]}
-      floating
-      required
-    />
-    <a
-      href={filterRef}
-      class="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
-    >
-      Filter
-    </a>
-  </div>
-  <Button><a href={url}>Download</a></Button>
+  <CollectionFilter type="registrations" />
+  <StatusFilter type="registrations" />
+  <PerPageControl />
+  <Button class="h-12 flex items-center"><a href={url}>Download</a></Button>
 </div>
 
 <Table>
@@ -406,7 +315,16 @@
 
 <div class="flex justify-between mt-4 w-full">
   <Button><a href={schoolsUrl}>Download Schools List</a></Button>
-  <Button href={nextHref}>Next</Button>
+  {#if !data.query && data.registrations}
+    <div class="flex gap-2">
+      {#if currentPage > 1}
+        <Button href={prevHref}>Previous</Button>
+      {/if}
+      {#if data.registrations.length >= currentLimit}
+        <Button href={nextHref}>Next</Button>
+      {/if}
+    </div>
+  {/if}
 </div>
 
 <Registration

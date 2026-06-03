@@ -50,7 +50,7 @@
   }
 </script>
 
-<Form class="flex gap-4 grow" on:submit={handleSearch}>
+<Form class="flex gap-4 w-96 shrink-0" on:submit={handleSearch}>
   <div class="relative grow">
     <Input
       class={{

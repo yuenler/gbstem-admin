@@ -11,32 +11,27 @@ export const load = (async ({ url, depends }) => {
   depends('app:classes')
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
+    const pageStr = url.searchParams.get('page') ?? '1'
+    const limitStr = url.searchParams.get('limit') ?? '25'
+    const pageNum = parseInt(pageStr, 10)
+    const limitVal = parseInt(limitStr, 10)
+    const offsetVal = (pageNum - 1) * limitVal
+
     const filter = url.searchParams.get('filter')
     try {
       let dbQuery: Query
 
       const collectionName = classesCollection
-      if (
-        filter === 'Python I' ||
-        filter === 'Python II' ||
-        filter === 'Scratch' ||
-        filter === 'Web Development' ||
-        filter === 'Engineering I' ||
-        filter === 'Engineering II' ||
-        filter === 'Engineering III' ||
-        filter === 'Math I' ||
-        filter === 'Math II' ||
-        filter === 'Math III' ||
-        filter === 'Math IV' ||
-        filter === 'Math V' ||
-        filter === 'Environmental Science'
-      ) {
+      if (filter && filter !== 'all') {
         dbQuery = adminDb
           .collection(collectionName)
           .where('course', '==', filter)
+          .orderBy('course')
       } else {
         dbQuery = adminDb.collection(collectionName).orderBy('course')
       }
+
+      dbQuery = dbQuery.limit(limitVal).offset(offsetVal)
 
       const snapshot = await dbQuery.get()
 
@@ -58,6 +53,8 @@ export const load = (async ({ url, depends }) => {
             ),
           }
         }),
+        page: pageNum,
+        limit: limitVal,
       }
     } catch (err: any) {
       console.error('[Load Error] classes page load:', err)

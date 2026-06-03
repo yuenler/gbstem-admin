@@ -36,6 +36,12 @@ export async function searchIndex<T>(
     )
     const snapshot = await adminDb.collection(indexName).get()
 
+    const isPlainObject = (obj: any): boolean => {
+      if (obj === null || typeof obj !== 'object') return false
+      const proto = Object.getPrototypeOf(obj)
+      return proto === null || proto === Object.prototype
+    }
+
     // Helper to sanitize Firestore Timestamps into standard Date objects
     const sanitize = (val: any): any => {
       if (val && typeof val === 'object') {
@@ -44,6 +50,9 @@ export async function searchIndex<T>(
         }
         if (Array.isArray(val)) {
           return val.map(sanitize)
+        }
+        if (!isPlainObject(val)) {
+          return val
         }
         const res: any = {}
         for (const key of Object.keys(val)) {
@@ -74,6 +83,9 @@ export async function searchIndex<T>(
       if (typeof val === 'object' && val !== null) {
         if (val instanceof Date) {
           return val.toISOString().toLowerCase().includes(lowerQuery)
+        }
+        if (!isPlainObject(val)) {
+          return false
         }
         return Object.values(val).some(matchesQuery)
       }

@@ -1,93 +1,101 @@
 <script lang="ts">
-  import {
-    collection,
-    query,
-    getDocs,
-    updateDoc,
-    doc,
-    getDoc,
-  } from 'firebase/firestore'
-  import { db, user } from '$lib/client/firebase'
-  import Form from '$lib/components/Form.svelte'
-  import clsx from 'clsx'
-  import { alert } from '$lib/stores'
-  import { onMount } from 'svelte'
-  import { get } from 'svelte/store'
+  import { page } from '$app/stores'
+  import { goto } from '$app/navigation'
   import Table from '$lib/components/Table.svelte'
-  import { json } from '@sveltejs/kit'
-  import { connectStorageEmulator } from 'firebase/storage'
-  import { classFeedbackCollection } from '$lib/data/collections'
+  import CourseFilter from '$lib/components/CourseFilter.svelte'
+  import SearchBox from '$lib/components/SearchBox.svelte'
+  import PerPageControl from '$lib/components/PerPageControl.svelte'
+  import Button from '$lib/components/Button.svelte'
+  import type { PageData } from './$types'
 
-  let showValidation = false
-  let currentUser: Data.User.Store
-  let scheduled = false
-  let data: Data.StudentFeedback[] = []
-  let loading = true
+  export let data: PageData
 
-  onMount(() => {
-    return user.subscribe(async (user) => {
-      if (user) {
-        currentUser = user
-        data = await getData()
-        loading = false
-      }
+  $: currentPage = data.page ?? 1
+  $: currentLimit = data.limit ?? 25
+
+  $: prevHref = (() => {
+    if (currentPage <= 1) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage - 1))
+    return `?${base.toString()}`
+  })()
+
+  $: nextHref = (() => {
+    if (data.feedback.length < currentLimit) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage + 1))
+    return `?${base.toString()}`
+  })()
+
+  // Generate CSV download
+  $: csv = data.feedback
+    .map((item) => {
+      return [
+        item.id,
+        item.studentName,
+        item.course,
+        item.instructorName,
+        item.date,
+        item.feedback ? item.feedback.replace(/,/g, '') : '',
+        item.rating,
+      ].join(',')
     })
-  })
+    .join('\n')
 
-  async function getData() {
-    const q = query(collection(db, classFeedbackCollection))
-    const classFeedback = await getDocs(q)
-    classFeedback.forEach(async (document) => {
-      const session = document.data()
-      let tempClass: Data.StudentFeedback = {
-        instructorName: '',
-        studentName: '',
-        feedback: '',
-        rating: 0,
-        course: '',
-        date: '',
-      }
-      tempClass.instructorName = session.instructor
-      tempClass.date = session.date
-      tempClass.feedback = session.feedback
-      tempClass.studentName = session.studentName
-      tempClass.course = session.course
-      tempClass.rating = session.rating
-      data.push(tempClass)
-    })
-    return data
-  }
+  $: csvWithHeaders = `id,studentName,course,instructorName,date,feedback,rating\n${csv}`
+  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
+  $: url = URL.createObjectURL(blob)
 </script>
 
-{#await data then feedback}
-  <Table>
-    <svelte:fragment slot="head">
-      <th scope="col" class="px-6 py-3">Student Name</th>
-      <th scope="col" class="px-6 py-3">Course</th>
-      <th scope="col" class="px-6 py-3">Instructor Name</th>
-      <th scope="col" class="px-6 py-3">Date</th>
-      <th scope="col" class="px-6 py-3">Feedback</th>
-      <th scope="col" class="px-6 py-3">Rating</th>
-    </svelte:fragment>
-    <svelte:fragment slot="body">
-      {#each feedback as value}
-        <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer">
-          <td class="px-6 py-4"> {value.studentName} </td>
-          <td class="px-6 py-4">
-            {value.course}
-          </td>
-          <td class="px-6 py-4">
-            {value.instructorName}
-          </td>
-          <td class="px-6 py-4">{value.date}</td>
-          <td class="px-6 py-4">
-            {value.feedback}
-          </td>
-          <td class="px-6 py-4">
-            {value.rating}
-          </td>
-        </tr>
-      {/each}
-    </svelte:fragment>
-  </Table>
-{/await}
+<svelte:head>
+  <title>Student Feedback</title>
+</svelte:head>
+
+<div class="flex flex-wrap items-center gap-4 mb-4">
+  <SearchBox basePath="/student-feedback" />
+  <CourseFilter paramName="course" />
+  <PerPageControl />
+  <Button class="h-12 flex items-center"><a href={url}>Download</a></Button>
+</div>
+
+<Table>
+  <svelte:fragment slot="head">
+    <th scope="col" class="px-6 py-3">Student Name</th>
+    <th scope="col" class="px-6 py-3">Course</th>
+    <th scope="col" class="px-6 py-3">Instructor Name</th>
+    <th scope="col" class="px-6 py-3">Date</th>
+    <th scope="col" class="px-6 py-3">Feedback</th>
+    <th scope="col" class="px-6 py-3">Rating</th>
+  </svelte:fragment>
+  <svelte:fragment slot="body">
+    {#each data.feedback as value}
+      <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer">
+        <td class="px-6 py-4"> {value.studentName} </td>
+        <td class="px-6 py-4">
+          {value.course}
+        </td>
+        <td class="px-6 py-4">
+          {value.instructorName}
+        </td>
+        <td class="px-6 py-4">{value.date}</td>
+        <td class="px-6 py-4">
+          {value.feedback}
+        </td>
+        <td class="px-6 py-4">
+          {value.rating}
+        </td>
+      </tr>
+    {/each}
+  </svelte:fragment>
+</Table>
+
+{#if !data.query && data.feedback}
+  <div class="flex justify-end gap-2 mt-4">
+    {#if currentPage > 1}
+      <Button href={prevHref}>Previous</Button>
+    {/if}
+    {#if data.feedback.length >= currentLimit}
+      <Button href={nextHref}>Next</Button>
+    {/if}
+  </div>
+{/if}

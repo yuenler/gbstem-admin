@@ -6,7 +6,9 @@
   import Button from '$lib/components/Button.svelte'
   import type Dialog from '$lib/components/Dialog.svelte'
   import SearchBox from '$lib/components/SearchBox.svelte'
-  import Select from '$lib/components/Select.svelte'
+  import CollectionFilter from '$lib/components/CollectionFilter.svelte'
+  import StatusFilter from '$lib/components/StatusFilter.svelte'
+  import PerPageControl from '$lib/components/PerPageControl.svelte'
   import Table from '$lib/components/Table.svelte'
   import { applicationsCollection } from '$lib/data/collections'
   import { actions, alert } from '$lib/stores'
@@ -18,13 +20,6 @@
   let dialogEl: Dialog
   let current: number | undefined
   let checked: Array<number> = []
-  let decisionFilter:
-    | 'all'
-    | 'decided'
-    | 'undecided'
-    | 'inPerson'
-    | 'incomplete'
-    | 'complete' = ($page.url.searchParams.get('filter') as any) ?? 'all'
 
   const csv = data.applications
     .map((application: PageData['applications'][number]) => {
@@ -80,33 +75,22 @@
       : current === undefined
         ? undefined
         : data.applications[current]
-  let nextHref = ''
-  let filterRef = ''
-  $: {
-    const base = $page.url.searchParams
-    base.delete('updated')
-    if (data.applications.length > 0) {
-      base.set(
-        'updated',
-        data.applications[
-          data.applications.length - 1
-        ].values.timestamps.updated.toString(),
-      )
-      nextHref = `?${base.toString()}`
-    } else {
-      nextHref = '?'
-    }
-  }
-  $: {
-    const base = $page.url.searchParams
-    if (decisionFilter !== 'all') {
-      base.set('filter', decisionFilter)
-      base.delete('updated')
-    } else {
-      base.delete('filter')
-    }
-    filterRef = `?${base.toString()}`
-  }
+  $: currentPage = data.page ?? 1
+  $: currentLimit = data.limit ?? 25
+
+  $: prevHref = (() => {
+    if (currentPage <= 1) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage - 1))
+    return `?${base.toString()}`
+  })()
+
+  $: nextHref = (() => {
+    if (data.applications.length < currentLimit) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage + 1))
+    return `?${base.toString()}`
+  })()
 
   function createDecisionAction(decision: Data.Decision) {
     let name: 'Accept' | 'Waitlist' | 'Reject' | 'Interview' | 'Substitute'
@@ -202,91 +186,20 @@
     }
   }
 
-  // Add your collection options here
-  const collectionOptions = [
-    { name: 'Spring 2026', value: 'applicationsSpring26' },
-    { name: 'Fall 2025', value: 'applicationsFall25' },
-    { name: 'Spring 2025', value: 'applicationsSpring25' },
-    { name: 'Fall 2024', value: 'applicationsFall24' },
-    { name: 'Spring 2024', value: 'applicationsSpring24' },
-  ]
-
-  // Default to the current collection or 'applications'
-  let selectedCollection =
+  $: selectedCollection =
     $page.url.searchParams.get('collection') ?? applicationsCollection
-
-  // When the dropdown changes, reload with the new collection as a query param
-  function handleCollectionChange() {
-    const base = $page.url.searchParams
-    base.set('collection', selectedCollection)
-    base.delete('updated')
-    goto(`?${base.toString()}`)
-  }
 </script>
 
 <svelte:head>
   <title>Applications</title>
 </svelte:head>
 
-<div class="flex gap-4">
+<div class="flex flex-wrap items-center gap-4">
   <SearchBox basePath="/applications" />
-
-  <div class="flex items-center">
-    <label for="collection-select" class="sr-only">Collection</label>
-    <div class="relative">
-      <select
-        id="collection-select"
-        bind:value={selectedCollection}
-        on:change={handleCollectionChange}
-        class="block w-full h-12 px-4 pr-10 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white appearance-none transition"
-      >
-        {#each collectionOptions as option}
-          <option value={option.value}>{option.name}</option>
-        {/each}
-      </select>
-      <span
-        class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400"
-      >
-        <!-- Down arrow SVG -->
-        <svg
-          class="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
-      </span>
-    </div>
-  </div>
-
-  <div class="flex">
-    <Select
-      bind:value={decisionFilter}
-      label="Filter"
-      options={[
-        { name: 'all' },
-        { name: 'undecided' },
-        { name: 'inPerson' },
-        { name: 'incomplete' },
-        { name: 'complete' },
-      ]}
-      floating
-      required
-    />
-    <a
-      href={filterRef}
-      class="inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
-    >
-      Filter
-    </a>
-  </div>
-  <Button><a href={url}>Download</a></Button>
+  <CollectionFilter type="applications" />
+  <StatusFilter type="applications" />
+  <PerPageControl />
+  <Button class="h-12 flex items-center"><a href={url}>Download</a></Button>
 </div>
 
 <Table>
@@ -537,9 +450,16 @@
   </svelte:fragment>
 </Table>
 
-<div class="flex justify-end mt-4">
-  <Button href={nextHref}>Next</Button>
-</div>
+{#if !data.query && data.applications}
+  <div class="flex justify-end gap-2 mt-4">
+    {#if currentPage > 1}
+      <Button href={prevHref}>Previous</Button>
+    {/if}
+    {#if data.applications.length >= currentLimit}
+      <Button href={nextHref}>Next</Button>
+    {/if}
+  </div>
+{/if}
 
 <Application
   bind:dialogEl

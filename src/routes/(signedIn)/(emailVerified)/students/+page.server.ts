@@ -1,51 +1,64 @@
 import { registrationsCollection } from '$lib/data/collections'
+import csCourses from '$lib/data/csCourses.json'
+import engineeringCourses from '$lib/data/engineeringCourses.json'
+import mathCourses from '$lib/data/mathCourses.json'
+import scienceCourses from '$lib/data/scienceCourses.json'
 import { adminDb } from '$lib/server/firebase'
 import { searchIndex } from '$lib/server/search'
 import { error } from '@sveltejs/kit'
 import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import type { PageServerLoad } from './$types'
-// import { db } from '$lib/client/firebase'
+
+function getCourseField(courseName: string): string | null {
+  if (csCourses.some((c) => c.name === courseName)) return 'program.csCourse'
+  if (engineeringCourses.some((c) => c.name === courseName))
+    return 'program.engineeringCourse'
+  if (mathCourses.some((c) => c.name === courseName))
+    return 'program.mathCourse'
+  if (scienceCourses.some((c) => c.name === courseName))
+    return 'program.scienceCourse'
+  return null
+}
 
 export const load = (async ({ url, depends }) => {
   depends('app:registrations')
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
-    const updated = url.searchParams.get('updated')
+    const pageStr = url.searchParams.get('page') ?? '1'
+    const limitStr = url.searchParams.get('limit') ?? '25'
+    const pageNum = parseInt(pageStr, 10)
+    const limitVal = parseInt(limitStr, 10)
+    const offsetVal = (pageNum - 1) * limitVal
+
     const filter = url.searchParams.get('filter')
+    const course = url.searchParams.get('course')
     try {
       let dbQuery: Query
 
       const collectionName = registrationsCollection
+      dbQuery = adminDb.collection(collectionName)
+
       if (filter === 'submitted') {
-        dbQuery = updated
-          ? adminDb
-              .collection(collectionName)
-              .where('meta.submitted', '==', true)
-              .startAfter(new Date(updated))
-          : adminDb
-              .collection(collectionName)
-              .where('meta.submitted', '==', true)
+        dbQuery = dbQuery.where('meta.submitted', '==', true)
       } else if (filter === 'enrolled') {
-        dbQuery = updated
-          ? adminDb.collection(collectionName).where('enrolled', '==', true)
-          : adminDb.collection(collectionName).where('enrolled', '==', true)
+        dbQuery = dbQuery.where('enrolled', '==', true)
       } else {
-        dbQuery = updated
-          ? adminDb
-              .collection(collectionName)
-              .where('meta.submitted', '==', true)
-              .orderBy('timestamps.updated', 'desc')
-              .startAfter(new Date(updated))
-          : adminDb
-              .collection(collectionName)
-              .where('meta.submitted', '==', true)
-              .orderBy('timestamps.updated', 'desc')
+        dbQuery = dbQuery.where('meta.submitted', '==', true)
       }
 
-      // const snapshot = await dbQuery.limit(25).get()
-      const snapshot = await dbQuery.get()
+      if (course && course !== 'all') {
+        const fieldName = getCourseField(course)
+        if (fieldName) {
+          dbQuery = dbQuery.where(fieldName, '==', course)
+        }
+      }
 
-      // const snapshot = await dbQuery.get()
+      dbQuery = dbQuery.orderBy('timestamps.updated', 'desc')
+
+      // Apply pagination limit and offset
+      dbQuery = dbQuery.limit(limitVal).offset(offsetVal)
+
+      const snapshot = await dbQuery.get()
 
       return {
         registrations: snapshot.docs.map((doc: QueryDocumentSnapshot) => {
@@ -64,6 +77,8 @@ export const load = (async ({ url, depends }) => {
             },
           }
         }),
+        page: pageNum,
+        limit: limitVal,
       }
     } catch (err: any) {
       console.error('[Load Error] students page load:', err)
@@ -93,11 +108,15 @@ export const load = (async ({ url, depends }) => {
       const decisions = (
         await Promise.all(
           hits.map((hit) => {
-            const decision = hit.meta.decision
-            return decision ? adminDb.doc(decision).get() : null
+            const decision = hit.meta.decision as any
+            return decision
+              ? typeof decision.get === 'function'
+                ? decision.get()
+                : adminDb.doc(decision).get()
+              : null
           }),
         )
-      ).map((doc) =>
+      ).map((doc: any) =>
         doc ? (doc.data() as { type: Data.Decision }).type : null,
       )
       return {

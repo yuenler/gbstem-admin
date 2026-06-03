@@ -363,6 +363,158 @@ async function seed() {
       },
     })
 
+  // Seeding 30 additional mock students/registrations
+  console.log('Seeding 30 additional mock students/registrations...')
+  const firstNames = [
+    'James',
+    'Mary',
+    'John',
+    'Patricia',
+    'Robert',
+    'Jennifer',
+    'Michael',
+    'Linda',
+    'William',
+    'Elizabeth',
+    'David',
+    'Barbara',
+    'Richard',
+    'Susan',
+    'Joseph',
+    'Jessica',
+    'Thomas',
+    'Sarah',
+    'Charles',
+    'Karen',
+    'Christopher',
+    'Nancy',
+    'Daniel',
+    'Lisa',
+    'Matthew',
+    'Betty',
+    'Anthony',
+    'Margaret',
+    'Mark',
+    'Sandra',
+  ]
+  const lastNames = [
+    'Smith',
+    'Johnson',
+    'Williams',
+    'Brown',
+    'Jones',
+    'Garcia',
+    'Miller',
+    'Davis',
+    'Rodriguez',
+    'Martinez',
+    'Hernandez',
+    'Lopez',
+    'Gonzalez',
+    'Wilson',
+    'Anderson',
+    'Thomas',
+    'Taylor',
+    'Moore',
+    'Jackson',
+    'Martin',
+    'Lee',
+    'Perez',
+    'Thompson',
+    'White',
+    'Harris',
+    'Sanchez',
+    'Clark',
+    'Ramirez',
+    'Lewis',
+    'Robinson',
+  ]
+  const schools = [
+    'Pinecrest Elementary',
+    'Oakridge Elementary',
+    'Brookside School',
+    'Maple Valley Academy',
+    'Riverdale Charter',
+  ]
+  const grades = ['1', '2', '3', '4', '5', '6']
+  const courses = [
+    'Scratch',
+    'Python I',
+    'Python II',
+    'Java',
+    'Web Development',
+  ]
+
+  for (let i = 0; i < 30; i++) {
+    const id = `reg-fake-${i}`
+    const studentFirstName = firstNames[i % firstNames.length]
+    const studentLastName = lastNames[i % lastNames.length]
+    const email = `student-${i}@gmail.com`
+    const isEnrolled = i % 2 === 0 // 15 enrolled, 15 only submitted
+    const inPerson = i % 5 === 0 // 6 inPerson = true
+    const submitted = i % 7 !== 0 // 26 submitted = true, 4 incomplete/submitted = false
+
+    // Vary the timestamp slightly so ordering/pagination is predictable
+    const createdDate = new Date(Date.now() - (30 - i) * 60 * 60 * 1000)
+
+    const regData = {
+      personal: {
+        email: email,
+        studentFirstName: studentFirstName,
+        studentLastName: studentLastName,
+        parentFirstName: 'Parent',
+        parentLastName: studentLastName,
+        secondaryEmail: '',
+        dateOfBirth: '2016-01-01',
+        gender: i % 2 === 0 ? 'Male' : 'Female',
+        race: ['White'],
+        phoneNumber: `555-${String(i).padStart(4, '0')}`,
+        frlp: i % 3 === 0 ? 'Yes' : 'No',
+        parentEducation: "Bachelor's Degree",
+      },
+      academic: {
+        school: schools[i % schools.length],
+        grade: grades[i % grades.length],
+      },
+      program: {
+        csCourse: courses[i % courses.length],
+        mathCourse: 'Mathematics 1a',
+        engineeringCourse: 'Engineering I',
+        scienceCourse: 'Environmental Science',
+        reason: 'Interest in STEM fields.',
+        inPerson: inPerson,
+      },
+      inPerson: {
+        allergies: 'None',
+        parentPickup: 'Parent Name',
+      },
+      agreements: {
+        entireProgram: true,
+        timeCommitment: true,
+        submitting: true,
+        mediaRelease: true,
+        bypassAgeLimits: false,
+      },
+      meta: {
+        id: id,
+        uid: `user-fake-${i}`,
+        submitted: submitted,
+      },
+      timestamps: {
+        created: admin.firestore.Timestamp.fromDate(createdDate),
+        updated: admin.firestore.Timestamp.fromDate(createdDate),
+      },
+    }
+
+    if (isEnrolled && submitted) {
+      regData.enrolled = true
+    } else {
+      regData.enrolled = false
+    }
+
+    await db.collection(registrationsCollection).doc(id).set(regData)
+  }
+
   // Create Mock Applications
   console.log(`Seeding mock applications in "${applicationsCollection}"...`)
   await db
@@ -483,25 +635,154 @@ async function seed() {
       classIds: ['class-python1'],
     })
 
-  // Create Mock Sub-Requests
-  console.log(`Seeding mock sub-requests in "${subRequestsCollection}"...`)
-  await db
-    .collection(subRequestsCollection)
-    .doc('sub-req-1')
-    .set({
-      classNumber: 3,
-      course: 'Python I',
-      dateOfClass: admin.firestore.Timestamp.fromDate(
-        new Date('2026-03-09T16:00:00Z'),
-      ),
-      originalInstructorEmail: 'instructor1@gbstem.org',
-      subInstructorId: '',
-      subInstructorFirstName: '',
-      subInstructorEmail: '',
-      subRequestStatus: 'open',
-      link: 'https:// zoom.us/j/123456789',
-      notes: 'Dentist appointment.',
-    })
+  // Seeding 30 applications
+  console.log('Seeding 30 additional mock applications...')
+  for (let i = 0; i < 30; i++) {
+    const id = `app-fake-${i}`
+    const submitted = i % 3 !== 0 // 20 submitted, 10 incomplete
+    const inPerson = i % 5 === 0 // 6 inPerson
+    const isDecided = i % 6 === 0 // 5 decided
+
+    const createdDate = new Date(Date.now() - (30 - i) * 60 * 60 * 1000)
+
+    const appData = {
+      personal: {
+        email: `applicant-${i}@gmail.com`,
+        firstName: firstNames[i % firstNames.length],
+        lastName: lastNames[i % lastNames.length],
+        dateOfBirth: '2008-01-01',
+        gender: i % 2 === 0 ? 'Male' : 'Female',
+        race: ['White'],
+        phoneNumber: `555-${String(i).padStart(4, '0')}`,
+      },
+      academic: {
+        school: schools[i % schools.length],
+        graduationYear: '2028',
+      },
+      program: {
+        courses: [courses[i % courses.length]],
+        preferences: 'None',
+        numClasses: '1',
+        timeSlots: 'Monday/Wednesday',
+        notAvailable: '',
+        inPerson: inPerson,
+        reason: 'Wants to teach.',
+      },
+      essay: {
+        taughtBefore: i % 2 === 0,
+        academicBackground: 'Taken CS classes.',
+        teachingScenario: 'Scenario detail.',
+        why: 'Why detail.',
+      },
+      agreements: {
+        entireProgram: true,
+        timeCommitment: true,
+        submitting: true,
+      },
+      meta: {
+        id: id,
+        uid: `user-fake-app-${i}`,
+        interview: true,
+        submitted: submitted,
+        decision: isDecided ? db.collection(decisionsCollection).doc(id) : null,
+      },
+      timestamps: {
+        created: admin.firestore.Timestamp.fromDate(createdDate),
+        updated: admin.firestore.Timestamp.fromDate(createdDate),
+      },
+    }
+
+    await db.collection(applicationsCollection).doc(id).set(appData)
+
+    if (isDecided) {
+      await db
+        .collection(decisionsCollection)
+        .doc(id)
+        .set({
+          type: i % 12 === 0 ? 'accepted' : 'waitlisted',
+          likelyDecision: i % 12 === 0 ? 'likely yes' : 'likely waitlist',
+          course: courses[i % courses.length],
+          time: 'Monday/Wednesday 16:00',
+          notes: 'Feedback decision notes.',
+        })
+    }
+  }
+
+  // Seeding 30 classes
+  console.log('Seeding 30 additional mock classes...')
+  for (let i = 0; i < 30; i++) {
+    const id = `class-fake-${i}`
+    const course = courses[i % courses.length]
+
+    await db
+      .collection(classesCollection)
+      .doc(id)
+      .set({
+        classCap: 15,
+        classDay1: 'Monday',
+        classDay2: 'Wednesday',
+        classTime1: '16:00',
+        classTime2: '16:00',
+        course: course,
+        instructorEmail: `instructor-fake-${i}@gbstem.org`,
+        otherInstructorEmails: '',
+        instructorFirstName: firstNames[i % firstNames.length],
+        instructorLastName: lastNames[i % lastNames.length],
+        meetingLink: 'https://zoom.us/j/123456789',
+        meetingTimes: [
+          admin.firestore.Timestamp.fromDate(new Date('2026-03-02T16:00:00Z')),
+          admin.firestore.Timestamp.fromDate(new Date('2026-03-04T16:00:00Z')),
+        ],
+        completedClassDates: [],
+        classStatuses: ['scheduled', 'scheduled'],
+        feedbackCompleted: [false, false],
+        online: true,
+        students: [`student-fake-${i}`],
+      })
+  }
+
+  // Seeding 30 tokens
+  console.log('Seeding 30 additional mock tokens...')
+  for (let i = 0; i < 30; i++) {
+    const id = `token-fake-${i}`
+    const role = i % 2 === 0 ? 'admin' : 'instructor'
+    await db
+      .collection('tokens')
+      .doc(id)
+      .set({
+        consumable: i % 3 === 0,
+        consumers: [],
+        expires: admin.firestore.Timestamp.fromDate(
+          new Date(Date.now() + (i + 1) * 24 * 60 * 60 * 1000),
+        ),
+        role: role,
+      })
+  }
+
+  // Create Mock Sub-Requests (30 records)
+  console.log(`Seeding 30 mock sub-requests in "${subRequestsCollection}"...`)
+  for (let i = 0; i < 30; i++) {
+    const id = `sub-req-fake-${i}`
+    const status = i % 3 === 0 ? 'open' : i % 3 === 1 ? 'accepted' : 'completed'
+    await db
+      .collection(subRequestsCollection)
+      .doc(id)
+      .set({
+        classNumber: (i % 4) + 1,
+        course: courses[i % courses.length],
+        dateOfClass: admin.firestore.Timestamp.fromDate(
+          new Date(Date.now() - (30 - i) * 24 * 60 * 60 * 1000),
+        ),
+        originalInstructorEmail: `instructor-fake-${i}@gbstem.org`,
+        subInstructorId: i % 3 !== 0 ? `sub-inst-id-${i}` : '',
+        subInstructorFirstName:
+          i % 3 !== 0 ? firstNames[(i + 2) % firstNames.length] : '',
+        subInstructorEmail: i % 3 !== 0 ? `sub-${i}@gbstem.org` : '',
+        subRequestStatus: status,
+        link: 'https://zoom.us/j/123456789',
+        notes: `Dentist appointment fake #${i}.`,
+      })
+  }
 
   // Create Mock Interview Slots
   console.log(
@@ -517,49 +798,51 @@ async function seed() {
     intervieweeId: 'user_app1',
     interviewerEmail: 'demo@gbstem.org',
     interviewSlotStatus: 'available',
-    meetingLink: 'https:// zoom.us/j/555555555',
+    meetingLink: 'https://zoom.us/j/555555555',
   })
 
-  // Create Announcements
-  console.log('Seeding mock announcements...')
-  await db.collection('announcements').add({
-    title: 'Welcome to gbSTEM Spring 2026!',
-    content:
-      'Our semester begins soon. Make sure to verify your schedules and log in to local emulators.',
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
-  })
-
-  // Create Mock Student Feedback
-  console.log(
-    `Seeding mock student feedback in "${classFeedbackCollection}"...`,
-  )
-  await db.collection(classFeedbackCollection).doc('feed-student-1').set({
-    instructor: 'Alice Smith',
-    date: '2026-03-10',
-    feedback:
-      'The class was very fun and I learned how to draw shapes in Python!',
-    studentName: 'Charlie Brown',
-    course: 'Python I',
-    rating: 5,
-  })
-
-  // Create Mock Instructor Feedback
-  console.log(
-    `Seeding mock instructor feedback in "${instructorFeedbackCollection}"...`,
-  )
-  await db
-    .collection(instructorFeedbackCollection)
-    .doc('feed-instructor-1')
-    .set({
-      instructorName: 'Alice Smith',
-      courseName: 'Python I',
-      students: ['Charlie Brown', 'Sally Brown'],
-      feedback:
-        'Both students participated actively today. Charlie completed the exercises ahead of time.',
-      date: '2026-03-10',
-      attendanceList: [{ present: true }, { present: true }],
-      classNumber: 1,
+  // Create Announcements (30 records)
+  console.log('Seeding 30 mock announcements...')
+  for (let i = 0; i < 30; i++) {
+    await db.collection('announcements').add({
+      title: `Welcome to gbSTEM Spring 2026! (Update #${i})`,
+      content: `Our semester begins soon. Make sure to verify your schedules and log in. Announcement #${i}.`,
+      timestamp: admin.firestore.Timestamp.fromDate(
+        new Date(Date.now() - (30 - i) * 24 * 60 * 60 * 1000),
+      ),
     })
+  }
+
+  // Create Mock Student Feedback (30 records)
+  console.log(
+    `Seeding 30 mock student feedback in "${classFeedbackCollection}"...`,
+  )
+  for (let i = 0; i < 30; i++) {
+    await db.collection(classFeedbackCollection).add({
+      instructor: `${firstNames[i % firstNames.length]} ${lastNames[i % lastNames.length]}`,
+      date: `2026-03-${10 + (i % 20)}`,
+      feedback: `The class was very fun and I learned Python! (#${i})`,
+      studentName: `${firstNames[(i + 1) % firstNames.length]} ${lastNames[(i + 1) % lastNames.length]}`,
+      course: courses[i % courses.length],
+      rating: (i % 5) + 1,
+    })
+  }
+
+  // Create Mock Instructor Feedback (30 records)
+  console.log(
+    `Seeding 30 mock instructor feedback in "${instructorFeedbackCollection}"...`,
+  )
+  for (let i = 0; i < 30; i++) {
+    await db.collection(instructorFeedbackCollection).add({
+      instructorName: `${firstNames[i % firstNames.length]} ${lastNames[i % lastNames.length]}`,
+      courseName: courses[i % courses.length],
+      students: [`Student A #${i}`, `Student B #${i}`],
+      feedback: `Both students participated actively today. Class #${i}.`,
+      date: `2026-03-${10 + (i % 20)}`,
+      attendanceList: [{ present: true }, { present: i % 3 !== 0 }],
+      classNumber: (i % 4) + 1,
+    })
+  }
 
   console.log('\nSeeding completed successfully!')
   console.log('--------------------------------------------------')

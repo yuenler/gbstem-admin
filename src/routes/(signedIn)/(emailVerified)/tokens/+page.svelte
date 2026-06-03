@@ -6,10 +6,11 @@
   import { deleteDoc, doc } from 'firebase/firestore'
   import { db } from '$lib/client/firebase'
   import { actions, alert } from '$lib/stores'
-  import { invalidate } from '$app/navigation'
+  import Token from '$lib/components/Token.svelte'
+  import PerPageControl from '$lib/components/PerPageControl.svelte'
+  import { goto, invalidate } from '$app/navigation'
   import { page } from '$app/stores'
   import type { FirebaseError } from 'firebase/app'
-  import Token from '$lib/components/Token.svelte'
 
   export let data: PageData
 
@@ -18,6 +19,23 @@
     create: false,
   }
   let checked: Array<number> = []
+
+  $: currentPage = data.page ?? 1
+  $: currentLimit = data.limit ?? 25
+
+  $: prevHref = (() => {
+    if (currentPage <= 1) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage - 1))
+    return `?${base.toString()}`
+  })()
+
+  $: nextHref = (() => {
+    if (data.tokens.length < currentLimit) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage + 1))
+    return `?${base.toString()}`
+  })()
   $: if (checked.length > 0) {
     actions.set([
       {
@@ -97,6 +115,10 @@
 <svelte:head>
   <title>Tokens</title>
 </svelte:head>
+
+<div class="flex flex-wrap items-center gap-4 mb-4">
+  <PerPageControl />
+</div>
 
 <Table>
   <svelte:fragment slot="head">
@@ -224,6 +246,17 @@
     {/each}
   </svelte:fragment>
 </Table>
+
+{#if data.tokens}
+  <div class="flex justify-end gap-2 mt-4">
+    {#if currentPage > 1}
+      <Button href={prevHref}>Previous</Button>
+    {/if}
+    {#if data.tokens.length >= currentLimit}
+      <Button href={nextHref}>Next</Button>
+    {/if}
+  </div>
+{/if}
 
 {#if create}
   <Token

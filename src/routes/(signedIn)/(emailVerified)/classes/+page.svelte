@@ -1,14 +1,17 @@
 <script lang="ts">
-  import { page } from '$app/stores'
-  import Button from '$lib/components/Button.svelte'
-  import ClassDetails from '$lib/components/ClassDetails.svelte'
-  import Dialog from '$lib/components/Dialog.svelte'
-  import SearchBox from '$lib/components/SearchBox.svelte'
-  import Select from '$lib/components/Select.svelte'
+  import CourseFilter from '$lib/components/CourseFilter.svelte'
   import Table from '$lib/components/Table.svelte'
-  import { ClassStatus } from '$lib/data/types/ClassStatus'
-  import { copyEmails } from '$lib/utils'
+  import Dialog from '$lib/components/Dialog.svelte'
+  import { copyEmails, formatTime24to12 } from '$lib/utils'
+  import { format } from 'date-fns'
+  import ClassDetails from '$lib/components/ClassDetails.svelte'
   import type { PageData } from './$types'
+  import Button from '$lib/components/Button.svelte'
+  import SearchBox from '$lib/components/SearchBox.svelte'
+  import { ClassStatus } from '$lib/data/types/ClassStatus'
+  import PerPageControl from '$lib/components/PerPageControl.svelte'
+  import { page } from '$app/stores'
+  import { goto } from '$app/navigation'
 
   export let data: PageData
   let showValidation = false
@@ -17,31 +20,24 @@
   let loading = true
   let selectedClassId: string | undefined = undefined
   let checked: Array<number> = []
-  let courseFilter:
-    | 'Scratch'
-    | 'Python'
-    | 'Python II'
-    | 'Web Development'
-    | 'Engineering I'
-    | 'Engineering II'
-    | 'Engineering III'
-    | 'Math I'
-    | 'Math II'
-    | 'Math III'
-    | 'Math IV'
-    | 'Math V'
-    | 'Environmental Science' =
-    ($page.url.searchParams.get('filter') as any) ?? 'all'
-
-  let filterRef = ''
   let dialogEl: Dialog
 
-  $: {
+  $: currentPage = data.page ?? 1
+  $: currentLimit = data.limit ?? 25
+
+  $: prevHref = (() => {
+    if (currentPage <= 1) return ''
     const base = new URLSearchParams($page.url.searchParams)
-    base.set('filter', courseFilter)
-    base.delete('updated')
-    filterRef = `?${base.toString()}`
-  }
+    base.set('page', String(currentPage - 1))
+    return `?${base.toString()}`
+  })()
+
+  $: nextHref = (() => {
+    if (data.classes && data.classes.length < currentLimit) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage + 1))
+    return `?${base.toString()}`
+  })()
 
   const csv = data.classes
     .map((classes) => {
@@ -94,45 +90,19 @@
 
 <ClassDetails bind:dialogEl id={selectedClassId} />
 
-<div class="flex gap-4">
+<div class="flex flex-wrap items-center gap-4">
   <SearchBox basePath="/classes" />
-
-  <div class="flex">
-    <Select
-      bind:value={courseFilter}
-      label="Filter"
-      options={[
-        { name: 'Scratch' },
-        { name: 'Python I' },
-        { name: 'Python II' },
-        { name: 'Web Development' },
-        { name: 'Math I' },
-        { name: 'Math II' },
-        { name: 'Math III' },
-        { name: 'Math IV' },
-        { name: 'Math V' },
-        { name: 'Engineering I' },
-        { name: 'Engineering II' },
-        { name: 'Engineering III' },
-        { name: 'Environmental Science' },
-      ]}
-      floating
-      required
-    />
-    <a
-      href={filterRef}
-      class="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
-    >
-      Filter
-    </a>
-  </div>
-  <Button color="blue"><a href={url}>Download</a></Button>
+  <CourseFilter />
+  <PerPageControl />
+  <Button color="blue" class="h-12 flex items-center"
+    ><a href={url}>Download</a></Button
+  >
   <Button
     on:click={() =>
       copyEmails(
         data.classes.map((instructor) => `${instructor.email}`).join(', '),
       )}
-    class="flex items-center gap-1"
+    class="h-12 flex items-center gap-1"
   >
     <svg
       fill="#000000"
@@ -211,4 +181,14 @@
       {/each}
     </svelte:fragment>
   </Table>
+  {#if !data.query && feedback.classes}
+    <div class="flex justify-end gap-2 mt-4">
+      {#if currentPage > 1}
+        <Button href={prevHref}>Previous</Button>
+      {/if}
+      {#if feedback.classes.length >= currentLimit}
+        <Button href={nextHref}>Next</Button>
+      {/if}
+    </div>
+  {/if}
 {/await}

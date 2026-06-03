@@ -1,15 +1,13 @@
 <script lang="ts">
   import SetInterviewTimesForm from '$lib/components/forms/SetInterviewTimesForm.svelte'
-  import PageLayout from '$lib/components/PageLayout.svelte'
 </script>
 
 <svelte:head>
   <title>Interview Timeslots</title>
 </svelte:head>
 
-<PageLayout cols={2}>
-  <svelte:fragment slot="title">Set Interview Timeslots</svelte:fragment>
-  <div class="relative w-full">
-    <SetInterviewTimesForm />
-  </div>
-</PageLayout>
+<h1 class="mb-8 text-5xl font-bold md:text-6xl">Set Interview Timeslots</h1>
+
+<div class="relative w-full">
+  <SetInterviewTimesForm />
+</div>

@@ -141,6 +141,8 @@ const mockCollection = {
   where: jest.fn().mockReturnThis(),
   orderBy: jest.fn().mockReturnThis(),
   startAfter: jest.fn().mockReturnThis(),
+  limit: jest.fn().mockReturnThis(),
+  offset: jest.fn().mockReturnThis(),
   add: jest.fn().mockResolvedValue({ id: 'new-mail-id' }),
 }
 
@@ -208,6 +210,9 @@ import { load as instructorFeedbackLoad } from '../src/routes/(signedIn)/(emailV
 import { load as registrationsLoad } from '../src/routes/(signedIn)/(emailVerified)/registrations/+page.server'
 import { load as studentsLoad } from '../src/routes/(signedIn)/(emailVerified)/students/+page.server'
 import { load as tokensLoad } from '../src/routes/(signedIn)/(emailVerified)/tokens/+page.server'
+import { load as studentFeedbackLoad } from '../src/routes/(signedIn)/(emailVerified)/student-feedback/+page.server'
+import { load as subRequestsLoad } from '../src/routes/(signedIn)/(emailVerified)/sub-requests/+page.server'
+import { load as announcementsLoad } from '../src/routes/(signedIn)/(emailVerified)/announcements/+page.server'
 import { load as userSlugLoad } from '../src/routes/(signedIn)/(emailVerified)/user/[slug]/+page.server'
 import { load as signedInLayoutLoad } from '../src/routes/(signedIn)/+layout.server'
 import { load as signedOutLayoutLoad } from '../src/routes/(signedOut)/+layout.server'
@@ -356,11 +361,48 @@ describe('students route', () => {
   })
 })
 
+describe('student-feedback route', () => {
+  it('loads student feedback without search query', async () => {
+    const url = new URL('http://localhost/?filter=Scratch')
+    const res = await studentFeedbackLoad({ url, depends: jest.fn() } as any)
+    expect(res).toHaveProperty('feedback')
+  })
+
+  it('loads student feedback with search query', async () => {
+    const url = new URL('http://localhost/?query=test')
+    const res = await studentFeedbackLoad({ url, depends: jest.fn() } as any)
+    expect(res).toHaveProperty('feedback')
+  })
+})
+
+describe('sub-requests route', () => {
+  it('loads sub requests without search query', async () => {
+    const url = new URL('http://localhost/?filter=Scratch')
+    const res = await subRequestsLoad({ url, depends: jest.fn() } as any)
+    expect(res).toHaveProperty('subRequests')
+  })
+
+  it('loads sub requests with search query', async () => {
+    const url = new URL('http://localhost/?query=test')
+    const res = await subRequestsLoad({ url, depends: jest.fn() } as any)
+    expect(res).toHaveProperty('subRequests')
+  })
+})
+
+describe('announcements route', () => {
+  it('loads announcements', async () => {
+    const url = new URL('http://localhost/')
+    const res = await announcementsLoad({ url, depends: jest.fn() } as any)
+    expect(res).toHaveProperty('announcements')
+  })
+})
+
 describe('tokens route', () => {
   it('loads tokens for admin user', async () => {
     const res = await tokensLoad({
       depends: jest.fn(),
       locals: { user: { role: 'admin' } },
+      url: new URL('http://localhost/'),
     } as any)
     expect(res).toHaveProperty('tokens')
   })
@@ -370,6 +412,7 @@ describe('tokens route', () => {
       tokensLoad({
         depends: jest.fn(),
         locals: { user: { role: 'instructor' } },
+        url: new URL('http://localhost/'),
       } as any),
     ).rejects.toEqual(expect.objectContaining({ __isSvelteKitError: true }))
   })

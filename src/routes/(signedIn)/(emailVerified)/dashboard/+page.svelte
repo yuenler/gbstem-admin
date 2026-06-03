@@ -2,7 +2,6 @@
   import { db, user } from '$lib/client/firebase'
   import Button from '$lib/components/Button.svelte'
   import Card from '$lib/components/Card.svelte'
-  import PageLayout from '$lib/components/PageLayout.svelte'
   import {
     collection,
     getCountFromServer,
@@ -169,10 +168,18 @@
 <svelte:head>
   <title>Dashboard</title>
 </svelte:head>
+<h1 class="mb-4 text-5xl font-bold md:text-6xl">Dashboard</h1>
 
-<PageLayout cols={2}>
-  <svelte:fragment slot="title">Dashboard</svelte:fragment>
-  <div class="relative w-full">
+<div class="mb-8">
+  <a href="/announcements" class="inline-flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+    </svg>
+    View Announcements
+  </a>
+</div>
+
+<div class="relative w-full">
     {#if loading}
       <div
         class="absolute top-0 left-0 right-0 h-[calc(100vh-216px-80px)] md:h-[calc(100vh-216px)] bg-gray-200 flex items-center justify-center rounded-lg opacity-60"
@@ -437,4 +444,3 @@
       </div>
     {/if}
   </div>
-</PageLayout>

@@ -4,12 +4,13 @@ import { searchIndex } from '$lib/server/search'
 import { error } from '@sveltejs/kit'
 import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import type { PageServerLoad } from './$types'
-// import { db } from '$lib/client/firebase'
 
 interface DBInstructorFeedback {
   instructorName: string
   students: string[]
-  attendanceList: Record<string, { present: boolean }>
+  attendanceList:
+    | Record<string, { present: boolean }>
+    | Array<{ present: boolean }>
   date: string
   courseName: string
   feedback: string
@@ -20,43 +21,44 @@ export const load = (async ({ url, depends }) => {
   depends('app:instructorFeedbackFall24')
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
-    const filter = url.searchParams.get('filter')
-    try {
-      let dbQuery: Query
+    const pageStr = url.searchParams.get('page') ?? '1'
+    const limitStr = url.searchParams.get('limit') ?? '25'
+    const pageNum = parseInt(pageStr, 10)
+    const limitVal = parseInt(limitStr, 10)
+    const offsetVal = (pageNum - 1) * limitVal
 
-      const collectionName = instructorFeedbackCollection
-      if (
-        filter === 'Python I' ||
-        filter === 'Python II' ||
-        filter === 'Scratch' ||
-        filter === 'Web Development' ||
-        filter === 'Engineering I' ||
-        filter === 'Engineering II' ||
-        filter === 'Engineering III' ||
-        filter === 'Math I' ||
-        filter === 'Math II' ||
-        filter === 'Math III' ||
-        filter === 'Math IV' ||
-        filter === 'Math V' ||
-        filter === 'Environmental Science'
-      ) {
-        dbQuery = adminDb
-          .collection(collectionName)
-          .where('courseName', '==', filter)
-      } else {
-        dbQuery = adminDb.collection(collectionName).orderBy('date', 'desc')
+    const course = url.searchParams.get('course')
+    try {
+      let dbQuery: Query = adminDb.collection(instructorFeedbackCollection)
+
+      if (course && course !== 'all') {
+        dbQuery = dbQuery.where('courseName', '==', course)
       }
+
+      dbQuery = dbQuery.orderBy('date', 'desc')
+
+      // Apply pagination limit and offset
+      dbQuery = dbQuery.limit(limitVal).offset(offsetVal)
 
       const snapshot = await dbQuery.get()
 
       return {
+        page: pageNum,
+        limit: limitVal,
         feedback: snapshot.docs.map((doc: QueryDocumentSnapshot) => {
           const data = doc.data() as DBInstructorFeedback
 
           const attendanceList: boolean[] = []
-
-          for (const propt in data.attendanceList) {
-            attendanceList.push(data.attendanceList[propt].present)
+          if (data.attendanceList) {
+            if (Array.isArray(data.attendanceList)) {
+              for (const entry of data.attendanceList) {
+                attendanceList.push(entry.present)
+              }
+            } else {
+              for (const propt in data.attendanceList) {
+                attendanceList.push(data.attendanceList[propt].present)
+              }
+            }
           }
 
           return {
@@ -90,9 +92,16 @@ export const load = (async ({ url, depends }) => {
         query,
         feedback: hits.map((hit) => {
           const attendanceList: boolean[] = []
-
-          for (const propt in hit.attendanceList) {
-            attendanceList.push(hit.attendanceList[propt].present)
+          if (hit.attendanceList) {
+            if (Array.isArray(hit.attendanceList)) {
+              for (const entry of hit.attendanceList) {
+                attendanceList.push(entry.present)
+              }
+            } else {
+              for (const propt in hit.attendanceList) {
+                attendanceList.push(hit.attendanceList[propt].present)
+              }
+            }
           }
 
           return {

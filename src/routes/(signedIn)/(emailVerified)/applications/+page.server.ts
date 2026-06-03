@@ -14,102 +14,56 @@ export const load = (async ({ url, depends }) => {
   depends('app:applications')
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
-    const updated = url.searchParams.get('updated')
+    const pageStr = url.searchParams.get('page') ?? '1'
+    const limitStr = url.searchParams.get('limit') ?? '25'
+    const pageNum = parseInt(pageStr, 10)
+    const limitVal = parseInt(limitStr, 10)
+    const offsetVal = (pageNum - 1) * limitVal
+
     const filter = url.searchParams.get('filter')
     try {
       let dbQuery: Query
-      // if (filter === 'decided') {
-      //   dbQuery = updated
-      //     ? adminDb
-      //       .collection('applications')
-      //       .where('meta.submitted', '==', true)
-      //       .orderBy('timestamps.updated')
-      //       .orderBy('meta.decision')
-      //       .where('meta.decision', '!=', null)
-      //       .startAfter(new Date(updated))
-      //     : adminDb
-      //       .collection('applications')
-      //       .where('meta.submitted', '==', true)
-      //       .orderBy('meta.decision')
-      //       .where('meta.decision', '!=', false)
-      //       .orderBy('timestamps.updated')
-      // }
-      // else
 
       const collectionName =
         url.searchParams.get('collection') ?? applicationsCollection
       if (filter === 'undecided') {
-        dbQuery = updated
-          ? adminDb
-              .collection(collectionName)
-              .where('meta.submitted', '==', true)
-              .orderBy('timestamps.updated', 'desc')
-              .orderBy('meta.decision')
-              .where('meta.decision', '==', null)
-              .startAfter(new Date(updated))
-          : adminDb
-              .collection(collectionName)
-              .where('meta.submitted', '==', true)
-              .orderBy('meta.decision')
-              .where('meta.decision', '==', null)
-              .orderBy('timestamps.updated', 'desc')
+        dbQuery = adminDb
+          .collection(collectionName)
+          .where('meta.submitted', '==', true)
+          .orderBy('meta.decision')
+          .where('meta.decision', '==', null)
+          .orderBy('timestamps.updated', 'desc')
       } else if (filter === 'inPerson') {
-        dbQuery = updated
-          ? adminDb
-              .collection(collectionName)
-              .where('program.inPerson', '==', true)
-          : adminDb
-              .collection(collectionName)
-              .where('program.inPerson', '==', true)
+        dbQuery = adminDb
+          .collection(collectionName)
+          .where('program.inPerson', '==', true)
+          .orderBy('timestamps.updated', 'desc')
       } else if (filter === 'incomplete') {
-        dbQuery = updated
-          ? adminDb
-              .collection(collectionName)
-              .where('meta.submitted', '==', false)
-              .orderBy('timestamps.updated', 'desc')
-          : adminDb
-              .collection(collectionName)
-              .where('meta.submitted', '==', false)
-              .orderBy('timestamps.updated', 'desc')
+        dbQuery = adminDb
+          .collection(collectionName)
+          .where('meta.submitted', '==', false)
+          .orderBy('timestamps.updated', 'desc')
       } else if (filter === 'complete') {
-        dbQuery = updated
-          ? adminDb
-              .collection(collectionName)
-              .where('agreements.entireProgram', '==', true)
-              .where('agreements.submitting', '==', true)
-              .where('agreements.timeCommitment', '==', true)
-              .where('essay.academicBackground', '!=', '')
-              .where('essay.teachingScenario', '!=', '')
-              .where('essay.why', '!=', '')
-              .where('program.timeSlots', '!=', '')
-              .orderBy('timestamps.updated', 'desc')
-          : adminDb
-              .collection(collectionName)
-              .where('agreements.entireProgram', '==', true)
-              .where('agreements.submitting', '==', true)
-              .where('agreements.timeCommitment', '==', true)
-              .where('essay.academicBackground', '!=', '')
-              .where('essay.teachingScenario', '!=', '')
-              .where('essay.why', '!=', '')
-              .where('program.timeSlots', '!=', '')
-              .orderBy('timestamps.updated', 'desc')
+        dbQuery = adminDb
+          .collection(collectionName)
+          .where('agreements.entireProgram', '==', true)
+          .where('agreements.submitting', '==', true)
+          .where('agreements.timeCommitment', '==', true)
+          .where('essay.academicBackground', '!=', '')
+          .where('essay.teachingScenario', '!=', '')
+          .where('essay.why', '!=', '')
+          .where('program.timeSlots', '!=', '')
+          .orderBy('timestamps.updated', 'desc')
       } else {
-        dbQuery = updated
-          ? adminDb
-              .collection(collectionName)
-              .where('meta.submitted', '==', true)
-              .orderBy('timestamps.updated', 'desc')
-              .startAfter(new Date(updated))
-          : adminDb
-              .collection(collectionName)
-              .where('meta.submitted', '==', true)
-              .orderBy('timestamps.updated', 'desc')
+        dbQuery = adminDb
+          .collection(collectionName)
+          .where('meta.submitted', '==', true)
+          .orderBy('timestamps.updated', 'desc')
       }
 
-      // const snapshot = await dbQuery.limit(25).get()
-      const snapshot = await dbQuery.get()
+      dbQuery = dbQuery.limit(limitVal).offset(offsetVal)
 
-      // const snapshot = await dbQuery.get()
+      const snapshot = await dbQuery.get()
 
       const decisions = (
         await Promise.all(
@@ -149,6 +103,8 @@ export const load = (async ({ url, depends }) => {
             }
           },
         ),
+        page: pageNum,
+        limit: limitVal,
       }
     } catch (err: any) {
       console.error('[Load Error] applications page load:', err)
@@ -179,8 +135,12 @@ export const load = (async ({ url, depends }) => {
       const decisions = (
         await Promise.all(
           hits.map((hit) => {
-            const decision = hit.meta.decision
-            return decision ? adminDb.doc(decision).get() : null
+            const decision = hit.meta.decision as any
+            return decision
+              ? typeof decision.get === 'function'
+                ? decision.get()
+                : adminDb.doc(decision).get()
+              : null
           }),
         )
       ).map((doc: DocumentSnapshot | null) =>
