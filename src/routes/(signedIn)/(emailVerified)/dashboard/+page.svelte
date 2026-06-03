@@ -171,276 +171,280 @@
 <h1 class="mb-4 text-5xl font-bold md:text-6xl">Dashboard</h1>
 
 <div class="mb-8">
-  <a href="/announcements" class="inline-flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors">
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+  <a
+    href="/announcements"
+    class="inline-flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="2"
+      stroke="currentColor"
+      class="w-5 h-5"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
+      />
     </svg>
     View Announcements
   </a>
 </div>
 
 <div class="relative w-full">
-    {#if loading}
-      <div
-        class="absolute top-0 left-0 right-0 h-[calc(100vh-216px-80px)] md:h-[calc(100vh-216px)] bg-gray-200 flex items-center justify-center rounded-lg opacity-60"
-        transition:fade
-      >
-        <div role="status">
-          <svg
-            aria-hidden="true"
-            class="inline w-10 h-10 text-white animate-spin fill-gray-700"
-            viewBox="0 0 100 101"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-              fill="currentColor"
-            />
-            <path
-              d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-              fill="currentFill"
-            />
-          </svg>
-          <span class="sr-only">Loading...</span>
-        </div>
+  {#if loading}
+    <div
+      class="absolute top-0 left-0 right-0 h-[calc(100vh-216px-80px)] md:h-[calc(100vh-216px)] bg-gray-200 flex items-center justify-center rounded-lg opacity-60"
+      transition:fade
+    >
+      <div role="status">
+        <svg
+          aria-hidden="true"
+          class="inline w-10 h-10 text-white animate-spin fill-gray-700"
+          viewBox="0 0 100 101"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+            fill="currentColor"
+          />
+          <path
+            d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+            fill="currentFill"
+          />
+        </svg>
+        <span class="sr-only">Loading...</span>
       </div>
-    {:else}
-      <div
-        class="space-y-6"
-        transition:fade={{
-          duration: 500,
-        }}
-      >
-        <Card class="space-y-2">
-          <h2 class="text-xl font-bold">Applications</h2>
-          <ol class="space-y-1">
-            <li>
-              {data.applications.total} total instructor applications created.
-            </li>
-            <li>{data.applications.submitted} instructor apps submitted.</li>
-            <li>{data.applications.decided} instructor apps decided.</li>
-            <li>{data.applications.registered} students pre-registered.</li>
-            <li>
-              {data.applications.totalRegistrationsStarted} pre-registrations started.
-            </li>
-            <li>{data.applications.enrolled} students enrolled.</li>
-          </ol>
-          <Button
-            on:click={() => {
-              // copy emails to clipboard
-              navigator.clipboard.writeText(uncompletedRegistrationsEmails)
-              alert.trigger(
-                'success',
-                'Emails of uncompleted registrations copied to clipboard.',
-              )
-            }}>Copy Emails for Uncompleted Registrations</Button
-          >
-          <Button
-            on:click={() => {
-              // copy emails to clipboard
-              navigator.clipboard.writeText(uncompletedApplicationsEmails)
-              alert.trigger(
-                'success',
-                'Emails of uncompleted applications copied to clipboard.',
-              )
-            }}>Copy Emails for Uncompleted Applications</Button
-          >
-        </Card>
-        <Card class="space-y-2">
-          <h2 class="text-xl font-bold">Users</h2>
-          <ol class="space-y-1">
-            <li>{data.users.total} total.</li>
-          </ol>
-        </Card>
-        <Card class="space-y-2">
-          <h2 class="text-xl font-bold">Classes Today</h2>
-          <ul class="list-none space-y-2">
-            {#each classesToday as classToday}
-              {#if classToday.class.classStatuses[classToday.classNumber] === ClassStatus.ClassUpcomingSoon}
-                <li
-                  class="flex items-center justify-between rounded-lg p-4 bg-blue-100"
-                >
-                  <p>{classToday.class.course}</p>
-                  <p>
-                    {classToday.class.instructorFirstName +
-                      ' ' +
-                      classToday.class.instructorLastName}
-                  </p>
-                  <Button
-                    color="gray"
-                    on:click={() =>
-                      sendClassReminder({
-                        instructorName: classToday.class.instructorFirstName,
-                        instructorEmail: classToday.class.instructorEmail,
-                        otherInstructorEmails:
-                          classToday.class.otherInstructorEmails,
-                        className: classToday.class.course,
-                        nextMeetingTime: formatDate(
-                          timestampToDate(
-                            classToday.class.meetingTimes[
-                              classToday.classNumber
-                            ],
-                          ),
+    </div>
+  {:else}
+    <div
+      class="space-y-6"
+      transition:fade={{
+        duration: 500,
+      }}
+    >
+      <Card class="space-y-2">
+        <h2 class="text-xl font-bold">Applications</h2>
+        <ol class="space-y-1">
+          <li>
+            {data.applications.total} total instructor applications created.
+          </li>
+          <li>{data.applications.submitted} instructor apps submitted.</li>
+          <li>{data.applications.decided} instructor apps decided.</li>
+          <li>{data.applications.registered} students pre-registered.</li>
+          <li>
+            {data.applications.totalRegistrationsStarted} pre-registrations started.
+          </li>
+          <li>{data.applications.enrolled} students enrolled.</li>
+        </ol>
+        <Button
+          on:click={() => {
+            // copy emails to clipboard
+            navigator.clipboard.writeText(uncompletedRegistrationsEmails)
+            alert.trigger(
+              'success',
+              'Emails of uncompleted registrations copied to clipboard.',
+            )
+          }}>Copy Emails for Uncompleted Registrations</Button
+        >
+        <Button
+          on:click={() => {
+            // copy emails to clipboard
+            navigator.clipboard.writeText(uncompletedApplicationsEmails)
+            alert.trigger(
+              'success',
+              'Emails of uncompleted applications copied to clipboard.',
+            )
+          }}>Copy Emails for Uncompleted Applications</Button
+        >
+      </Card>
+      <Card class="space-y-2">
+        <h2 class="text-xl font-bold">Users</h2>
+        <ol class="space-y-1">
+          <li>{data.users.total} total.</li>
+        </ol>
+      </Card>
+      <Card class="space-y-2">
+        <h2 class="text-xl font-bold">Classes Today</h2>
+        <ul class="list-none space-y-2">
+          {#each classesToday as classToday}
+            {#if classToday.class.classStatuses[classToday.classNumber] === ClassStatus.ClassUpcomingSoon}
+              <li
+                class="flex items-center justify-between rounded-lg p-4 bg-blue-100"
+              >
+                <p>{classToday.class.course}</p>
+                <p>
+                  {classToday.class.instructorFirstName +
+                    ' ' +
+                    classToday.class.instructorLastName}
+                </p>
+                <Button
+                  color="gray"
+                  on:click={() =>
+                    sendClassReminder({
+                      instructorName: classToday.class.instructorFirstName,
+                      instructorEmail: classToday.class.instructorEmail,
+                      otherInstructorEmails:
+                        classToday.class.otherInstructorEmails,
+                      className: classToday.class.course,
+                      nextMeetingTime: formatDate(
+                        timestampToDate(
+                          classToday.class.meetingTimes[classToday.classNumber],
                         ),
-                      })}>Send Instructor Reminder</Button
-                  >
-                  <p>
-                    {formatDate(
-                      timestampToDate(
-                        classToday.class.meetingTimes[classToday.classNumber],
                       ),
-                    )}
-                  </p>
-                </li>
-              {:else if classToday.class.classStatuses[classToday.classNumber] === ClassStatus.ClassNotHeld}
-                <li
-                  class="flex items-center justify-between rounded-lg p-4 bg-red-100"
+                    })}>Send Instructor Reminder</Button
                 >
-                  <p>{classToday.class.course}</p>
-                  <p>
-                    {classToday.class.instructorFirstName +
-                      ' ' +
-                      classToday.class.instructorLastName}
-                  </p>
-                  <Button
-                    color="gray"
-                    on:click={() =>
-                      sendClassReminder({
-                        instructorName: classToday.class.instructorFirstName,
-                        instructorEmail: classToday.class.instructorEmail,
-                        otherInstructorEmails:
-                          classToday.class.otherInstructorEmails,
-                        className: classToday.class.course,
-                        nextMeetingTime: formatDate(
-                          timestampToDate(
-                            classToday.class.meetingTimes[
-                              classToday.classNumber
-                            ],
-                          ),
+                <p>
+                  {formatDate(
+                    timestampToDate(
+                      classToday.class.meetingTimes[classToday.classNumber],
+                    ),
+                  )}
+                </p>
+              </li>
+            {:else if classToday.class.classStatuses[classToday.classNumber] === ClassStatus.ClassNotHeld}
+              <li
+                class="flex items-center justify-between rounded-lg p-4 bg-red-100"
+              >
+                <p>{classToday.class.course}</p>
+                <p>
+                  {classToday.class.instructorFirstName +
+                    ' ' +
+                    classToday.class.instructorLastName}
+                </p>
+                <Button
+                  color="gray"
+                  on:click={() =>
+                    sendClassReminder({
+                      instructorName: classToday.class.instructorFirstName,
+                      instructorEmail: classToday.class.instructorEmail,
+                      otherInstructorEmails:
+                        classToday.class.otherInstructorEmails,
+                      className: classToday.class.course,
+                      nextMeetingTime: formatDate(
+                        timestampToDate(
+                          classToday.class.meetingTimes[classToday.classNumber],
                         ),
-                      })}>Send Instructor Reminder</Button
-                  >
-                  <p>
-                    {formatDate(
-                      timestampToDate(
-                        classToday.class.meetingTimes[classToday.classNumber],
                       ),
-                    )}
-                  </p>
-                </li>
-              {:else if classToday.class.classStatuses[classToday.classNumber] === ClassStatus.FeedbackIncomplete}
-                <li
-                  class="flex items-center justify-between rounded-lg p-4 bg-yellow-100"
+                    })}>Send Instructor Reminder</Button
                 >
-                  <p>{classToday.class.course}</p>
-                  <p>
-                    {classToday.class.instructorFirstName +
-                      ' ' +
-                      classToday.class.instructorLastName}
-                  </p>
-                  <Button
-                    color="gray"
-                    on:click={() =>
-                      sendClassReminder({
-                        instructorName: classToday.class.instructorFirstName,
-                        instructorEmail: classToday.class.instructorEmail,
-                        otherInstructorEmails:
-                          classToday.class.otherInstructorEmails,
-                        className: classToday.class.course,
-                        nextMeetingTime: formatDate(
-                          timestampToDate(
-                            classToday.class.meetingTimes[
-                              classToday.classNumber
-                            ],
-                          ),
+                <p>
+                  {formatDate(
+                    timestampToDate(
+                      classToday.class.meetingTimes[classToday.classNumber],
+                    ),
+                  )}
+                </p>
+              </li>
+            {:else if classToday.class.classStatuses[classToday.classNumber] === ClassStatus.FeedbackIncomplete}
+              <li
+                class="flex items-center justify-between rounded-lg p-4 bg-yellow-100"
+              >
+                <p>{classToday.class.course}</p>
+                <p>
+                  {classToday.class.instructorFirstName +
+                    ' ' +
+                    classToday.class.instructorLastName}
+                </p>
+                <Button
+                  color="gray"
+                  on:click={() =>
+                    sendClassReminder({
+                      instructorName: classToday.class.instructorFirstName,
+                      instructorEmail: classToday.class.instructorEmail,
+                      otherInstructorEmails:
+                        classToday.class.otherInstructorEmails,
+                      className: classToday.class.course,
+                      nextMeetingTime: formatDate(
+                        timestampToDate(
+                          classToday.class.meetingTimes[classToday.classNumber],
                         ),
-                      })}>Send Instructor Reminder</Button
-                  >
-                  <p>
-                    {formatDate(
-                      timestampToDate(
-                        classToday.class.meetingTimes[classToday.classNumber],
                       ),
-                    )}
-                  </p>
-                </li>
-              {:else if classToday.class.classStatuses[classToday.classNumber] === ClassStatus.EverythingComplete}
-                <li
-                  class="flex items-center justify-between rounded-lg p-4 bg-green-100"
+                    })}>Send Instructor Reminder</Button
                 >
-                  <p>{classToday.class.course}</p>
-                  <p>
-                    {classToday.class.instructorFirstName +
-                      ' ' +
-                      classToday.class.instructorLastName}
-                  </p>
-                  <Button
-                    color="gray"
-                    on:click={() =>
-                      sendClassReminder({
-                        instructorName: classToday.class.instructorFirstName,
-                        instructorEmail: classToday.class.instructorEmail,
-                        otherInstructorEmails:
-                          classToday.class.otherInstructorEmails,
-                        className: classToday.class.course,
-                        nextMeetingTime: formatDate(
-                          timestampToDate(
-                            classToday.class.meetingTimes[
-                              classToday.classNumber
-                            ],
-                          ),
+                <p>
+                  {formatDate(
+                    timestampToDate(
+                      classToday.class.meetingTimes[classToday.classNumber],
+                    ),
+                  )}
+                </p>
+              </li>
+            {:else if classToday.class.classStatuses[classToday.classNumber] === ClassStatus.EverythingComplete}
+              <li
+                class="flex items-center justify-between rounded-lg p-4 bg-green-100"
+              >
+                <p>{classToday.class.course}</p>
+                <p>
+                  {classToday.class.instructorFirstName +
+                    ' ' +
+                    classToday.class.instructorLastName}
+                </p>
+                <Button
+                  color="gray"
+                  on:click={() =>
+                    sendClassReminder({
+                      instructorName: classToday.class.instructorFirstName,
+                      instructorEmail: classToday.class.instructorEmail,
+                      otherInstructorEmails:
+                        classToday.class.otherInstructorEmails,
+                      className: classToday.class.course,
+                      nextMeetingTime: formatDate(
+                        timestampToDate(
+                          classToday.class.meetingTimes[classToday.classNumber],
                         ),
-                      })}>Send Instructor Reminder</Button
-                  >
-                  <p>
-                    {formatDate(
-                      timestampToDate(
-                        classToday.class.meetingTimes[classToday.classNumber],
                       ),
-                    )}
-                  </p>
-                </li>
-              {:else}
-                <li
-                  class="flex items-center justify-between rounded-lg p-4 bg-gray-100"
+                    })}>Send Instructor Reminder</Button
                 >
-                  <p>{classToday.class.course}</p>
-                  <p>
-                    {classToday.class.instructorFirstName +
-                      ' ' +
-                      classToday.class.instructorLastName}
-                  </p>
-                  <Button
-                    color="gray"
-                    on:click={() =>
-                      sendClassReminder({
-                        instructorName: classToday.class.instructorFirstName,
-                        instructorEmail: classToday.class.instructorEmail,
-                        otherInstructorEmails:
-                          classToday.class.otherInstructorEmails,
-                        className: classToday.class.course,
-                        nextMeetingTime: formatDate(
-                          timestampToDate(
-                            classToday.class.meetingTimes[
-                              classToday.classNumber
-                            ],
-                          ),
+                <p>
+                  {formatDate(
+                    timestampToDate(
+                      classToday.class.meetingTimes[classToday.classNumber],
+                    ),
+                  )}
+                </p>
+              </li>
+            {:else}
+              <li
+                class="flex items-center justify-between rounded-lg p-4 bg-gray-100"
+              >
+                <p>{classToday.class.course}</p>
+                <p>
+                  {classToday.class.instructorFirstName +
+                    ' ' +
+                    classToday.class.instructorLastName}
+                </p>
+                <Button
+                  color="gray"
+                  on:click={() =>
+                    sendClassReminder({
+                      instructorName: classToday.class.instructorFirstName,
+                      instructorEmail: classToday.class.instructorEmail,
+                      otherInstructorEmails:
+                        classToday.class.otherInstructorEmails,
+                      className: classToday.class.course,
+                      nextMeetingTime: formatDate(
+                        timestampToDate(
+                          classToday.class.meetingTimes[classToday.classNumber],
                         ),
-                      })}>Send Instructor Reminder</Button
-                  >
-                  <p>
-                    {formatDate(
-                      timestampToDate(
-                        classToday.class.meetingTimes[classToday.classNumber],
                       ),
-                    )}
-                  </p>
-                </li>
-              {/if}
-            {/each}
-          </ul>
-        </Card>
-      </div>
-    {/if}
-  </div>
+                    })}>Send Instructor Reminder</Button
+                >
+                <p>
+                  {formatDate(
+                    timestampToDate(
+                      classToday.class.meetingTimes[classToday.classNumber],
+                    ),
+                  )}
+                </p>
+              </li>
+            {/if}
+          {/each}
+        </ul>
+      </Card>
+    </div>
+  {/if}
+</div>
