@@ -246,7 +246,7 @@
 
 <Dialog bind:this={dialogEl} size="full" alert>
   <svelte:fragment slot="title">
-    <div class="flex justify-between">
+    <div class="flex flex-wrap items-center justify-between gap-3">
       <div>Student Attendance and Information</div>
       <Button
         color="red"
@@ -260,11 +260,13 @@
       </Button>
     </div>
   </svelte:fragment>
-  <div slot="description">
+  <div slot="description" class="w-full min-w-0">
     <div class="mt-4 justify-center">
       {#each classes as value, i}
         <Card>
-          <div class="flex justify-between">
+          <div
+            class="flex flex-wrap items-start sm:items-center justify-between gap-3"
+          >
             <h2 class="font-bold">Class {i + 1} Information</h2>
             <Button
               color="blue"
@@ -283,63 +285,74 @@
               Send {value.course} Class Reminder To Student?
             </Button>
           </div>
-          <fieldset class="mt-4 space-y-4">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr>
-                  <th class="border-b p-2">Course</th>
-                  <th class="border-b p-2">Instructor</th>
-                  <th class="border-b p-2">Instructor Email</th>
-                  <th class="border-b p-2">Meeting Link</th>
-                  <th class="border-b p-2">Format</th>
-                  <th class="border-b p-2">Class Times</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="border-b">
-                  <td class="p-2">{value.course}</td>
-                  <td class="p-2"
-                    >{value.instructorFirstName} {value.instructorLastName}</td
-                  >
-                  <td class="p-2">{value.instructorEmail}</td>
-                  <td class="p-2">{value.meetingLink}</td>
-                  <td class="p-2">{value.online ? 'Online' : 'In-Person'}</td>
-                  <td class="p-2"
-                    >{formatClassTimes(
-                      [value.classDay1, value.classDay2],
-                      [value.classTime1, value.classTime2],
-                    )}</td
-                  >
-                </tr>
-              </tbody>
-            </table>
+          <fieldset class="mt-4 space-y-4 min-w-0">
+            <div class="w-full overflow-x-auto">
+              <table class="w-full text-left border-collapse min-w-[600px]">
+                <thead>
+                  <tr>
+                    <th class="border-b p-2 whitespace-nowrap">Course</th>
+                    <th class="border-b p-2 whitespace-nowrap">Instructor</th>
+                    <th class="border-b p-2 whitespace-nowrap"
+                      >Instructor Email</th
+                    >
+                    <th class="border-b p-2 whitespace-nowrap">Meeting Link</th>
+                    <th class="border-b p-2 whitespace-nowrap">Format</th>
+                    <th class="border-b p-2 whitespace-nowrap">Class Times</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-b">
+                    <td class="p-2 whitespace-nowrap">{value.course}</td>
+                    <td class="p-2 whitespace-nowrap"
+                      >{value.instructorFirstName}
+                      {value.instructorLastName}</td
+                    >
+                    <td class="p-2 whitespace-nowrap"
+                      >{value.instructorEmail}</td
+                    >
+                    <td class="p-2 whitespace-nowrap">{value.meetingLink}</td>
+                    <td class="p-2 whitespace-nowrap"
+                      >{value.online ? 'Online' : 'In-Person'}</td
+                    >
+                    <td class="p-2 whitespace-nowrap"
+                      >{formatClassTimes(
+                        [value.classDay1, value.classDay2],
+                        [value.classTime1, value.classTime2],
+                      )}</td
+                    >
+                  </tr>
+                </tbody>
+              </table>
+            </div>
             <h2 class="font-bold">Attendance</h2>
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr>
-                  <th class="border-b p-2">Class Number</th>
-                  <th class="border-b p-2">Date</th>
-                  <th class="border-b p-2">Attended</th>
-                  <th class="border-b p-2">Feedback</th>
-                </tr>
-              </thead>
-              {#each attendance as att}
-                {#if att.courseName === value.course && att.id.includes(value.id) && Object.keys(att.attendanceList).includes(studentData.name)}
-                  <tbody>
-                    <tr class="border-b">
-                      <td class="p-2">{att.classNumber}</td>
-                      <td class="p-2">{att.date}</td>
-                      <td class="p-2"
-                        >{att.attendanceList[studentData.name]?.present
-                          ? 'Yes'
-                          : 'No'}</td
-                      >
-                      <td class="p-2">{att.feedback}</td>
-                    </tr>
-                  </tbody>
-                {/if}
-              {/each}
-            </table>
+            <div class="w-full overflow-x-auto">
+              <table class="w-full text-left border-collapse min-w-[500px]">
+                <thead>
+                  <tr>
+                    <th class="border-b p-2 whitespace-nowrap">Class Number</th>
+                    <th class="border-b p-2 whitespace-nowrap">Date</th>
+                    <th class="border-b p-2 whitespace-nowrap">Attended</th>
+                    <th class="border-b p-2 whitespace-nowrap">Feedback</th>
+                  </tr>
+                </thead>
+                {#each attendance as att}
+                  {#if att.courseName === value.course && att.id.includes(value.id) && Object.keys(att.attendanceList).includes(studentData.name)}
+                    <tbody>
+                      <tr class="border-b">
+                        <td class="p-2 whitespace-nowrap">{att.classNumber}</td>
+                        <td class="p-2 whitespace-nowrap">{att.date}</td>
+                        <td class="p-2 whitespace-nowrap"
+                          >{att.attendanceList[studentData.name]?.present
+                            ? 'Yes'
+                            : 'No'}</td
+                        >
+                        <td class="p-2 whitespace-nowrap">{att.feedback}</td>
+                      </tr>
+                    </tbody>
+                  {/if}
+                {/each}
+              </table>
+            </div>
           </fieldset>
         </Card>
       {/each}
@@ -373,25 +386,26 @@
         </Button>
       </div>
       <div class="m-5 overflow-auto">
-        <table class="w-full text-left border-collapse">
+        <table class="w-full text-left border-collapse min-w-[600px]">
           <thead>
             <tr>
-              <th class="border-b p-2">Student Name</th>
-              <th class="border-b p-2">Email</th>
-              <th class="border-b p-2">Secondary Email</th>
-              <th class="border-b p-2">Phone</th>
-              <th class="border-b p-2">Grade</th>
-              <th class="border-b p-2">School</th>
+              <th class="border-b p-2 whitespace-nowrap">Student Name</th>
+              <th class="border-b p-2 whitespace-nowrap">Email</th>
+              <th class="border-b p-2 whitespace-nowrap">Secondary Email</th>
+              <th class="border-b p-2 whitespace-nowrap">Phone</th>
+              <th class="border-b p-2 whitespace-nowrap">Grade</th>
+              <th class="border-b p-2 whitespace-nowrap">School</th>
             </tr>
           </thead>
           <tbody>
             <tr class="border-b">
-              <td class="p-2">{studentData.name}</td>
-              <td class="p-2">{studentData.email}</td>
-              <td class="p-2">{studentData.secondaryEmail}</td>
-              <td class="p-2">{studentData.phone}</td>
-              <td class="p-2">{studentData.grade}</td>
-              <td class="p-2">{studentData.school}</td>
+              <td class="p-2 whitespace-nowrap">{studentData.name}</td>
+              <td class="p-2 whitespace-nowrap">{studentData.email}</td>
+              <td class="p-2 whitespace-nowrap">{studentData.secondaryEmail}</td
+              >
+              <td class="p-2 whitespace-nowrap">{studentData.phone}</td>
+              <td class="p-2 whitespace-nowrap">{studentData.grade}</td>
+              <td class="p-2 whitespace-nowrap">{studentData.school}</td>
             </tr>
           </tbody>
         </table>

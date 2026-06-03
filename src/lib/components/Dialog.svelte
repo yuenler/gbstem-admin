@@ -70,8 +70,8 @@
     >
       <div
         class={clsx(
-          'p-4 sm:p-8 bg-white grid gap-3 sm:gap-6 w-full rounded-lg',
-          size === 'full' && 'h-full',
+          'p-4 sm:p-8 bg-white grid gap-3 sm:gap-6 w-full rounded-lg relative',
+          size === 'full' && 'min-h-full h-fit',
           size === 'min' && 'max-w-2xl',
         )}
         role="dialog"
@@ -83,8 +83,29 @@
           }
         }}
       >
+        <button
+          type="button"
+          class="absolute top-2 right-2 sm:top-4 sm:right-4 text-gray-500 hover:text-gray-700 focus:outline-none disabled:opacity-50 z-50 cursor-pointer bg-white rounded-full p-1.5 shadow-sm border border-gray-200 hover:bg-gray-100 transition-colors"
+          on:click={cancel}
+          {disabled}
+          aria-label="Close dialog"
+        >
+          <svg
+            class="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
         <h1
-          class="text-xl uppercase bg-gray-200 px-4 py-3 rounded-md font-bold"
+          class="text-xl uppercase bg-gray-200 px-4 py-3 rounded-md font-bold pr-12"
         >
           <slot name="title" />
         </h1>

@@ -57,22 +57,25 @@
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
-  <svelte:fragment slot="title"
-    ><div class="flex" style="justify-content:space-between;">
-      <div style="align-content:center;">
+  <svelte:fragment slot="title">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
         Feedback for {values.instructorName}'s {values.courseName} Class #{values.classNumber}
       </div>
-      <div><Button color="red" on:click={dialogEl.cancel}>Close</Button></div>
-    </div></svelte:fragment
-  >
-  <div slot="description">
+      <Button color="red" on:click={dialogEl.cancel}>Close</Button>
+    </div>
+  </svelte:fragment>
+  <div slot="description" class="w-full min-w-0">
     <div style="text-align:left;">
       <Card class="mb-4">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="font-bold">Class Details</h2>
         </div>
-        <div class="m-5" style="overflow: auto;">
-          <table style="border-collapse: collapse; width: 100%;">
+        <div class="m-5 overflow-auto">
+          <table
+            class="min-w-[500px]"
+            style="border-collapse: collapse; width: 100%;"
+          >
             <thead>
               <tr>
                 <th

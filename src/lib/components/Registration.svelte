@@ -144,15 +144,21 @@
 
 <Dialog bind:this={dialogEl} size="full" alert>
   <svelte:fragment slot="title">Registration</svelte:fragment>
-  <div slot="description">
-    <Card class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
+  <div slot="description" class="w-full min-w-0">
+    <Card
+      class="sticky top-2 z-50 flex flex-wrap items-center justify-between gap-3 p-3"
+    >
       {#if !disabled}
-        <Button color="green" on:click={handleSaveChanges}>Save changes</Button>
-        <Button color="red" on:click={handleDeleteChanges}
-          >Delete changes</Button
-        >
+        <div class="flex flex-wrap gap-2">
+          <Button color="green" on:click={handleSaveChanges}
+            >Save changes</Button
+          >
+          <Button color="red" on:click={handleDeleteChanges}
+            >Delete changes</Button
+          >
+        </div>
       {/if}
-      <div class="flex gap-3">
+      <div class="flex flex-wrap gap-2">
         <Button on:click={handleEdit}>Edit</Button>
         <Button on:click={dialogEl.cancel}>Close</Button>
       </div>
@@ -237,7 +243,7 @@
             />
             <div class="grid gap-1">
               <span>Race / ethnicity (check all that apply)</span>
-              <div class="grid grid-cols-2">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1">
                 {#each raceJson as race}
                   <Input
                     type="checkbox"

@@ -494,10 +494,12 @@
 
 <Dialog bind:this={dialogEl} size="full" alert>
   <svelte:fragment slot="title">Application</svelte:fragment>
-  <div slot="description">
+  <div slot="description" class="w-full min-w-0">
     <Card>
-      <div class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
-        <fieldset class="flex gap-3" disabled={loading}>
+      <div
+        class="sticky top-2 z-50 flex flex-wrap items-center justify-between gap-3 p-3 md:p-3"
+      >
+        <fieldset class="flex flex-wrap gap-2 items-center" disabled={loading}>
           {#if disabled}
             <Button
               color={!loading &&
@@ -703,7 +705,7 @@
             >
           {/if}
         </fieldset>
-        <div class="flex gap-3">
+        <div class="flex flex-wrap gap-2 items-center">
           <Button
             color="green"
             on:click={() => (showInterviewForm = !showInterviewForm)}
@@ -719,8 +721,9 @@
       </div>
     </Card>
     <div class="mt-4 flex justify-center flex-wrap gap-4">
-      <Card class="w-fit">
-        <Form class="max-w-2xl">
+      <Card class="flex-1 min-w-[300px] md:min-w-[450px] w-full">
+        <h2 class="text-2xl font-bold my-4">Application Details</h2>
+        <Form class="w-full">
           <fieldset class="space-y-14">
             <div class="grid gap-1">
               <span class="font-bold">Personal</span>
@@ -926,8 +929,8 @@
         </Form>
       </Card>
       {#if showInterviewForm}
-        <Card class="w-fit">
-          <Form class="max-w-2xl">
+        <Card class="flex-1 min-w-[300px] md:min-w-[450px] w-full">
+          <Form class="w-full">
             <div>
               <h2 class="text-2xl font-bold my-4">
                 Interview Guide & Evaluation Form

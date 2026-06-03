@@ -187,15 +187,21 @@
 
 <Dialog bind:this={dialogEl} size="full" alert>
   <svelte:fragment slot="title">Class Details</svelte:fragment>
-  <div slot="description">
-    <Card class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
+  <div slot="description" class="w-full min-w-0">
+    <Card
+      class="sticky top-2 z-50 flex flex-wrap items-center justify-between gap-3 p-3"
+    >
       {#if !disabled}
-        <Button color="green" on:click={handleSaveChanges}>Save changes</Button>
-        <Button color="red" on:click={handleDeleteChanges}
-          >Cancel changes</Button
-        >
+        <div class="flex flex-wrap gap-2">
+          <Button color="green" on:click={handleSaveChanges}
+            >Save changes</Button
+          >
+          <Button color="red" on:click={handleDeleteChanges}
+            >Cancel changes</Button
+          >
+        </div>
       {/if}
-      <div class="flex gap-3">
+      <div class="flex flex-wrap gap-2">
         <Button color="green" on:click={handleEdit}>Edit</Button>
         <Button color="red" on:click={dialogEl.cancel}>Close</Button>
         <Button
@@ -224,7 +230,7 @@
       </div>
     </Card>
     <div class="mt-4 flex justify-center">
-      <Form>
+      <Form class="w-full max-w-4xl">
         <fieldset class="mt-4 space-y-4" {disabled}>
           <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
             <Select
@@ -353,8 +359,9 @@
             <span>Copy</span>
           </Button>
         </div>
-        <div class="m-5" style="overflow: auto;">
+        <div class="m-5 overflow-auto">
           <table
+            class="min-w-[600px]"
             style="border-collapse: collapse; width: 100%; text-align: left;"
           >
             <thead>
@@ -387,7 +394,10 @@
             </thead>
             <tbody>
               {#each studentList as student}
-                <tr style="border-bottom: 1px solid #ccc;">
+                <tr
+                  style="border-bottom: 1px solid #ccc;"
+                  class="whitespace-nowrap"
+                >
                   <td style="padding: 8px;">{student.name}</td>
                   <td style="padding: 8px;">{student.email}</td>
                   <td style="padding: 8px;">{student.secondaryEmail}</td>
