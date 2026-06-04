@@ -69,6 +69,9 @@
   } else {
     actions.set(null)
   }
+  $: if ($actions === null) {
+    checked = []
+  }
   $: application =
     data.applications.length === 0
       ? undefined

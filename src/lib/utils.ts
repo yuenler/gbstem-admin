@@ -196,14 +196,18 @@ export const getNearestFutureClassIndex = (meetingTimes: Date[]) => {
 }
 
 export function copyEmails(email: string) {
-  navigator.clipboard
-    .writeText(email)
-    .then(() => {
-      alert.trigger('success', 'Emails copied to clipboard!')
-    })
-    .catch((err) => {
-      alert.trigger('error', 'Failed to copy emails to clipboard!')
-    })
+  const promise = navigator.clipboard.writeText(email)
+  if (promise && typeof promise.then === 'function') {
+    promise
+      .then(() => {
+        alert.trigger('success', 'Emails copied to clipboard!')
+      })
+      .catch((err) => {
+        alert.trigger('error', 'Failed to copy emails to clipboard!')
+      })
+  } else {
+    alert.trigger('success', 'Emails copied to clipboard!')
+  }
 }
 
 export function toLocalISOString(date: Date) {

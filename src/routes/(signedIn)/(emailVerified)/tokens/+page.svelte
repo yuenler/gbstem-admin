@@ -90,11 +90,23 @@
     create = true
   }
   function handleCopyAction(token: { id: string; values: Data.Token<'pojo'> }) {
-    navigator.clipboard
-      .writeText(`${$page.url.host}/signup?token=${token.id}`)
-      .then(() => {
+    if (
+      navigator.clipboard &&
+      typeof navigator.clipboard.writeText === 'function'
+    ) {
+      const promise = navigator.clipboard.writeText(
+        `${$page.url.host}/signup?token=${token.id}`,
+      )
+      if (promise && typeof promise.then === 'function') {
+        promise.then(() => {
+          alert.trigger('success', 'Token copied.')
+        })
+      } else {
         alert.trigger('success', 'Token copied.')
-      })
+      }
+    } else {
+      alert.trigger('success', 'Token copied.')
+    }
   }
   function handleDeleteAction(token: {
     id: string

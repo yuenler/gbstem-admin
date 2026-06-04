@@ -1,25 +1,19 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import { goto } from '$app/navigation'
-  import Table from '$lib/components/Table.svelte'
-  import { formatDate } from '$lib/utils'
-  import Dialog from '$lib/components/Dialog.svelte'
-  import Card from '$lib/components/Card.svelte'
-  import { SubRequestStatus } from '$lib/data/helpers/SubRequestStatus'
   import Button from '$lib/components/Button.svelte'
+  import Card from '$lib/components/Card.svelte'
   import CourseFilter from '$lib/components/CourseFilter.svelte'
-  import SearchBox from '$lib/components/SearchBox.svelte'
+  import Dialog from '$lib/components/Dialog.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
+  import SearchBox from '$lib/components/SearchBox.svelte'
+  import Table from '$lib/components/Table.svelte'
+  import { SubRequestStatus } from '$lib/data/helpers/SubRequestStatus'
+  import { formatDate } from '$lib/utils'
   import type { PageData } from './$types'
 
   export let data: PageData
 
   let dialogEl: Dialog[] = []
-  $: {
-    if (data.subRequests) {
-      dialogEl = new Array(data.subRequests.length).fill(null)
-    }
-  }
 
   $: currentPage = data.page ?? 1
   $: currentLimit = data.limit ?? 25
@@ -84,18 +78,18 @@
     <svelte:fragment slot="body">
       {#each data.subRequests as subRequest, i}
         <Dialog bind:this={dialogEl[i]}>
-          <svelte:fragment slot="title"
-            ><div class="flex items-center justify-between">
-              Sub Request Notes<Button color="red" on:click={dialogEl[i].cancel}
-                >Close</Button
-              >
-            </div></svelte:fragment
-          >
+          <svelte:fragment slot="title">
+            <div class="flex items-center justify-between">
+              Sub Request Notes
+              <Button color="red" on:click={dialogEl[i].cancel}>Close</Button>
+            </div>
+          </svelte:fragment>
           <Card slot="description">{subRequest.notes}</Card>
         </Dialog>
         <tr
           class={`${subRequest.subRequestStatus === SubRequestStatus.NoSubstituteNeeded ? 'bg-green-100' : subRequest.subRequestStatus === SubRequestStatus.SubstituteFeedbackNeeded ? 'bg-yellow-100' : subRequest.subRequestStatus === SubRequestStatus.SubstituteFound ? 'bg-blue-100' : 'bg-red-100'} border-b border-white hover:bg-white hover:cursor-pointer`}
-          on:click={() => {
+          on:click={(e) => {
+            e.stopPropagation()
             if (dialogEl[i]) {
               dialogEl[i].open()
             }

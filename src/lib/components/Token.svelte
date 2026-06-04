@@ -40,14 +40,27 @@
       } as Data.Token<'pojo'>)
         .then((snapshot) => {
           invalidate('app:applications').then(() => {
-            navigator.clipboard
-              .writeText(`${$page.url.host}/signup?token=${snapshot.id}`)
-              .then(() => {
-                invalidate('app:tokens').then(() => {
-                  alert.trigger('success', 'Changes were saved successfully.')
-                  dialogEl.close()
-                })
+            const next = () => {
+              invalidate('app:tokens').then(() => {
+                alert.trigger('success', 'Changes were saved successfully.')
+                dialogEl.close()
               })
+            }
+            if (
+              navigator.clipboard &&
+              typeof navigator.clipboard.writeText === 'function'
+            ) {
+              const promise = navigator.clipboard.writeText(
+                `${$page.url.host}/signup?token=${snapshot.id}`,
+              )
+              if (promise && typeof promise.then === 'function') {
+                promise.then(next).catch(next)
+              } else {
+                next()
+              }
+            } else {
+              next()
+            }
           })
         })
         .catch((err: FirebaseError) => {

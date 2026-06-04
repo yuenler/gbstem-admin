@@ -168,7 +168,7 @@
 </script>
 
 <svelte:head>
-  <title>registrations</title>
+  <title>Students</title>
 </svelte:head>
 
 <div class="flex flex-wrap items-center gap-4">
@@ -206,7 +206,8 @@
       {#await getCourses(registration.id) then courses}
         <tr
           class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
-          on:click={() => {
+          on:click={(e) => {
+            e.stopPropagation()
             current = i
             dialogEl.open()
           }}

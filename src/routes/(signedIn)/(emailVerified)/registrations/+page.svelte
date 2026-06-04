@@ -143,7 +143,6 @@
   function bypassAgeLimits(id: string) {
     getDoc(doc(db, registrationsCollection, id)).then((applicationSnapshot) => {
       if (applicationSnapshot.exists()) {
-        console.log(applicationSnapshot.data().agreements.bypassAgeLimits)
         updateDoc(doc(db, registrationsCollection, id), {
           'agreements.bypassAgeLimits':
             !applicationSnapshot.data().agreements.bypassAgeLimits,
@@ -198,7 +197,7 @@
 </script>
 
 <svelte:head>
-  <title>registrations</title>
+  <title>Registrations</title>
 </svelte:head>
 
 <div class="flex flex-wrap items-center gap-4">

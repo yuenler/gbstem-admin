@@ -3,31 +3,23 @@
   import Button from '$lib/components/Button.svelte'
   import Card from '$lib/components/Card.svelte'
   import {
-    collection,
-    getCountFromServer,
-    query,
-    where,
-    getDocs,
-    Timestamp,
-  } from 'firebase/firestore'
-  import { fade } from 'svelte/transition'
-  import { alert } from '$lib/stores'
-  import {
-    classHeldToday,
-    isClassUpcoming,
-    formatDate,
-    normalizeCapitals,
-    timestampToDate,
-    getNearestFutureClass,
-    getNearestFutureClassIndex,
-  } from '$lib/utils'
-  import {
     applicationsCollection,
     classesCollection,
     registrationsCollection,
   } from '$lib/data/collections'
   import sendClassReminder from '$lib/data/helpers/sendClassReminders'
   import { ClassStatus } from '$lib/data/types/ClassStatus'
+  import { alert } from '$lib/stores'
+  import { formatDate, timestampToDate } from '$lib/utils'
+  import {
+    collection,
+    getCountFromServer,
+    getDocs,
+    query,
+    Timestamp,
+    where,
+  } from 'firebase/firestore'
+  import { fade } from 'svelte/transition'
 
   type DashboardData = {
     applications: {
@@ -154,7 +146,6 @@
                 }
               }
             })
-            resolve(console.log(classesToday))
           })
         }),
       ]).then(() => {

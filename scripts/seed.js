@@ -67,7 +67,39 @@ async function createOrUpdateUser(uid, email, password, displayName, role) {
   return user
 }
 
+async function deleteCollection(collectionPath) {
+  const collectionRef = db.collection(collectionPath)
+  const snapshot = await collectionRef.get()
+  const batch = db.batch()
+  snapshot.docs.forEach((doc) => {
+    batch.delete(doc.ref)
+  })
+  await batch.commit()
+}
+
 async function seed() {
+  console.log('Clearing old documents from emulator Firestore...')
+  const collectionsToClear = [
+    classesCollection,
+    registrationsCollection,
+    decisionsCollection,
+    applicationsCollection,
+    subRequestsCollection,
+    interviewTimesCollection,
+    classFeedbackCollection,
+    instructorFeedbackCollection,
+    'announcements',
+    'tokens',
+    'confirmations',
+    'hhids',
+    'users',
+    'ids',
+    'instructorClasses',
+  ]
+  for (const collectionName of collectionsToClear) {
+    await deleteCollection(collectionName)
+  }
+
   // Create/Update Seed Users
   const adminUser = await createOrUpdateUser(
     null,
@@ -165,11 +197,13 @@ async function seed() {
       instructorLastName: 'Instructor',
       meetingLink: 'https://zoom.us/j/123456789',
       meetingTimes: [
-        admin.firestore.Timestamp.fromDate(new Date('2026-03-02T16:00:00Z')),
-        admin.firestore.Timestamp.fromDate(new Date('2026-03-04T16:00:00Z')),
+        admin.firestore.Timestamp.fromDate(new Date()),
+        admin.firestore.Timestamp.fromDate(
+          new Date(Date.now() + 48 * 60 * 60 * 1000),
+        ),
       ],
       completedClassDates: [],
-      classStatuses: ['scheduled', 'scheduled'],
+      classStatuses: ['ClassUpcomingSoon', 'ClassInFuture'],
       feedbackCompleted: [false, false],
       online: true,
       students: ['student-demo-uid-1', 'student1', 'student2'],
@@ -191,11 +225,13 @@ async function seed() {
       instructorLastName: 'Jones',
       meetingLink: 'https:// zoom.us/j/987654321',
       meetingTimes: [
-        admin.firestore.Timestamp.fromDate(new Date('2026-03-03T17:00:00Z')),
-        admin.firestore.Timestamp.fromDate(new Date('2026-03-05T17:00:00Z')),
+        admin.firestore.Timestamp.fromDate(new Date()),
+        admin.firestore.Timestamp.fromDate(
+          new Date(Date.now() + 48 * 60 * 60 * 1000),
+        ),
       ],
       completedClassDates: [],
-      classStatuses: ['scheduled', 'scheduled'],
+      classStatuses: ['FeedbackIncomplete', 'ClassInFuture'],
       feedbackCompleted: [false, false],
       online: true,
       students: ['student3'],
@@ -362,6 +398,11 @@ async function seed() {
         updated: admin.firestore.FieldValue.serverTimestamp(),
       },
     })
+
+  console.log('Seeding mock confirmation form for student-demo-uid...')
+  await db.collection('confirmations').doc('student-demo-uid').set({
+    submitted: true,
+  })
 
   // Seeding 30 additional mock students/registrations
   console.log('Seeding 30 additional mock students/registrations...')
@@ -557,7 +598,7 @@ async function seed() {
       meta: {
         id: 'app-david',
         uid: 'user_app1',
-        interview: true,
+        interview: false,
         submitted: true,
         decision: null,
       },
@@ -714,6 +755,30 @@ async function seed() {
     const id = `class-fake-${i}`
     const course = courses[i % courses.length]
 
+    let meetingTimes = [
+      admin.firestore.Timestamp.fromDate(new Date('2026-03-02T16:00:00Z')),
+      admin.firestore.Timestamp.fromDate(new Date('2026-03-04T16:00:00Z')),
+    ]
+    let classStatuses = ['scheduled', 'scheduled']
+
+    if (i === 0) {
+      meetingTimes = [
+        admin.firestore.Timestamp.fromDate(new Date()),
+        admin.firestore.Timestamp.fromDate(
+          new Date(Date.now() + 48 * 60 * 60 * 1000),
+        ),
+      ]
+      classStatuses = ['ClassNotHeld', 'ClassInFuture']
+    } else if (i === 1) {
+      meetingTimes = [
+        admin.firestore.Timestamp.fromDate(new Date()),
+        admin.firestore.Timestamp.fromDate(
+          new Date(Date.now() + 48 * 60 * 60 * 1000),
+        ),
+      ]
+      classStatuses = ['EverythingComplete', 'ClassInFuture']
+    }
+
     await db
       .collection(classesCollection)
       .doc(id)
@@ -729,12 +794,9 @@ async function seed() {
         instructorFirstName: firstNames[i % firstNames.length],
         instructorLastName: lastNames[i % lastNames.length],
         meetingLink: 'https://zoom.us/j/123456789',
-        meetingTimes: [
-          admin.firestore.Timestamp.fromDate(new Date('2026-03-02T16:00:00Z')),
-          admin.firestore.Timestamp.fromDate(new Date('2026-03-04T16:00:00Z')),
-        ],
+        meetingTimes: meetingTimes,
         completedClassDates: [],
-        classStatuses: ['scheduled', 'scheduled'],
+        classStatuses: classStatuses,
         feedbackCompleted: [false, false],
         online: true,
         students: [`student-fake-${i}`],

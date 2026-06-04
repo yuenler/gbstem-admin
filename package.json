@@ -13,6 +13,8 @@
     "format:check": "prettier . --check .",
     "format": "prettier --write --plugin prettier-plugin-svelte --plugin prettier-plugin-tailwindcss .",
     "test": "jest",
+    "cypress:run": "start-server-and-test start http://localhost:3000 cypress",
+    "cypress": "cypress run",
     "deploy": "npm run build && firebase deploy",
     "seed": "node scripts/seed.js",
     "prepare": "husky || true"
@@ -53,6 +55,8 @@
     "@sendgrid/mail": "^8.1.6",
     "algoliasearch": "^5.53.0",
     "clsx": "^2.1.1",
+    "cypress": "^15.16.0",
+    "cypress-terminal-report": "^7.3.3",
     "date-fns": "^4.4.0",
     "firebase": "^12.14.0",
     "firebase-admin": "^13.10.0",

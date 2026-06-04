@@ -1,23 +1,16 @@
 <script lang="ts">
-  import type { EnrollRequestBody } from '../../routes/api/enroll/+server'
-  import {
-    doc,
-    getDoc,
-    updateDoc,
-    setDoc,
-    query,
-    getDocs,
-    collection,
-    arrayUnion,
-    arrayRemove,
-  } from 'firebase/firestore'
-  import Input from '$lib/components/Input.svelte'
-  import Select from '$lib/components/Select.svelte'
+  import { db } from '$lib/client/firebase'
   import Card from '$lib/components/Card.svelte'
-  import Button from './Button.svelte'
-  import Dialog from './Dialog.svelte'
+  import Select from '$lib/components/Select.svelte'
+  import {
+    classesCollection,
+    instructorFeedbackCollection,
+    registrationsCollection,
+  } from '$lib/data/collections'
+  import sendClassReminder from '$lib/data/helpers/sendClassReminders'
+  import type ClassData from '$lib/data/types/ClassData'
+  import type Student from '$lib/data/types/Student'
   import { alert } from '$lib/stores'
-  import { tick, onMount } from 'svelte'
   import {
     copyEmails,
     formatClassTimes,
@@ -25,25 +18,20 @@
   } from '$lib/utils'
   import { format } from 'date-fns'
   import {
-    classesCollection,
-    instructorFeedbackCollection,
-    registrationsCollection,
-  } from '$lib/data/collections'
-  import type ClassData from '$lib/data/types/ClassData'
-  import type Student from '$lib/data/types/Student'
-
-  interface ClientInstructorFeedback {
-    instructorName: string
-    students: string[]
-    attendanceList: Record<string, { present: boolean }>
-    date: string
-    courseName: string
-    feedback: string
-    classNumber: number
-    id: string
-  }
-  import sendClassReminder from '$lib/data/helpers/sendClassReminders'
-  import { db } from '$lib/client/firebase'
+    arrayRemove,
+    arrayUnion,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    query,
+    setDoc,
+    updateDoc,
+  } from 'firebase/firestore'
+  import { tick } from 'svelte'
+  import type { EnrollRequestBody } from '../../routes/api/enroll/+server'
+  import Button from './Button.svelte'
+  import Dialog from './Dialog.svelte'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -88,9 +76,19 @@
     selectedClassId = ''
     selectedDropClassId = ''
 
-    // Get student registration info
+    // Start fetching everything in parallel to optimize load times and prevent timeout
     const studentDocRef = doc(db, registrationsCollection, studentId)
-    const studentDoc = await getDoc(studentDocRef)
+    const studentPromise = getDoc(studentDocRef)
+    const hhidPromise = getDoc(doc(db, 'hhids', studentId))
+    const classesPromise = getDocs(query(collection(db, classesCollection)))
+    const attendancePromise = getDocs(
+      query(collection(db, instructorFeedbackCollection)),
+    )
+
+    // Wait for the primary student data first
+    const studentDoc = await studentPromise
+    let confirmedPromise = null
+
     if (studentDoc.exists()) {
       const data = studentDoc.data()
       if (data) {
@@ -105,39 +103,50 @@
         }
         studentID = studentDoc.id
 
-        // Load check-in details
-        try {
-          checkInLoading = true
-          confirmed = false
-          checkedIn = false
-          checkedInAt = null
-          food = {}
-
-          if (data.meta?.uid) {
-            const confirmedDoc = await getDoc(doc(db, 'confirmations', data.meta.uid))
-            confirmed = confirmedDoc.exists()
-          }
-
-          const hhidDocRef = doc(db, 'hhids', studentId)
-          const hhidDoc = await getDoc(hhidDocRef)
-          if (hhidDoc.exists()) {
-            const hhidData = hhidDoc.data()
-            if (hhidData) {
-              checkedIn = hhidData.checkedIn
-              checkedInAt = hhidData.checkedInAt?.toDate ? hhidData.checkedInAt.toDate() : hhidData.checkedInAt
-              food = hhidData.food || {}
-            }
-          }
-        } catch (err) {
-          console.error('Error loading check-in:', err)
-        } finally {
-          checkInLoading = false
+        if (data.meta?.uid) {
+          confirmedPromise = getDoc(doc(db, 'confirmations', data.meta.uid))
         }
       }
     }
 
-    // Get classes
-    const classesSnap = await getDocs(query(collection(db, classesCollection)))
+    // Wait for all other parallel promises
+    const [confirmedDoc, hhidDoc, classesSnap, attendanceSnap] =
+      await Promise.all([
+        confirmedPromise || Promise.resolve(null),
+        hhidPromise,
+        classesPromise,
+        attendancePromise,
+      ])
+
+    // Process check-in and confirmation details
+    try {
+      checkInLoading = true
+      confirmed = false
+      checkedIn = false
+      checkedInAt = null
+      food = {}
+
+      if (confirmedDoc) {
+        confirmed = confirmedDoc.exists()
+      }
+
+      if (hhidDoc.exists()) {
+        const hhidData = hhidDoc.data()
+        if (hhidData) {
+          checkedIn = hhidData.checkedIn
+          checkedInAt = hhidData.checkedInAt?.toDate
+            ? hhidData.checkedInAt.toDate()
+            : hhidData.checkedInAt
+          food = hhidData.food || {}
+        }
+      }
+    } catch (err) {
+      console.error('Error loading check-in:', err)
+    } finally {
+      checkInLoading = false
+    }
+
+    // Process classes
     classes = []
     classesOptions = []
     dropClassesOptions = []
@@ -156,10 +165,7 @@
       }
     })
 
-    // Get attendance
-    const attendanceSnap = await getDocs(
-      query(collection(db, instructorFeedbackCollection)),
-    )
+    // Process attendance
     attendance = []
     attendanceSnap.forEach((doc) => {
       const data = doc.data()
@@ -185,9 +191,14 @@
 
     loading = true
 
-    loadStudentClasses(id).then(() => {
-      loading = false
-    })
+    loadStudentClasses(id)
+      .then(() => {
+        loading = false
+      })
+      .catch((err) => {
+        console.error('loadStudentClasses failed:', err)
+        loading = false
+      })
   }
 
   // Update selected class IDs
@@ -204,12 +215,6 @@
     selectedDropClassId = selectedDropClassOption
       ? nameToUid[selectedDropClassOption.name]
       : ''
-    if (selectedDropClassOption) {
-      console.log(nameToUid[selectedDropClassOption.name])
-    }
-    if (selectedClassOption) {
-      console.log(nameToUid[selectedClassOption.name])
-    }
   }
 
   // Add class
@@ -259,7 +264,6 @@
 
   // Drop class
   async function dropClass(classId: string) {
-    console.log(studentID)
     if (!studentID || !classId) {
       alert.trigger('error', 'Student ID or class is missing.')
       return
@@ -285,29 +289,33 @@
     const hhidRef = doc(db, 'hhids', studentID)
     const now = new Date()
     try {
-      await setDoc(hhidRef, {
-        checkedIn: true,
-        checkedInAt: now,
-        food: {
-          '2023-10-20': {
-            dinner: false,
-          },
-          '2023-10-21': {
-            breakfast: false,
-            lunch: false,
-            dinner: false,
-          },
-          '2023-10-22': {
-            breakfast: false,
+      await setDoc(
+        hhidRef,
+        {
+          checkedIn: true,
+          checkedInAt: now,
+          food: {
+            '2023-10-20': {
+              dinner: false,
+            },
+            '2023-10-21': {
+              breakfast: false,
+              lunch: false,
+              dinner: false,
+            },
+            '2023-10-22': {
+              breakfast: false,
+            },
           },
         },
-      }, { merge: true })
+        { merge: true },
+      )
       checkedIn = true
       checkedInAt = now
       food = {
         '2023-10-20': { dinner: false },
         '2023-10-21': { breakfast: false, lunch: false, dinner: false },
-        '2023-10-22': { breakfast: false }
+        '2023-10-22': { breakfast: false },
       }
       alert.trigger('success', 'Student checked in successfully!')
     } catch (error) {
@@ -538,7 +546,9 @@
         <div class="p-4 text-gray-500">Loading check-in details…</div>
       {:else if confirmed}
         <div>
-          <div class="mb-4 text-green-700 font-medium">Confirmation form was submitted.</div>
+          <div class="mb-4 text-green-700 font-medium">
+            Confirmation form was submitted.
+          </div>
           <div class="flex items-center gap-2 mb-4">
             <span class="font-semibold">Checked in:</span>
             <div>
@@ -582,9 +592,12 @@
                     {#each Object.keys(food[date]) as meal}
                       <Button
                         color={food[date][meal] ? 'gray' : 'blue'}
-                        on:click={() => handleMeal(date, meal, food[date][meal])}
+                        on:click={() =>
+                          handleMeal(date, meal, food[date][meal])}
                       >
-                        {meal}: {food[date][meal] ? 'already eaten' : 'available'}
+                        {meal}: {food[date][meal]
+                          ? 'already eaten'
+                          : 'available'}
                       </Button>
                     {/each}
                   </div>
@@ -594,7 +607,9 @@
           </div>
         </div>
       {:else}
-        <div class="text-red-500 font-medium">Did not send in a confirmation form.</div>
+        <div class="text-red-500 font-medium">
+          Did not send in a confirmation form.
+        </div>
       {/if}
     </Card>
   </div>

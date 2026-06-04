@@ -20,7 +20,10 @@
     nameToValue[col.name] = `${type}${col.id}`
   }
 
-  const defaultDisplayName = collectionsList[0]?.name ?? 'Spring 2026'
+  // lib/data/collectionsList.json should be ordered from the most recent
+  // collection (semester) to the most recent one, so that the default
+  // collection shown in the dropdown is the most recent one.
+  const defaultDisplayName = collectionsList[0]?.name ?? 'ERROR'
 
   let lastUrlDisplayName =
     valueToName[

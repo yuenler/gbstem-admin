@@ -88,6 +88,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>Classes</title>
+</svelte:head>
+
 <ClassDetails bind:dialogEl id={selectedClassId} />
 
 <div class="flex flex-wrap items-center gap-4">

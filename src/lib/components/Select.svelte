@@ -43,15 +43,19 @@
   let open = false
   let selectedOptionIndex = 0
 
-  const options = optionsJson.map((item) => item.name)
+  $: options = optionsJson.map((item) => item.name)
+  $: if (options) {
+    filterOptionsBy(value)
+  }
   let filteredOptions: Array<SelectOption> = []
   const filterOptionsBy = debounce((givenValue) => {
-    if (givenValue === '') {
+    const val = givenValue ?? ''
+    if (val === '') {
       filteredOptions = options
     } else {
-      const lowerCaseValue = givenValue.toLowerCase()
+      const lowerCaseValue = val.toLowerCase()
       filteredOptions = options.filter(
-        (name) => name.toLowerCase().indexOf(lowerCaseValue) !== -1,
+        (name) => name && name.toLowerCase().indexOf(lowerCaseValue) !== -1,
       )
     }
   }, 150)

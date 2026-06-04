@@ -1,4 +1,26 @@
 <script lang="ts">
+  import { invalidate } from '$app/navigation'
+  import { db } from '$lib/client/firebase'
+  import Card from '$lib/components/Card.svelte'
+  import Form from '$lib/components/Form.svelte'
+  import Input from '$lib/components/Input.svelte'
+  import Select from '$lib/components/Select.svelte'
+  import Textarea from '$lib/components/Textarea.svelte'
+  import {
+    coursesJson,
+    gendersJson,
+    interviewAttendanceJson,
+    raceJson,
+    reasonsJson,
+  } from '$lib/data'
+  import {
+    applicationsCollection,
+    decisionsCollection,
+    semesterDatesDocument,
+  } from '$lib/data/collections'
+  import { alert } from '$lib/stores'
+  import { formatDateShort, toLocalISOString } from '$lib/utils'
+  import type { FirebaseError } from 'firebase/app'
   import {
     type Timestamp,
     doc,
@@ -7,42 +29,11 @@
     setDoc,
     updateDoc,
   } from 'firebase/firestore'
-  import Input from '$lib/components/Input.svelte'
-  import Select from '$lib/components/Select.svelte'
-  import Textarea from '$lib/components/Textarea.svelte'
-  import {
-    gendersJson,
-    reasonsJson,
-    raceJson,
-    coursesJson,
-    timeSlotsJson,
-    classesPerWeekJson,
-    interviewAttendanceJson,
-  } from '$lib/data'
-  import Card from '$lib/components/Card.svelte'
-  import Form from '$lib/components/Form.svelte'
-  import { db } from '$lib/client/firebase'
-  import Field from '$lib/components/Field.svelte'
+  import { cloneDeep } from 'lodash-es'
+  import type { DecisionRequestBody } from '../../routes/api/decision/+server'
+  import type { ScheduleInterviewRequestBody } from '../../routes/api/scheduleInterview/+server'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
-  import { alert } from '$lib/stores'
-  import { cloneDeep } from 'lodash-es'
-  import type { FirebaseError } from 'firebase/app'
-  import type { ScheduleInterviewRequestBody } from '../../routes/api/scheduleInterview/+server'
-  import type { DecisionRequestBody } from '../../routes/api/decision/+server'
-  import { invalidate } from '$app/navigation'
-  import {
-    formatDate,
-    formatDateShort,
-    timestampToDate,
-    toLocalISOString,
-  } from '$lib/utils'
-  import {
-    applicationsCollection,
-    decisionsCollection,
-    semesterDatesDocument,
-  } from '$lib/data/collections'
-  import { afterUpdate } from 'svelte'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -219,7 +210,7 @@
           lastAutosaved = new Date().toLocaleTimeString()
         })
         .catch((err: FirebaseError) => {
-          console.log('Autosave error:', err)
+          console.error('Applications autosave error:', err)
         })
     }
   }
@@ -232,7 +223,7 @@
           lastAutosaved = new Date().toLocaleTimeString()
         })
         .catch((err: FirebaseError) => {
-          console.log('Autosave error:', err)
+          console.error('Decision notes autosave error:', err)
         })
     }
   }
@@ -299,7 +290,7 @@
         .catch((err) => {
           alert.trigger('error', 'Something went wrong. Please try again.')
           loading = false
-          console.log(err)
+          console.error('Decisions update error:', err)
         })
     }
   }
@@ -310,10 +301,14 @@
     const frozenId = id
     loading = true
     if (frozenId !== undefined) {
-      updateDoc(doc(db, decisionsCollection, frozenId), {
-        likelyDecision: newDecision,
-        type: decision,
-      })
+      setDoc(
+        doc(db, decisionsCollection, frozenId),
+        {
+          likelyDecision: newDecision,
+          type: decision ?? null,
+        },
+        { merge: true },
+      )
         .then(() => {
           updateDoc(doc(db, applicationsCollection, frozenId), {
             'meta.decision': doc(db, decisionsCollection, frozenId),

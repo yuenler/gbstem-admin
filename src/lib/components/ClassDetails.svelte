@@ -88,9 +88,9 @@
         const data = snapshot.data() as ClassData
 
         values = { ...data }
-        values.meetingTimes = data.meetingTimes.sort(
-          (a: Date, b: Date) => a.getTime() - b.getTime(),
-        )
+        values.meetingTimes = data.meetingTimes
+          .map((t) => timestampToDate(t))
+          .sort((a: Date, b: Date) => a.getTime() - b.getTime())
 
         const studentUids = data.students
         if (studentUids) {

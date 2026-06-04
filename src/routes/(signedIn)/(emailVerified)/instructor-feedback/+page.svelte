@@ -58,6 +58,10 @@
   $: url = URL.createObjectURL(blob)
 </script>
 
+<svelte:head>
+  <title>Class Feedback</title>
+</svelte:head>
+
 <ClassFeedbackDetails bind:dialogEl id={selectedFeedbackId} />
 
 <div class="flex flex-wrap items-center gap-4 mb-4">

@@ -1,27 +1,29 @@
 <script lang="ts">
-  import type { AssignInterviewRequestBody } from '../../../routes/api/assignInterview/+server'
-  import Input from '$lib/components/Input.svelte'
-  import clsx from 'clsx'
-  import { alert } from '$lib/stores'
-  import Form from '$lib/components/Form.svelte'
-  import Button from '../Button.svelte'
-  import {
-    query,
-    collection,
-    getDocs,
-    updateDoc,
-    setDoc,
-    doc,
-    deleteDoc,
-  } from 'firebase/firestore'
   import { db, user } from '$lib/client/firebase'
-  import Card from '../Card.svelte'
-  import { onMount } from 'svelte'
-  import Loading from '../Loading.svelte'
+  import Form from '$lib/components/Form.svelte'
+  import Input from '$lib/components/Input.svelte'
+  import {
+    applicationsCollection,
+    interviewTimesCollection,
+  } from '$lib/data/collections'
+  import { alert } from '$lib/stores'
   import { formatDate, formatDateLocal, toLocalISOString } from '$lib/utils'
-  import { applicationsCollection } from '$lib/data/collections'
+  import clsx from 'clsx'
+  import {
+    collection,
+    deleteDoc,
+    doc,
+    getDocs,
+    query,
+    setDoc,
+    updateDoc,
+  } from 'firebase/firestore'
+  import { onMount } from 'svelte'
+  import type { AssignInterviewRequestBody } from '../../../routes/api/assignInterview/+server'
+  import Button from '../Button.svelte'
+  import Card from '../Card.svelte'
+  import Loading from '../Loading.svelte'
   import Select from '../Select.svelte'
-  import { interviewTimesCollection } from '$lib/data/collections'
 
   let className = ''
   export { className as class }
@@ -101,13 +103,14 @@
           names.push({
             name: `${user.personal.firstName} ${user.personal.lastName}`,
           })
-          options.push(user)
+          options.push({ ...user, docId: doc.id } as any)
         }
       }
     })
     return { names, options }
   }
 
+  let selectedIntervieweeDocId = ''
   $: if (interviewee) {
     const selectedInterviewee = intervieweeOptions.find(
       (option) =>
@@ -115,18 +118,17 @@
         interviewee,
     )
     if (selectedInterviewee) {
-      console.log(selectedInterviewee)
       const {
         personal: { email, firstName, lastName },
         meta: { uid },
       } = selectedInterviewee
+      selectedIntervieweeDocId = (selectedInterviewee as any).docId || ''
       interviewSlotToAdd.intervieweeId = uid
       interviewSlotToAdd.intervieweeEmail = email
       interviewSlotToAdd.intervieweeFirstName = firstName
       interviewSlotToAdd.intervieweeLastName = lastName
       interviewSlotToAdd.interviewSlotStatus = 'pending'
     }
-    console.log(interviewSlotToAdd)
   }
 
   onMount(() => {
@@ -171,9 +173,8 @@
       date: new Date(interviewSlotToAdd.date),
     })
     if (interviewSlotToAdd.intervieweeId != '') {
-      console.log(interviewSlotToAdd)
       await updateDoc(
-        doc(db, applicationsCollection, interviewSlotToAdd.intervieweeId),
+        doc(db, applicationsCollection, selectedIntervieweeDocId),
         {
           'meta.interview': true,
         },
@@ -203,6 +204,7 @@
     interviewSlotToAdd.intervieweeLastName = ''
     interviewSlotToAdd.interviewSlotStatus = 'available'
     interviewee = ''
+    allInterviewSlots = await getData()
   }
 
   function handleClear() {
@@ -434,7 +436,7 @@
                   </div>
                 {/if}
 
-                {#if interview.interviewSlotStatus === 'available' && (interview.interviewerEmail === currentUser.object.email || currentUser.profile.role === 'admin')}
+                {#if (interview.interviewSlotStatus === 'available' || interview.interviewSlotStatus === 'pending') && (interview.interviewerEmail === currentUser.object.email || currentUser.profile.role === 'admin')}
                   <div>
                     <Button
                       color="blue"
