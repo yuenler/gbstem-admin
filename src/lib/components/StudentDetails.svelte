@@ -141,7 +141,7 @@
         }
       }
     } catch (err) {
-      console.error('Error loading check-in:', err)
+      console.error('Check-in load error:', err)
     } finally {
       checkInLoading = false
     }
@@ -196,7 +196,7 @@
         loading = false
       })
       .catch((err) => {
-        console.error('loadStudentClasses failed:', err)
+        console.error('Student classes load error:', err)
         loading = false
       })
   }
@@ -257,7 +257,7 @@
         body: JSON.stringify(payload),
       })
     } catch (error) {
-      console.error('Error adding class:', error)
+      console.error('Class addition error:', error)
       alert.trigger('error', 'Failed to add class.')
     }
   }
@@ -279,7 +279,7 @@
       await tick()
       await loadStudentClasses(studentID)
     } catch (error) {
-      console.error('Error dropping class:', error)
+      console.error('Class drop error:', error)
       alert.trigger('error', 'Failed to drop class.')
     }
   }
@@ -319,7 +319,7 @@
       }
       alert.trigger('success', 'Student checked in successfully!')
     } catch (error) {
-      console.error('Error checking in:', error)
+      console.error('Check-in error:', error)
       alert.trigger('error', 'Failed to check in.')
     }
   }
@@ -334,7 +334,7 @@
       food[date][meal] = !state
       food = { ...food }
     } catch (error) {
-      console.error('Error updating meal:', error)
+      console.error('Meal update error:', error)
       alert.trigger('error', 'Failed to update meal.')
     }
   }

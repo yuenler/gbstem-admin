@@ -300,4 +300,15 @@ declare global {
       notes: string
     }
   }
+
+  interface ClientInstructorFeedback {
+    courseName: string
+    instructorName: string
+    feedback: string
+    date: string
+    classNumber: number
+    attendanceList: Record<string, { present: boolean }>
+    id: string
+    students: string[]
+  }
 }

@@ -101,7 +101,7 @@
         alert.trigger('error', 'Registration not found.')
       }
     } catch (error) {
-      console.error('Error loading class data:', error)
+      console.error('Class data load error:', error)
       alert.trigger('error', 'Failed to load class data.')
     } finally {
       loading = false
@@ -123,7 +123,7 @@
           })
         })
         .catch((err: FirebaseError) => {
-          console.log(err)
+          console.error('Class save changes error:', err)
           alert.trigger('error', err.code, true)
           loading = false
         })

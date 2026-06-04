@@ -57,7 +57,7 @@
                 }, 2000)
               })
               .catch((err) => {
-                console.log(err)
+                console.error('Account deletion error:', err)
                 disabled = false
               })
           })

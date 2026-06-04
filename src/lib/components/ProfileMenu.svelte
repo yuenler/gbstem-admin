@@ -23,7 +23,7 @@
         signOut(auth)
         goto('/signin')
       })
-      .catch((err) => console.log('Sign Out Error:', err))
+      .catch((err) => console.error('Sign out error:', err))
   }
 </script>
 

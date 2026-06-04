@@ -64,7 +64,7 @@
           })
         })
         .catch((err: FirebaseError) => {
-          console.log(err)
+          console.error('Token creation error:', err)
           alert.trigger('error', err.code, true)
           disabled = false
         })

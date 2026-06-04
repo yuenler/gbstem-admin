@@ -130,7 +130,7 @@
           })
         })
         .catch((err: FirebaseError) => {
-          console.log(err)
+          console.error('Registration save changes error:', err)
           alert.trigger('error', err.code, true)
           loading = false
         })

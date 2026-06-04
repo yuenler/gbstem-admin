@@ -115,7 +115,7 @@ if (!building) {
     }
   } catch (err: any) {
     if (!/already exists/u.test(err.message)) {
-      console.log('Firebase Admin Error:', err.stack)
+      console.error('Firebase Admin init error:', err)
     }
   }
   adminAuth = getAuth()

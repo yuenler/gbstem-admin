@@ -327,7 +327,7 @@
         .catch((err) => {
           alert.trigger('error', 'Something went wrong. Please try again.')
           loading = false
-          console.log(err)
+          console.error('Decision likely decision update error:', err)
         })
     }
   }
@@ -456,7 +456,7 @@
         .catch((err) => {
           alert.trigger('error', 'Something went wrong. Please try again.')
           loading = false
-          console.log(err)
+          console.error('Decision update error:', err)
         })
     }
   }
@@ -475,7 +475,7 @@
           })
         })
         .catch((err: FirebaseError) => {
-          console.log(err)
+          console.error('Applications save changes error:', err)
           alert.trigger('error', err.code, true)
           loading = false
         })

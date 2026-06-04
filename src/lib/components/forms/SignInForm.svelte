@@ -34,7 +34,7 @@
               .then(() => {
                 goto('/dashboard')
               })
-              .catch((err) => console.log('Sign In Error:', err))
+              .catch((err) => console.error('Sign in error:', err))
           })
         })
         .catch((err) => {
