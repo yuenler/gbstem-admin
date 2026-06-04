@@ -7,6 +7,15 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
   const expiresIn = 1000 * 60 * 60 * 24 * 7
   const decodedIdToken = await adminAuth.verifyIdToken(idToken)
 
+  const userRecord = await adminAuth.getUser(decodedIdToken.uid)
+  const role = userRecord.customClaims?.role as string | undefined
+  if (role === 'instructor' || role === 'student' || !role) {
+    throw error(
+      403,
+      'Unauthorized: You do not have permission to access the admin site.',
+    )
+  }
+
   if (new Date().getTime() / 1000 - decodedIdToken.auth_time < 5 * 60) {
     const cookie = await adminAuth.createSessionCookie(idToken, {
       expiresIn,

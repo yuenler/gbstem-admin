@@ -36,6 +36,46 @@ describe('Section A: Authentication and Navigation', () => {
     cy.get('.bg-red-200').should('be.visible')
   })
 
+  it('Test Case 2b: Unauthorized Role Sign In (Student & Instructor)', () => {
+    // Try logging in as instructor
+    cy.visit('/signin')
+    cy.get('input[type="email"]').should('be.visible')
+    cy.wait(500)
+    cy.fillInput('input[type="email"]', 'instructor@gbstem.org')
+    cy.fillInput('input[type="password"]', 'penguin')
+    cy.get('button[type="submit"]').click()
+
+    // Assert that we stay on signin and get the appropriate error message
+    cy.url().should('include', '/signin')
+    cy.get('.bg-red-200')
+      .should('be.visible')
+      .and(
+        'contain',
+        'Unauthorized: You do not have permission to access the admin site.',
+      )
+
+    // Clear session/cookies and try logging in as student
+    cy.clearAllCookies()
+    cy.clearAllLocalStorage()
+    cy.clearAllSessionStorage()
+
+    cy.visit('/signin')
+    cy.get('input[type="email"]').should('be.visible')
+    cy.wait(500)
+    cy.fillInput('input[type="email"]', 'student@gbstem.org')
+    cy.fillInput('input[type="password"]', 'penguin')
+    cy.get('button[type="submit"]').click()
+
+    // Assert that we stay on signin and get the appropriate error message
+    cy.url().should('include', '/signin')
+    cy.get('.bg-red-200')
+      .should('be.visible')
+      .and(
+        'contain',
+        'Unauthorized: You do not have permission to access the admin site.',
+      )
+  })
+
   it('Test Case 3: Successful Sign In', () => {
     cy.visit('/')
     cy.url().should('include', '/signin')

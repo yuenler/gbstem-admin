@@ -685,7 +685,12 @@ describe('api/auth', () => {
   it('POST authenticates user and sets session cookie', async () => {
     mockRequest.json.mockResolvedValue({ idToken: 'idToken123' })
     mockAdminAuth.verifyIdToken.mockResolvedValue({
+      uid: 'uid123',
       auth_time: new Date().getTime() / 1000 - 10,
+    })
+    mockAdminAuth.getUser.mockResolvedValue({
+      uid: 'uid123',
+      customClaims: { role: 'admin' },
     })
     mockAdminAuth.createSessionCookie.mockResolvedValue('sessionCookieVal')
 
@@ -701,10 +706,81 @@ describe('api/auth', () => {
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
   })
 
+  it('POST throws 403 if user is a student', async () => {
+    mockRequest.json.mockResolvedValue({ idToken: 'idToken123' })
+    mockAdminAuth.verifyIdToken.mockResolvedValue({
+      uid: 'uid123',
+      auth_time: new Date().getTime() / 1000 - 10,
+    })
+    mockAdminAuth.getUser.mockResolvedValue({
+      uid: 'uid123',
+      customClaims: { role: 'student' },
+    })
+
+    await expect(
+      authPOST({ request: mockRequest, cookies: mockCookies } as any),
+    ).rejects.toEqual(
+      expect.objectContaining({
+        status: 403,
+        message:
+          'Unauthorized: You do not have permission to access the admin site.',
+      }),
+    )
+  })
+
+  it('POST throws 403 if user is an instructor', async () => {
+    mockRequest.json.mockResolvedValue({ idToken: 'idToken123' })
+    mockAdminAuth.verifyIdToken.mockResolvedValue({
+      uid: 'uid123',
+      auth_time: new Date().getTime() / 1000 - 10,
+    })
+    mockAdminAuth.getUser.mockResolvedValue({
+      uid: 'uid123',
+      customClaims: { role: 'instructor' },
+    })
+
+    await expect(
+      authPOST({ request: mockRequest, cookies: mockCookies } as any),
+    ).rejects.toEqual(
+      expect.objectContaining({
+        status: 403,
+        message:
+          'Unauthorized: You do not have permission to access the admin site.',
+      }),
+    )
+  })
+
+  it('POST throws 403 if user has no role claim', async () => {
+    mockRequest.json.mockResolvedValue({ idToken: 'idToken123' })
+    mockAdminAuth.verifyIdToken.mockResolvedValue({
+      uid: 'uid123',
+      auth_time: new Date().getTime() / 1000 - 10,
+    })
+    mockAdminAuth.getUser.mockResolvedValue({
+      uid: 'uid123',
+      customClaims: {},
+    })
+
+    await expect(
+      authPOST({ request: mockRequest, cookies: mockCookies } as any),
+    ).rejects.toEqual(
+      expect.objectContaining({
+        status: 403,
+        message:
+          'Unauthorized: You do not have permission to access the admin site.',
+      }),
+    )
+  })
+
   it('POST throws error if sign in is not recent', async () => {
     mockRequest.json.mockResolvedValue({ idToken: 'idToken123' })
     mockAdminAuth.verifyIdToken.mockResolvedValue({
+      uid: 'uid123',
       auth_time: new Date().getTime() / 1000 - 1000,
+    })
+    mockAdminAuth.getUser.mockResolvedValue({
+      uid: 'uid123',
+      customClaims: { role: 'admin' },
     })
 
     await expect(

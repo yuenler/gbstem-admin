@@ -23,23 +23,33 @@
       disabled = true
       signInWithEmailAndPassword(auth, values.email, values.password)
         .then((credential) => {
-          credential.user.getIdToken().then((idToken) => {
-            fetch('/api/auth', {
+          return credential.user.getIdToken().then((idToken) => {
+            return fetch('/api/auth', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({ idToken }),
             })
-              .then(() => {
-                goto('/dashboard')
-              })
-              .catch((err) => console.error('Sign in error:', err))
           })
+        })
+        .then(async (res) => {
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}))
+            throw new Error(data.message || 'Unauthorized')
+          }
+          await goto('/dashboard')
         })
         .catch((err) => {
           disabled = false
-          alert.trigger('error', err.code, true)
+          console.error('Sign in error:', err)
+          const isFirebaseError =
+            err.code && typeof err.code === 'string' && err.code.includes('/')
+          if (isFirebaseError) {
+            alert.trigger('error', err.code, true)
+          } else {
+            alert.trigger('error', err.message || 'Unauthorized')
+          }
         })
     } else {
       showValidation = true
