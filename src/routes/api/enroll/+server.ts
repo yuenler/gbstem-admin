@@ -1,42 +1,32 @@
 import { inPersonClassEnrolledEmailTemplate } from '$lib/data/emailTemplates/inPersonClassEnrolledEmailTemplate'
 import { onlineClassEnrolledEmailTemplate } from '$lib/data/emailTemplates/onlineClassEnrolledEmailTemplate'
-import { verifyAdmin, handleApiError } from '$lib/server/apiHelpers'
+import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
 import { addDataToHtmlTemplate, formatTime24to12 } from '$lib/utils'
 import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 
-export interface EnrollRequestBody {
-  email: string
-  firstName: string
-  instructor: string
-  instructorEmail: string
-  classTimes: string[]
-  classDays: string[]
-  course: string
-  studentName: string
-  meetingLink: string
-  online: boolean
-}
+import { z } from 'zod'
+
+const enrollSchema = z.object({
+  email: z.email('Invalid email address'),
+  firstName: z.string().min(1, 'First name is required'),
+  instructor: z.string().min(1, 'Instructor name is required'),
+  instructorEmail: z.email('Invalid instructor email address'),
+  classTimes: z.array(z.string()).min(1, 'At least one class time is required'),
+  classDays: z.array(z.string()).min(1, 'At least one class day is required'),
+  course: z.string().min(1, 'Course is required'),
+  studentName: z.string().min(1, 'Student name is required'),
+  meetingLink: z.string().optional().default(''),
+  online: z.boolean(),
+})
+
+export type EnrollRequestBody = z.infer<typeof enrollSchema>
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   try {
     verifyAdmin(locals)
-    const body = (await request.json()) as EnrollRequestBody
-
-    // Validate required fields
-    if (
-      !body.email ||
-      !body.firstName ||
-      !body.instructor ||
-      !body.instructorEmail ||
-      !body.classTimes ||
-      !body.classDays ||
-      !body.course ||
-      !body.studentName
-    ) {
-      throw new Error('Missing required fields in request body.')
-    }
+    const body = enrollSchema.parse(await request.json())
 
     const classes = body.classDays.map(
       (day: string, index: number) =>

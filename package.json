@@ -54,14 +54,18 @@
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",
     "algoliasearch": "^5.53.0",
+    "bits-ui": "^2.18.1",
     "clsx": "^2.1.1",
     "cypress": "^15.16.0",
     "cypress-terminal-report": "^7.3.3",
     "date-fns": "^4.4.0",
     "firebase": "^12.14.0",
     "firebase-admin": "^13.10.0",
+    "formsnap": "^2.0.1",
     "lodash-es": "^4.18.1",
     "nprogress": "^0.2.0",
-    "tailwind-merge": "^3.6.0"
+    "sveltekit-superforms": "^2.30.1",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
   }
 }

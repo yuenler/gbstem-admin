@@ -1,20 +1,26 @@
 import { scheduleInterviewEmailTemplate } from '$lib/data/emailTemplates/scheduleInterviewEmailTemplate'
-import { verifyAdmin, handleApiError } from '$lib/server/apiHelpers'
+import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
 import { addDataToHtmlTemplate } from '$lib/utils'
 import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 
-export interface ScheduleInterviewRequestBody {
-  email: string
-  name: string
-  deadline: string
-}
+import { z } from 'zod'
+
+const scheduleInterviewSchema = z.object({
+  email: z.email('Invalid email address'),
+  name: z.string().min(1, 'Name is required'),
+  deadline: z.string().optional().default(''),
+})
+
+export type ScheduleInterviewRequestBody = z.infer<
+  typeof scheduleInterviewSchema
+>
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   try {
     verifyAdmin(locals)
-    const body = (await request.json()) as ScheduleInterviewRequestBody
+    const body = scheduleInterviewSchema.parse(await request.json())
 
     const intervieweeEmail = body.email
 

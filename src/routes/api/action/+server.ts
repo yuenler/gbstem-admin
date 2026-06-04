@@ -1,20 +1,31 @@
-import { verifyAuthenticated, handleApiError } from '$lib/server/apiHelpers'
+import { handleApiError, verifyAuthenticated } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
 import { adminAuth, adminDb } from '$lib/server/firebase'
 import { addDataToHtmlTemplate } from '$lib/utils'
 import { error, json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 
-export interface ActionRequestBody {
-  type: 'verifyEmail' | 'changeEmail' | 'resetPassword'
-  email?: string
-  newEmail?: string
-  firstName?: string
-}
+import { z } from 'zod'
+
+const actionSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('verifyEmail'),
+  }),
+  z.object({
+    type: z.literal('changeEmail'),
+    newEmail: z.email('Invalid email address'),
+  }),
+  z.object({
+    type: z.literal('resetPassword'),
+    email: z.email('Invalid email address'),
+  }),
+])
+
+export type ActionRequestBody = z.infer<typeof actionSchema>
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   try {
-    const body = (await request.json()) as ActionRequestBody
+    const body = actionSchema.parse(await request.json())
     let to = ''
     let data
 

@@ -2,8 +2,14 @@ import { adminAuth } from '$lib/server/firebase'
 import { error, json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 
+import { z } from 'zod'
+
+const authSchema = z.object({
+  idToken: z.string().min(1, 'ID Token is required'),
+})
+
 export const POST: RequestHandler = async ({ request, cookies }) => {
-  const { idToken } = await request.json()
+  const { idToken } = authSchema.parse(await request.json())
   const expiresIn = 1000 * 60 * 60 * 24 * 7
   const decodedIdToken = await adminAuth.verifyIdToken(idToken)
 

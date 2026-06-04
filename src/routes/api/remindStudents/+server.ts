@@ -1,23 +1,27 @@
 import { classReminderEmailTemplate } from '$lib/data/emailTemplates/classReminderEmailTemplate'
-import { verifyAdmin, handleApiError } from '$lib/server/apiHelpers'
+import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
 import { addDataToHtmlTemplate } from '$lib/utils'
 import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 
-export interface RemindStudentsRequestBody {
-  email: string
-  otherInstructorEmails: string
-  name: string
-  class: string
-  classTime: string
-  instructorName: string
-}
+import { z } from 'zod'
+
+const remindStudentsSchema = z.object({
+  email: z.email('Invalid email address'),
+  otherInstructorEmails: z.string().optional().default(''),
+  name: z.string().min(1, 'Name is required'),
+  class: z.string().min(1, 'Class is required'),
+  classTime: z.string().min(1, 'Class time is required'),
+  instructorName: z.string().min(1, 'Instructor name is required'),
+})
+
+export type RemindStudentsRequestBody = z.infer<typeof remindStudentsSchema>
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   try {
     verifyAdmin(locals)
-    const body = (await request.json()) as RemindStudentsRequestBody
+    const body = remindStudentsSchema.parse(await request.json())
 
     const email = body.email
     const otherEmails = body.otherInstructorEmails

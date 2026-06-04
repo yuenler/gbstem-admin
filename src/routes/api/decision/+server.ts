@@ -2,22 +2,26 @@ import { acceptEmailTemplate } from '$lib/data/emailTemplates/acceptEmailTemplat
 import { rejectionEmailTemplate } from '$lib/data/emailTemplates/rejectionEmailTemplate'
 import { subEmailTemplate } from '$lib/data/emailTemplates/subEmailTemplate'
 import { waitlistEmailTemplate } from '$lib/data/emailTemplates/waitlistEmailTemplate'
-import { verifyAdmin, handleApiError } from '$lib/server/apiHelpers'
+import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
 import { addDataToHtmlTemplate } from '$lib/utils'
 import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 
-export interface DecisionRequestBody {
-  email: string
-  decision: 'rejected' | 'waitlisted' | 'substitute' | 'accepted'
-  name: string
-}
+import { z } from 'zod'
+
+const decisionSchema = z.object({
+  email: z.email('Invalid email address'),
+  decision: z.enum(['rejected', 'waitlisted', 'substitute', 'accepted']),
+  name: z.string().min(1, 'Name is required'),
+})
+
+export type DecisionRequestBody = z.infer<typeof decisionSchema>
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   try {
     verifyAdmin(locals)
-    const body = (await request.json()) as DecisionRequestBody
+    const body = decisionSchema.parse(await request.json())
 
     const intervieweeEmail = body.email
     const decision = body.decision
