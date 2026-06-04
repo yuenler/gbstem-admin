@@ -12,7 +12,7 @@
   import { invalidate } from '$app/navigation'
   import DialogActions from './DialogActions.svelte'
   import { addHours } from 'date-fns'
-  import { cn } from '$lib/utils'
+  import { cn, writeToClipboard } from '$lib/utils'
   import { createEventDispatcher } from 'svelte'
 
   const dispatch = createEventDispatcher()
@@ -46,21 +46,9 @@
                 dialogEl.close()
               })
             }
-            if (
-              navigator.clipboard &&
-              typeof navigator.clipboard.writeText === 'function'
-            ) {
-              const promise = navigator.clipboard.writeText(
-                `${$page.url.host}/signup?token=${snapshot.id}`,
-              )
-              if (promise && typeof promise.then === 'function') {
-                promise.then(next).catch(next)
-              } else {
-                next()
-              }
-            } else {
-              next()
-            }
+            writeToClipboard(`${$page.url.host}/signup?token=${snapshot.id}`)
+              .then(next)
+              .catch(next)
           })
         })
         .catch((err: FirebaseError) => {

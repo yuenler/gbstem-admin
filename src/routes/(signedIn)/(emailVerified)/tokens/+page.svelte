@@ -11,6 +11,7 @@
   import { goto, invalidate } from '$app/navigation'
   import { page } from '$app/stores'
   import type { FirebaseError } from 'firebase/app'
+  import { writeToClipboard } from '$lib/utils'
 
   export let data: PageData
 
@@ -90,23 +91,13 @@
     create = true
   }
   function handleCopyAction(token: { id: string; values: Data.Token<'pojo'> }) {
-    if (
-      navigator.clipboard &&
-      typeof navigator.clipboard.writeText === 'function'
-    ) {
-      const promise = navigator.clipboard.writeText(
-        `${$page.url.host}/signup?token=${token.id}`,
-      )
-      if (promise && typeof promise.then === 'function') {
-        promise.then(() => {
-          alert.trigger('success', 'Token copied.')
-        })
-      } else {
+    writeToClipboard(`${$page.url.host}/signup?token=${token.id}`)
+      .then(() => {
         alert.trigger('success', 'Token copied.')
-      }
-    } else {
-      alert.trigger('success', 'Token copied.')
-    }
+      })
+      .catch(() => {
+        alert.trigger('error', 'Failed to copy token.')
+      })
   }
   function handleDeleteAction(token: {
     id: string

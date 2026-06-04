@@ -14,6 +14,7 @@
   import Dialog from '$lib/components/Dialog.svelte'
   import Button from '$lib/components/Button.svelte'
   import DialogActions from '$lib/components/DialogActions.svelte'
+  import { writeToClipboard } from '$lib/utils'
 
   export let data: PageData
 
@@ -112,7 +113,7 @@
             aria-label="Copy user ID to clipboard"
             on:click={() => {
               if ($user) {
-                navigator.clipboard.writeText(data.user.uid)
+                writeToClipboard(data.user.uid)
               }
             }}
           >

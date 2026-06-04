@@ -10,7 +10,7 @@
   import sendClassReminder from '$lib/data/helpers/sendClassReminders'
   import { ClassStatus } from '$lib/data/types/ClassStatus'
   import { alert } from '$lib/stores'
-  import { formatDate, timestampToDate } from '$lib/utils'
+  import { formatDate, timestampToDate, writeToClipboard } from '$lib/utils'
   import {
     collection,
     getCountFromServer,
@@ -233,22 +233,36 @@
         </ol>
         <Button
           on:click={() => {
-            // copy emails to clipboard
-            navigator.clipboard.writeText(uncompletedRegistrationsEmails)
-            alert.trigger(
-              'success',
-              'Emails of uncompleted registrations copied to clipboard.',
-            )
+            writeToClipboard(uncompletedRegistrationsEmails)
+              .then(() => {
+                alert.trigger(
+                  'success',
+                  'Emails of uncompleted registrations copied to clipboard.',
+                )
+              })
+              .catch(() => {
+                alert.trigger(
+                  'error',
+                  'Failed to copy emails of uncompleted registrations.',
+                )
+              })
           }}>Copy Emails for Uncompleted Registrations</Button
         >
         <Button
           on:click={() => {
-            // copy emails to clipboard
-            navigator.clipboard.writeText(uncompletedApplicationsEmails)
-            alert.trigger(
-              'success',
-              'Emails of uncompleted applications copied to clipboard.',
-            )
+            writeToClipboard(uncompletedApplicationsEmails)
+              .then(() => {
+                alert.trigger(
+                  'success',
+                  'Emails of uncompleted applications copied to clipboard.',
+                )
+              })
+              .catch(() => {
+                alert.trigger(
+                  'error',
+                  'Failed to copy emails of uncompleted applications.',
+                )
+              })
           }}>Copy Emails for Uncompleted Applications</Button
         >
       </Card>

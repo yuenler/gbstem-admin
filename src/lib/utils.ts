@@ -195,19 +195,29 @@ export const getNearestFutureClassIndex = (meetingTimes: Date[]) => {
   )
 }
 
-export function copyEmails(email: string) {
-  const promise = navigator.clipboard.writeText(email)
-  if (promise && typeof promise.then === 'function') {
-    promise
-      .then(() => {
-        alert.trigger('success', 'Emails copied to clipboard!')
-      })
-      .catch((err) => {
-        alert.trigger('error', 'Failed to copy emails to clipboard!')
-      })
-  } else {
-    alert.trigger('success', 'Emails copied to clipboard!')
+export function writeToClipboard(text: string): Promise<void> {
+  if (
+    typeof navigator === 'undefined' ||
+    !navigator.clipboard ||
+    typeof navigator.clipboard.writeText !== 'function'
+  ) {
+    return Promise.reject(new Error('Clipboard API not supported'))
   }
+  const promise = navigator.clipboard.writeText(text)
+  if (promise && typeof promise.then === 'function') {
+    return promise
+  }
+  return Promise.resolve()
+}
+
+export function copyEmails(email: string) {
+  writeToClipboard(email)
+    .then(() => {
+      alert.trigger('success', 'Emails copied to clipboard!')
+    })
+    .catch(() => {
+      alert.trigger('error', 'Failed to copy emails to clipboard!')
+    })
 }
 
 export function toLocalISOString(date: Date) {
