@@ -52,7 +52,6 @@ export const load = (async ({ url, depends }) => {
       } else {
         dbQuery = adminDb
           .collection(collectionName)
-          .where('meta.submitted', '==', true)
           .orderBy('timestamps.updated', 'desc')
       }
 

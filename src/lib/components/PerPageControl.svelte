@@ -3,12 +3,16 @@
   import { goto } from '$app/navigation'
   import Select from './Select.svelte'
 
-  let limitValue = String($page.url.searchParams.get('limit') ?? '25')
+  let previousUrlLimit = String($page.url.searchParams.get('limit') ?? '25')
+  let limitValue = previousUrlLimit
 
   $: {
     const urlLimit = String($page.url.searchParams.get('limit') ?? '25')
-    if (limitValue !== urlLimit) {
+    if (urlLimit !== previousUrlLimit) {
+      previousUrlLimit = urlLimit
       limitValue = urlLimit
+    } else if (limitValue !== urlLimit) {
+      handleLimitChange(limitValue)
     }
   }
 
@@ -20,10 +24,6 @@
     base.set('limit', newLimit)
     base.set('page', '1') // Reset to page 1
     goto(`?${base.toString()}`)
-  }
-
-  $: if (limitValue) {
-    handleLimitChange(limitValue)
   }
 
   const limitOptions = [

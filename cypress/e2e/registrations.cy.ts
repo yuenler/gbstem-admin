@@ -44,6 +44,12 @@ describe('Section G: Pre-Registrations Directory', () => {
       expect($table).to.contain('Charlie Brown')
     })
 
+    // Verify Per Page dropdown functionality
+    cy.get('input[name="per-page"]').should('have.value', '25')
+    cy.selectOption('input[name="per-page"]', '50')
+    cy.url().should('contain', 'limit=50')
+    cy.get('input[name="per-page"]').should('have.value', '50')
+
     // Select "submitted" from Status filter dropdown
     cy.selectOption('input[name="status"]', 'incomplete')
     cy.get('table').should(($table) => {
@@ -54,9 +60,9 @@ describe('Section G: Pre-Registrations Directory', () => {
 
     cy.selectOption('input[name="status"]', 'all')
     cy.get('table').should(($table) => {
-      // Verify Charlie gets filtered out and Mark stays
-      expect($table).to.not.contain('Charlie Brown')
-      // TODO(dmeyer246) Mark Lewis isn't there at all, is "all" not really "all"?
+      // Verify Charlie gets restored and Mark stays
+      expect($table).to.contain('Charlie Brown')
+      expect($table).to.contain('Mark Lewis')
     })
 
     // Verify Download button links to a CSV Blob
