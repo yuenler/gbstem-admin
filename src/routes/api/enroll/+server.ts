@@ -1,8 +1,9 @@
 import { inPersonClassEnrolledEmailTemplate } from '$lib/data/emailTemplates/inPersonClassEnrolledEmailTemplate'
 import { onlineClassEnrolledEmailTemplate } from '$lib/data/emailTemplates/onlineClassEnrolledEmailTemplate'
+import { verifyAdmin, handleApiError } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
 import { addDataToHtmlTemplate, formatTime24to12 } from '$lib/utils'
-import { error, json } from '@sveltejs/kit'
+import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 
 export interface EnrollRequestBody {
@@ -19,15 +20,11 @@ export interface EnrollRequestBody {
 }
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-  let topError
   try {
+    verifyAdmin(locals)
     const body = (await request.json()) as EnrollRequestBody
 
-    if (locals.user === null) {
-      throw error(400, 'User not signed in.')
-    }
-
-    // Validate required fields, you can add more validations as needed
+    // Validate required fields
     if (
       !body.email ||
       !body.firstName ||
@@ -38,7 +35,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       !body.course ||
       !body.studentName
     ) {
-      throw error(400, 'Missing required fields in request body.')
+      throw new Error('Missing required fields in request body.')
     }
 
     const classes = body.classDays.map(
@@ -81,26 +78,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
         subject: String(template.data.subject),
         html: htmlBody,
       })
-      return json({ message: 'Email sent successfully.' })
     } catch (mailError) {
       return json(
         { error: 'Failed to send email. Please try again later.' },
         { status: 500 },
       )
     }
-  } catch (err: unknown) {
-    if (typeof err === 'string') {
-      topError = error(400, err)
-    } else if (err instanceof Error) {
-      topError = error(400, err.message)
-    } else if (err && typeof err === 'object' && 'message' in err) {
-      topError = error(
-        400,
-        String((err as { message?: unknown }).message ?? ''),
-      )
-    } else {
-      topError = error(400, 'Invalid request body or unknown error.')
-    }
-    throw topError
+
+    return json({ message: 'Email sent successfully.' })
+  } catch (err) {
+    throw handleApiError(err)
   }
 }

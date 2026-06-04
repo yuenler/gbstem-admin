@@ -46,6 +46,8 @@ jest.mock(
       data,
       __isSvelteKitFail: true,
     }),
+    isHttpError: (err: any) =>
+      err && (err.__isSvelteKitError || (err.status && err.body)),
   }),
   { virtual: true },
 )
@@ -478,7 +480,7 @@ describe('API routes POST endpoints', () => {
     })
     const res = await actionPOST({
       request: mockRequest as any,
-      locals: { user: { email: 'test@test.com' } },
+      locals: { user: { email: 'test@test.com', role: 'admin' } },
     } as any)
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
   })
@@ -490,7 +492,7 @@ describe('API routes POST endpoints', () => {
     })
     const res = await actionPOST({
       request: mockRequest as any,
-      locals: { user: { email: 'old@test.com' } },
+      locals: { user: { email: 'old@test.com', role: 'admin' } },
     } as any)
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
   })
@@ -518,7 +520,7 @@ describe('API routes POST endpoints', () => {
     })
     const res = await assignInterviewPOST({
       request: mockRequest as any,
-      locals: { user: { email: 'admin@test.com' } },
+      locals: { user: { email: 'admin@test.com', role: 'admin' } },
     } as any)
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
   })
@@ -534,7 +536,7 @@ describe('API routes POST endpoints', () => {
     })
     const res = await decisionPOST({
       request: mockRequest as any,
-      locals: { user: { email: 'admin@test.com' } },
+      locals: { user: { email: 'admin@test.com', role: 'admin' } },
     } as any)
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
   })
@@ -553,7 +555,7 @@ describe('API routes POST endpoints', () => {
     })
     const res = await enrollPOST({
       request: mockRequest as any,
-      locals: { user: { email: 'admin@test.com' } },
+      locals: { user: { email: 'admin@test.com', role: 'admin' } },
     } as any)
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
   })
@@ -568,7 +570,7 @@ describe('API routes POST endpoints', () => {
     })
     const res = await remindInstructorPOST({
       request: mockRequest as any,
-      locals: { user: { email: 'admin@test.com' } },
+      locals: { user: { email: 'admin@test.com', role: 'admin' } },
     } as any)
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
   })
@@ -585,7 +587,7 @@ describe('API routes POST endpoints', () => {
     })
     const res = await remindStudentsPOST({
       request: mockRequest as any,
-      locals: { user: { email: 'admin@test.com' } },
+      locals: { user: { email: 'admin@test.com', role: 'admin' } },
     } as any)
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
   })
@@ -598,7 +600,7 @@ describe('API routes POST endpoints', () => {
     })
     const res = await scheduleInterviewPOST({
       request: mockRequest as any,
-      locals: { user: { email: 'admin@test.com' } },
+      locals: { user: { email: 'admin@test.com', role: 'admin' } },
     } as any)
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
   })
