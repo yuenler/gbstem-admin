@@ -20,6 +20,7 @@
     where,
   } from 'firebase/firestore'
   import { fade } from 'svelte/transition'
+  import { onDestroy } from 'svelte'
 
   type DashboardData = {
     applications: {
@@ -46,112 +47,177 @@
   let uncompletedRegistrationsEmails = ''
   let uncompletedApplicationsEmails = ''
 
-  let data: DashboardData
+  let data: DashboardData = {
+    applications: {
+      total: 0,
+      submitted: 0,
+      decided: 0,
+      registered: 0,
+      totalRegistrationsStarted: 0,
+      enrolled: 0,
+    },
+    users: {
+      total: 0,
+    },
+  }
 
-  user.subscribe((user) => {
-    if (user) {
-      let timer: number
-      Promise.all([
-        new Promise<void>((resolve) => {
-          timer = window.setTimeout(resolve, 400)
-        }),
-        new Promise<void>((resolve) => {
-          const applicationsColl = collection(db, applicationsCollection)
-          const usersColl = collection(db, 'users')
-          const registrationsColl = collection(db, registrationsCollection)
-          // get uncompleted registration emails
-          getDocs(
-            query(registrationsColl, where('meta.submitted', '==', false)),
-          ).then((snapshot) => {
-            snapshot.forEach((doc) => {
-              uncompletedRegistrationsEmails += doc.data().personal.email + ', '
-            })
-            resolve()
-          })
+  let timer: any
+  let queryTimeout: any
 
-          // get uncompleted application emails
-          getDocs(
-            query(applicationsColl, where('meta.submitted', '==', false)),
-          ).then((snapshot) => {
-            snapshot.forEach((doc) => {
-              uncompletedApplicationsEmails += doc.data().personal.email + ', '
-            })
-            resolve()
-          })
+  onDestroy(() => {
+    if (timer) window.clearTimeout(timer)
+    if (queryTimeout) window.clearTimeout(queryTimeout)
+  })
 
-          Promise.all([
-            getCountFromServer(applicationsColl),
-            getCountFromServer(
-              query(applicationsColl, where('meta.submitted', '==', true)),
-            ),
-            getCountFromServer(
-              query(applicationsColl, where('meta.decision', '!=', null)),
-            ),
-            getCountFromServer(usersColl),
-            getCountFromServer(
-              query(registrationsColl, where('meta.submitted', '==', true)),
-            ),
-            getCountFromServer(registrationsColl),
-            getCountFromServer(
-              query(registrationsColl, where('enrolled', '==', true)),
-            ),
-          ]).then(
-            ([
-              totalApplicationsSnapshot,
-              submittedApplicationsSnapshot,
-              decidedApplicationsSnapshot,
-              totalUsersSnapshot,
-              submittedRegistrationsSnapshot,
-              totalRegistrationsSnapshot,
-              enrolledRegistrationsSnapshot,
-            ]) => {
-              data = {
-                applications: {
-                  total: totalApplicationsSnapshot.data().count,
-                  submitted: submittedApplicationsSnapshot.data().count,
-                  decided: decidedApplicationsSnapshot.data().count,
-                  registered: submittedRegistrationsSnapshot.data().count,
-                  totalRegistrationsStarted:
-                    totalRegistrationsSnapshot.data().count,
-                  enrolled: enrolledRegistrationsSnapshot.data().count,
-                },
-                users: {
-                  total: totalUsersSnapshot.data().count,
-                },
-              }
-              resolve()
-            },
-          )
-        }),
+  function getClassStatusBg(status: string) {
+    switch (status) {
+      case ClassStatus.ClassUpcomingSoon:
+        return 'bg-blue-100'
+      case ClassStatus.ClassNotHeld:
+        return 'bg-red-100'
+      case ClassStatus.FeedbackIncomplete:
+        return 'bg-yellow-100'
+      case ClassStatus.EverythingComplete:
+        return 'bg-green-100'
+      default:
+        return 'bg-gray-100'
+    }
+  }
 
-        new Promise<void>((resolve) => {
-          const q = query(collection(db, classesCollection))
-          getDocs(q).then((snapshot) => {
-            snapshot.forEach((doc) => {
-              const meetingTimes: Timestamp[] = doc.data().meetingTimes
-              if (meetingTimes !== undefined && Array.isArray(meetingTimes)) {
-                for (let i = 0; i < meetingTimes.length; i++) {
-                  const rawTime = meetingTimes[i]
-                  if (rawTime) {
-                    const meetingTime = timestampToDate(rawTime)
-                    if (
-                      meetingTime &&
-                      new Date().toLocaleDateString() ===
-                        meetingTime.toLocaleDateString()
-                    ) {
-                      const classSession = doc.data() as Data.Class
-                      classesToday.push({ class: classSession, classNumber: i })
-                    }
-                  }
-                }
-              }
-            })
-          })
-        }),
-      ]).then(() => {
-        loading = false
+  async function loadDashboardData() {
+    loading = true
+    try {
+      const applicationsColl = collection(db, applicationsCollection)
+      const usersColl = collection(db, 'users')
+      const registrationsColl = collection(db, registrationsCollection)
+      const classesColl = collection(db, classesCollection)
+
+      const timerPromise = new Promise<void>((resolve) => {
+        timer = window.setTimeout(resolve, 400)
       })
-      return () => window.clearTimeout(timer)
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        queryTimeout = window.setTimeout(() => {
+          reject(new Error('Query timeout (10 seconds)'))
+        }, 10000)
+      })
+
+      const fetchPromise = Promise.all([
+        getDocs(query(registrationsColl, where('meta.submitted', '==', false))),
+        getDocs(query(applicationsColl, where('meta.submitted', '==', false))),
+        Promise.all([
+          getCountFromServer(applicationsColl),
+          getCountFromServer(
+            query(applicationsColl, where('meta.submitted', '==', true)),
+          ),
+          getCountFromServer(
+            query(applicationsColl, where('meta.decision', '!=', null)),
+          ),
+          getCountFromServer(usersColl),
+          getCountFromServer(
+            query(registrationsColl, where('meta.submitted', '==', true)),
+          ),
+          getCountFromServer(registrationsColl),
+          getCountFromServer(
+            query(registrationsColl, where('enrolled', '==', true)),
+          ),
+        ]),
+        getDocs(query(classesColl)),
+      ])
+
+      const [
+        uncompletedRegistrationsSnapshot,
+        uncompletedApplicationsSnapshot,
+        counts,
+        classesSnapshot,
+      ] = await Promise.race([fetchPromise, timeoutPromise])
+
+      // Process uncompleted registration emails
+      let regEmails = ''
+      uncompletedRegistrationsSnapshot.forEach((doc) => {
+        const email = doc.data().personal?.email
+        if (email) {
+          regEmails += email + ', '
+        }
+      })
+      uncompletedRegistrationsEmails = regEmails
+
+      // Process uncompleted application emails
+      let appEmails = ''
+      uncompletedApplicationsSnapshot.forEach((doc) => {
+        const email = doc.data().personal?.email
+        if (email) {
+          appEmails += email + ', '
+        }
+      })
+      uncompletedApplicationsEmails = appEmails
+
+      // Process counts
+      const [
+        totalApplicationsSnapshot,
+        submittedApplicationsSnapshot,
+        decidedApplicationsSnapshot,
+        totalUsersSnapshot,
+        submittedRegistrationsSnapshot,
+        totalRegistrationsSnapshot,
+        enrolledRegistrationsSnapshot,
+      ] = counts
+
+      data = {
+        applications: {
+          total: totalApplicationsSnapshot.data().count,
+          submitted: submittedApplicationsSnapshot.data().count,
+          decided: decidedApplicationsSnapshot.data().count,
+          registered: submittedRegistrationsSnapshot.data().count,
+          totalRegistrationsStarted: totalRegistrationsSnapshot.data().count,
+          enrolled: enrolledRegistrationsSnapshot.data().count,
+        },
+        users: {
+          total: totalUsersSnapshot.data().count,
+        },
+      }
+
+      // Process classes today
+      const todayClasses: ClassToday[] = []
+      classesSnapshot.forEach((doc) => {
+        const meetingTimes: Timestamp[] = doc.data().meetingTimes
+        if (meetingTimes !== undefined && Array.isArray(meetingTimes)) {
+          for (let i = 0; i < meetingTimes.length; i++) {
+            const rawTime = meetingTimes[i]
+            if (rawTime) {
+              const meetingTime = timestampToDate(rawTime)
+              if (
+                meetingTime &&
+                new Date().toLocaleDateString() ===
+                  meetingTime.toLocaleDateString()
+              ) {
+                const classSession = doc.data() as Data.Class
+                todayClasses.push({ class: classSession, classNumber: i })
+              }
+            }
+          }
+        }
+      })
+      classesToday = todayClasses
+
+      // Wait for minimum loader time
+      await timerPromise
+    } catch (err: any) {
+      console.error('Error loading dashboard data:', err)
+      alert.trigger(
+        'error',
+        `Failed to load dashboard data: ${err.message || err}`,
+      )
+    } finally {
+      if (timer) window.clearTimeout(timer)
+      if (queryTimeout) window.clearTimeout(queryTimeout)
+      loading = false
+    }
+  }
+
+  user.subscribe((u) => {
+    if (u) {
+      loadDashboardData()
     }
   })
 </script>
@@ -274,35 +340,59 @@
       </Card>
       <Card class="space-y-2">
         <h2 class="text-xl font-bold">Classes Today</h2>
-        <ul class="list-none space-y-2">
-          {#each classesToday as classToday}
-            {#if classToday.class.classStatuses[classToday.classNumber] === ClassStatus.ClassUpcomingSoon}
+        {#if classesToday.length === 0}
+          <p class="text-gray-500 text-sm italic p-2">
+            No classes scheduled for today.
+          </p>
+        {:else}
+          <div
+            class="hidden sm:grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-gray-500 border-b border-gray-200"
+          >
+            <span class="col-span-3">Course</span>
+            <span class="col-span-3">Instructor</span>
+            <span class="col-span-4">Action</span>
+            <span class="col-span-2 text-right">Time</span>
+          </div>
+          <ul class="list-none space-y-2">
+            {#each classesToday as classToday}
+              {@const status =
+                classToday.class.classStatuses[classToday.classNumber]}
               <li
-                class="flex items-center justify-between rounded-lg p-4 bg-blue-100"
+                class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center rounded-lg p-4 {getClassStatusBg(
+                  status,
+                )}"
               >
-                <p>{classToday.class.course}</p>
-                <p>
+                <p class="font-semibold sm:font-normal sm:col-span-3">
+                  {classToday.class.course}
+                </p>
+                <p class="sm:col-span-3">
                   {classToday.class.instructorFirstName +
                     ' ' +
                     classToday.class.instructorLastName}
                 </p>
-                <Button
-                  color="gray"
-                  on:click={() =>
-                    sendClassReminder({
-                      instructorName: classToday.class.instructorFirstName,
-                      instructorEmail: classToday.class.instructorEmail,
-                      otherInstructorEmails:
-                        classToday.class.otherInstructorEmails,
-                      className: classToday.class.course,
-                      nextMeetingTime: formatDate(
-                        timestampToDate(
-                          classToday.class.meetingTimes[classToday.classNumber],
+                <div class="sm:col-span-4">
+                  <Button
+                    color="gray"
+                    on:click={() =>
+                      sendClassReminder({
+                        instructorName: classToday.class.instructorFirstName,
+                        instructorEmail: classToday.class.instructorEmail,
+                        otherInstructorEmails:
+                          classToday.class.otherInstructorEmails,
+                        className: classToday.class.course,
+                        nextMeetingTime: formatDate(
+                          timestampToDate(
+                            classToday.class.meetingTimes[
+                              classToday.classNumber
+                            ],
+                          ),
                         ),
-                      ),
-                    })}>Send Instructor Reminder</Button
-                >
-                <p>
+                      })}
+                  >
+                    Send Instructor Reminder
+                  </Button>
+                </div>
+                <p class="sm:col-span-2 sm:text-right">
                   {formatDate(
                     timestampToDate(
                       classToday.class.meetingTimes[classToday.classNumber],
@@ -310,145 +400,9 @@
                   )}
                 </p>
               </li>
-            {:else if classToday.class.classStatuses[classToday.classNumber] === ClassStatus.ClassNotHeld}
-              <li
-                class="flex items-center justify-between rounded-lg p-4 bg-red-100"
-              >
-                <p>{classToday.class.course}</p>
-                <p>
-                  {classToday.class.instructorFirstName +
-                    ' ' +
-                    classToday.class.instructorLastName}
-                </p>
-                <Button
-                  color="gray"
-                  on:click={() =>
-                    sendClassReminder({
-                      instructorName: classToday.class.instructorFirstName,
-                      instructorEmail: classToday.class.instructorEmail,
-                      otherInstructorEmails:
-                        classToday.class.otherInstructorEmails,
-                      className: classToday.class.course,
-                      nextMeetingTime: formatDate(
-                        timestampToDate(
-                          classToday.class.meetingTimes[classToday.classNumber],
-                        ),
-                      ),
-                    })}>Send Instructor Reminder</Button
-                >
-                <p>
-                  {formatDate(
-                    timestampToDate(
-                      classToday.class.meetingTimes[classToday.classNumber],
-                    ),
-                  )}
-                </p>
-              </li>
-            {:else if classToday.class.classStatuses[classToday.classNumber] === ClassStatus.FeedbackIncomplete}
-              <li
-                class="flex items-center justify-between rounded-lg p-4 bg-yellow-100"
-              >
-                <p>{classToday.class.course}</p>
-                <p>
-                  {classToday.class.instructorFirstName +
-                    ' ' +
-                    classToday.class.instructorLastName}
-                </p>
-                <Button
-                  color="gray"
-                  on:click={() =>
-                    sendClassReminder({
-                      instructorName: classToday.class.instructorFirstName,
-                      instructorEmail: classToday.class.instructorEmail,
-                      otherInstructorEmails:
-                        classToday.class.otherInstructorEmails,
-                      className: classToday.class.course,
-                      nextMeetingTime: formatDate(
-                        timestampToDate(
-                          classToday.class.meetingTimes[classToday.classNumber],
-                        ),
-                      ),
-                    })}>Send Instructor Reminder</Button
-                >
-                <p>
-                  {formatDate(
-                    timestampToDate(
-                      classToday.class.meetingTimes[classToday.classNumber],
-                    ),
-                  )}
-                </p>
-              </li>
-            {:else if classToday.class.classStatuses[classToday.classNumber] === ClassStatus.EverythingComplete}
-              <li
-                class="flex items-center justify-between rounded-lg p-4 bg-green-100"
-              >
-                <p>{classToday.class.course}</p>
-                <p>
-                  {classToday.class.instructorFirstName +
-                    ' ' +
-                    classToday.class.instructorLastName}
-                </p>
-                <Button
-                  color="gray"
-                  on:click={() =>
-                    sendClassReminder({
-                      instructorName: classToday.class.instructorFirstName,
-                      instructorEmail: classToday.class.instructorEmail,
-                      otherInstructorEmails:
-                        classToday.class.otherInstructorEmails,
-                      className: classToday.class.course,
-                      nextMeetingTime: formatDate(
-                        timestampToDate(
-                          classToday.class.meetingTimes[classToday.classNumber],
-                        ),
-                      ),
-                    })}>Send Instructor Reminder</Button
-                >
-                <p>
-                  {formatDate(
-                    timestampToDate(
-                      classToday.class.meetingTimes[classToday.classNumber],
-                    ),
-                  )}
-                </p>
-              </li>
-            {:else}
-              <li
-                class="flex items-center justify-between rounded-lg p-4 bg-gray-100"
-              >
-                <p>{classToday.class.course}</p>
-                <p>
-                  {classToday.class.instructorFirstName +
-                    ' ' +
-                    classToday.class.instructorLastName}
-                </p>
-                <Button
-                  color="gray"
-                  on:click={() =>
-                    sendClassReminder({
-                      instructorName: classToday.class.instructorFirstName,
-                      instructorEmail: classToday.class.instructorEmail,
-                      otherInstructorEmails:
-                        classToday.class.otherInstructorEmails,
-                      className: classToday.class.course,
-                      nextMeetingTime: formatDate(
-                        timestampToDate(
-                          classToday.class.meetingTimes[classToday.classNumber],
-                        ),
-                      ),
-                    })}>Send Instructor Reminder</Button
-                >
-                <p>
-                  {formatDate(
-                    timestampToDate(
-                      classToday.class.meetingTimes[classToday.classNumber],
-                    ),
-                  )}
-                </p>
-              </li>
-            {/if}
-          {/each}
-        </ul>
+            {/each}
+          </ul>
+        {/if}
       </Card>
     </div>
   {/if}
