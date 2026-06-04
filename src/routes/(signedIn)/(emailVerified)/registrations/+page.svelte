@@ -15,6 +15,7 @@
   } from '$lib/data/collections'
   import { normalizeCapitals } from '$lib/utils'
   import { format } from 'date-fns'
+  import { alert } from '$lib/stores'
   import {
     collection,
     doc,
@@ -141,14 +142,25 @@
     }
   }
   function bypassAgeLimits(id: string) {
-    getDoc(doc(db, registrationsCollection, id)).then((applicationSnapshot) => {
-      if (applicationSnapshot.exists()) {
-        updateDoc(doc(db, registrationsCollection, id), {
-          'agreements.bypassAgeLimits':
-            !applicationSnapshot.data().agreements.bypassAgeLimits,
-        })
-      }
-    })
+    getDoc(doc(db, registrationsCollection, id))
+      .then((applicationSnapshot) => {
+        if (applicationSnapshot.exists()) {
+          return updateDoc(doc(db, registrationsCollection, id), {
+            'agreements.bypassAgeLimits':
+              !applicationSnapshot.data().agreements.bypassAgeLimits,
+          })
+        }
+      })
+      .then(() => {
+        alert.trigger('success', 'Bypass age limits updated successfully.')
+      })
+      .catch((err) => {
+        console.error('Failed to update bypass age limits:', err)
+        alert.trigger(
+          'error',
+          `Failed to update bypass age limits: ${err.message || err}`,
+        )
+      })
   }
   function getInterestedClasses(registration: any) {
     let interestedClasses = ''
@@ -178,21 +190,33 @@
   }
 
   async function getCourses(id: string) {
-    let enrolled = true
-    const q = query(
-      collection(db, classesCollection),
-      where('students', 'array-contains', id),
-    )
-    const snapshot = await getDocs(q)
-    const courses = snapshot.docs.map((doc) => doc.data().course)
-    if (courses.length === 0) {
-      enrolled = false
+    try {
+      let enrolled = true
+      const q = query(
+        collection(db, classesCollection),
+        where('students', 'array-contains', id),
+      )
+      const snapshot = await getDocs(q)
+      const courses = snapshot.docs.map((doc) => doc.data().course)
+      if (courses.length === 0) {
+        enrolled = false
+      }
+
+      const registrationDocRef = doc(db, registrationsCollection, id)
+      await updateDoc(registrationDocRef, { enrolled: enrolled }).catch(
+        (err) => {
+          console.warn(
+            `Failed to update enrolled status for registration ${id}:`,
+            err,
+          )
+        },
+      )
+
+      return enrolled ? courses : 'NO CLASS ENROLLMENT FOUND'
+    } catch (err: any) {
+      console.error(`Error fetching courses for student ${id}:`, err)
+      return 'ERROR LOADING ENROLLMENT'
     }
-
-    const registrationDocRef = doc(db, registrationsCollection, id)
-    updateDoc(registrationDocRef, { enrolled: enrolled })
-
-    return enrolled ? courses : 'NO CLASS ENROLLMENT FOUND'
   }
 </script>
 

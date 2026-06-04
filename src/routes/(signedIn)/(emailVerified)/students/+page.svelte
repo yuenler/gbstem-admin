@@ -149,21 +149,33 @@
   }
 
   async function getCourses(id: string) {
-    let enrolled = true
-    const q = query(
-      collection(db, classesCollection),
-      where('students', 'array-contains', id),
-    )
-    const snapshot = await getDocs(q)
-    const courses = snapshot.docs.map((doc) => doc.data().course)
-    if (courses.length === 0) {
-      enrolled = false
+    try {
+      let enrolled = true
+      const q = query(
+        collection(db, classesCollection),
+        where('students', 'array-contains', id),
+      )
+      const snapshot = await getDocs(q)
+      const courses = snapshot.docs.map((doc) => doc.data().course)
+      if (courses.length === 0) {
+        enrolled = false
+      }
+
+      const registrationDocRef = doc(db, registrationsCollection, id)
+      await updateDoc(registrationDocRef, { enrolled: enrolled }).catch(
+        (err) => {
+          console.warn(
+            `Failed to update enrolled status for registration ${id}:`,
+            err,
+          )
+        },
+      )
+
+      return enrolled ? courses : 'NO CLASS ENROLLMENT FOUND'
+    } catch (err: any) {
+      console.error(`Error fetching courses for student ${id}:`, err)
+      return 'ERROR LOADING ENROLLMENT'
     }
-
-    const registrationDocRef = doc(db, registrationsCollection, id)
-    updateDoc(registrationDocRef, { enrolled: enrolled })
-
-    return enrolled ? courses : 'NO CLASS ENROLLMENT FOUND'
   }
 </script>
 
@@ -230,9 +242,11 @@
           </td>
 
           <td class="px-6 py-4">
-            {courses === 'NO CLASS ENROLLMENT FOUND'
-              ? 'Not Enrolled'
-              : courses.join(', ')}
+            {Array.isArray(courses)
+              ? courses.join(', ')
+              : courses === 'NO CLASS ENROLLMENT FOUND'
+                ? 'Not Enrolled'
+                : 'Error'}
           </td>
           <td class="px-6 py-4"> {registration.values.personal.email} </td>
           <td class="px-6 py-4">

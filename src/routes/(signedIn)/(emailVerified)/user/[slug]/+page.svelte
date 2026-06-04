@@ -5,6 +5,7 @@
   import Button from '$lib/components/Button.svelte'
   import { format } from 'date-fns'
   import { invalidateAll } from '$app/navigation'
+  import { alert } from '$lib/stores'
 
   export let data: PageData
 
@@ -26,17 +27,31 @@
           breakfast: false,
         },
       },
-    }).then(() => {
-      invalidateAll()
     })
+      .then(() => {
+        invalidateAll()
+        alert.trigger('success', 'Checked in successfully.')
+      })
+      .catch((err) => {
+        console.error('Check in failed:', err)
+        alert.trigger('error', `Check in failed: ${err.message || err}`)
+      })
   }
 
   function handleMeal(date: string, meal: string, state: boolean) {
     updateDoc(doc(db, 'hhids', data.applicant.user.hhid), {
       [`food.${date}.${meal}`]: !state,
-    }).then(() => {
-      invalidateAll()
     })
+      .then(() => {
+        invalidateAll()
+      })
+      .catch((err) => {
+        console.error('Meal status update failed:', err)
+        alert.trigger(
+          'error',
+          `Meal status update failed: ${err.message || err}`,
+        )
+      })
   }
 </script>
 

@@ -163,7 +163,14 @@
                 resolve()
               })
             })
-            .catch(reject)
+            .catch((err) => {
+              console.error('Failed to update decisions:', err)
+              alert.trigger(
+                'error',
+                `Failed to update decision: ${err.message || err}`,
+              )
+              reject(err)
+            })
         }),
     }
   }
