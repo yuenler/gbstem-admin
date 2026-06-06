@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from '$app/environment'
   import { page } from '$app/stores'
   import { db } from '$lib/client/firebase'
   import Button from '$lib/components/Button.svelte'
@@ -149,6 +150,7 @@
   }
 
   async function getCourses(id: string) {
+    if (!browser) return 'Loading...'
     try {
       let enrolled = true
       const q = query(
@@ -215,55 +217,57 @@
   </svelte:fragment>
   <svelte:fragment slot="body">
     {#each data.registrations as registration, i}
-      {#await getCourses(registration.id) then courses}
-        <tr
-          class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
-          on:click={(e) => {
-            e.stopPropagation()
-            current = i
-            dialogEl.open()
-          }}
-        >
-          <td class="w-4 p-4">
-            <div class="flex items-center">
-              <input
-                id={`check-${i}`}
-                class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-hidden focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
-                type="checkbox"
-                checked={checked.includes(i)}
-                on:input={(e) => handleCheck(e, i)}
-                on:click|stopPropagation
-              />
-              <label for={`check-${i}`} class="sr-only">checkbox</label>
-            </div>
-          </td>
-          <td class="px-6 py-4">
-            {`${normalizeCapitals(registration.values.personal.studentFirstName + ' ' + registration.values.personal.studentLastName)}`}
-          </td>
+      <tr
+        class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
+        on:click={(e) => {
+          e.stopPropagation()
+          current = i
+          dialogEl.open()
+        }}
+      >
+        <td class="w-4 p-4">
+          <div class="flex items-center">
+            <input
+              id={`check-${i}`}
+              class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-hidden focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+              type="checkbox"
+              checked={checked.includes(i)}
+              on:input={(e) => handleCheck(e, i)}
+              on:click|stopPropagation
+            />
+            <label for={`check-${i}`} class="sr-only">checkbox</label>
+          </div>
+        </td>
+        <td class="px-6 py-4">
+          {`${normalizeCapitals(registration.values.personal.studentFirstName + ' ' + registration.values.personal.studentLastName)}`}
+        </td>
 
-          <td class="px-6 py-4">
+        <td class="px-6 py-4">
+          {#await getCourses(registration.id)}
+            Loading...
+          {:then courses}
             {Array.isArray(courses)
               ? courses.join(', ')
               : courses === 'NO CLASS ENROLLMENT FOUND'
                 ? 'Not Enrolled'
                 : 'Error'}
-          </td>
-          <td class="px-6 py-4"> {registration.values.personal.email} </td>
-          <td class="px-6 py-4">
-            {registration.values.academic.school}
-          </td>
-          <td class="px-6 py-4">
-            {registration.values.academic.grade}
-          </td>
-          <td class="px-6 py-4">
-            {normalizeCapitals(
-              registration.values.personal.parentFirstName +
-                ' ' +
-                registration.values.personal.parentLastName,
-            )}
-          </td>
-        </tr>
-      {/await}
+          {/await}
+        </td>
+        <td class="px-6 py-4"> {registration.values.personal.email} </td>
+        <td class="px-6 py-4">
+          {registration.values.academic.school}
+        </td>
+        <td class="px-6 py-4">
+          {registration.values.academic.grade}
+        </td>
+        <td class="px-6 py-4">
+          {normalizeCapitals(
+            registration.values.personal.parentFirstName +
+              ' ' +
+              registration.values.personal.parentLastName,
+          )}
+        </td>
+      </tr>
     {/each}
   </svelte:fragment>
 </Table>

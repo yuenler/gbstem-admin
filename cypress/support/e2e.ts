@@ -26,5 +26,5 @@ before(() => {
   }
 
   // Restore the emulator database to the seed state to ensure tests are deterministic
-  cy.exec('npm run seed')
+  cy.exec('npm run seed', { timeout: 120000 })
 })

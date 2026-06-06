@@ -13,11 +13,11 @@ const actionSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('changeEmail'),
-    newEmail: z.email('Invalid email address'),
+    newEmail: z.string().email('Invalid email address'),
   }),
   z.object({
     type: z.literal('resetPassword'),
-    email: z.email('Invalid email address'),
+    email: z.string().email('Invalid email address'),
   }),
 ])
 

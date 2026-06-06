@@ -11,7 +11,7 @@ import type { RequestHandler } from './$types'
 import { z } from 'zod'
 
 const decisionSchema = z.object({
-  email: z.email('Invalid email address'),
+  email: z.string().email('Invalid email address'),
   decision: z.enum(['rejected', 'waitlisted', 'substitute', 'accepted']),
   name: z.string().min(1, 'Name is required'),
 })

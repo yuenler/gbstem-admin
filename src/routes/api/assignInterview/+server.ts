@@ -8,12 +8,12 @@ import type { RequestHandler } from './$types'
 import { z } from 'zod'
 
 const assignInterviewSchema = z.object({
-  email: z.email('Invalid interviewer email address'),
+  email: z.string().email('Invalid interviewer email address'),
   date: z.string().min(1, 'Date is required'),
   link: z.string().min(1, 'Meeting link is required'),
   interviewer: z.string().min(1, 'Interviewer name is required'),
   firstName: z.string().min(1, 'Interviewee first name is required'),
-  intervieweeEmail: z.email('Invalid interviewee email address'),
+  intervieweeEmail: z.string().email('Invalid interviewee email address'),
 })
 
 export type AssignInterviewRequestBody = z.infer<typeof assignInterviewSchema>

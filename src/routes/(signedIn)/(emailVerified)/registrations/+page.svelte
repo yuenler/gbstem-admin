@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from '$app/environment'
   import { page } from '$app/stores'
   import { db } from '$lib/client/firebase'
   import Button from '$lib/components/Button.svelte'
@@ -190,6 +191,7 @@
   }
 
   async function getCourses(id: string) {
+    if (!browser) return 'Loading...'
     try {
       let enrolled = true
       const q = query(

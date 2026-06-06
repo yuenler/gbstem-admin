@@ -9,10 +9,10 @@ import type { RequestHandler } from './$types'
 import { z } from 'zod'
 
 const enrollSchema = z.object({
-  email: z.email('Invalid email address'),
+  email: z.string().email('Invalid email address'),
   firstName: z.string().min(1, 'First name is required'),
   instructor: z.string().min(1, 'Instructor name is required'),
-  instructorEmail: z.email('Invalid instructor email address'),
+  instructorEmail: z.string().email('Invalid instructor email address'),
   classTimes: z.array(z.string()).min(1, 'At least one class time is required'),
   classDays: z.array(z.string()).min(1, 'At least one class day is required'),
   course: z.string().min(1, 'Course is required'),

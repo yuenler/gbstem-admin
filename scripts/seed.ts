@@ -1,4 +1,59 @@
+// seed.ts - Seed the Firebase emulator with mock data for testing
+// both the admin and portal sites in development. It is validated
+// against our Zod schemas in order to ensure all required data is
+// specified and all fields match the required types and format.
 import admin from 'firebase-admin'
+import { z } from 'zod'
+import {
+  applicationSchema,
+  classSchema,
+  registrationSchema,
+} from '../src/lib/components/forms/schemas'
+
+function validateClass(data: any, id: string) {
+  try {
+    classSchema.parse(data)
+  } catch (err: any) {
+    console.error(`\nValidation failed for class "${id}":`, err.errors || err)
+    throw err
+  }
+}
+
+function validateToken(data: any, id: string) {
+  try {
+    z.object({
+      role: z.enum(['reviewer', 'admin']),
+      consumable: z.boolean(),
+    }).parse(data)
+  } catch (err: any) {
+    console.error(`\nValidation failed for token "${id}":`, err.errors || err)
+    throw err
+  }
+}
+
+function validateApplication(data: any, id: string) {
+  try {
+    applicationSchema.parse(data)
+  } catch (err: any) {
+    console.error(
+      `\nValidation failed for application "${id}":`,
+      err.errors || err,
+    )
+    throw err
+  }
+}
+
+function validateRegistration(data: any, id: string) {
+  try {
+    registrationSchema.parse(data)
+  } catch (err: any) {
+    console.error(
+      `\nValidation failed for registration "${id}":`,
+      err.errors || err,
+    )
+    throw err
+  }
+}
 
 // Configure environment variables to point to the local Firebase emulators
 process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9099'
@@ -28,7 +83,13 @@ const interviewTimesCollection = 'instructorInterviewTimesSpring26'
 const classFeedbackCollection = 'classFeedbackSpring26'
 const instructorFeedbackCollection = 'instructorFeedbackSpring26'
 
-async function createOrUpdateUser(uid, email, password, displayName, role) {
+async function createOrUpdateUser(
+  uid: string | null,
+  email: string,
+  password: string,
+  displayName: string,
+  role: string,
+) {
   let user
   try {
     console.log(`Checking if user ${email} already exists...`)
@@ -41,10 +102,10 @@ async function createOrUpdateUser(uid, email, password, displayName, role) {
       displayName: displayName,
       emailVerified: true,
     })
-  } catch (err) {
+  } catch (err: any) {
     if (err.code === 'auth/user-not-found') {
       console.log(`User does not exist. Creating new user ${email}...`)
-      const options = {
+      const options: admin.auth.CreateRequest = {
         email: email,
         password: password,
         displayName: displayName,
@@ -67,7 +128,7 @@ async function createOrUpdateUser(uid, email, password, displayName, role) {
   return user
 }
 
-async function deleteCollection(collectionPath) {
+async function deleteCollection(collectionPath: string) {
   const collectionRef = db.collection(collectionPath)
   const snapshot = await collectionRef.get()
   const batch = db.batch()
@@ -150,17 +211,16 @@ async function seed() {
 
   // Create Signup Token
   console.log('Creating a demo signup token in "tokens" collection...')
-  await db
-    .collection('tokens')
-    .doc('demo-token')
-    .set({
-      consumable: false,
-      consumers: [],
-      expires: admin.firestore.Timestamp.fromDate(
-        new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-      ),
-      role: 'admin',
-    })
+  const demoToken = {
+    consumable: false,
+    consumers: [],
+    expires: admin.firestore.Timestamp.fromDate(
+      new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    ),
+    role: 'admin',
+  }
+  validateToken(demoToken, 'demo-token')
+  await db.collection('tokens').doc('demo-token').set(demoToken)
 
   // Create Semester Dates Document
   console.log('Creating semesterDates/spring26 document...')
@@ -181,223 +241,224 @@ async function seed() {
 
   // Create Mock Classes
   console.log(`Seeding mock classes in "${classesCollection}"...`)
-  await db
-    .collection(classesCollection)
-    .doc('class-python1')
-    .set({
-      classCap: 15,
-      classDay1: 'Monday',
-      classDay2: 'Wednesday',
-      classTime1: '16:00',
-      classTime2: '16:00',
-      course: 'Python I',
-      instructorEmail: 'instructor@gbstem.org',
-      otherInstructorEmails: '',
-      instructorFirstName: 'Demo',
-      instructorLastName: 'Instructor',
-      meetingLink: 'https://zoom.us/j/123456789',
-      meetingTimes: [
-        admin.firestore.Timestamp.fromDate(new Date()),
-        admin.firestore.Timestamp.fromDate(
-          new Date(Date.now() + 48 * 60 * 60 * 1000),
-        ),
-      ],
-      completedClassDates: [],
-      classStatuses: ['ClassUpcomingSoon', 'ClassInFuture'],
-      feedbackCompleted: [false, false],
-      online: true,
-      students: ['student-demo-uid-1', 'student1', 'student2'],
-    })
+  const classPython1 = {
+    classCap: 15,
+    classDay1: 'Monday',
+    classDay2: 'Wednesday',
+    classTime1: '16:00',
+    classTime2: '16:00',
+    course: 'Python 1 (a/b)',
+    instructorEmail: 'instructor@gbstem.org',
+    otherInstructorEmails: '',
+    instructorFirstName: 'Demo',
+    instructorLastName: 'Instructor',
+    meetingLink: 'https://zoom.us/j/123456789',
+    meetingTimes: [
+      admin.firestore.Timestamp.fromDate(new Date()),
+      admin.firestore.Timestamp.fromDate(
+        new Date(Date.now() + 48 * 60 * 60 * 1000),
+      ),
+    ],
+    completedClassDates: [],
+    classStatuses: ['ClassUpcomingSoon', 'ClassInFuture'],
+    feedbackCompleted: [false, false],
+    online: true,
+    students: ['student-demo-uid-1', 'student1', 'student2'],
+  }
+  validateClass(classPython1, 'class-python1')
+  await db.collection(classesCollection).doc('class-python1').set(classPython1)
 
-  await db
-    .collection(classesCollection)
-    .doc('class-scratch')
-    .set({
-      classCap: 12,
-      classDay1: 'Tuesday',
-      classDay2: 'Thursday',
-      classTime1: '17:00',
-      classTime2: '17:00',
-      course: 'Scratch',
-      instructorEmail: 'instructor2@gbstem.org',
-      otherInstructorEmails: 'assistant@gbstem.org',
-      instructorFirstName: 'Bob',
-      instructorLastName: 'Jones',
-      meetingLink: 'https:// zoom.us/j/987654321',
-      meetingTimes: [
-        admin.firestore.Timestamp.fromDate(new Date()),
-        admin.firestore.Timestamp.fromDate(
-          new Date(Date.now() + 48 * 60 * 60 * 1000),
-        ),
-      ],
-      completedClassDates: [],
-      classStatuses: ['FeedbackIncomplete', 'ClassInFuture'],
-      feedbackCompleted: [false, false],
-      online: true,
-      students: ['student3'],
-    })
+  const classScratch = {
+    classCap: 12,
+    classDay1: 'Tuesday',
+    classDay2: 'Thursday',
+    classTime1: '17:00',
+    classTime2: '17:00',
+    course: 'Scratch 1 (a/b)',
+    instructorEmail: 'instructor2@gbstem.org',
+    otherInstructorEmails: 'assistant@gbstem.org',
+    instructorFirstName: 'Bob',
+    instructorLastName: 'Jones',
+    meetingLink: 'https://zoom.us/j/987654321',
+    meetingTimes: [
+      admin.firestore.Timestamp.fromDate(new Date()),
+      admin.firestore.Timestamp.fromDate(
+        new Date(Date.now() + 48 * 60 * 60 * 1000),
+      ),
+    ],
+    completedClassDates: [],
+    classStatuses: ['FeedbackIncomplete', 'ClassInFuture'],
+    feedbackCompleted: [false, false],
+    online: true,
+    students: ['student3'],
+  }
+  validateClass(classScratch, 'class-scratch')
+  await db.collection(classesCollection).doc('class-scratch').set(classScratch)
 
   // Create Mock Registrations
   console.log(`Seeding mock registrations in "${registrationsCollection}"...`)
+  const regCharlie = {
+    personal: {
+      email: 'parent1@gmail.com',
+      studentFirstName: 'Charlie',
+      studentLastName: 'Brown',
+      parentFirstName: 'Lucy',
+      parentLastName: 'Brown',
+      secondaryEmail: 'parent1_sec@gmail.com',
+      dateOfBirth: '2016-05-15',
+      gender: 'Male',
+      race: ['White'],
+      phoneNumber: '555-0199',
+      frlp: 'No',
+      parentEducation: "Bachelor's Degree",
+    },
+    academic: {
+      school: 'Pinecrest Elementary',
+      grade: '4',
+    },
+    program: {
+      csCourse: 'Scratch 1 (a/b)',
+      mathCourse: 'Mathematics 1 (a/b)',
+      engineeringCourse: 'Engineering 1 (a/b)',
+      scienceCourse: 'Environmental Science (a/b)',
+      reason: 'Loves computers and building things.',
+      inPerson: false,
+    },
+    inPerson: {
+      allergies: 'None',
+      parentPickup: 'Lucy Brown',
+    },
+    agreements: {
+      entireProgram: true,
+      timeCommitment: true,
+      submitting: true,
+      mediaRelease: true,
+      bypassAgeLimits: false,
+    },
+    meta: {
+      id: 'reg-charlie',
+      uid: 'user1',
+      submitted: true,
+    },
+    timestamps: {
+      created: admin.firestore.FieldValue.serverTimestamp(),
+      updated: admin.firestore.FieldValue.serverTimestamp(),
+    },
+  }
+  validateRegistration(regCharlie, 'reg-charlie')
   await db
     .collection(registrationsCollection)
     .doc('reg-charlie')
-    .set({
-      personal: {
-        email: 'parent1@gmail.com',
-        studentFirstName: 'Charlie',
-        studentLastName: 'Brown',
-        parentFirstName: 'Lucy',
-        parentLastName: 'Brown',
-        secondaryEmail: 'parent1_sec@gmail.com',
-        dateOfBirth: '2016-05-15',
-        gender: 'Male',
-        race: ['White'],
-        phoneNumber: '555-0199',
-        frlp: 'No',
-        parentEducation: "Bachelor's Degree",
-      },
-      academic: {
-        school: 'Pinecrest Elementary',
-        grade: '4',
-      },
-      program: {
-        csCourse: 'Scratch',
-        mathCourse: 'Math I',
-        engineeringCourse: 'Engineering I',
-        scienceCourse: 'Environmental Science',
-        reason: 'Loves computers and building things.',
-        inPerson: false,
-      },
-      inPerson: {
-        allergies: 'None',
-        parentPickup: 'Lucy Brown',
-      },
-      agreements: {
-        entireProgram: true,
-        timeCommitment: true,
-        submitting: true,
-        mediaRelease: true,
-        bypassAgeLimits: false,
-      },
-      meta: {
-        id: 'reg-charlie',
-        uid: 'user1',
-        submitted: true,
-      },
-      timestamps: {
-        created: admin.firestore.FieldValue.serverTimestamp(),
-        updated: admin.firestore.FieldValue.serverTimestamp(),
-      },
-    })
+    .set(regCharlie)
 
-  await db
-    .collection(registrationsCollection)
-    .doc('reg-sally')
-    .set({
-      personal: {
-        email: 'parent2@gmail.com',
-        studentFirstName: 'Sally',
-        studentLastName: 'Brown',
-        parentFirstName: 'Lucy',
-        parentLastName: 'Brown',
-        secondaryEmail: 'parent2_sec@gmail.com',
-        dateOfBirth: '2018-07-20',
-        gender: 'Female',
-        race: ['White'],
-        phoneNumber: '555-0199',
-        frlp: 'No',
-        parentEducation: "Bachelor's Degree",
-      },
-      academic: {
-        school: 'Pinecrest Elementary',
-        grade: '2',
-      },
-      program: {
-        csCourse: 'Python I',
-        mathCourse: 'Math I',
-        engineeringCourse: 'Engineering I',
-        scienceCourse: 'Environmental Science',
-        reason: 'Excited to learn programming.',
-        inPerson: false,
-      },
-      inPerson: {
-        allergies: 'None',
-        parentPickup: 'Lucy Brown',
-      },
-      agreements: {
-        entireProgram: true,
-        timeCommitment: true,
-        submitting: true,
-        mediaRelease: true,
-        bypassAgeLimits: false,
-      },
-      meta: {
-        id: 'reg-sally',
-        uid: 'user2',
-        submitted: true,
-      },
-      enrolled: true,
-      timestamps: {
-        created: admin.firestore.FieldValue.serverTimestamp(),
-        updated: admin.firestore.FieldValue.serverTimestamp(),
-      },
-    })
+  const regSally = {
+    personal: {
+      email: 'parent2@gmail.com',
+      studentFirstName: 'Sally',
+      studentLastName: 'Brown',
+      parentFirstName: 'Lucy',
+      parentLastName: 'Brown',
+      secondaryEmail: 'parent2_sec@gmail.com',
+      dateOfBirth: '2018-07-20',
+      gender: 'Female',
+      race: ['White'],
+      phoneNumber: '555-0199',
+      frlp: 'No',
+      parentEducation: "Bachelor's Degree",
+    },
+    academic: {
+      school: 'Pinecrest Elementary',
+      grade: '2',
+    },
+    program: {
+      csCourse: 'Python 1 (a/b)',
+      mathCourse: 'Mathematics 1 (a/b)',
+      engineeringCourse: 'Engineering 1 (a/b)',
+      scienceCourse: 'Environmental Science (a/b)',
+      reason: 'Excited to learn programming.',
+      inPerson: false,
+    },
+    inPerson: {
+      allergies: 'None',
+      parentPickup: 'Lucy Brown',
+    },
+    agreements: {
+      entireProgram: true,
+      timeCommitment: true,
+      submitting: true,
+      mediaRelease: true,
+      bypassAgeLimits: false,
+    },
+    meta: {
+      id: 'reg-sally',
+      uid: 'user2',
+      submitted: true,
+    },
+    enrolled: true,
+    timestamps: {
+      created: admin.firestore.FieldValue.serverTimestamp(),
+      updated: admin.firestore.FieldValue.serverTimestamp(),
+    },
+  }
+  validateRegistration(regSally, 'reg-sally')
+  await db.collection(registrationsCollection).doc('reg-sally').set(regSally)
 
   console.log(`Seeding mock registration for student-demo-uid...`)
+  const regStudentDemo = {
+    personal: {
+      email: 'student@gbstem.org',
+      studentFirstName: 'Demo Student',
+      studentLastName: 'One',
+      parentFirstName: 'Parent',
+      parentLastName: 'Demo',
+      secondaryEmail: '',
+      dateOfBirth: '2016-01-01',
+      gender: 'Female',
+      race: ['Asian'],
+      phoneNumber: '555-1111',
+      frlp: 'No',
+      parentEducation: "Bachelor's Degree",
+    },
+    academic: {
+      school: 'Pinecrest Elementary',
+      grade: '3',
+    },
+    program: {
+      csCourse: 'Python 1 (a/b)',
+      mathCourse: 'None',
+      engineeringCourse: 'None',
+      scienceCourse: 'None',
+      reason: 'Excited to learn python.',
+      inPerson: false,
+    },
+    inPerson: {
+      allergies: 'None',
+      parentPickup: 'Parent Demo',
+    },
+    agreements: {
+      entireProgram: true,
+      timeCommitment: true,
+      submitting: true,
+      mediaRelease: true,
+      bypassAgeLimits: false,
+    },
+    meta: {
+      id: 'student-demo-uid-1',
+      uid: 'student-demo-uid',
+      submitted: true,
+    },
+    enrolled: true,
+    classes: ['class-python1'],
+    timestamps: {
+      created: admin.firestore.FieldValue.serverTimestamp(),
+      updated: admin.firestore.FieldValue.serverTimestamp(),
+    },
+  }
+  validateRegistration(regStudentDemo, 'student-demo-uid-1')
   await db
     .collection(registrationsCollection)
     .doc('student-demo-uid-1')
-    .set({
-      personal: {
-        email: 'student@gbstem.org',
-        studentFirstName: 'Demo Student',
-        studentLastName: 'One',
-        parentFirstName: 'Parent',
-        parentLastName: 'Demo',
-        secondaryEmail: '',
-        dateOfBirth: '2016-01-01',
-        gender: 'Female',
-        race: ['Asian'],
-        phoneNumber: '555-1111',
-        frlp: 'No',
-        parentEducation: "Bachelor's Degree",
-      },
-      academic: {
-        school: 'Pinecrest Elementary',
-        grade: '3',
-      },
-      program: {
-        csCourse: 'Python I',
-        mathCourse: '',
-        engineeringCourse: '',
-        scienceCourse: '',
-        reason: 'Excited to learn python.',
-        inPerson: false,
-      },
-      inPerson: {
-        allergies: 'None',
-        parentPickup: 'Parent Demo',
-      },
-      agreements: {
-        entireProgram: true,
-        timeCommitment: true,
-        submitting: true,
-        mediaRelease: true,
-        bypassAgeLimits: false,
-      },
-      meta: {
-        id: 'student-demo-uid-1',
-        uid: 'student-demo-uid',
-        submitted: true,
-      },
-      enrolled: true,
-      classes: ['class-python1'],
-      timestamps: {
-        created: admin.firestore.FieldValue.serverTimestamp(),
-        updated: admin.firestore.FieldValue.serverTimestamp(),
-      },
-    })
+    .set(regStudentDemo)
 
   console.log('Seeding mock confirmation form for student-demo-uid...')
   await db.collection('confirmations').doc('student-demo-uid').set({
@@ -479,11 +540,10 @@ async function seed() {
   ]
   const grades = ['1', '2', '3', '4', '5', '6']
   const courses = [
-    'Scratch',
-    'Python I',
-    'Python II',
-    'Java',
-    'Web Development',
+    'Scratch 1 (a/b)',
+    'Python 1 (a/b)',
+    'Python 2 (a/b)',
+    'Web Development (a/b)',
   ]
 
   for (let i = 0; i < 30; i++) {
@@ -498,7 +558,7 @@ async function seed() {
     // Vary the timestamp slightly so ordering/pagination is predictable
     const createdDate = new Date(Date.now() - (30 - i) * 60 * 60 * 1000)
 
-    const regData = {
+    const regData: any = {
       personal: {
         email: email,
         studentFirstName: studentFirstName,
@@ -519,9 +579,9 @@ async function seed() {
       },
       program: {
         csCourse: courses[i % courses.length],
-        mathCourse: 'Mathematics 1a',
-        engineeringCourse: 'Engineering I',
-        scienceCourse: 'Environmental Science',
+        mathCourse: 'Mathematics 1 (a/b)',
+        engineeringCourse: 'Engineering 1 (a/b)',
+        scienceCourse: 'Environmental Science (a/b)',
         reason: 'Interest in STEM fields.',
         inPerson: inPerson,
       },
@@ -553,117 +613,119 @@ async function seed() {
       regData.enrolled = false
     }
 
+    validateRegistration(regData, id)
     await db.collection(registrationsCollection).doc(id).set(regData)
   }
 
   // Create Mock Applications
   console.log(`Seeding mock applications in "${applicationsCollection}"...`)
-  await db
-    .collection(applicationsCollection)
-    .doc('app-david')
-    .set({
-      personal: {
-        email: 'applicant1@gmail.com',
-        firstName: 'David',
-        lastName: 'Miller',
-        dateOfBirth: '2008-11-22',
-        gender: 'Male',
-        race: ['Asian'],
-        phoneNumber: '555-0244',
-      },
-      academic: {
-        school: 'Central High School',
-        graduationYear: '2027',
-      },
-      program: {
-        courses: ['Python I', 'Scratch'],
-        preferences: 'Prefers Python teaching.',
-        numClasses: '2',
-        timeSlots: 'Monday/Wednesday',
-        notAvailable: 'Friday',
-        inPerson: false,
-        reason: 'Wants to share coding passion with younger kids.',
-      },
-      essay: {
-        taughtBefore: true,
-        academicBackground: 'Taken AP Computer Science.',
-        teachingScenario: 'Would use interactive examples and visual puzzles.',
-        why: 'Believes STEM education is crucial.',
-      },
-      agreements: {
-        entireProgram: true,
-        timeCommitment: true,
-        submitting: true,
-      },
-      meta: {
-        id: 'app-david',
-        uid: 'user_app1',
-        interview: false,
-        submitted: true,
-        decision: null,
-      },
-      timestamps: {
-        created: admin.firestore.FieldValue.serverTimestamp(),
-        updated: admin.firestore.FieldValue.serverTimestamp(),
-      },
-    })
+  const appDavid = {
+    personal: {
+      email: 'applicant1@gmail.com',
+      firstName: 'David',
+      lastName: 'Miller',
+      dateOfBirth: '2008-11-22',
+      gender: 'Male',
+      race: ['Asian'],
+      phoneNumber: '555-0244',
+    },
+    academic: {
+      school: 'Central High School',
+      graduationYear: 2027,
+    },
+    program: {
+      courses: ['Python 1 (a/b)', 'Scratch 1 (a/b)'],
+      preferences: 'Prefers Python teaching.',
+      numClasses: '2',
+      timeSlots: 'Monday/Wednesday',
+      notAvailable: 'Friday',
+      inPerson: false,
+      reason: 'Wants to share coding passion with younger kids.',
+    },
+    essay: {
+      taughtBefore: true,
+      academicBackground: 'Taken AP Computer Science.',
+      teachingScenario: 'Would use interactive examples and visual puzzles.',
+      why: 'Believes STEM education is crucial.',
+    },
+    agreements: {
+      entireProgram: true,
+      timeCommitment: true,
+      submitting: true,
+    },
+    meta: {
+      id: 'app-david',
+      uid: 'user_app1',
+      interview: false,
+      submitted: true,
+      decision: null,
+    },
+    timestamps: {
+      created: admin.firestore.FieldValue.serverTimestamp(),
+      updated: admin.firestore.FieldValue.serverTimestamp(),
+    },
+  }
+  validateApplication(appDavid, 'app-david')
+  await db.collection(applicationsCollection).doc('app-david').set(appDavid)
 
   console.log(`Seeding mock application for instructor-demo-uid...`)
+  const appInstructorDemo = {
+    personal: {
+      email: 'instructor@gbstem.org',
+      firstName: 'Demo',
+      lastName: 'Instructor',
+      dateOfBirth: '2000-01-01',
+      gender: 'Non-binary',
+      race: ['Other'],
+      phoneNumber: '555-0000',
+    },
+    academic: {
+      school: 'gbSTEM University',
+      graduationYear: 2028,
+    },
+    program: {
+      courses: ['Python 1 (a/b)'],
+      preferences: 'None',
+      numClasses: '1',
+      timeSlots: 'Monday/Wednesday',
+      notAvailable: 'None',
+      inPerson: false,
+      reason: 'Love teaching',
+    },
+    essay: {
+      taughtBefore: true,
+      academicBackground: 'CS Major',
+      teachingScenario: 'Coding exercises',
+      why: 'To help kids',
+    },
+    agreements: {
+      entireProgram: true,
+      timeCommitment: true,
+      submitting: true,
+    },
+    meta: {
+      id: 'instructor-demo-uid',
+      uid: 'instructor-demo-uid',
+      interview: true,
+      submitted: true,
+      decision: db.collection(decisionsCollection).doc('instructor-demo-uid'),
+    },
+    timestamps: {
+      created: admin.firestore.FieldValue.serverTimestamp(),
+      updated: admin.firestore.FieldValue.serverTimestamp(),
+    },
+  }
+  validateApplication(appInstructorDemo, 'instructor-demo-uid')
   await db
     .collection(applicationsCollection)
     .doc('instructor-demo-uid')
-    .set({
-      personal: {
-        email: 'instructor@gbstem.org',
-        firstName: 'Demo',
-        lastName: 'Instructor',
-        dateOfBirth: '2000-01-01',
-        gender: 'Non-binary',
-        race: ['Other'],
-        phoneNumber: '555-0000',
-      },
-      academic: {
-        school: 'gbSTEM University',
-        graduationYear: '2028',
-      },
-      program: {
-        courses: ['Python I'],
-        preferences: 'None',
-        numClasses: '1',
-        timeSlots: 'Monday/Wednesday',
-        notAvailable: '',
-        inPerson: false,
-        reason: 'Love teaching',
-      },
-      essay: {
-        taughtBefore: true,
-        academicBackground: 'CS Major',
-        teachingScenario: 'Coding exercises',
-        why: 'To help kids',
-      },
-      agreements: {
-        entireProgram: true,
-        timeCommitment: true,
-        submitting: true,
-      },
-      meta: {
-        id: 'instructor-demo-uid',
-        uid: 'instructor-demo-uid',
-        interview: true,
-        submitted: true,
-        decision: db.collection(decisionsCollection).doc('instructor-demo-uid'),
-      },
-      timestamps: {
-        created: admin.firestore.FieldValue.serverTimestamp(),
-        updated: admin.firestore.FieldValue.serverTimestamp(),
-      },
-    })
+    .set(appInstructorDemo)
 
   console.log(`Seeding mock decision for instructor-demo-uid...`)
   await db.collection(decisionsCollection).doc('instructor-demo-uid').set({
     type: 'accepted',
     likelyDecision: 'likely yes',
-    course: 'Python I',
+    course: 'Python 1 (a/b)',
     time: 'Monday/Wednesday 16:00',
     notes: 'Welcome to the team!',
   })
@@ -686,7 +748,7 @@ async function seed() {
 
     const createdDate = new Date(Date.now() - (30 - i) * 60 * 60 * 1000)
 
-    const appData = {
+    const appData: any = {
       personal: {
         email: `applicant-${i}@gmail.com`,
         firstName: firstNames[i % firstNames.length],
@@ -698,14 +760,14 @@ async function seed() {
       },
       academic: {
         school: schools[i % schools.length],
-        graduationYear: '2028',
+        graduationYear: 2028,
       },
       program: {
         courses: [courses[i % courses.length]],
         preferences: 'None',
         numClasses: '1',
         timeSlots: 'Monday/Wednesday',
-        notAvailable: '',
+        notAvailable: 'None',
         inPerson: inPerson,
         reason: 'Wants to teach.',
       },
@@ -733,6 +795,7 @@ async function seed() {
       },
     }
 
+    validateApplication(appData, id)
     await db.collection(applicationsCollection).doc(id).set(appData)
 
     if (isDecided) {
@@ -779,46 +842,45 @@ async function seed() {
       classStatuses = ['EverythingComplete', 'ClassInFuture']
     }
 
-    await db
-      .collection(classesCollection)
-      .doc(id)
-      .set({
-        classCap: 15,
-        classDay1: 'Monday',
-        classDay2: 'Wednesday',
-        classTime1: '16:00',
-        classTime2: '16:00',
-        course: course,
-        instructorEmail: `instructor-fake-${i}@gbstem.org`,
-        otherInstructorEmails: '',
-        instructorFirstName: firstNames[i % firstNames.length],
-        instructorLastName: lastNames[i % lastNames.length],
-        meetingLink: 'https://zoom.us/j/123456789',
-        meetingTimes: meetingTimes,
-        completedClassDates: [],
-        classStatuses: classStatuses,
-        feedbackCompleted: [false, false],
-        online: true,
-        students: [`student-fake-${i}`],
-      })
+    const classData = {
+      classCap: 15,
+      classDay1: 'Monday',
+      classDay2: 'Wednesday',
+      classTime1: '16:00',
+      classTime2: '16:00',
+      course: course,
+      instructorEmail: `instructor-fake-${i}@gbstem.org`,
+      otherInstructorEmails: '',
+      instructorFirstName: firstNames[i % firstNames.length],
+      instructorLastName: lastNames[i % lastNames.length],
+      meetingLink: 'https://zoom.us/j/123456789',
+      meetingTimes: meetingTimes,
+      completedClassDates: [],
+      classStatuses: classStatuses,
+      feedbackCompleted: [false, false],
+      online: true,
+      students: [`student-fake-${i}`],
+    }
+
+    validateClass(classData, id)
+    await db.collection(classesCollection).doc(id).set(classData)
   }
 
   // Seeding 30 tokens
   console.log('Seeding 30 additional mock tokens...')
   for (let i = 0; i < 30; i++) {
     const id = `token-fake-${i}`
-    const role = i % 2 === 0 ? 'admin' : 'instructor'
-    await db
-      .collection('tokens')
-      .doc(id)
-      .set({
-        consumable: i % 3 === 0,
-        consumers: [],
-        expires: admin.firestore.Timestamp.fromDate(
-          new Date(Date.now() + (i + 1) * 24 * 60 * 60 * 1000),
-        ),
-        role: role,
-      })
+    const role = i % 2 === 0 ? 'admin' : 'reviewer'
+    const tokenData = {
+      consumable: i % 3 === 0,
+      consumers: [],
+      expires: admin.firestore.Timestamp.fromDate(
+        new Date(Date.now() + (i + 1) * 24 * 60 * 60 * 1000),
+      ),
+      role: role,
+    }
+    validateToken(tokenData, id)
+    await db.collection('tokens').doc(id).set(tokenData)
   }
 
   // Create Mock Sub-Requests (30 records)

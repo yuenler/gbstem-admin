@@ -6,13 +6,7 @@
   import Input from '$lib/components/Input.svelte'
   import Select from '$lib/components/Select.svelte'
   import Textarea from '$lib/components/Textarea.svelte'
-  import {
-    coursesJson,
-    gendersJson,
-    interviewAttendanceJson,
-    raceJson,
-    reasonsJson,
-  } from '$lib/data'
+  import { interviewAttendanceJson } from '$lib/data'
   import {
     applicationsCollection,
     decisionsCollection,
@@ -20,7 +14,6 @@
   } from '$lib/data/collections'
   import { alert } from '$lib/stores'
   import { formatDateShort, toLocalISOString } from '$lib/utils'
-  import type { FirebaseError } from 'firebase/app'
   import {
     type Timestamp,
     doc,
@@ -34,6 +27,7 @@
   import type { ScheduleInterviewRequestBody } from '../../routes/api/scheduleInterview/+server'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
+  import EditApplicationForm from './forms/EditApplicationForm.svelte'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -44,15 +38,6 @@
   let showInterviewForm = true
   let semesterStartDate = ''
   let semesterEndDate = ''
-  let autosaveTimeout: ReturnType<typeof setTimeout> | null = null
-  let lastAutosaved = ''
-  // $: {
-  //   if (loading) {
-  //     nProgress.start()
-  //   } else {
-  //     nProgress.done()
-  //   }
-  // }
   let dbValues: Data.Application<'client'>
   const defaultValues: Data.Application<'client'> = {
     personal: {
@@ -122,10 +107,10 @@
   }
 
   let interview: Data.Interview = cloneDeep(defaultInterview)
-
   let values: Data.Application<'client'> = cloneDeep(defaultValues)
   let decision: Data.Decision | null
-  let notes = ''
+  let formEl: HTMLFormElement
+
   $: if (id !== undefined) {
     loading = true
     disabled = true
@@ -135,6 +120,8 @@
       if (applicationSnapshot.exists()) {
         values = cloneDeep(data)
         dbValues = cloneDeep(data)
+
+        // Data populated in form child component
         if (data.meta.decision) {
           getDoc(data.meta.decision).then((decisionSnapshot) => {
             const data = decisionSnapshot.data() as Data.Interview
@@ -179,14 +166,14 @@
             } else {
               decision = null
               interview.likelyDecision = null
-              notes = ''
+              interview = cloneDeep(defaultInterview)
             }
             loading = false
           })
         } else {
           decision = null
           interview.likelyDecision = null
-          notes = ''
+          interview = cloneDeep(defaultInterview)
           loading = false
         }
       } else {
@@ -202,34 +189,6 @@
       }
     })
   }
-
-  function autosaveValues() {
-    if (id !== undefined && !disabled) {
-      setDoc(doc(db, applicationsCollection, id), values, { merge: true })
-        .then(() => {
-          lastAutosaved = new Date().toLocaleTimeString()
-        })
-        .catch((err: FirebaseError) => {
-          console.error('Applications autosave error:', err)
-        })
-    }
-  }
-
-  // Autosave handler for interview notes
-  function autosaveInterview() {
-    if (id !== undefined && !disabled && showInterviewForm) {
-      setDoc(doc(db, decisionsCollection, id), interview, { merge: true })
-        .then(() => {
-          lastAutosaved = new Date().toLocaleTimeString()
-        })
-        .catch((err: FirebaseError) => {
-          console.error('Decision notes autosave error:', err)
-        })
-    }
-  }
-
-  // Remove the problematic afterUpdate that causes infinite loops in Svelte 5
-  // The autosave will be handled by specific reactive statements instead
 
   function saveNotes() {
     const frozenId = id
@@ -332,16 +291,8 @@
     }
   }
 
-  async function clearLikelyDecision() {
-    interview.likelyDecision = null
-    alert.trigger('success', 'Likely decision cleared.')
-  }
-
   async function handleDecision(newDecision: Data.Decision) {
-    // Get today's date
     let today = new Date()
-
-    // Calculate the date 7 days from today
     let weekDeadline = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
     let interviewDeadline = formatDateShort(weekDeadline)
 
@@ -460,25 +411,13 @@
         })
     }
   }
+
   function handleEdit() {
     disabled = false
   }
   function handleSaveChanges() {
-    loading = true
-    disabled = true
-    if (id !== undefined) {
-      setDoc(doc(db, applicationsCollection, id), values)
-        .then(() => {
-          invalidate('app:applications').then(() => {
-            alert.trigger('success', 'Changes were saved successfully.')
-            loading = false
-          })
-        })
-        .catch((err: FirebaseError) => {
-          console.error('Applications save changes error:', err)
-          alert.trigger('error', err.code, true)
-          loading = false
-        })
+    if (formEl) {
+      formEl.requestSubmit()
     }
   }
   function handleDeleteChanges() {
@@ -596,7 +535,7 @@
                 height="16"
                 width="10"
                 viewBox="0 0 320 512"
-                ><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path
+                ><path
                   d="M112 48a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm40 304V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V256.9L59.4 304.5c-9.1 15.1-28.8 20-43.9 10.9s-20-28.8-10.9-43.9l58.3-97c17.4-28.9 48.6-46.6 82.3-46.6h29.7c33.7 0 64.9 17.7 82.3 46.6l58.3 97c9.1 15.1 4.2 34.8-10.9 43.9s-34.8 4.2-43.9-10.9L232 256.9V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V352H152z"
                 /></svg
               >
@@ -718,210 +657,17 @@
     <div class="mt-4 flex justify-center flex-wrap gap-4">
       <Card class="flex-1 min-w-[300px] md:min-w-[450px] w-full">
         <h2 class="text-2xl font-bold my-4">Application Details</h2>
-        <Form class="w-full">
-          <fieldset class="space-y-14">
-            <div class="grid gap-1">
-              <span class="font-bold">Personal</span>
-              <Card class="my-2 grid gap-3">
-                <div class="rounded-md bg-gray-100 px-3 py-2 shadow-xs">
-                  {`Name: ${values.personal.firstName} ${values.personal.lastName}`}
-                </div>
-                <div class="rounded-md bg-gray-100 px-3 py-2 shadow-xs">
-                  {`Email: ${values.personal.email}`}
-                </div>
-                <div class="text-sm">
-                  Wrong name or email? Go to your <a
-                    class="link"
-                    href="/profile">profile</a
-                  > to update your information.
-                </div>
-              </Card>
-              <Input
-                type="tel"
-                bind:value={values.personal.phoneNumber}
-                label="Phone number"
-                floating
-                required
-                pattern="[\d\s\-\+]+"
-              />
-              <Input
-                type="date"
-                bind:value={values.personal.dateOfBirth}
-                label="Date of birth"
-                floating
-                required
-              />
-
-              <Select
-                bind:value={values.personal.gender}
-                label="Gender"
-                options={gendersJson}
-                floating
-                required
-              />
-              <div class="grid gap-1">
-                <span>Race / ethnicity (check all that apply)</span>
-                <div class="grid grid-cols-2">
-                  {#each raceJson as race}
-                    <Input
-                      type="checkbox"
-                      bind:value={values.personal.race}
-                      label={race.name}
-                    />
-                  {/each}
-                </div>
-              </div>
-            </div>
-            <div class="grid gap-1">
-              <span class="font-bold">Academic</span>
-              <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
-                <div class="sm:col-span-2">
-                  <Input
-                    type="text"
-                    bind:value={values.academic.school}
-                    label="Current school"
-                    floating
-                    required
-                  />
-                </div>
-                <Input
-                  type="number"
-                  bind:value={values.academic.graduationYear}
-                  label="Graduation year"
-                  min={new Date().getFullYear()}
-                  max={new Date().getFullYear() + 20}
-                  floating
-                  required
-                />
-              </div>
-            </div>
-            <div class="grid gap-1">
-              <div class="mt-3 grid gap-1">
-                <span class="font-bold"
-                  >Which of the following courses are you comfortable teaching?
-                  Check all that apply. Course descriptions are on our website.</span
-                >
-                <div class="grid grid-cols-2 gap-2">
-                  {#each coursesJson as course}
-                    <Input
-                      type="checkbox"
-                      bind:value={values.program.courses}
-                      label={course.name}
-                      required
-                    />
-                  {/each}
-                </div>
-              </div>
-
-              <div class="mt-4">
-                <span class="font-bold"
-                  >If you have any preferences for the courses you teach, please
-                  list them here.</span
-                >
-                <Input
-                  type="text"
-                  bind:value={values.program.preferences}
-                  label="Preferences"
-                  floating
-                />
-              </div>
-
-              <div class="mt-3 grid gap-1">
-                <span class="font-bold">Timeslots</span>
-                <Input
-                  type="text"
-                  bind:value={values.program.timeSlots}
-                  label="Please describe your weekly availability. For example, 'weekdays after 4pm' or 'weekends anytime'."
-                  required
-                />
-              </div>
-
-              <div class="mt-2">
-                <Textarea
-                  bind:value={values.program.notAvailable}
-                  label="When will you not be available to teach classes during the semester? Include potential conflicts such as medical absences, vacations, and athletic events."
-                  required
-                />
-              </div>
-
-              <Input
-                type="checkbox"
-                bind:value={values.program.inPerson}
-                label="For our in-person offering in the fall, gbSTEM is holding a new Lego Robotics competition program for students grade 5 and up. The program will meet weekly in-person at the Cambridge Public Library on Saturdays 1:00-3:00pm; parents are encouraged to help coach the robotics team. There are 10 slots available this year and will be more in the future. You may apply for this program on top of two courses, but if you are selected you will only be able to enroll in one additional course. Would you like to apply for the robotics program?"
-              />
-
-              <div class="mt-2">
-                <Select
-                  bind:value={values.program.reason}
-                  label="How did you learn about gbSTEM?"
-                  options={reasonsJson}
-                  floating
-                  required
-                />
-              </div>
-
-              <div class="mt-5">
-                <span class="font-bold">Essays</span>
-                <div class="mt-2">
-                  <Input
-                    type="checkbox"
-                    bind:value={values.essay.taughtBefore}
-                    label="Have you taught for gbSTEM before?"
-                  />
-                </div>
-                <div class="mt-2">
-                  <Textarea
-                    bind:value={values.essay.academicBackground}
-                    label="Describe your academic background in any of the classes you said you were comfortable teaching. List any relevant coursework, projects, or extracurriculars. (500 char limit)"
-                    required
-                    maxlength={500}
-                  />
-                </div>
-                {#if !values.essay.taughtBefore}
-                  <div class="mt-2">
-                    <Textarea
-                      bind:value={values.essay.teachingScenario}
-                      label="Suppose your students are not engaging in the class. What would you do? (500 char limit)"
-                      required
-                      maxlength={500}
-                    />
-                  </div>
-                  <div class="mt-2">
-                    <Textarea
-                      bind:value={values.essay.why}
-                      label="Why do you want to teach for gbSTEM? (500 char limit)"
-                      required
-                      maxlength={500}
-                    />
-                  </div>
-                {/if}
-              </div>
-              <div class="grid gap-1">
-                <span class="font-bold">Agreements</span>
-                <div class="grid">
-                  <Input
-                    type="checkbox"
-                    bind:value={values.agreements.entireProgram}
-                    label="gbSTEM will run from {semesterStartDate} to {semesterEndDate}. Do you confirm that you will be able to teach for the entirety of the program?"
-                    required
-                  />
-                  <Input
-                    type="checkbox"
-                    bind:value={values.agreements.timeCommitment}
-                    label="Do you hereby confirm that if you are selected as an instructor, that you will be able to make the weekly time commitment of 2 hours a week for each class you teach? "
-                    required
-                  />
-                  <Input
-                    type="checkbox"
-                    bind:value={values.agreements.submitting}
-                    label="I understand submitting means I can no longer make changes to my application. Don't check this box until you are sure that you are ready to submit."
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-          </fieldset>
-        </Form>
+        <EditApplicationForm
+          bind:formEl
+          bind:disabled
+          bind:loading
+          bind:values
+          bind:dbValues
+          {id}
+          {collection}
+          {semesterStartDate}
+          {semesterEndDate}
+        />
       </Card>
       {#if showInterviewForm}
         <Card class="flex-1 min-w-[300px] md:min-w-[450px] w-full">
@@ -931,7 +677,7 @@
                 Interview Guide & Evaluation Form
               </h2>
               <div class="text-xs text-gray-500 mt-2">
-                Autosaved at {lastAutosaved}
+                Autosave is enabled for this browser
               </div>
               <Input
                 type="datetime-local"

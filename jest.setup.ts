@@ -9,7 +9,10 @@ beforeAll(() => {
   consoleLogSpy = jest
     .spyOn(console, 'log')
     .mockImplementation((message, ...args) => {
-      if (typeof message === 'string' && message.includes('Email sent')) {
+      if (
+        typeof message === 'string' &&
+        (message.includes('Email sent') || message.includes('[Search]'))
+      ) {
         return
       }
       originalConsoleLog(message, ...args)

@@ -112,9 +112,7 @@
             type="button"
             aria-label="Copy user ID to clipboard"
             on:click={() => {
-              if ($user) {
-                writeToClipboard(data.user.uid)
-              }
+              writeToClipboard(data.user.uid)
             }}
           >
             <svg

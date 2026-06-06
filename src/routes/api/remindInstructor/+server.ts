@@ -8,7 +8,7 @@ import type { RequestHandler } from './$types'
 import { z } from 'zod'
 
 const remindInstructorSchema = z.object({
-  email: z.email('Invalid instructor email address'),
+  email: z.string().email('Invalid instructor email address'),
   otherInstructorEmails: z.string().optional().default(''),
   name: z.string().min(1, 'Name is required'),
   class: z.string().min(1, 'Class is required'),

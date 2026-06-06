@@ -1,26 +1,10 @@
 <script lang="ts">
-  import {
-    type Timestamp,
-    doc,
-    getDoc,
-    serverTimestamp,
-    setDoc,
-    updateDoc,
-  } from 'firebase/firestore'
-  import Input from '$lib/components/Input.svelte'
-  import Select from '$lib/components/Select.svelte'
+  import { type Timestamp, doc, getDoc, updateDoc } from 'firebase/firestore'
   import Card from '$lib/components/Card.svelte'
-  import Form from '$lib/components/Form.svelte'
   import { db } from '$lib/client/firebase'
-  import Field from '$lib/components/Field.svelte'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
   import { alert } from '$lib/stores'
-  import { cloneDeep } from 'lodash-es'
-  import type { FirebaseError } from 'firebase/app'
-  import { invalidate } from '$app/navigation'
-  import nProgress from 'nprogress'
-  import { coursesJson, daysOfWeekJson } from '$lib/data'
   import {
     copyEmails,
     formatDate,
@@ -37,6 +21,7 @@
   import sendClassReminder from '$lib/data/helpers/sendClassReminders'
   import type Student from '$lib/data/types/Student'
   import type ClassData from '$lib/data/types/ClassData'
+  import EditClassForm from './forms/EditClassForm.svelte'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -67,6 +52,8 @@
     students: [],
     id: '',
   }
+
+  let formEl: HTMLFormElement
 
   // Handle id changes without causing infinite loops
   let previousId = id
@@ -112,25 +99,14 @@
     disabled = false
   }
   function handleSaveChanges() {
-    loading = true
-    disabled = true
-    if (id !== undefined) {
-      setDoc(doc(db, classesCollection, id), values)
-        .then(() => {
-          invalidate('app:registrations').then(() => {
-            alert.trigger('success', 'Changes were saved successfully.')
-            loading = false
-          })
-        })
-        .catch((err: FirebaseError) => {
-          console.error('Class save changes error:', err)
-          alert.trigger('error', err.code, true)
-          loading = false
-        })
+    if (formEl) {
+      formEl.requestSubmit()
     }
   }
   function handleDeleteChanges() {
     disabled = true
+    // Reset to the current Firestore loaded data
+    values = { ...values }
   }
 
   /**
@@ -230,94 +206,7 @@
       </div>
     </Card>
     <div class="mt-4 flex justify-center">
-      <Form class="w-full max-w-4xl">
-        <fieldset class="mt-4 space-y-4" {disabled}>
-          <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
-            <Select
-              bind:value={values.course}
-              label="Course"
-              options={coursesJson}
-              floating
-              required
-            />
-            <Input
-              type="text"
-              bind:value={values.gradeRecommendation}
-              floating
-              label="Grade recommendation. For example, 3-5 or 6-8."
-            />
-            <Input
-              type="number"
-              bind:value={values.classCap}
-              label="Class capacity"
-              floating
-              required
-            />
-          </div>
-          {#if values.online}
-            <Input
-              type="text"
-              bind:value={values.meetingLink}
-              label="Meeting link"
-              floating
-              required
-            />
-          {/if}
-
-          <div class="grid gap-1">
-            <span class="font-bold"
-              >Online classes meet twice weekly at consistent days and times
-              throughout the semester and run for 45-60 minutes each. In-person
-              classes meet once a week on a weekend afternoon at the Cambridge
-              Public Library.
-            </span>
-
-            <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
-              <div class="sm:col-span-2">
-                <Select
-                  bind:value={values.classDay1}
-                  label="Meeting day 1"
-                  options={daysOfWeekJson}
-                  floating
-                  required
-                />
-              </div>
-              <Input
-                type="time"
-                bind:value={values.classTime1}
-                label="Meeting time 1"
-                floating
-                required
-              />
-            </div>
-
-            {#if values.online}
-              <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
-                <div class="sm:col-span-2">
-                  <Select
-                    bind:value={values.classDay2}
-                    label="Meeting day 2"
-                    options={daysOfWeekJson}
-                    floating
-                    required
-                  />
-                </div>
-                <Input
-                  type="time"
-                  bind:value={values.classTime2}
-                  label="Meeting time 2"
-                  floating
-                />
-              </div>
-            {/if}
-          </div>
-          <Input
-            type="checkbox"
-            bind:value={values.online}
-            label="Class taught online?"
-          />
-        </fieldset>
-      </Form>
+      <EditClassForm bind:formEl bind:disabled bind:values {id} />
     </div>
 
     <div>

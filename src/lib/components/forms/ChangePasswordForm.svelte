@@ -1,61 +1,66 @@
 <script lang="ts">
-  import Input from '$lib/components/Input.svelte'
-  import clsx from 'clsx'
+  import { superForm, defaults } from 'sveltekit-superforms'
+  import { zod } from 'sveltekit-superforms/adapters'
+  import { z } from 'zod'
+  import { Field, Control, Label, FieldErrors } from 'formsnap'
   import { alert } from '$lib/stores'
   import { updatePassword } from 'firebase/auth'
   import Dialog from '$lib/components/Dialog.svelte'
   import ReauthenticateForm from '$lib/components/forms/ReauthenticateForm.svelte'
-  import Form from '$lib/components/Form.svelte'
   import { user } from '$lib/client/firebase'
   import DialogActions from '../DialogActions.svelte'
   import Button from '../Button.svelte'
 
-  let className = ''
-  export { className as class }
+  const schema = z
+    .object({
+      newPassword: z
+        .string()
+        .min(6, 'Password must be at least 6-characters long'),
+      confirmPassword: z.string().min(1, 'Confirm password is required'),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: 'Passwords do not match.',
+      path: ['confirmPassword'],
+    })
 
   let dialogEl: Dialog
-  let disabled = false
-  let showValidation = false
-  let values = {
-    newPassword: '',
-    confirmPassword: '',
-  }
-  function handleSubmit(e: CustomEvent<SubmitData>) {
-    if (e.detail.error === null) {
-      showValidation = false
-      disabled = true
-      dialogEl.open()
-    } else {
-      showValidation = true
-      alert.trigger('error', e.detail.error)
-    }
-  }
+  let passwordToUpdate = ''
+
+  const formResult = superForm(
+    defaults(
+      { newPassword: '', confirmPassword: '' },
+      zod(schema as any) as any,
+    ) as any,
+    {
+      SPA: true,
+      validators: zod(schema as any) as any,
+      invalidateAll: false,
+      applyAction: false,
+      onUpdate({ form: formVal }) {
+        if (!formVal.valid) return
+        passwordToUpdate = formVal.data.newPassword
+        dialogEl.open()
+      },
+    },
+  )
+
+  const { form, enhance, delayed, reset } = formResult
+
   function handleCancel() {
-    disabled = false
-    values = {
-      newPassword: '',
-      confirmPassword: '',
-    }
+    reset()
     alert.trigger('info', 'Password change canceled.')
   }
+
   function handleReauthenticate() {
     if ($user) {
-      updatePassword($user.object, values.newPassword)
+      updatePassword($user.object, passwordToUpdate)
         .then(() => {
-          disabled = false
-          values = {
-            newPassword: '',
-            confirmPassword: '',
-          }
+          reset()
           dialogEl.close()
           alert.trigger('success', 'Password was successfully changed.')
         })
         .catch((err) => {
-          disabled = false
-          values = {
-            newPassword: '',
-            confirmPassword: '',
-          }
+          reset()
           dialogEl.close()
           alert.trigger('error', err.code, true)
         })
@@ -63,40 +68,61 @@
   }
 </script>
 
-<Form
-  class={clsx(showValidation && 'show-validation', className)}
-  on:submit={handleSubmit}
->
-  <fieldset {disabled}>
+<form use:enhance class="w-full">
+  <fieldset class="space-y-4" disabled={$delayed}>
     <span class="font-bold">Change password</span>
-    <Input
-      type="password"
-      bind:value={values.newPassword}
-      label="New password"
-      floating
-      required
-    />
-    <div class="relative">
-      <Input
-        class="pr-21"
-        type="password"
-        bind:value={values.confirmPassword}
-        label="Confirm password"
-        floating
-        required
-        validations={[
-          [
-            values.newPassword !== values.confirmPassword,
-            'Passwords do not match.',
-          ],
-        ]}
-      />
-      <div class="absolute right-2 top-0 flex h-12 items-center">
-        <Button color="blue" class="px-2 py-1" type="submit">Update</Button>
-      </div>
+
+    <div class="flex flex-col gap-1.5">
+      <Field form={formResult} name="newPassword">
+        <Control>
+          {#snippet children({ props })}
+            <Label class="font-bold text-sm">New password</Label>
+            <input
+              {...props}
+              name="new-password"
+              type="password"
+              bind:value={$form.newPassword}
+              placeholder="New password"
+              required
+              class="block h-12 w-full appearance-none rounded-md border border-gray-400 px-3 transition-colors placeholder:text-gray-500 focus:border-gray-600 focus:outline-hidden disabled:bg-white disabled:text-gray-400"
+            />
+          {/snippet}
+        </Control>
+        <FieldErrors class="text-xs text-red-500 font-semibold" />
+      </Field>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <Field form={formResult} name="confirmPassword">
+        <Control>
+          {#snippet children({ props })}
+            <Label class="font-bold text-sm">Confirm password</Label>
+            <div class="relative">
+              <input
+                {...props}
+                name="confirm-password"
+                type="password"
+                bind:value={$form.confirmPassword}
+                placeholder="Confirm password"
+                required
+                class="block h-12 w-full appearance-none rounded-md border border-gray-400 px-3 pr-21 transition-colors placeholder:text-gray-500 focus:border-gray-600 focus:outline-hidden disabled:bg-white disabled:text-gray-400"
+              />
+              <div class="absolute right-2 top-0 flex h-12 items-center">
+                <Button
+                  color="blue"
+                  class="px-2 py-1"
+                  type="submit"
+                  disabled={$delayed}>Update</Button
+                >
+              </div>
+            </div>
+          {/snippet}
+        </Control>
+        <FieldErrors class="text-xs text-red-500 font-semibold" />
+      </Field>
     </div>
   </fieldset>
-</Form>
+</form>
 
 <Dialog bind:this={dialogEl} on:cancel={handleCancel}>
   <svelte:fragment slot="title">Reauthenticate</svelte:fragment>

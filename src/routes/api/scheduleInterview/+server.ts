@@ -8,7 +8,7 @@ import type { RequestHandler } from './$types'
 import { z } from 'zod'
 
 const scheduleInterviewSchema = z.object({
-  email: z.email('Invalid email address'),
+  email: z.string().email('Invalid email address'),
   name: z.string().min(1, 'Name is required'),
   deadline: z.string().optional().default(''),
 })

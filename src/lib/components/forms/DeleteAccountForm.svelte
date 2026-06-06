@@ -1,5 +1,8 @@
 <script lang="ts">
-  import clsx from 'clsx'
+  import { superForm, defaults } from 'sveltekit-superforms'
+  import { zod } from 'sveltekit-superforms/adapters'
+  import { z } from 'zod'
+  import { Field, Control, Label, FieldErrors } from 'formsnap'
   import { alert } from '$lib/stores'
   import {
     EmailAuthProvider,
@@ -7,109 +10,97 @@
     reauthenticateWithCredential,
   } from 'firebase/auth'
   import Dialog from '$lib/components/Dialog.svelte'
-  import Form from '$lib/components/Form.svelte'
-  import Input from '$lib/components/Input.svelte'
   import { user } from '$lib/client/firebase'
   import Button from '../Button.svelte'
   import DialogActions from '../DialogActions.svelte'
 
-  let className = ''
-  export { className as class }
+  const schema = z.object({
+    password: z.string().min(1, 'Password is required'),
+  })
 
   let dialogEl: Dialog
-  let showValidation = false
-  let disabled = false
-  let values = {
-    password: '',
-  }
 
-  function handleSubmit(e: CustomEvent<SubmitData>) {
-    if (e.detail.error === null) {
-      showValidation = false
-      dialogEl.open()
-    } else {
-      showValidation = true
-      alert.trigger('error', e.detail.error)
-    }
-  }
-  function handleCancel() {
-    alert.trigger('info', 'Account deletion canceled.')
-  }
-  async function handleReauthenticate(e: CustomEvent<SubmitData>) {
-    if ($user) {
-      const frozenUser = $user
-      if (e.detail.error === null) {
-        showValidation = false
-        disabled = true
-        reauthenticateWithCredential(
-          frozenUser.object,
-          EmailAuthProvider.credential(
-            frozenUser.object.email as string,
-            values.password,
-          ),
-        )
-          .then(async () => {
-            deleteUser(frozenUser.object)
-              .then(() => {
-                alert.trigger('success', 'Account was successfully deleted.')
-                window.setTimeout(() => {
-                  location.reload()
-                }, 2000)
-              })
-              .catch((err) => {
-                console.error('Account deletion error:', err)
-                disabled = false
-              })
-          })
-          .catch((err) => {
-            disabled = false
+  const formResult = superForm(
+    defaults({ password: '' }, zod(schema as any) as any) as any,
+    {
+      SPA: true,
+      validators: zod(schema as any) as any,
+      async onUpdate({ form: formVal }) {
+        if (!formVal.valid) return
+        if ($user) {
+          const frozenUser = $user
+          try {
+            await reauthenticateWithCredential(
+              frozenUser.object,
+              EmailAuthProvider.credential(
+                frozenUser.object.email as string,
+                formVal.data.password,
+              ),
+            )
+            await deleteUser(frozenUser.object)
+            alert.trigger('success', 'Account was successfully deleted.')
+            window.setTimeout(() => {
+              location.reload()
+            }, 2000)
+          } catch (err: any) {
             alert.trigger('error', err.code, true)
-          })
-      } else {
-        showValidation = true
-        alert.trigger('error', e.detail.error)
-      }
-    }
+          }
+        }
+      },
+    },
+  )
+
+  const { form, enhance, delayed, reset } = formResult
+
+  function handleCancel() {
+    reset()
+    alert.trigger('info', 'Account deletion canceled.')
   }
 </script>
 
-<Form
-  class={clsx(showValidation && 'show-validation', className)}
-  on:submit={handleSubmit}
->
+<form on:submit|preventDefault={() => dialogEl.open()} class="w-full">
   <span class="font-bold">Delete account</span>
   <div class="mt-2">
     <Button color="red" type="submit">Delete account</Button>
   </div>
-</Form>
+</form>
 
-<Dialog bind:this={dialogEl} on:cancel={handleCancel} {disabled} alert>
+<Dialog bind:this={dialogEl} on:cancel={handleCancel} disabled={$delayed} alert>
   <svelte:fragment slot="title">Delete account</svelte:fragment>
-  <div slot="description" class="flex justify-center">
-    <Form
-      class={clsx(showValidation && 'show-validation')}
-      on:submit={handleReauthenticate}
-    >
-      <fieldset class="space-y-4" {disabled}>
+  <div slot="description" class="flex justify-center w-full">
+    <form use:enhance class="w-full max-w-lg">
+      <fieldset class="space-y-4" disabled={$delayed}>
         <div class="flex justify-center">
-          <div class="space-y-4 max-w-lg w-full">
-            <Input
-              type="password"
-              bind:value={values.password}
-              label="Password"
-              floating
-              required
-              autocomplete="current-password"
-              focus
-            />
-            <div class="font-bold">Warning! This is irreversible.</div>
+          <div class="space-y-4 w-full">
+            <div class="flex flex-col gap-1.5">
+              <Field form={formResult} name="password">
+                <Control>
+                  {#snippet children({ props })}
+                    <Label class="font-bold text-sm">Password</Label>
+                    <input
+                      {...props}
+                      type="password"
+                      bind:value={$form.password}
+                      placeholder="Password"
+                      required
+                      autocomplete="current-password"
+                      class="block h-12 w-full appearance-none rounded-md border border-gray-400 px-3 transition-colors placeholder:text-gray-500 focus:border-gray-600 focus:outline-hidden disabled:bg-white disabled:text-gray-400"
+                    />
+                  {/snippet}
+                </Control>
+                <FieldErrors class="text-xs text-red-500 font-semibold" />
+              </Field>
+            </div>
+            <div class="font-bold text-red-600 text-center">
+              Warning! This is irreversible.
+            </div>
           </div>
         </div>
         <DialogActions>
-          <Button on:click={dialogEl.cancel}>Cancel</Button>
-          <Button color="red" type="submit">Delete</Button>
+          <Button type="button" on:click={dialogEl.cancel}>Cancel</Button>
+          <Button color="red" type="submit" disabled={$delayed}>Delete</Button>
         </DialogActions>
       </fieldset>
-    </Form>
+    </form>
   </div>
 </Dialog>
