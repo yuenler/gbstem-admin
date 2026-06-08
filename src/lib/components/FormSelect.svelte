@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Field, Control, FieldErrors } from 'formsnap'
   import Select from '$lib/components/Select.svelte'
+  import { Control, Field, FieldErrors } from 'formsnap'
 
   let className = ''
   export { className as class }
@@ -11,7 +11,6 @@
   export let required: boolean | undefined = undefined
   export let value: string
   export let options: any[]
-  export let floating = false
   export let inputName: string = ''
 
   /**
@@ -47,7 +46,6 @@
         class={className}
         {label}
         {options}
-        {floating}
         required={isRequired}
         bind:value
         {...$$restProps}

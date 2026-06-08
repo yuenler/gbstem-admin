@@ -88,7 +88,6 @@
         if (id !== undefined) {
           const updatedValues = {
             ...values,
-            ...formVal.data,
             personal: {
               ...values.personal,
               ...formVal.data.personal,
@@ -224,7 +223,6 @@
           form={formResult}
           name="personal.gender"
           label="Gender"
-          floating
           options={gendersJson}
           bind:value={$form.personal.gender}
         />
@@ -349,7 +347,6 @@
           form={formResult}
           name="program.reason"
           label="How did you learn about gbSTEM?"
-          floating
           options={reasonsJson}
           bind:value={$form.program.reason}
         />

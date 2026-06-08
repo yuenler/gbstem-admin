@@ -683,14 +683,12 @@
                 type="datetime-local"
                 bind:value={interview.date}
                 label="Interview Date"
-                floating
                 required
               />
               <Input
                 type="text"
                 bind:value={interview.interviewer}
                 label="Interviewer"
-                floating
                 required
               />
               <Select
@@ -698,7 +696,6 @@
                 bind:value={interview.attendance}
                 options={interviewAttendanceJson}
                 label="Attendance"
-                floating
                 required
               />
               <ul class="rounded-lg bg-gray-100 p-4 px-8 my-4 list-disc">
@@ -745,7 +742,6 @@
                 type="checkbox"
                 bind:value={values.essay.taughtBefore}
                 label="Have they taught for gbSTEM before? (This should be pre-set to the correct value, but if not simply check/uncheck the box as needed)."
-                floating
               />
               {#if values.essay.taughtBefore}
                 <div class="rounded-lg bg-gray-100 p-4 my-4">
@@ -856,7 +852,7 @@
                   <Button
                     color="blue"
                     href="https://docs.google.com/document/d/1-Q40jjtKjt1dvX09qndC1ZEA7amiieAQgXF8qPDEvOE/edit"
-                    target="_blank">Python I</Button
+                    target="_blank">Python 1</Button
                   >
                   <Button
                     color="blue"

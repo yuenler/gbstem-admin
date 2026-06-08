@@ -64,4 +64,4 @@
   $: label = labelMap[type]
 </script>
 
-<Select class="mt-0 w-64" bind:value {label} {options} floating required />
+<Select class="mt-0 w-64" bind:value {label} {options} required />

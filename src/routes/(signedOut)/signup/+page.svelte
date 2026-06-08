@@ -64,29 +64,20 @@
           type="text"
           bind:value={values.firstName}
           label="First name"
-          floating
           required
         />
         <Input
           type="text"
           bind:value={values.lastName}
           label="Last name"
-          floating
           required
         />
       </div>
-      <Input
-        type="email"
-        bind:value={values.email}
-        label="Email"
-        floating
-        required
-      />
+      <Input type="email" bind:value={values.email} label="Email" required />
       <Input
         type="password"
         bind:value={values.password}
         label="Password"
-        floating
         required
         autocomplete="new-password"
       />
@@ -94,7 +85,6 @@
         type="password"
         bind:value={values.confirmPassword}
         label="Confirm password"
-        floating
         required
         autocomplete="new-password"
         validations={[

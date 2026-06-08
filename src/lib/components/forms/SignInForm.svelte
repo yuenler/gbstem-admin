@@ -65,18 +65,11 @@
   <fieldset class="space-y-4" {disabled}>
     <Brand />
     <h1 class="text-2xl font-bold">Sign in</h1>
-    <Input
-      type="email"
-      bind:value={values.email}
-      label="Email"
-      floating
-      required
-    />
+    <Input type="email" bind:value={values.email} label="Email" required />
     <Input
       type="password"
       bind:value={values.password}
       label="Password"
-      floating
       required
       autocomplete="current-password"
     />

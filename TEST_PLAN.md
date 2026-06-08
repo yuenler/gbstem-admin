@@ -270,8 +270,8 @@ graph TD
 - **Description**: Verify searching and exporting classes data.
 - **Steps**:
   1. Click the **"Classes"** link in the navigation bar (navigates to `/classes`).
-  2. Select the **Course** filter dropdown and choose `"Python I"`.
-  3. Verify that only `"Python I"` classes are shown.
+  2. Select the **Course** filter dropdown and choose `"Python 1"`.
+  3. Verify that only `"Python 1"` classes are shown.
   4. Click the **"Copy Emails"** button.
   5. Verify that clipboard contains all class instructors' emails and a toast confirmation is shown.
   6. Click the **"Download"** button.
@@ -283,7 +283,7 @@ graph TD
 
 - **Description**: Edit class details, view class lists, and trigger student/instructor reminders.
 - **Steps**:
-  1. Click on the row for `"Python I"` taught by `Demo Instructor`.
+  1. Click on the row for `"Python 1"` taught by `Demo Instructor`.
   2. Verify the **Class Details** modal opens.
   3. Verify the **Class List** section displays a table of enrolled students with columns: `Student Name`, `Email`, `Secondary Email`, `Phone`, `Grade`, `School`.
   4. Click **"Copy"** next to Class List to copy all students' and secondary emails.
@@ -308,10 +308,10 @@ graph TD
   2. Search for `Charlie`.
   3. Click the row for `Charlie Brown`.
   4. Verify the **Student Attendance and Information** modal opens.
-  5. Locate the **Select a class** dropdown in the "Add Class" section. Select `"Python I taught by Demo Instructor..."`.
+  5. Locate the **Select a class** dropdown in the "Add Class" section. Select `"Python 1 taught by Demo Instructor..."`.
   6. Click the green **"Add Class"** button.
   7. Verify that Charlie Brown is added to the class, and a POST request to `/api/enroll` is triggered.
-  8. Locate the **Select a class** dropdown in the "Drop Class" section. Select `"Python I taught by Demo Instructor..."`.
+  8. Locate the **Select a class** dropdown in the "Drop Class" section. Select `"Python 1 taught by Demo Instructor..."`.
   9. Click the red **"Drop Class"** button.
   10. Verify that the class is dropped successfully.
 - **Expected Results (Assertions)**:

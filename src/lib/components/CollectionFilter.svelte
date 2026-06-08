@@ -66,6 +66,5 @@
   bind:value={displayName}
   label="Collection"
   {options}
-  floating
   required
 />

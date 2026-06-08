@@ -35,7 +35,11 @@ describe('Section D: Instructor Applications Management', () => {
 
     // Clear search using Clear button
     cy.contains('button', 'Clear').click()
-    cy.wait(500)
+    cy.get('table').should(($table) => {
+      // Ensure Mark re-appears
+      expect($table).to.contain('Mark Lewis')
+      expect($table).to.contain('David Miller')
+    })
 
     // Select "Fall 2025" from Collection dropdown
     cy.get('input[name="collection"]').clear().type('Fall 2025')

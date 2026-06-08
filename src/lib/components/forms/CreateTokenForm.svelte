@@ -74,7 +74,6 @@
             bind:value={$form.role}
             options={[{ name: 'reviewer' }, { name: 'admin' }]}
             label="What role should this token grant?"
-            floating
           />
         </div>
 

@@ -27,6 +27,12 @@ describe('Section J: Substitute Requests Log', () => {
     cy.get('th').contains('Substitute Instructor').should('be.visible')
     cy.get('th').contains('Substitute Instructor Email').should('be.visible')
 
+    // Verify preconditions
+    cy.get('table').should(($table) => {
+      expect($table).to.contain('Scratch')
+      expect($table).to.contain('Python')
+    })
+
     // Search query
     cy.get('input[placeholder="Search"]').clear().type('Python{enter}')
     cy.get('table').should(($table) => {
@@ -37,14 +43,18 @@ describe('Section J: Substitute Requests Log', () => {
 
     // Clear search using Clear button
     cy.contains('button', 'Clear').click()
-    cy.wait(500)
+    cy.get('table').should(($table) => {
+      // Verify Scratch reappears
+      expect($table).to.contain('Scratch')
+      expect($table).to.contain('Python')
+    })
 
     // Filter by course
-    cy.selectOption('input[name="course"]', 'Python I')
+    cy.selectOption('input[name="course"]', 'Python 1')
     cy.get('table').should(($table) => {
-      // Verify Python II gets filtered out and Python I stays
-      expect($table).to.not.contain('Python II')
-      expect($table).to.contain('Python I')
+      // Verify Python 2 gets filtered out and Python 1 stays
+      expect($table).to.not.contain('Python 2')
+      expect($table).to.contain('Python 1')
     })
 
     // Verify Download button links to a CSV Blob
@@ -70,16 +80,12 @@ describe('Section J: Substitute Requests Log', () => {
       })
 
     // Click on a row containing notes
-    cy.contains('tr', 'instructor-fake-26@gbstem.org').click()
-    cy.contains('tr', 'instructor-fake-26@gbstem.org')
-      .invoke('text')
-      .then((text) => {
-        cy.log(text)
-      })
+    cy.contains('tr', 'instructor-fake-25@gbstem.org').click()
     cy.get('[role="dialog"]').should('exist')
+    cy.get('[role="dialog"]').contains('div', 'Dentist appointment fake #25.')
 
-    // Click Close inside the dialog using regex exact match
-    cy.contains('button', /^Close$/).click({ force: true })
+    // Click Close inside the dialog
+    cy.contains('button', 'Close').click()
     cy.get('[role="dialog"]').should('not.exist')
   })
 })

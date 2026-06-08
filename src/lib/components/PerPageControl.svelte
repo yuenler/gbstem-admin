@@ -39,6 +39,5 @@
   bind:value={limitValue}
   label="Per Page"
   options={limitOptions}
-  floating
   required
 />

@@ -72,43 +72,48 @@ describe('Section G: Pre-Registrations Directory', () => {
 
     // Toggle Bypass Age Limits on Charlie Brown's row
     // Charlie Brown row's bypass checkbox is in column 9 (index 8)
-    cy.contains('tr', 'Charlie Brown').within(() => {
-      cy.get('td').eq(8).find('input[type="checkbox"]').as('bypassCheckbox')
-    })
+    cy.contains('tr', 'Charlie Brown')
+      .scrollIntoView()
+      .within(() => {
+        cy.get('td').eq(8).find('input[type="checkbox"]').as('bypassCheckbox')
+      })
     cy.get('@bypassCheckbox').should('exist')
 
     // Click it to toggle
-    cy.get('@bypassCheckbox').click({ force: true })
-    cy.wait(500)
+    cy.get('@bypassCheckbox').click()
+    cy.get('.bg-green-200', { timeout: 15000 }).should(
+      'contain',
+      'Bypass age limits updated successfully.',
+    )
 
     // Open Registration details modal for Charlie Brown
     cy.contains('td', 'Charlie Brown').click()
     cy.get('[role="dialog"]').should('exist')
 
     // Click Edit on the sticky header
-    cy.contains('button', 'Edit').click({ force: true })
+    cy.contains('button', 'Edit').click()
+    cy.contains('button', 'Save changes').should('be.visible')
 
     // Change student grade from 4 to 5
     cy.get('input[name="student-grade"]')
+      .scrollIntoView()
       .clear({ force: true })
       .type('5', { force: true })
 
     // Click Save changes
-    cy.contains('button', 'Save changes').click({ force: true })
+    cy.contains('button', 'Save changes').scrollIntoView().click()
     cy.get('.bg-green-200', { timeout: 10000 }).should(
       'contain',
       'Changes were saved successfully.',
     )
 
     // Close dialog
-    cy.contains('button', 'Close').click({ force: true })
+    cy.contains('button', 'Close').click()
     cy.get('[role="dialog"]').should('not.exist')
 
     // Re-verify grade on the table row
-    // TODO(dmeyer246) Dialog entry is flakey, so this is commented out for now. Fix the root
-    // cause and re-enable.
-    // cy.contains('tr', 'Charlie Brown').within(() => {
-    //   cy.get('td').eq(5).should('contain', '5')
-    // })
+    cy.contains('tr', 'Charlie Brown').within(() => {
+      cy.get('td').eq(5).should('contain', '5')
+    })
   })
 })

@@ -37,19 +37,19 @@ describe('Section F: Students Directory', () => {
     cy.contains('td', 'Charlie Brown').click()
     cy.get('[role="dialog"]').should('exist')
 
-    // Enroll Charlie in "Python I"
+    // Enroll Charlie in "Python 1"
     // eq(0) is the Add Class dropdown
     cy.get('input[name="select-a-class"]', { timeout: 15000 })
       .eq(0)
-      .clear()
-      .type('Python I')
+      .clear({ force: true })
+      .type('Python 1', { force: true })
     cy.wait(500)
     cy.get('input[name="select-a-class"]')
       .eq(0)
       .parent()
       .parent()
       .find('button')
-      .contains('Python I')
+      .contains('Python 1')
       .click({ force: true })
     cy.wait(200)
 
@@ -63,21 +63,21 @@ describe('Section F: Students Directory', () => {
 
     // Class 1 Information should appear
     cy.contains('h2', 'Class 1 Information').should('exist')
-    cy.contains('td', 'Python I').should('exist')
+    cy.contains('td', 'Python 1').should('exist')
 
     // Drop the class
     // eq(1) is the Drop Class dropdown
     cy.get('input[name="select-a-class"]', { timeout: 15000 })
       .eq(1)
-      .clear()
-      .type('Python I')
+      .clear({ force: true })
+      .type('Python 1', { force: true })
     cy.wait(500)
     cy.get('input[name="select-a-class"]')
       .eq(1)
       .parent()
       .parent()
       .find('button')
-      .contains('Python I')
+      .contains('Python 1')
       .click({ force: true })
     cy.wait(200)
 

@@ -56,13 +56,7 @@
   <fieldset class="space-y-4" {disabled}>
     <Brand />
     <h1 class="text-2xl font-bold">Reset password</h1>
-    <Input
-      type="email"
-      bind:value={values.email}
-      label="Email"
-      floating
-      required
-    />
+    <Input type="email" bind:value={values.email} label="Email" required />
     <div class="flex items-center justify-between">
       <span>
         <Link href="/signup">Sign up</Link> or

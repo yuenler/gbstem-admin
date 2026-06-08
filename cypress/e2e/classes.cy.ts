@@ -21,21 +21,21 @@ describe('Section E: Classes Directory', () => {
   it('Test Case 12: Classes Search, Filters, and Email Export', () => {
     // Verify initial state
     cy.get('table').should(($table) => {
-      expect($table).to.contain('Python I')
-      expect($table).to.contain('Scratch')
+      expect($table).to.contain('Python 1')
+      expect($table).to.contain('Scratch 1')
     })
 
-    // Select "Python I" from Course filter dropdown
-    cy.get('input[name="course"]').clear().type('Python I')
+    // Select "Python 1" from Course filter dropdown
+    cy.get('input[name="course"]').clear().type('Python 1')
     cy.wait(200)
     cy.get('input[name="course"]').type('{enter}')
     cy.wait(500)
 
-    // Table should contain Python I classes only
+    // Table should contain Python 1 classes only
     cy.get('table').should(($table) => {
-      // Ensure Scratch is filtered out and Python I stays
-      expect($table).to.not.contain('Scratch')
-      expect($table).to.contain('Python I')
+      // Ensure Scratch is filtered out and Python 1 stays
+      expect($table).to.not.contain('Scratch 1')
+      expect($table).to.contain('Python 1')
     })
 
     // Stub clipboard
@@ -58,7 +58,7 @@ describe('Section E: Classes Directory', () => {
   })
 
   it('Test Case 13: Class Details Modal Actions', () => {
-    // Open modal for Python I class taught by Demo Instructor
+    // Open modal for Python 1 class taught by Demo Instructor
     cy.contains('tr', 'Demo Instructor').click()
     cy.get('[role="dialog"]').should('exist')
 

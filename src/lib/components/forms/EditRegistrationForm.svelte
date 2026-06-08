@@ -96,7 +96,6 @@
         if (id !== undefined) {
           const updatedValues = {
             ...values,
-            ...formVal.data,
             personal: {
               ...values.personal,
               ...formVal.data.personal,
@@ -272,7 +271,6 @@
             form={formResult}
             name="personal.gender"
             label="Gender"
-            floating
             options={gendersJson}
             bind:value={$form.personal.gender}
           />
@@ -283,7 +281,6 @@
             form={formResult}
             name="personal.frlp"
             label="Eligible for federal free or reduced lunch program?"
-            floating
             options={frlpJson}
             bind:value={$form.personal.frlp}
           />
@@ -295,7 +292,6 @@
           form={formResult}
           name="personal.parentEducation"
           label="Highest level of education completed"
-          floating
           options={parentEducationJson}
           bind:value={$form.personal.parentEducation}
         />
@@ -330,7 +326,7 @@
     <div class="grid gap-1">
       <span class="font-bold">Academic</span>
       <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
-        <div class="sm:col-span-2 flex flex-col gap-1.5">
+        <div class="sm:col-span-2 flex flex-col gap-1.5 mt-2">
           <FormInput
             form={formResult}
             name="academic.school"
@@ -345,7 +341,6 @@
             name="academic.grade"
             inputName="student-grade"
             label="Grade"
-            floating
             options={gradesJson}
             bind:value={$form.academic.grade}
           />
@@ -361,7 +356,6 @@
             form={formResult}
             name="program.csCourse"
             label="CS course"
-            floating
             options={csCoursesJson}
             bind:value={$form.program.csCourse}
           />
@@ -372,7 +366,6 @@
             form={formResult}
             name="program.mathCourse"
             label="Math course"
-            floating
             options={mathCoursesJson}
             bind:value={$form.program.mathCourse}
           />
@@ -385,7 +378,6 @@
             form={formResult}
             name="program.engineeringCourse"
             label="Engineering course"
-            floating
             options={engineeringCoursesJson}
             bind:value={$form.program.engineeringCourse}
           />
@@ -396,7 +388,6 @@
             form={formResult}
             name="program.scienceCourse"
             label="Science course"
-            floating
             options={scienceCoursesJson}
             bind:value={$form.program.scienceCourse}
           />
@@ -408,7 +399,6 @@
           form={formResult}
           name="program.reason"
           label="Why are you enrolling your child?"
-          floating
           options={reasonsJson}
           bind:value={$form.program.reason}
         />

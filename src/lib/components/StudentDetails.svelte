@@ -512,7 +512,6 @@
             bind:value={selectedClass}
             options={classesOptions}
             label="Select a class"
-            floating
           />
         </div>
         <Button
@@ -525,7 +524,6 @@
             bind:value={selectedDropClass}
             options={dropClassesOptions}
             label="Select a class"
-            floating
           />
         </div>
         <Button

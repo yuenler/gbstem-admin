@@ -1,8 +1,5 @@
 import { registrationsCollection } from '$lib/data/collections'
-import csCourses from '$lib/data/csCourses.json'
-import engineeringCourses from '$lib/data/engineeringCourses.json'
-import mathCourses from '$lib/data/mathCourses.json'
-import scienceCourses from '$lib/data/scienceCourses.json'
+import { coursesJson } from '$lib/data'
 import { adminDb } from '$lib/server/firebase'
 import { searchIndex } from '$lib/server/search'
 import { error } from '@sveltejs/kit'
@@ -10,14 +7,20 @@ import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import type { PageServerLoad } from './$types'
 
 function getCourseField(courseName: string): string | null {
-  if (csCourses.some((c) => c.name === courseName)) return 'program.csCourse'
-  if (engineeringCourses.some((c) => c.name === courseName))
-    return 'program.engineeringCourse'
-  if (mathCourses.some((c) => c.name === courseName))
-    return 'program.mathCourse'
-  if (scienceCourses.some((c) => c.name === courseName))
-    return 'program.scienceCourse'
-  return null
+  const course = coursesJson.find((c) => c.name === courseName)
+  if (!course) return null
+  switch (course.track) {
+    case 'cs':
+      return 'program.csCourse'
+    case 'engineering':
+      return 'program.engineeringCourse'
+    case 'math':
+      return 'program.mathCourse'
+    case 'science':
+      return 'program.scienceCourse'
+    default:
+      return null
+  }
 }
 
 export const load = (async ({ url, depends }) => {

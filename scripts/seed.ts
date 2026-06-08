@@ -247,7 +247,7 @@ async function seed() {
     classDay2: 'Wednesday',
     classTime1: '16:00',
     classTime2: '16:00',
-    course: 'Python 1 (a/b)',
+    course: 'Python 1',
     instructorEmail: 'instructor@gbstem.org',
     otherInstructorEmails: '',
     instructorFirstName: 'Demo',
@@ -274,7 +274,7 @@ async function seed() {
     classDay2: 'Thursday',
     classTime1: '17:00',
     classTime2: '17:00',
-    course: 'Scratch 1 (a/b)',
+    course: 'Scratch 1',
     instructorEmail: 'instructor2@gbstem.org',
     otherInstructorEmails: 'assistant@gbstem.org',
     instructorFirstName: 'Bob',
@@ -317,10 +317,10 @@ async function seed() {
       grade: '4',
     },
     program: {
-      csCourse: 'Scratch 1 (a/b)',
-      mathCourse: 'Mathematics 1 (a/b)',
-      engineeringCourse: 'Engineering 1 (a/b)',
-      scienceCourse: 'Environmental Science (a/b)',
+      csCourse: 'Scratch 1',
+      mathCourse: 'Mathematics 1b',
+      engineeringCourse: 'Engineering 1',
+      scienceCourse: 'Environmental Science B',
       reason: 'Loves computers and building things.',
       inPerson: false,
     },
@@ -371,10 +371,10 @@ async function seed() {
       grade: '2',
     },
     program: {
-      csCourse: 'Python 1 (a/b)',
-      mathCourse: 'Mathematics 1 (a/b)',
-      engineeringCourse: 'Engineering 1 (a/b)',
-      scienceCourse: 'Environmental Science (a/b)',
+      csCourse: 'Python 1',
+      mathCourse: 'Mathematics 1b',
+      engineeringCourse: 'Engineering 1',
+      scienceCourse: 'Environmental Science B',
       reason: 'Excited to learn programming.',
       inPerson: false,
     },
@@ -424,7 +424,7 @@ async function seed() {
       grade: '3',
     },
     program: {
-      csCourse: 'Python 1 (a/b)',
+      csCourse: 'Python 1',
       mathCourse: 'None',
       engineeringCourse: 'None',
       scienceCourse: 'None',
@@ -539,12 +539,7 @@ async function seed() {
     'Riverdale Charter',
   ]
   const grades = ['1', '2', '3', '4', '5', '6']
-  const courses = [
-    'Scratch 1 (a/b)',
-    'Python 1 (a/b)',
-    'Python 2 (a/b)',
-    'Web Development (a/b)',
-  ]
+  const courses = ['Scratch 1', 'Python 1', 'Python 2', 'Web Development']
 
   for (let i = 0; i < 30; i++) {
     const id = `reg-fake-${i}`
@@ -579,9 +574,9 @@ async function seed() {
       },
       program: {
         csCourse: courses[i % courses.length],
-        mathCourse: 'Mathematics 1 (a/b)',
-        engineeringCourse: 'Engineering 1 (a/b)',
-        scienceCourse: 'Environmental Science (a/b)',
+        mathCourse: 'Mathematics 1b',
+        engineeringCourse: 'Engineering 1',
+        scienceCourse: 'Environmental Science B',
         reason: 'Interest in STEM fields.',
         inPerson: inPerson,
       },
@@ -634,7 +629,7 @@ async function seed() {
       graduationYear: 2027,
     },
     program: {
-      courses: ['Python 1 (a/b)', 'Scratch 1 (a/b)'],
+      courses: ['Python 1', 'Scratch 1'],
       preferences: 'Prefers Python teaching.',
       numClasses: '2',
       timeSlots: 'Monday/Wednesday',
@@ -684,7 +679,7 @@ async function seed() {
       graduationYear: 2028,
     },
     program: {
-      courses: ['Python 1 (a/b)'],
+      courses: ['Python 1'],
       preferences: 'None',
       numClasses: '1',
       timeSlots: 'Monday/Wednesday',
@@ -725,7 +720,7 @@ async function seed() {
   await db.collection(decisionsCollection).doc('instructor-demo-uid').set({
     type: 'accepted',
     likelyDecision: 'likely yes',
-    course: 'Python 1 (a/b)',
+    course: 'Python 1',
     time: 'Monday/Wednesday 16:00',
     notes: 'Welcome to the team!',
   })

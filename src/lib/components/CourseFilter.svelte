@@ -2,10 +2,7 @@
   import Select from './Select.svelte'
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
-  import csCourses from '$lib/data/csCourses.json'
-  import engineeringCourses from '$lib/data/engineeringCourses.json'
-  import mathCourses from '$lib/data/mathCourses.json'
-  import scienceCourses from '$lib/data/scienceCourses.json'
+  import { coursesJson } from '$lib/data'
 
   export let paramName = 'filter'
 
@@ -39,25 +36,10 @@
     handleChange(value)
   }
 
-  const allRawCourses = [
-    ...csCourses,
-    ...engineeringCourses,
-    ...mathCourses,
-    ...scienceCourses,
+  const options = [
+    { name: 'all' },
+    ...coursesJson.map((course) => ({ name: course.name })),
   ]
-
-  const filteredCourses = allRawCourses
-    .filter((course) => !course.name.toLowerCase().includes('not interested'))
-    .map((course) => ({ name: course.name }))
-
-  const options = [{ name: 'all' }, ...filteredCourses]
 </script>
 
-<Select
-  class="mt-0 w-64"
-  bind:value
-  label="Course"
-  {options}
-  floating
-  required
-/>
+<Select class="mt-0 w-64" bind:value label="Course" {options} required />

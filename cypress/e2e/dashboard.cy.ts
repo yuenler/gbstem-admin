@@ -74,10 +74,12 @@ describe('Section B: Dashboard and Navigation Layout', () => {
       .parent()
       .within(() => {
         // bg-blue-100: ClassUpcomingSoon
-        cy.get('.bg-blue-100').should('be.visible').and('contain', 'Python I')
+        cy.get('.bg-blue-100').should('be.visible').and('contain', 'Python 1')
 
         // bg-yellow-100: FeedbackIncomplete
-        cy.get('.bg-yellow-100').should('be.visible').and('contain', 'Scratch')
+        cy.get('.bg-yellow-100')
+          .should('be.visible')
+          .and('contain', 'Scratch 1')
 
         // bg-red-100: ClassNotHeld
         cy.get('.bg-red-100').should('be.visible')
