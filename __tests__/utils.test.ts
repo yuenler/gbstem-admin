@@ -374,16 +374,23 @@ describe('utils', () => {
       jest.clearAllMocks()
     })
 
-    it('triggers success alert when email copying succeeds', async () => {
+    it('filters false-y/blank values, joins them, and triggers success alert', async () => {
       ;(navigator.clipboard.writeText as jest.Mock).mockResolvedValue(undefined)
 
-      copyEmails('test@example.com')
+      copyEmails([
+        'test1@example.com',
+        '',
+        null,
+        undefined,
+        '  ',
+        'test2@example.com',
+      ])
 
       // Wait for promise microtasks
       await new Promise(process.nextTick)
 
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        'test@example.com',
+        'test1@example.com, test2@example.com',
       )
       expect(alert.trigger).toHaveBeenCalledWith(
         'success',
@@ -396,7 +403,7 @@ describe('utils', () => {
         new Error('Permission denied'),
       )
 
-      copyEmails('test@example.com')
+      copyEmails(['test@example.com'])
 
       // Wait for promise microtasks
       await new Promise(process.nextTick)

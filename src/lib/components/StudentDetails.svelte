@@ -459,13 +459,7 @@
         <h2 class="font-bold">Student Information</h2>
         <Button
           on:click={() =>
-            copyEmails(
-              studentData.email.concat(
-                studentData.secondaryEmail
-                  ? ', ' + studentData.secondaryEmail
-                  : '',
-              ),
-            )}
+            copyEmails([studentData.email, studentData.secondaryEmail])}
           class="flex items-center gap-1"
         >
           <svg fill="#000" height="20" width="20" viewBox="0 0 352.804 352.804">

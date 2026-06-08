@@ -210,8 +210,12 @@ export function writeToClipboard(text: string): Promise<void> {
   return Promise.resolve()
 }
 
-export function copyEmails(email: string) {
-  writeToClipboard(email)
+export function copyEmails(emails: Array<string | null | undefined>) {
+  const cleanEmails = emails.filter(
+    (email): email is string =>
+      typeof email === 'string' && email.trim() !== '',
+  )
+  writeToClipboard(cleanEmails.join(', '))
     .then(() => {
       alert.trigger('success', 'Emails copied to clipboard!')
     })

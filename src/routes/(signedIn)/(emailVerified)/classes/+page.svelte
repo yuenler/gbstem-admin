@@ -103,9 +103,7 @@
   >
   <Button
     on:click={() =>
-      copyEmails(
-        data.classes.map((instructor) => `${instructor.email}`).join(', '),
-      )}
+      copyEmails(data.classes.map((instructor) => instructor.email))}
     class="h-12 flex items-center gap-1"
   >
     <svg

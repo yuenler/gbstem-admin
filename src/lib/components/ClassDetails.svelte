@@ -216,12 +216,10 @@
           <Button
             on:click={() =>
               copyEmails(
-                studentList
-                  .map(
-                    (student) =>
-                      `${student.email}${student.secondaryEmail ? `, ${student.secondaryEmail}` : ''}`,
-                  )
-                  .join(', '),
+                studentList.flatMap((student) => [
+                  student.email,
+                  student.secondaryEmail,
+                ]),
               )}
             class="flex items-center gap-1"
           >
