@@ -1,9 +1,14 @@
 <script lang="ts">
-  import { type Timestamp, doc, getDoc, updateDoc } from 'firebase/firestore'
-  import Card from '$lib/components/Card.svelte'
   import { db } from '$lib/client/firebase'
-  import Button from './Button.svelte'
-  import Dialog from './Dialog.svelte'
+  import Card from '$lib/components/Card.svelte'
+  import {
+    classesCollection,
+    registrationsCollection,
+  } from '$lib/data/collections'
+  import sendClassReminder from '$lib/data/helpers/sendClassReminders'
+  import type ClassData from '$lib/data/types/ClassData'
+  import { ClassStatus } from '$lib/data/types/ClassStatus'
+  import type Student from '$lib/data/types/Student'
   import { alert } from '$lib/stores'
   import {
     copyEmails,
@@ -13,14 +18,9 @@
     normalizeCapitals,
     timestampToDate,
   } from '$lib/utils'
-  import {
-    classesCollection,
-    registrationsCollection,
-  } from '$lib/data/collections'
-  import { ClassStatus } from '$lib/data/types/ClassStatus'
-  import sendClassReminder from '$lib/data/helpers/sendClassReminders'
-  import type Student from '$lib/data/types/Student'
-  import type ClassData from '$lib/data/types/ClassData'
+  import { doc, getDoc, updateDoc } from 'firebase/firestore'
+  import Button from './Button.svelte'
+  import Dialog from './Dialog.svelte'
   import EditClassForm from './forms/EditClassForm.svelte'
 
   export let dialogEl: Dialog
@@ -245,7 +245,7 @@
                 />
               </g>
             </svg>
-            <span>Copy</span>
+            <span>Copy Emails</span>
           </Button>
         </div>
         <div class="m-5 overflow-auto">

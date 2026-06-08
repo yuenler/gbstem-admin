@@ -61,6 +61,95 @@ describe('Section J: Substitute Requests Log', () => {
     cy.contains('a', 'Download')
       .should('have.attr', 'href')
       .and('include', 'blob:')
+      .then((href) => {
+        cy.window().then((win) => {
+          return win.fetch(href).then((res: Response) => res.text())
+        })
+      })
+      .then((text) => {
+        const lines = text
+          .split('\n')
+          .map((line: string) => line.trim())
+          .filter(Boolean)
+        const headers = lines[0].split(',').map((h: string) => h.trim())
+        expect(headers).to.deep.equal([
+          'id',
+          'course',
+          'classNumber',
+          'originalInstructorEmail',
+          'dateOfClass',
+          'subRequestStatus',
+          'subInstructorFirstName',
+          'subInstructorEmail',
+          'notes',
+        ])
+        const first5Rows = lines
+          .slice(1, 6)
+          .map((line: string) => line.split(','))
+        expect(first5Rows.length).to.be.at.most(5)
+
+        const expectedRowsWithoutDates = [
+          [
+            'sub-req-fake-29',
+            'Python 1',
+            '2',
+            'instructor-fake-29@gbstem.org',
+            'completed',
+            'Mary',
+            'sub-29@gbstem.org',
+            'Dentist appointment fake #29.',
+          ],
+          [
+            'sub-req-fake-25',
+            'Python 1',
+            '2',
+            'instructor-fake-25@gbstem.org',
+            'accepted',
+            'Margaret',
+            'sub-25@gbstem.org',
+            'Dentist appointment fake #25.',
+          ],
+          [
+            'sub-req-fake-21',
+            'Python 1',
+            '2',
+            'instructor-fake-21@gbstem.org',
+            'open',
+            '',
+            '',
+            'Dentist appointment fake #21.',
+          ],
+          [
+            'sub-req-fake-17',
+            'Python 1',
+            '2',
+            'instructor-fake-17@gbstem.org',
+            'completed',
+            'Karen',
+            'sub-17@gbstem.org',
+            'Dentist appointment fake #17.',
+          ],
+          [
+            'sub-req-fake-13',
+            'Python 1',
+            '2',
+            'instructor-fake-13@gbstem.org',
+            'accepted',
+            'Jessica',
+            'sub-13@gbstem.org',
+            'Dentist appointment fake #13.',
+          ],
+        ]
+
+        first5Rows.forEach((row: string[], idx: number) => {
+          // Assert the date string matches ISO format
+          expect(row[4]).to.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
+
+          // Reconstruct the row without the date column (index 4)
+          const rowWithoutDate = [...row.slice(0, 4), ...row.slice(5)]
+          expect(rowWithoutDate).to.deep.equal(expectedRowsWithoutDates[idx])
+        })
+      })
 
     // Verify row statuses match background colors
     // Check one red row (open / needs substitute) or green row (no substitute needed) or blue row (substitute found)

@@ -204,15 +204,19 @@
         enrolled = false
       }
 
-      const registrationDocRef = doc(db, registrationsCollection, id)
-      await updateDoc(registrationDocRef, { enrolled: enrolled }).catch(
-        (err) => {
-          console.warn(
-            `Failed to update enrolled status for registration ${id}:`,
-            err,
-          )
-        },
-      )
+      const reg = data.registrations.find((r) => r.id === id)
+      const currentEnrolled = (reg?.values as any)?.enrolled
+      if (currentEnrolled !== enrolled) {
+        const registrationDocRef = doc(db, registrationsCollection, id)
+        await updateDoc(registrationDocRef, { enrolled: enrolled }).catch(
+          (err) => {
+            console.warn(
+              `Failed to update enrolled status for registration ${id}:`,
+              err,
+            )
+          },
+        )
+      }
 
       return enrolled ? courses : 'NO CLASS ENROLLMENT FOUND'
     } catch (err: any) {
@@ -264,7 +268,8 @@
     {#each data.registrations as registration, i}
       <tr
         class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
-        on:click={() => {
+        on:click={(e) => {
+          if ((e.target as HTMLElement).tagName === 'INPUT') return
           current = i
           dialogEl.open()
         }}
@@ -277,7 +282,6 @@
               type="checkbox"
               checked={checked.includes(i)}
               on:input={(e) => handleCheck(e, i)}
-              on:click|stopPropagation
             />
             <label for="check-all" class="sr-only">checkbox</label>
           </div>
@@ -322,12 +326,11 @@
         </td><td class="px-6 py-4">{getInterestedClasses(registration)}</td>
         <td class="px-6 py-4">
           <input
-            id={`check-${i}`}
+            id={`bypass-${i}`}
             class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-hidden focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
             type="checkbox"
             checked={registration.values.agreements.bypassAgeLimits}
-            on:input={() => bypassAgeLimits(registration.id)}
-            on:click|stopPropagation
+            on:change={() => bypassAgeLimits(registration.id)}
           />
         </td>
         {#await getCourses(registration.id) then courses}

@@ -63,6 +63,94 @@ describe('Section I: Feedback Views', () => {
     cy.contains('a', 'Download')
       .should('have.attr', 'href')
       .and('include', 'blob:')
+      .then((href) => {
+        cy.window().then((win) => {
+          return win.fetch(href).then((res: Response) => res.text())
+        })
+      })
+      .then((text) => {
+        const lines = text
+          .split('\n')
+          .map((line: string) => line.trim())
+          .filter(Boolean)
+        const headers = lines[0].split(',').map((h: string) => h.trim())
+        expect(headers).to.deep.equal([
+          'id',
+          'studentName',
+          'course',
+          'instructorName',
+          'date',
+          'feedback',
+          'rating',
+        ])
+        const first5Rows = lines
+          .slice(1, 6)
+          .map((line: string) => line.split(','))
+        expect(first5Rows.length).to.be.at.most(5)
+        first5Rows.forEach((row: string[]) => {
+          expect(row[0].length).to.equal(20)
+        })
+        const slicedRows = first5Rows.map((row: string[]) => row.slice(1))
+
+        expect(slicedRows[0]).to.deep.equal([
+          'Charles Jackson',
+          'Python 1',
+          'Sarah Moore',
+          '2026-03-27',
+          'The class was very fun and I learned Python! (#17)',
+          '3',
+        ])
+        expect(slicedRows[1]).to.deep.equal([
+          'Joseph Anderson',
+          'Python 1',
+          'Susan Wilson',
+          '2026-03-23',
+          'The class was very fun and I learned Python! (#13)',
+          '4',
+        ])
+
+        const row2and3 = [slicedRows[2], slicedRows[3]]
+        expect(row2and3).to.deep.include([
+          'David Hernandez',
+          'Python 1',
+          'Elizabeth Martinez',
+          '2026-03-19',
+          'The class was very fun and I learned Python! (#9)',
+          '5',
+        ])
+        expect(row2and3).to.deep.include([
+          'James Smith',
+          'Python 1',
+          'Sandra Robinson',
+          '2026-03-19',
+          'The class was very fun and I learned Python! (#29)',
+          '5',
+        ])
+
+        const opt1 = [
+          'Anthony Clark',
+          'Python 1',
+          'Betty Sanchez',
+          '2026-03-15',
+          'The class was very fun and I learned Python! (#25)',
+          '1',
+        ]
+        const opt2 = [
+          'Michael Miller',
+          'Python 1',
+          'Jennifer Garcia',
+          '2026-03-15',
+          'The class was very fun and I learned Python! (#5)',
+          '1',
+        ]
+        const matchedOpt =
+          Cypress._.isEqual(slicedRows[4], opt1) ||
+          Cypress._.isEqual(slicedRows[4], opt2)
+        expect(
+          matchedOpt,
+          `Row 4 should be Anthony Clark or Michael Miller. Got: ${JSON.stringify(slicedRows[4])}`,
+        ).to.equal(true)
+      })
   })
 
   it('Test Case 18: Audit Instructor Feedback and View Details', () => {
@@ -121,5 +209,86 @@ describe('Section I: Feedback Views', () => {
     cy.contains('a', 'Download')
       .should('have.attr', 'href')
       .and('include', 'blob:')
+      .then((href) => {
+        cy.window().then((win) => {
+          return win.fetch(href).then((res: Response) => res.text())
+        })
+      })
+      .then((text) => {
+        const lines = text
+          .split('\n')
+          .map((line: string) => line.trim())
+          .filter(Boolean)
+        const headers = lines[0].split(',').map((h: string) => h.trim())
+        expect(headers).to.deep.equal([
+          'id',
+          'instructorName',
+          'courseName',
+          'classNumber',
+          'date',
+          'feedback',
+        ])
+        const first5Rows = lines
+          .slice(1, 6)
+          .map((line: string) => line.split(','))
+        expect(first5Rows.length).to.be.at.most(5)
+        first5Rows.forEach((row: string[]) => {
+          expect(row[0].length).to.equal(20)
+        })
+        const slicedRows = first5Rows.map((row: string[]) => row.slice(1))
+
+        expect(slicedRows[0]).to.deep.equal([
+          'Sarah Moore',
+          'Python 1',
+          '2',
+          '2026-03-27',
+          'Both students participated actively today. Class #17.',
+        ])
+        expect(slicedRows[1]).to.deep.equal([
+          'Susan Wilson',
+          'Python 1',
+          '2',
+          '2026-03-23',
+          'Both students participated actively today. Class #13.',
+        ])
+
+        const row2and3 = [slicedRows[2], slicedRows[3]]
+        expect(row2and3).to.deep.include([
+          'Elizabeth Martinez',
+          'Python 1',
+          '2',
+          '2026-03-19',
+          'Both students participated actively today. Class #9.',
+        ])
+        expect(row2and3).to.deep.include([
+          'Sandra Robinson',
+          'Python 1',
+          '2',
+          '2026-03-19',
+          'Both students participated actively today. Class #29.',
+        ])
+
+        const opt1 = [
+          'Betty Sanchez',
+          'Python 1',
+          '2',
+          '2026-03-15',
+          'Both students participated actively today. Class #25.',
+        ]
+        const opt2 = [
+          'Jennifer Garcia',
+          'Python 1',
+          '2',
+          '2026-03-15',
+          'Both students participated actively today. Class #5.',
+        ]
+        const matchedOpt =
+          Cypress._.isEqual(slicedRows[4], opt1) ||
+          Cypress._.isEqual(slicedRows[4], opt2)
+        expect(
+          matchedOpt,
+          `Row 4 should be Betty Sanchez or Jennifer Garcia. Got: ${JSON.stringify(slicedRows[4])}`,
+        ).to.equal(true)
+      })
   })
 })

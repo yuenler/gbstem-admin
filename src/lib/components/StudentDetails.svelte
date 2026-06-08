@@ -478,7 +478,7 @@
               />
             </g>
           </svg>
-          <span>Copy</span>
+          <span>Copy Emails</span>
         </Button>
       </div>
       <div class="m-5 overflow-auto">

@@ -69,18 +69,151 @@ describe('Section G: Pre-Registrations Directory', () => {
     cy.contains('a', 'Download')
       .should('have.attr', 'href')
       .and('include', 'blob:')
+      .then((href) => {
+        cy.window().then((win) => {
+          return win.fetch(href).then((res: Response) => res.text())
+        })
+      })
+      .then((text) => {
+        const lines = text
+          .split('\n')
+          .map((line: string) => line.trim())
+          .filter(Boolean)
+        const headers = lines[0].split(',').map((h: string) => h.trim())
+        expect(headers).to.deep.equal([
+          'id',
+          'studentFirstName',
+          'studentLastName',
+          'parentFirstName',
+          'parentLastName',
+          'email',
+          'secondaryEmail',
+          'school',
+          'grade',
+          'csCourse',
+          'engineeringCourse',
+          'mathCourse',
+          'scienceCourse',
+          'In-person',
+        ])
+        const first5Rows = lines
+          .slice(1, 6)
+          .map((line: string) => line.split(','))
+        expect(first5Rows.length).to.be.at.most(5)
+        expect(first5Rows).to.deep.equal([
+          [
+            'student-demo-uid-1',
+            'Demo Student',
+            'One',
+            'Parent',
+            'Demo',
+            'student@gbstem.org',
+            '',
+            'Pinecrest Elementary',
+            '3',
+            'python-1',
+            'none',
+            'none',
+            'none',
+            'No',
+          ],
+          [
+            'reg-sally',
+            'Sally',
+            'Brown',
+            'Lucy',
+            'Brown',
+            'parent2@gmail.com',
+            'parent2_sec@gmail.com',
+            'Pinecrest Elementary',
+            '2',
+            'python-1',
+            'engineering-1',
+            'mathematics-1-b',
+            'environmental-science-b',
+            'No',
+          ],
+          [
+            'reg-charlie',
+            'Charlie',
+            'Brown',
+            'Lucy',
+            'Brown',
+            'parent1@gmail.com',
+            'parent1_sec@gmail.com',
+            'Pinecrest Elementary',
+            '4',
+            'scratch-1',
+            'engineering-1',
+            'mathematics-1-b',
+            'environmental-science-b',
+            'No',
+          ],
+          [
+            'reg-fake-29',
+            'Sandra',
+            'Robinson',
+            'Parent',
+            'Robinson',
+            'student-29@gmail.com',
+            '',
+            'Riverdale Charter',
+            '6',
+            'python-1',
+            'engineering-1',
+            'mathematics-1-b',
+            'environmental-science-b',
+            'No',
+          ],
+          [
+            'reg-fake-28',
+            'Mark',
+            'Lewis',
+            'Parent',
+            'Lewis',
+            'student-28@gmail.com',
+            '',
+            'Maple Valley Academy',
+            '5',
+            'scratch-1',
+            'engineering-1',
+            'mathematics-1-b',
+            'environmental-science-b',
+            'No',
+          ],
+        ])
+      })
+
+    // Verify Download Schools List button links to a CSV Blob
+    cy.contains('a', 'Download Schools List')
+      .should('have.attr', 'href')
+      .and('include', 'blob:')
+      .then((href) => {
+        cy.window().then((win) => {
+          return win.fetch(href).then((res: Response) => res.text())
+        })
+      })
+      .then((text) => {
+        const schools = text
+          .split('\n')
+          .map((line: string) => line.trim())
+          .filter(Boolean)
+        expect(schools).to.deep.equal([
+          'brookside school',
+          'maple valley academy',
+          'oakridge elementary',
+          'pinecrest elementary',
+          'riverdale charter',
+        ])
+      })
 
     // Toggle Bypass Age Limits on Charlie Brown's row
     // Charlie Brown row's bypass checkbox is in column 9 (index 8)
     cy.contains('tr', 'Charlie Brown')
       .scrollIntoView()
       .within(() => {
-        cy.get('td').eq(8).find('input[type="checkbox"]').as('bypassCheckbox')
+        cy.get('td').eq(8).find('input[type="checkbox"]').check()
       })
-    cy.get('@bypassCheckbox').should('exist')
-
-    // Click it to toggle
-    cy.get('@bypassCheckbox').click()
     cy.get('.bg-green-200', { timeout: 15000 }).should(
       'contain',
       'Bypass age limits updated successfully.',

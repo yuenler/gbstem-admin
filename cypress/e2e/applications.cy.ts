@@ -78,6 +78,120 @@ describe('Section D: Instructor Applications Management', () => {
     cy.contains('a', 'Download')
       .should('have.attr', 'href')
       .and('include', 'blob:')
+      .then((href) => {
+        cy.window().then((win) => {
+          return win.fetch(href).then((res: Response) => res.text())
+        })
+      })
+      .then((text) => {
+        const lines = text
+          .split('\n')
+          .map((line: string) => line.trim())
+          .filter(Boolean)
+        const headers = lines[0].split(',').map((h: string) => h.trim())
+        expect(headers).to.deep.equal([
+          'ID',
+          'Submitted',
+          'Decision',
+          'Likely Decision',
+          'Notes',
+          'First Name',
+          'Last Name',
+          'Email',
+          'School',
+          'Graduation Year',
+          'Courses',
+          'Time Slots',
+          'Taught Before',
+          'In-person',
+        ])
+        const first5Rows = lines
+          .slice(1, 6)
+          .map((line: string) => line.split(','))
+        expect(first5Rows.length).to.be.at.most(5)
+        expect(first5Rows).to.deep.equal([
+          [
+            'instructor-demo-uid',
+            'Submitted',
+            'accepted',
+            'likely yes',
+            'Welcome to the team!',
+            'Demo',
+            'Instructor',
+            'instructor@gbstem.org',
+            'gbSTEM University',
+            '2028',
+            'Python 1',
+            'Monday/Wednesday',
+            'Yes',
+            'No',
+          ],
+          [
+            'app-david',
+            'Submitted',
+            'Undecided',
+            'Undecided',
+            '',
+            'David',
+            'Miller',
+            'applicant1@gmail.com',
+            'Central High School',
+            '2027',
+            'Python 1;Scratch 1',
+            'Monday/Wednesday',
+            'Yes',
+            'No',
+          ],
+          [
+            'app-fake-29',
+            'Submitted',
+            'Undecided',
+            'Undecided',
+            '',
+            'Sandra',
+            'Robinson',
+            'applicant-29@gmail.com',
+            'Riverdale Charter',
+            '2028',
+            'Python 1',
+            'Monday/Wednesday',
+            'No',
+            'No',
+          ],
+          [
+            'app-fake-28',
+            'Submitted',
+            'Undecided',
+            'Undecided',
+            '',
+            'Mark',
+            'Lewis',
+            'applicant-28@gmail.com',
+            'Maple Valley Academy',
+            '2028',
+            'Scratch 1',
+            'Monday/Wednesday',
+            'Yes',
+            'No',
+          ],
+          [
+            'app-fake-26',
+            'Submitted',
+            'Undecided',
+            'Undecided',
+            '',
+            'Anthony',
+            'Clark',
+            'applicant-26@gmail.com',
+            'Oakridge Elementary',
+            '2028',
+            'Python 2',
+            'Monday/Wednesday',
+            'Yes',
+            'No',
+          ],
+        ])
+      })
   })
 
   it('Test Case 10: Bulk Application Decisions', () => {

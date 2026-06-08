@@ -42,10 +42,21 @@ describe('Section B: Dashboard and Navigation Layout', () => {
 
     // Click "Copy Emails for Uncompleted Registrations"
     cy.contains('button', 'Copy Emails for Uncompleted Registrations').click()
-    cy.get('@clipboardCopy').should(
-      'have.been.calledWithMatch',
-      'student-0@gmail.com',
-    )
+    cy.get('@clipboardCopy').then((stub: any) => {
+      expect(stub.called).to.equal(true)
+      const text = stub.lastCall.args[0]
+      const emails = text
+        .split(',')
+        .map((e: string) => e.trim())
+        .filter(Boolean)
+      expect(emails.slice(0, 5)).to.deep.equal([
+        'student-0@gmail.com',
+        'student-14@gmail.com',
+        'student-21@gmail.com',
+        'student-28@gmail.com',
+        'student-7@gmail.com',
+      ])
+    })
     cy.get('.bg-green-200').should(
       'contain',
       'Emails of uncompleted registrations copied to clipboard.',
@@ -53,10 +64,21 @@ describe('Section B: Dashboard and Navigation Layout', () => {
 
     // Click "Copy Emails for Uncompleted Applications"
     cy.contains('button', 'Copy Emails for Uncompleted Applications').click()
-    cy.get('@clipboardCopy').should(
-      'have.been.calledWithMatch',
-      'applicant-0@gmail.com',
-    )
+    cy.get('@clipboardCopy').then((stub: any) => {
+      expect(stub.called).to.equal(true)
+      const text = stub.lastCall.args[0]
+      const emails = text
+        .split(',')
+        .map((e: string) => e.trim())
+        .filter(Boolean)
+      expect(emails.slice(0, 5)).to.deep.equal([
+        'applicant-0@gmail.com',
+        'applicant-12@gmail.com',
+        'applicant-15@gmail.com',
+        'applicant-18@gmail.com',
+        'applicant-21@gmail.com',
+      ])
+    })
     cy.get('.bg-green-200').should(
       'contain',
       'Emails of uncompleted applications copied to clipboard.',

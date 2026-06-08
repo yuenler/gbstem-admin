@@ -16,6 +16,8 @@ describe('Section K: Registration Signup Tokens', () => {
     cy.visit('/tokens')
     cy.title().should('contain', 'Tokens')
     cy.wait(1000) // Wait for tokens to load
+    cy.selectOption('input[name="per-page"]', '50')
+    cy.wait(500)
   })
 
   it('Test Case 20: Create, Copy, and Delete Signup Tokens', () => {
@@ -60,16 +62,39 @@ describe('Section K: Registration Signup Tokens', () => {
       cy.wrap(stub).as('clipboardCopy')
     })
 
-    // Find the newly created row (it should have role "admin" and consumable "Yes" or checked SVG)
-    // We can look for a row with role "admin" and click Copy
-    cy.contains('tr', 'admin').within(() => {
+    // Find the newly created row (role "admin" and token ID has length 20)
+    cy.get('tbody tr').then(($rows) => {
+      let foundRow: any = null
+      const rowsDebug: string[] = []
+      $rows.each((i: number, el: any) => {
+        const $row = Cypress.$(el)
+        const tokenId = $row.find('th').text().trim()
+        rowsDebug.push(
+          `Row ${i} token ID: "${tokenId}" (length ${tokenId.length})`,
+        )
+        if (tokenId.length === 20) {
+          foundRow = $row
+        }
+      })
+      expect(
+        foundRow,
+        `Could not find a 20-character token ID. Found rows:\n${rowsDebug.join('\n')}`,
+      ).to.not.equal(null)
+      cy.wrap(foundRow).as('newAdminRow')
+    })
+
+    cy.get('@newAdminRow').within(() => {
       cy.contains('button', 'Copy').click({ force: true })
     })
-    cy.get('@clipboardCopy').should('have.been.called')
+    cy.get('@clipboardCopy').then((stub: any) => {
+      expect(stub.callCount).to.equal(1)
+      const url = stub.firstCall.args[0]
+      expect(url).to.match(/\/signup\?token=[a-zA-Z0-9]{20}$/)
+    })
     cy.get('.bg-green-200').should('contain', 'Token copied.')
 
     // Click Delete on the admin token row
-    cy.contains('tr', 'admin').within(() => {
+    cy.get('@newAdminRow').within(() => {
       cy.contains('button', 'Delete').click({ force: true })
     })
     cy.get('.bg-green-200').should('contain', 'Token deleted.')

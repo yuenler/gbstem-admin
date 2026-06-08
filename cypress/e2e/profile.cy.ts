@@ -25,8 +25,17 @@ describe('Section L: Profile and Account Customization', () => {
       stub.resolves()
       cy.wrap(stub).as('clipboardCopy')
     })
-    cy.get('button[aria-label="Copy user ID to clipboard"]').click()
-    cy.get('@clipboardCopy').should('have.been.called')
+
+    cy.contains('div', /^UID:/)
+      .invoke('text')
+      .then((uidText) => {
+        const expectedUid = uidText.replace('UID:', '').trim()
+        cy.get('button[aria-label="Copy user ID to clipboard"]').click()
+        cy.get('@clipboardCopy').then((stub: any) => {
+          expect(stub.calledOnce).to.equal(true)
+          expect(stub.firstCall.args[0]).to.equal(expectedUid)
+        })
+      })
 
     // 2. Change name
     const newName = 'Demo Admin Test'
