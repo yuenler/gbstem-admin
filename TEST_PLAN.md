@@ -30,7 +30,7 @@ Follow these steps to establish a clean, predictable, local testing environment.
 1. Start the Firebase Emulator suite:
 
    ```bash
-   firebase emulators:start
+   npm run emulators
    ```
 
 ### C. Seed Local Emulator Database

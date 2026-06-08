@@ -17,6 +17,7 @@
     "cypress": "cypress run",
     "deploy": "npm run build && firebase deploy",
     "seed": "npx tsx scripts/seed.ts",
+    "emulators": "firebase emulators:start --log-verbosity=quiet",
     "prepare": "husky || true"
   },
   "devDependencies": {
