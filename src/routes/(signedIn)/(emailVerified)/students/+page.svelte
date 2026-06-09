@@ -3,19 +3,18 @@
   import { page } from '$app/stores'
   import { db } from '$lib/client/firebase'
   import Button from '$lib/components/Button.svelte'
+  import CourseFilter from '$lib/components/CourseFilter.svelte'
   import type Dialog from '$lib/components/Dialog.svelte'
+  import PerPageControl from '$lib/components/PerPageControl.svelte'
   import SearchBox from '$lib/components/SearchBox.svelte'
   import StatusFilter from '$lib/components/StatusFilter.svelte'
-  import CourseFilter from '$lib/components/CourseFilter.svelte'
-  import PerPageControl from '$lib/components/PerPageControl.svelte'
   import StudentDetails from '$lib/components/StudentDetails.svelte'
   import Table from '$lib/components/Table.svelte'
-  import { goto } from '$app/navigation'
   import {
     classesCollection,
     registrationsCollection,
   } from '$lib/data/collections'
-  import { normalizeCapitals } from '$lib/utils'
+  import { generateCSV, normalizeCapitals } from '$lib/utils'
   import {
     collection,
     doc,
@@ -33,48 +32,55 @@
   let clickedRegistration: any
   let checked: Array<number> = []
 
-  const csv = data.registrations
-    .map((registration) => {
-      const {
-        id,
-        values: {
-          personal: {
-            studentFirstName,
-            studentLastName,
-            email,
-            secondaryEmail,
-          },
-          academic: { school, grade },
-          program: {
-            csCourse,
-            engineeringCourse,
-            mathCourse,
-            scienceCourse,
-            inPerson,
-          },
+  const csvHeaders = [
+    'id',
+    'firstName',
+    'lastName',
+    'email',
+    'secondaryEmail',
+    'school',
+    'grade',
+    'csCourse',
+    'engineeringCourse',
+    'mathCourse',
+    'scienceCourse',
+    'In-person',
+  ]
+  $: rows = data.registrations.map((registration) => {
+    const {
+      id,
+      values: {
+        personal: { studentFirstName, studentLastName, email, secondaryEmail },
+        academic: { school, grade },
+        program: {
+          csCourse,
+          engineeringCourse,
+          mathCourse,
+          scienceCourse,
+          inPerson,
         },
-      } = registration
-      return [
-        id,
-        studentFirstName,
-        studentLastName,
-        email,
-        secondaryEmail,
-        school.replace(/,/g, ''),
-        grade,
-        csCourse,
-        engineeringCourse,
-        kebabCase(mathCourse),
-        scienceCourse,
-        inPerson ? 'Yes' : 'No',
-      ].join(',')
-    })
-    .join('\n')
-  // add column names
-  const csvWithHeaders = `id,firstName,lastName,email,secondaryEmail,school,grade,csCourse,engineeringCourse,mathCourse,scienceCourse,In-person\n${csv}`
+      },
+    } = registration
+    return [
+      id,
+      studentFirstName,
+      studentLastName,
+      email,
+      secondaryEmail,
+      school,
+      grade,
+      csCourse,
+      engineeringCourse,
+      kebabCase(mathCourse),
+      scienceCourse,
+      inPerson ? 'Yes' : 'No',
+    ]
+  })
 
-  const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
+  $: csvWithHeaders = generateCSV(csvHeaders, rows)
+
+  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
+  $: url = URL.createObjectURL(blob)
 
   $: clickedRegistration =
     data.registrations.length === 0

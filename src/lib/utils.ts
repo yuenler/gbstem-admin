@@ -211,10 +211,13 @@ export function writeToClipboard(text: string): Promise<void> {
 }
 
 export function copyEmails(emails: Array<string | null | undefined>) {
-  const cleanEmails = emails.filter(
-    (email): email is string =>
-      typeof email === 'string' && email.trim() !== '',
-  )
+  const cleanEmails = emails
+    .filter(
+      (email): email is string =>
+        typeof email === 'string' && email.trim() !== '',
+    )
+    .map((email) => email.trim())
+    .sort()
   writeToClipboard(cleanEmails.join(', '))
     .then(() => {
       alert.trigger('success', 'Emails copied to clipboard!')
@@ -252,4 +255,56 @@ export function cleanEnvVar(value: string | undefined): string | undefined {
   }
 
   return trimmed
+}
+
+export function escapeCSVCell(val: any): string {
+  if (val === null || val === undefined) {
+    return ''
+  }
+  const str = String(val)
+  if (
+    str.includes(',') ||
+    str.includes('"') ||
+    str.includes('\n') ||
+    str.includes('\r')
+  ) {
+    return `"${str.replace(/"/g, '""')}"`
+  }
+  return str
+}
+
+export function generateCSV(
+  headers: string[],
+  rows: any[][] | any[],
+  sort: boolean = true,
+  sortColumnIndex: number = 0,
+): string {
+  let rowData: any[][]
+  if (rows.length > 0 && !Array.isArray(rows[0])) {
+    rowData = []
+    const cols = headers.length
+    for (let i = 0; i < rows.length; i += cols) {
+      rowData.push(rows.slice(i, i + cols))
+    }
+  } else {
+    rowData = [...(rows as any[][])]
+  }
+
+  if (sort) {
+    rowData.sort((a, b) => {
+      const valA =
+        a[sortColumnIndex] !== undefined && a[sortColumnIndex] !== null
+          ? String(a[sortColumnIndex])
+          : ''
+      const valB =
+        b[sortColumnIndex] !== undefined && b[sortColumnIndex] !== null
+          ? String(b[sortColumnIndex])
+          : ''
+      return valA < valB ? -1 : valA > valB ? 1 : 0
+    })
+  }
+
+  const headerLine = headers.map(escapeCSVCell).join(',')
+  const rowLines = rowData.map((row) => row.map(escapeCSVCell).join(','))
+  return [headerLine, ...rowLines].join('\n')
 }

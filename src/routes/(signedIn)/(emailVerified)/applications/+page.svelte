@@ -1,17 +1,18 @@
 <script lang="ts">
-  import { goto, invalidate } from '$app/navigation'
+  import { invalidate } from '$app/navigation'
   import { page } from '$app/stores'
   import { db } from '$lib/client/firebase'
   import Application from '$lib/components/Application.svelte'
   import Button from '$lib/components/Button.svelte'
-  import type Dialog from '$lib/components/Dialog.svelte'
-  import SearchBox from '$lib/components/SearchBox.svelte'
   import CollectionFilter from '$lib/components/CollectionFilter.svelte'
-  import StatusFilter from '$lib/components/StatusFilter.svelte'
+  import type Dialog from '$lib/components/Dialog.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
+  import SearchBox from '$lib/components/SearchBox.svelte'
+  import StatusFilter from '$lib/components/StatusFilter.svelte'
   import Table from '$lib/components/Table.svelte'
   import { applicationsCollection } from '$lib/data/collections'
   import { actions, alert } from '$lib/stores'
+  import { generateCSV } from '$lib/utils'
   import { format } from 'date-fns'
   import { doc, setDoc, updateDoc } from 'firebase/firestore'
   import type { PageData } from './$types'
@@ -21,8 +22,24 @@
   let current: number | undefined
   let checked: Array<number> = []
 
-  const csv = data.applications
-    .map((application: PageData['applications'][number]) => {
+  const csvHeaders = [
+    'ID',
+    'Submitted',
+    'Decision',
+    'Likely Decision',
+    'Notes',
+    'First Name',
+    'Last Name',
+    'Email',
+    'School',
+    'Graduation Year',
+    'Courses',
+    'Time Slots',
+    'Taught Before',
+    'In-person',
+  ]
+  $: rows = data.applications.map(
+    (application: PageData['applications'][number]) => {
       const {
         id,
         values: {
@@ -39,24 +56,24 @@
         submitted ? 'Submitted' : 'Not Submitted',
         decision?.type ?? 'Undecided',
         decision?.likelyDecision ?? 'Undecided',
-        decision?.notes?.replace(/,/g, '') ?? '',
+        decision?.notes ?? '',
         firstName,
         lastName,
         email,
-        school.replace(/,/g, ''),
+        school,
         graduationYear,
         courses.join(';'),
-        timeSlots.replace(/,/g, ''),
+        timeSlots,
         taughtBefore ? 'Yes' : 'No',
         inPerson ? 'Yes' : 'No',
       ]
-    })
-    .join('\n')
-  // add column names
-  const csvWithHeaders = `ID,Submitted,Decision,Likely Decision,Notes,First Name,Last Name,Email,School,Graduation Year,Courses,Time Slots,Taught Before,In-person\n${csv}`
+    },
+  )
 
-  const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
+  $: csvWithHeaders = generateCSV(csvHeaders, rows)
+
+  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
+  $: url = URL.createObjectURL(blob)
 
   $: if (checked.length > 0) {
     actions.set([

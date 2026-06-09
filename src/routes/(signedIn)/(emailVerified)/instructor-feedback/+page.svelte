@@ -7,6 +7,7 @@
   import PerPageControl from '$lib/components/PerPageControl.svelte'
   import SearchBox from '$lib/components/SearchBox.svelte'
   import Table from '$lib/components/Table.svelte'
+  import { generateCSV } from '$lib/utils'
   import type { PageData } from './$types'
 
   export let data: PageData
@@ -39,21 +40,25 @@
     return `?${base.toString()}`
   })()
 
-  // Generate CSV download
-  $: csv = data.feedback
-    .map((item) => {
-      return [
-        item.id,
-        item.instructorName,
-        item.courseName,
-        item.classNumber,
-        item.date,
-        item.feedback ? item.feedback.replace(/,/g, '') : '',
-      ].join(',')
-    })
-    .join('\n')
-
-  $: csvWithHeaders = `id,instructorName,courseName,classNumber,date,feedback\n${csv}`
+  const csvHeaders = [
+    'id',
+    'instructorName',
+    'courseName',
+    'classNumber',
+    'date',
+    'feedback',
+  ]
+  $: csvWithHeaders = generateCSV(
+    csvHeaders,
+    data.feedback.map((item) => [
+      item.id,
+      item.instructorName,
+      item.courseName,
+      item.classNumber,
+      item.date,
+      item.feedback || '',
+    ]),
+  )
   $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
   $: url = URL.createObjectURL(blob)
 </script>

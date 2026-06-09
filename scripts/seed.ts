@@ -937,14 +937,17 @@ async function seed() {
     `Seeding 30 mock student feedback in "${classFeedbackCollection}"...`,
   )
   for (let i = 0; i < 30; i++) {
-    await db.collection(classFeedbackCollection).add({
-      instructor: `${firstNames[i % firstNames.length]} ${lastNames[i % lastNames.length]}`,
-      date: `2026-03-${10 + (i % 20)}`,
-      feedback: `The class was very fun and I learned Python! (#${i})`,
-      studentName: `${firstNames[(i + 1) % firstNames.length]} ${lastNames[(i + 1) % lastNames.length]}`,
-      course: courses[i % courses.length],
-      rating: (i % 5) + 1,
-    })
+    await db
+      .collection(classFeedbackCollection)
+      .doc(`feedback-fake-${i}`)
+      .set({
+        instructor: `${firstNames[i % firstNames.length]} ${lastNames[i % lastNames.length]}`,
+        date: `2026-03-${10 + (i % 20)}`,
+        feedback: `The class was very fun and I learned Python! (#${i})`,
+        studentName: `${firstNames[(i + 1) % firstNames.length]} ${lastNames[(i + 1) % lastNames.length]}`,
+        course: courses[i % courses.length],
+        rating: (i % 5) + 1,
+      })
   }
 
   // Create Mock Instructor Feedback (30 records)
@@ -952,15 +955,18 @@ async function seed() {
     `Seeding 30 mock instructor feedback in "${instructorFeedbackCollection}"...`,
   )
   for (let i = 0; i < 30; i++) {
-    await db.collection(instructorFeedbackCollection).add({
-      instructorName: `${firstNames[i % firstNames.length]} ${lastNames[i % lastNames.length]}`,
-      courseName: courses[i % courses.length],
-      students: [`Student A #${i}`, `Student B #${i}`],
-      feedback: `Both students participated actively today. Class #${i}.`,
-      date: `2026-03-${10 + (i % 20)}`,
-      attendanceList: [{ present: true }, { present: i % 3 !== 0 }],
-      classNumber: (i % 4) + 1,
-    })
+    await db
+      .collection(instructorFeedbackCollection)
+      .doc(`instructor-feedback-fake-${i}`)
+      .set({
+        instructorName: `${firstNames[i % firstNames.length]} ${lastNames[i % lastNames.length]}`,
+        courseName: courses[i % courses.length],
+        students: [`Student A #${i}`, `Student B #${i}`],
+        feedback: `Both students participated actively today. Class #${i}.`,
+        date: `2026-03-${10 + (i % 20)}`,
+        attendanceList: [{ present: true }, { present: i % 3 !== 0 }],
+        classNumber: (i % 4) + 1,
+      })
   }
 
   console.log('\nSeeding completed successfully!')

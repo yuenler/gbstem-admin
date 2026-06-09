@@ -50,17 +50,15 @@ describe('Section E: Classes Directory', () => {
     cy.get('@clipboardCopy').then((stub: any) => {
       expect(stub.called).to.equal(true)
       const text = stub.lastCall.args[0]
-      const emails = text
-        .split(',')
-        .map((e: string) => e.trim())
-        .filter(Boolean)
-      expect(emails.slice(0, 5)).to.deep.equal([
-        'instructor-fake-1@gbstem.org',
-        'instructor-fake-13@gbstem.org',
-        'instructor-fake-17@gbstem.org',
-        'instructor-fake-21@gbstem.org',
-        'instructor-fake-25@gbstem.org',
-      ])
+      cy.parseCopiedEmails(text).then((emails) => {
+        expect(emails.slice(0, 5)).to.deep.equal([
+          'instructor-fake-13@gbstem.org',
+          'instructor-fake-17@gbstem.org',
+          'instructor-fake-1@gbstem.org',
+          'instructor-fake-21@gbstem.org',
+          'instructor-fake-25@gbstem.org',
+        ])
+      })
     })
     cy.get('.bg-green-200').should('contain', 'copied to clipboard')
 
@@ -74,93 +72,84 @@ describe('Section E: Classes Directory', () => {
         })
       })
       .then((text) => {
-        const lines = text
-          .split('\n')
-          .map((line: string) => line.trim())
-          .filter(Boolean)
-        const headers = lines[0].split(',').map((h: string) => h.trim())
-        expect(headers).to.deep.equal([
-          'id',
-          'name',
-          'email',
-          'class',
-          'students',
-          'classes complete',
-          'classes missing feedback',
-          'classes missed',
-          'meeting link',
-          'class times',
-        ])
-        const first5Rows = lines
-          .slice(1, 6)
-          .map((line: string) => line.split(',').map((f: string) => f.trim()))
-        expect(first5Rows).to.deep.equal([
-          [
-            'class-fake-1',
-            'Mary Johnson',
-            'instructor-fake-1@gbstem.org',
-            'Python 1',
-            'student-fake-1',
-            '1',
-            '0',
-            '0',
-            'https://zoom.us/j/123456789',
-            'Monday at 4:00 PM',
-            'Wednesday at 4:00 PM',
-          ],
-          [
-            'class-fake-13',
-            'Susan Wilson',
-            'instructor-fake-13@gbstem.org',
-            'Python 1',
-            'student-fake-13',
-            '0',
-            '0',
-            '0',
-            'https://zoom.us/j/123456789',
-            'Monday at 4:00 PM',
-            'Wednesday at 4:00 PM',
-          ],
-          [
-            'class-fake-17',
-            'Sarah Moore',
-            'instructor-fake-17@gbstem.org',
-            'Python 1',
-            'student-fake-17',
-            '0',
-            '0',
-            '0',
-            'https://zoom.us/j/123456789',
-            'Monday at 4:00 PM',
-            'Wednesday at 4:00 PM',
-          ],
-          [
-            'class-fake-21',
-            'Nancy Perez',
-            'instructor-fake-21@gbstem.org',
-            'Python 1',
-            'student-fake-21',
-            '0',
-            '0',
-            '0',
-            'https://zoom.us/j/123456789',
-            'Monday at 4:00 PM',
-            'Wednesday at 4:00 PM',
-          ],
-          [
-            'class-fake-25',
-            'Betty Sanchez',
-            'instructor-fake-25@gbstem.org',
-            'Python 1',
-            'student-fake-25',
-            '0',
-            '0',
-            '0',
-            'https://zoom.us/j/123456789',
-            'Monday at 4:00 PM',
-            'Wednesday at 4:00 PM',
-          ],
-        ])
+        cy.parseCsv(text).then((parsedRows) => {
+          const headers = parsedRows[0]
+          expect(headers).to.deep.equal([
+            'id',
+            'name',
+            'email',
+            'class',
+            'students',
+            'classes complete',
+            'classes missing feedback',
+            'classes missed',
+            'meeting link',
+            'class times',
+          ])
+          const first5Rows = parsedRows.slice(1, 6)
+          expect(first5Rows).to.deep.equal([
+            [
+              'class-fake-1',
+              'Mary Johnson',
+              'instructor-fake-1@gbstem.org',
+              'Python 1',
+              'student-fake-1',
+              '1',
+              '0',
+              '0',
+              'https://zoom.us/j/123456789',
+              'Monday at 4:00 PM, Wednesday at 4:00 PM',
+            ],
+            [
+              'class-fake-13',
+              'Susan Wilson',
+              'instructor-fake-13@gbstem.org',
+              'Python 1',
+              'student-fake-13',
+              '0',
+              '0',
+              '0',
+              'https://zoom.us/j/123456789',
+              'Monday at 4:00 PM, Wednesday at 4:00 PM',
+            ],
+            [
+              'class-fake-17',
+              'Sarah Moore',
+              'instructor-fake-17@gbstem.org',
+              'Python 1',
+              'student-fake-17',
+              '0',
+              '0',
+              '0',
+              'https://zoom.us/j/123456789',
+              'Monday at 4:00 PM, Wednesday at 4:00 PM',
+            ],
+            [
+              'class-fake-21',
+              'Nancy Perez',
+              'instructor-fake-21@gbstem.org',
+              'Python 1',
+              'student-fake-21',
+              '0',
+              '0',
+              '0',
+              'https://zoom.us/j/123456789',
+              'Monday at 4:00 PM, Wednesday at 4:00 PM',
+            ],
+            [
+              'class-fake-25',
+              'Betty Sanchez',
+              'instructor-fake-25@gbstem.org',
+              'Python 1',
+              'student-fake-25',
+              '0',
+              '0',
+              '0',
+              'https://zoom.us/j/123456789',
+              'Monday at 4:00 PM, Wednesday at 4:00 PM',
+            ],
+          ])
+        })
       })
   })
 
@@ -193,11 +182,9 @@ describe('Section E: Classes Directory', () => {
     cy.get('@clipboardCopy').then((stub: any) => {
       expect(stub.called).to.equal(true)
       const text = stub.lastCall.args[0]
-      const emails = text
-        .split(',')
-        .map((e: string) => e.trim())
-        .filter(Boolean)
-      expect(emails.slice(0, 5)).to.deep.equal(['student@gbstem.org'])
+      cy.parseCopiedEmails(text).then((emails) => {
+        expect(emails).to.deep.equal(['student@gbstem.org'])
+      })
     })
     cy.get('.bg-green-200').should('contain', 'copied to clipboard')
 

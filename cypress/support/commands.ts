@@ -1,4 +1,5 @@
 // Add all new commands to index.d.ts as well.
+import Papa from 'papaparse'
 
 Cypress.Commands.add('fillInput', (selector: string, text: string) => {
   cy.get(selector)
@@ -58,3 +59,32 @@ Cypress.Commands.add('selectOption', (selector: string, text: string) => {
   cy.wait(300)
   cy.get(selector).type('{enter}', { force: true })
 })
+
+Cypress.Commands.add('parseCsv', (csvText: string) => {
+  const parsed = Papa.parse<string[]>(csvText, {
+    skipEmptyLines: true,
+  })
+  return cy.wrap(parsed.data)
+})
+
+Cypress.Commands.add('parseCopiedEmails', (clipboardText: string) => {
+  const emails = clipboardText.split(',').map((e: string) => e.trim())
+  return cy.wrap(emails)
+})
+
+Cypress.Commands.add(
+  'dropCsvColumn',
+  (parsedRows: string[][], columnName: string) => {
+    const headers = parsedRows[0]
+    const colIndex = headers.indexOf(columnName)
+    if (colIndex === -1) {
+      throw new Error(
+        `Column "${columnName}" not found in CSV headers: ${headers.join(', ')}`,
+      )
+    }
+    const updatedRows = parsedRows.map((row) => {
+      return [...row.slice(0, colIndex), ...row.slice(colIndex + 1)]
+    })
+    return cy.wrap(updatedRows)
+  },
+)

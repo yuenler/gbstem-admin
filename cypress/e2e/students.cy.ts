@@ -35,101 +35,97 @@ describe('Section F: Students Directory', () => {
         })
       })
       .then((text) => {
-        const lines = text
-          .split('\n')
-          .map((line: string) => line.trim())
-          .filter(Boolean)
-        const headers = lines[0].split(',').map((h: string) => h.trim())
-        expect(headers).to.deep.equal([
-          'id',
-          'firstName',
-          'lastName',
-          'email',
-          'secondaryEmail',
-          'school',
-          'grade',
-          'csCourse',
-          'engineeringCourse',
-          'mathCourse',
-          'scienceCourse',
-          'In-person',
-        ])
-        const first5Rows = lines
-          .slice(1, 6)
-          .map((line: string) => line.split(','))
-        expect(first5Rows.length).to.be.at.most(5)
-        expect(first5Rows).to.deep.equal([
-          [
-            'student-demo-uid-1',
-            'Demo Student',
-            'One',
-            'student@gbstem.org',
-            '',
-            'Pinecrest Elementary',
-            '3',
-            'Python 1',
-            'None',
-            'none',
-            'None',
-            'No',
-          ],
-          [
-            'reg-sally',
-            'Sally',
-            'Brown',
-            'parent2@gmail.com',
-            'parent2_sec@gmail.com',
-            'Pinecrest Elementary',
-            '2',
-            'Python 1',
-            'Engineering 1',
-            'mathematics-1-b',
-            'Environmental Science B',
-            'No',
-          ],
-          [
-            'reg-charlie',
-            'Charlie',
-            'Brown',
-            'parent1@gmail.com',
-            'parent1_sec@gmail.com',
-            'Pinecrest Elementary',
-            '4',
-            'Scratch 1',
-            'Engineering 1',
-            'mathematics-1-b',
-            'Environmental Science B',
-            'No',
-          ],
-          [
-            'reg-fake-29',
-            'Sandra',
-            'Robinson',
-            'student-29@gmail.com',
-            '',
-            'Riverdale Charter',
-            '6',
-            'Python 1',
-            'Engineering 1',
-            'mathematics-1-b',
-            'Environmental Science B',
-            'No',
-          ],
-          [
-            'reg-fake-27',
-            'Margaret',
-            'Ramirez',
-            'student-27@gmail.com',
-            '',
-            'Brookside School',
-            '4',
-            'Web Development',
-            'Engineering 1',
-            'mathematics-1-b',
-            'Environmental Science B',
-            'No',
-          ],
-        ])
+        cy.parseCsv(text).then((parsedRows) => {
+          const headers = parsedRows[0]
+          expect(headers).to.deep.equal([
+            'id',
+            'firstName',
+            'lastName',
+            'email',
+            'secondaryEmail',
+            'school',
+            'grade',
+            'csCourse',
+            'engineeringCourse',
+            'mathCourse',
+            'scienceCourse',
+            'In-person',
+          ])
+          const first5Rows = parsedRows.slice(1, 6)
+          expect(first5Rows.length).to.be.at.most(5)
+          expect(first5Rows).to.deep.equal([
+            [
+              'reg-charlie',
+              'Charlie',
+              'Brown',
+              'parent1@gmail.com',
+              'parent1_sec@gmail.com',
+              'Pinecrest Elementary',
+              '4',
+              'Scratch 1',
+              'Engineering 1',
+              'mathematics-1-b',
+              'Environmental Science B',
+              'No',
+            ],
+            [
+              'reg-fake-10',
+              'David',
+              'Hernandez',
+              'student-10@gmail.com',
+              '',
+              'Pinecrest Elementary',
+              '5',
+              'Python 2',
+              'Engineering 1',
+              'mathematics-1-b',
+              'Environmental Science B',
+              'Yes',
+            ],
+            [
+              'reg-fake-11',
+              'Barbara',
+              'Lopez',
+              'student-11@gmail.com',
+              '',
+              'Oakridge Elementary',
+              '6',
+              'Web Development',
+              'Engineering 1',
+              'mathematics-1-b',
+              'Environmental Science B',
+              'No',
+            ],
+            [
+              'reg-fake-12',
+              'Richard',
+              'Gonzalez',
+              'student-12@gmail.com',
+              '',
+              'Brookside School',
+              '1',
+              'Scratch 1',
+              'Engineering 1',
+              'mathematics-1-b',
+              'Environmental Science B',
+              'No',
+            ],
+            [
+              'reg-fake-13',
+              'Susan',
+              'Wilson',
+              'student-13@gmail.com',
+              '',
+              'Maple Valley Academy',
+              '2',
+              'Python 1',
+              'Engineering 1',
+              'mathematics-1-b',
+              'Environmental Science B',
+              'No',
+            ],
+          ])
+        })
       })
 
     // Search for Charlie

@@ -1,17 +1,15 @@
 <script lang="ts">
-  import CourseFilter from '$lib/components/CourseFilter.svelte'
-  import Table from '$lib/components/Table.svelte'
-  import Dialog from '$lib/components/Dialog.svelte'
-  import { copyEmails, formatTime24to12 } from '$lib/utils'
-  import { format } from 'date-fns'
-  import ClassDetails from '$lib/components/ClassDetails.svelte'
-  import type { PageData } from './$types'
-  import Button from '$lib/components/Button.svelte'
-  import SearchBox from '$lib/components/SearchBox.svelte'
-  import { ClassStatus } from '$lib/data/types/ClassStatus'
-  import PerPageControl from '$lib/components/PerPageControl.svelte'
   import { page } from '$app/stores'
-  import { goto } from '$app/navigation'
+  import Button from '$lib/components/Button.svelte'
+  import ClassDetails from '$lib/components/ClassDetails.svelte'
+  import CourseFilter from '$lib/components/CourseFilter.svelte'
+  import Dialog from '$lib/components/Dialog.svelte'
+  import PerPageControl from '$lib/components/PerPageControl.svelte'
+  import SearchBox from '$lib/components/SearchBox.svelte'
+  import Table from '$lib/components/Table.svelte'
+  import { ClassStatus } from '$lib/data/types/ClassStatus'
+  import { copyEmails, generateCSV } from '$lib/utils'
+  import type { PageData } from './$types'
 
   export let data: PageData
   let showValidation = false
@@ -39,42 +37,52 @@
     return `?${base.toString()}`
   })()
 
-  const csv = data.classes
-    .map((classes) => {
-      const {
-        id,
-        name,
-        email,
-        courses,
-        students,
-        classStatuses,
-        meetingLink,
-        classTimes,
-      } = classes
-      return [
-        id,
-        name,
-        email,
-        courses,
-        students.join(', '),
-        classStatuses.filter(
-          (status) => status === ClassStatus.EverythingComplete,
-        ).length,
-        classStatuses.filter(
-          (status) => status === ClassStatus.FeedbackIncomplete,
-        ).length,
-        classStatuses.filter((status) => status === ClassStatus.ClassNotHeld)
-          .length,
-        meetingLink,
-        classTimes.map((value) => value.toString()).join(', '),
-      ].join(',')
-    })
-    .join('\n')
+  const csvHeaders = [
+    'id',
+    'name',
+    'email',
+    'class',
+    'students',
+    'classes complete',
+    'classes missing feedback',
+    'classes missed',
+    'meeting link',
+    'class times',
+  ]
+  $: rows = data.classes.map((classes) => {
+    const {
+      id,
+      name,
+      email,
+      courses,
+      students,
+      classStatuses,
+      meetingLink,
+      classTimes,
+    } = classes
+    return [
+      id,
+      name,
+      email,
+      courses,
+      students.join(', '),
+      classStatuses.filter(
+        (status) => status === ClassStatus.EverythingComplete,
+      ).length,
+      classStatuses.filter(
+        (status) => status === ClassStatus.FeedbackIncomplete,
+      ).length,
+      classStatuses.filter((status) => status === ClassStatus.ClassNotHeld)
+        .length,
+      meetingLink,
+      classTimes.map((value) => value.toString()).join(', '),
+    ]
+  })
 
-  const csvWithHeaders = `id,name,email,class,students,classes complete, classes missing feedback, classes missed, meeting link, class times\n${csv}`
+  $: csvWithHeaders = generateCSV(csvHeaders, rows)
 
-  const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
+  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
+  $: url = URL.createObjectURL(blob)
 
   function handleCheckAll(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },

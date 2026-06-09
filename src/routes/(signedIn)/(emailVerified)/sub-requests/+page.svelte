@@ -8,7 +8,7 @@
   import SearchBox from '$lib/components/SearchBox.svelte'
   import Table from '$lib/components/Table.svelte'
   import { SubRequestStatus } from '$lib/data/helpers/SubRequestStatus'
-  import { formatDate } from '$lib/utils'
+  import { formatDate, generateCSV } from '$lib/utils'
   import type { PageData } from './$types'
 
   export let data: PageData
@@ -32,24 +32,31 @@
     return `?${base.toString()}`
   })()
 
-  // Generate CSV download
-  $: csv = data.subRequests
-    .map((item) => {
-      return [
-        item.id,
-        item.course,
-        item.classNumber,
-        item.originalInstructorEmail,
-        item.dateOfClass ? item.dateOfClass.toISOString() : '',
-        item.subRequestStatus,
-        item.subInstructorFirstName,
-        item.subInstructorEmail,
-        item.notes ? item.notes.replace(/,/g, '') : '',
-      ].join(',')
-    })
-    .join('\n')
-
-  $: csvWithHeaders = `id,course,classNumber,originalInstructorEmail,dateOfClass,subRequestStatus,subInstructorFirstName,subInstructorEmail,notes\n${csv}`
+  const csvHeaders = [
+    'id',
+    'course',
+    'classNumber',
+    'originalInstructorEmail',
+    'dateOfClass',
+    'subRequestStatus',
+    'subInstructorFirstName',
+    'subInstructorEmail',
+    'notes',
+  ]
+  $: csvWithHeaders = generateCSV(
+    csvHeaders,
+    data.subRequests.map((item) => [
+      item.id,
+      item.course,
+      item.classNumber,
+      item.originalInstructorEmail,
+      item.dateOfClass ? item.dateOfClass.toISOString() : '',
+      item.subRequestStatus,
+      item.subInstructorFirstName,
+      item.subInstructorEmail,
+      item.notes || '',
+    ]),
+  )
   $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
   $: url = URL.createObjectURL(blob)
 </script>

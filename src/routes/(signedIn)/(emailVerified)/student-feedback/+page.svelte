@@ -1,11 +1,11 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import { goto } from '$app/navigation'
-  import Table from '$lib/components/Table.svelte'
-  import CourseFilter from '$lib/components/CourseFilter.svelte'
-  import SearchBox from '$lib/components/SearchBox.svelte'
-  import PerPageControl from '$lib/components/PerPageControl.svelte'
   import Button from '$lib/components/Button.svelte'
+  import CourseFilter from '$lib/components/CourseFilter.svelte'
+  import PerPageControl from '$lib/components/PerPageControl.svelte'
+  import SearchBox from '$lib/components/SearchBox.svelte'
+  import Table from '$lib/components/Table.svelte'
+  import { generateCSV } from '$lib/utils'
   import type { PageData } from './$types'
 
   export let data: PageData
@@ -27,22 +27,27 @@
     return `?${base.toString()}`
   })()
 
-  // Generate CSV download
-  $: csv = data.feedback
-    .map((item) => {
-      return [
-        item.id,
-        item.studentName,
-        item.course,
-        item.instructorName,
-        item.date,
-        item.feedback ? item.feedback.replace(/,/g, '') : '',
-        item.rating,
-      ].join(',')
-    })
-    .join('\n')
-
-  $: csvWithHeaders = `id,studentName,course,instructorName,date,feedback,rating\n${csv}`
+  const csvHeaders = [
+    'id',
+    'studentName',
+    'course',
+    'instructorName',
+    'date',
+    'feedback',
+    'rating',
+  ]
+  $: csvWithHeaders = generateCSV(
+    csvHeaders,
+    data.feedback.map((item) => [
+      item.id,
+      item.studentName,
+      item.course,
+      item.instructorName,
+      item.date,
+      item.feedback || '',
+      item.rating,
+    ]),
+  )
   $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
   $: url = URL.createObjectURL(blob)
 </script>

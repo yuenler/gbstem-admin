@@ -15,12 +15,14 @@ import {
   clickOutside,
   cn,
   copyEmails,
+  escapeCSVCell,
   formatClassTimes,
   formatDate,
   formatDateLocal,
   formatDateShort,
   formatDateString,
   formatTime24to12,
+  generateCSV,
   getNearestFutureClass,
   getNearestFutureClassIndex,
   isClassUpcoming,
@@ -374,16 +376,16 @@ describe('utils', () => {
       jest.clearAllMocks()
     })
 
-    it('filters false-y/blank values, joins them, and triggers success alert', async () => {
+    it('filters false-y/blank values, sorts them, joins them, and triggers success alert', async () => {
       ;(navigator.clipboard.writeText as jest.Mock).mockResolvedValue(undefined)
 
       copyEmails([
-        'test1@example.com',
+        'test2@example.com',
         '',
         null,
         undefined,
         '  ',
-        'test2@example.com',
+        'test1@example.com',
       ])
 
       // Wait for promise microtasks
@@ -451,6 +453,87 @@ describe('utils', () => {
       expect(cleanEnvVar('"user-agent: Mozilla..."')).toBe(
         'user-agent: Mozilla...',
       )
+    })
+  })
+
+  describe('CSV helpers', () => {
+    describe('escapeCSVCell', () => {
+      it('escapes cells containing commas, double quotes, or newlines', () => {
+        expect(escapeCSVCell('hello')).toBe('hello')
+        expect(escapeCSVCell('hello, world')).toBe('"hello, world"')
+        expect(escapeCSVCell('hello "world"')).toBe('"hello ""world"""')
+        expect(escapeCSVCell('hello\nworld')).toBe('"hello\nworld"')
+        expect(escapeCSVCell(null)).toBe('')
+        expect(escapeCSVCell(undefined)).toBe('')
+      })
+    })
+
+    describe('generateCSV', () => {
+      it('generates CSV content from 2D array rows', () => {
+        const headers = ['id', 'name', 'comment']
+        const rows = [
+          [1, 'Alice', 'no comment'],
+          [2, 'Bob', 'hello, world'],
+          [3, 'Charlie', 'line 1\nline 2'],
+        ]
+        const expected = [
+          'id,name,comment',
+          '1,Alice,no comment',
+          '2,Bob,"hello, world"',
+          '3,Charlie,"line 1\nline 2"',
+        ].join('\n')
+
+        expect(generateCSV(headers, rows)).toBe(expected)
+      })
+
+      it('generates CSV content from 1D flat array', () => {
+        const headers = ['id', 'name']
+        const flatArray = [1, 'Alice', 2, 'Bob']
+        const expected = ['id,name', '1,Alice', '2,Bob'].join('\n')
+
+        expect(generateCSV(headers, flatArray)).toBe(expected)
+      })
+
+      it('automatically sorts rows alphabetically by the first column by default', () => {
+        const headers = ['id', 'name']
+        const rows = [
+          ['class-fake-13', 'Susan'],
+          ['class-fake-1', 'Mary'],
+          ['class-fake-25', 'Betty'],
+        ]
+        const expected = [
+          'id,name',
+          'class-fake-1,Mary',
+          'class-fake-13,Susan',
+          'class-fake-25,Betty',
+        ].join('\n')
+
+        expect(generateCSV(headers, rows)).toBe(expected)
+      })
+
+      it('can disable sorting or sort by a custom column', () => {
+        const headers = ['id', 'name']
+        const rows = [
+          ['class-fake-13', 'Susan'],
+          ['class-fake-1', 'Mary'],
+          ['class-fake-25', 'Betty'],
+        ]
+        const unsortedExpected = [
+          'id,name',
+          'class-fake-13,Susan',
+          'class-fake-1,Mary',
+          'class-fake-25,Betty',
+        ].join('\n')
+        const sortByColumn1Expected = [
+          'id,name',
+          'class-fake-25,Betty',
+          'class-fake-1,Mary',
+          'class-fake-13,Susan',
+        ].join('\n')
+
+        expect(generateCSV(headers, rows, false)).toBe(unsortedExpected)
+        expect(generateCSV(headers, rows, true, 1)).toBe(sortByColumn1Expected)
+      })
     })
   })
 })

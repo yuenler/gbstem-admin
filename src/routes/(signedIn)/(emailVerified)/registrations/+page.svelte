@@ -14,9 +14,9 @@
     classesCollection,
     registrationsCollection,
   } from '$lib/data/collections'
-  import { normalizeCapitals } from '$lib/utils'
-  import { format } from 'date-fns'
   import { alert } from '$lib/stores'
+  import { generateCSV, normalizeCapitals } from '$lib/utils'
+  import { format } from 'date-fns'
   import {
     collection,
     doc,
@@ -36,52 +36,66 @@
   $: selectedCollection =
     $page.url.searchParams.get('collection') ?? registrationsCollection
 
-  const csv = data.registrations
-    .map((registration) => {
-      const {
-        id,
-        values: {
-          personal: {
-            studentFirstName,
-            studentLastName,
-            parentFirstName,
-            parentLastName,
-            email,
-            secondaryEmail,
-          },
-          academic: { school, grade },
-          program: {
-            csCourse,
-            engineeringCourse,
-            mathCourse,
-            scienceCourse,
-            inPerson,
-          },
+  const csvHeaders = [
+    'id',
+    'studentFirstName',
+    'studentLastName',
+    'parentFirstName',
+    'parentLastName',
+    'email',
+    'secondaryEmail',
+    'school',
+    'grade',
+    'csCourse',
+    'engineeringCourse',
+    'mathCourse',
+    'scienceCourse',
+    'In-person',
+  ]
+  $: rows = data.registrations.map((registration) => {
+    const {
+      id,
+      values: {
+        personal: {
+          studentFirstName,
+          studentLastName,
+          parentFirstName,
+          parentLastName,
+          email,
+          secondaryEmail,
         },
-      } = registration
-      return [
-        id,
-        normalizeCapitals(studentFirstName),
-        normalizeCapitals(studentLastName),
-        normalizeCapitals(parentFirstName),
-        normalizeCapitals(parentLastName),
-        email,
-        secondaryEmail,
-        school.replace(/,/g, ''),
-        grade,
-        (csCourse ?? '').toLowerCase().replace(/ /g, '-'),
-        (engineeringCourse ?? '').toLowerCase().replace(/ /g, '-'),
-        kebabCase(mathCourse ?? ''),
-        (scienceCourse ?? '').toLowerCase().replace(/ /g, '-'),
-        inPerson ? 'Yes' : 'No',
-      ].join(',')
-    })
-    .join('\n')
-  // add column names
-  const csvWithHeaders = `id,studentFirstName,studentLastName,parentFirstName,parentLastName,email,secondaryEmail,school,grade,csCourse,engineeringCourse,mathCourse,scienceCourse,In-person\n${csv}`
+        academic: { school, grade },
+        program: {
+          csCourse,
+          engineeringCourse,
+          mathCourse,
+          scienceCourse,
+          inPerson,
+        },
+      },
+    } = registration
+    return [
+      id,
+      normalizeCapitals(studentFirstName),
+      normalizeCapitals(studentLastName),
+      normalizeCapitals(parentFirstName),
+      normalizeCapitals(parentLastName),
+      email,
+      secondaryEmail,
+      school,
+      grade,
+      (csCourse ?? '').toLowerCase().replace(/ /g, '-'),
+      (engineeringCourse ?? '').toLowerCase().replace(/ /g, '-'),
+      kebabCase(mathCourse ?? ''),
+      (scienceCourse ?? '').toLowerCase().replace(/ /g, '-'),
+      inPerson ? 'Yes' : 'No',
+    ]
+  })
 
-  const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
+  $: csvWithHeaders = generateCSV(csvHeaders, rows)
+
+  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
+  $: url = URL.createObjectURL(blob)
 
   const schools: string[] = data.registrations
     .map((registration) =>
