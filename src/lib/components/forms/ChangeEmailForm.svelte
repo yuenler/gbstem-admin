@@ -71,9 +71,7 @@
     <span class="font-bold">Change email</span>
 
     <div class="flex flex-col gap-1.5">
-      <label class="font-bold text-sm text-gray-500" for="current-email"
-        >Current email</label
-      >
+      <label class="font-bold text-sm" for="current-email">Current email</label>
       <input
         id="current-email"
         type="email"

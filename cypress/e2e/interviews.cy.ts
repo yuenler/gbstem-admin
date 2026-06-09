@@ -42,7 +42,7 @@ describe('Section H: Interview Timeslots Configuration', () => {
     // Confirm Timeslot
     cy.on('window:confirm', () => true)
     cy.contains('button', 'Confirm Timeslot').click({ force: true })
-    cy.get('.bg-green-200').should('contain', 'Timeslot added successfully.')
+    cy.waitForNotification('Timeslot added successfully.')
     cy.wait(500)
 
     // Verify slot is created and appears in list
@@ -65,7 +65,7 @@ describe('Section H: Interview Timeslots Configuration', () => {
           .type('https://zoom.us/j/8888888888')
         cy.contains('button', 'Save').click({ force: true })
       })
-    cy.get('.bg-green-200').should('contain', 'Timeslot updated successfully.')
+    cy.waitForNotification('Timeslot updated successfully.')
     cy.wait(500)
 
     // Verify updated details
@@ -85,7 +85,7 @@ describe('Section H: Interview Timeslots Configuration', () => {
       .within(() => {
         cy.contains('button', 'Delete').click({ force: true })
       })
-    cy.get('.bg-green-200').should('contain', 'Timeslot successfully deleted.')
+    cy.waitForNotification('Timeslot successfully deleted.')
     cy.wait(500)
 
     // Verify it is removed from list

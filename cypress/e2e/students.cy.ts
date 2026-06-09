@@ -158,10 +158,7 @@ describe('Section F: Students Directory', () => {
 
     // Click Add Class
     cy.contains('button', 'Add Class').click({ force: true })
-    cy.get('.bg-green-200', { timeout: 10000 }).should(
-      'contain',
-      'Enrolled in class successfully!',
-    )
+    cy.waitForNotification('Enrolled in class successfully!')
     cy.wait(500)
 
     // Class 1 Information should appear
@@ -186,10 +183,7 @@ describe('Section F: Students Directory', () => {
 
     // Click Drop Class
     cy.contains('button', 'Drop Class').click({ force: true })
-    cy.get('.bg-green-200', { timeout: 10000 }).should(
-      'contain',
-      'Dropped class successfully!',
-    )
+    cy.waitForNotification('Dropped class successfully!')
     cy.wait(500)
 
     // Class 1 Information should no longer exist

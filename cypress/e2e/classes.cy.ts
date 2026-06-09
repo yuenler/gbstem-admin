@@ -60,7 +60,7 @@ describe('Section E: Classes Directory', () => {
         ])
       })
     })
-    cy.get('.bg-green-200').should('contain', 'copied to clipboard')
+    cy.waitForNotification('copied to clipboard')
 
     // Verify Download button links to a CSV Blob
     cy.contains('a', 'Download')
@@ -186,7 +186,7 @@ describe('Section E: Classes Directory', () => {
         expect(emails).to.deep.equal(['student@gbstem.org'])
       })
     })
-    cy.get('.bg-green-200').should('contain', 'copied to clipboard')
+    cy.waitForNotification('copied to clipboard')
 
     // Click reminders (trigger alert)
     cy.on('window:confirm', () => true)
@@ -196,7 +196,7 @@ describe('Section E: Classes Directory', () => {
       if ($body.find('.bg-red-200').length > 0) {
         cy.get('.bg-red-200').should('contain', 'No upcoming classes')
       } else {
-        cy.get('.bg-green-200').should('contain', 'sent')
+        cy.waitForNotification('sent')
       }
     })
 
@@ -206,7 +206,7 @@ describe('Section E: Classes Directory', () => {
       if ($body.find('.bg-red-200').length > 0) {
         cy.get('.bg-red-200').should('contain', 'No upcoming classes')
       } else {
-        cy.get('.bg-green-200').should('contain', 'sent')
+        cy.waitForNotification('sent')
       }
     })
 
@@ -226,10 +226,7 @@ describe('Section E: Classes Directory', () => {
 
     // Click Save changes
     cy.contains('button', 'Save changes').click()
-    cy.get('.bg-green-200').should(
-      'contain',
-      'Changes were saved successfully.',
-    )
+    cy.waitForNotification('Changes were saved successfully.')
 
     // Close and reopen to verify capacity saved
     cy.contains('button', 'Close').click()

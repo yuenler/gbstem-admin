@@ -33,10 +33,7 @@ describe('Section M: Check In Details and Meals', () => {
 
     // Click Check In button
     cy.contains('button', 'Check In').click({ force: true })
-    cy.get('.bg-green-200', { timeout: 10000 }).should(
-      'contain',
-      'Student checked in successfully!',
-    )
+    cy.waitForNotification('Student checked in successfully!')
     cy.wait(500)
 
     // Meal Status should now be visible

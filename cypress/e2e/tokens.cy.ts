@@ -50,10 +50,7 @@ describe('Section K: Registration Signup Tokens', () => {
 
     // Click Create
     cy.contains('button', 'Create').click({ force: true })
-    cy.get('.bg-green-200').should(
-      'contain',
-      'Changes were saved successfully.',
-    )
+    cy.waitForNotification('Changes were saved successfully.')
     cy.wait(1000)
 
     cy.window().then((win) => {
@@ -91,12 +88,12 @@ describe('Section K: Registration Signup Tokens', () => {
       const url = stub.firstCall.args[0]
       expect(url).to.match(/\/signup\?token=[a-zA-Z0-9]{20}$/)
     })
-    cy.get('.bg-green-200').should('contain', 'Token copied.')
+    cy.waitForNotification('Token copied.')
 
     // Click Delete on the admin token row
     cy.get('@newAdminRow').within(() => {
       cy.contains('button', 'Delete').click({ force: true })
     })
-    cy.get('.bg-green-200').should('contain', 'Token deleted.')
+    cy.waitForNotification('Token deleted.')
   })
 })

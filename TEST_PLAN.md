@@ -508,3 +508,62 @@ graph TD
   10. Click it again to toggle it back to `available`.
 - **Expected Results (Assertions)**:
   - The check-in details and food checkout actions sync instantly with the Firestore database.
+
+---
+
+### Section N: End-to-End Account Lifecycle (Manual Flow)
+
+#### Test Case 23: Complete Account Creation and Management Lifecycle
+
+- **Description**: Verify the end-to-end user lifecycle starting from signup token generation, profile changes, email verification, password reset, and finishing with account deletion.
+- **Prerequisites**: Ensure the Firebase emulator suite UI is running and accessible at `http://localhost:4000`.
+- **Steps**:
+  1. **Generate the Registration Token**:
+     - Sign in as Admin (`demo@gbstem.org` / `penguin`).
+     - Navigate to `http://localhost:5173/tokens`.
+     - Click the blue **"+"** create button in the table header.
+     - Select `"admin"` from the role dropdown, check **"Should this token be one-time use?"**, set hours to expire to `"24"`, and click **"Create"**.
+     - Locate the newly created token row in the table, and click the **"Copy"** link to copy the signup URL (`http://localhost:5173/signup?token=<token_id>`).
+     - Click the profile menu button in the top right, and click **"Sign out"**.
+  2. **Register the New Account**:
+     - Paste and navigate to the copied signup URL in your browser.
+     - Fill out the registration form:
+       - **First name**: `Lifecycle`
+       - **Last name**: `Test`
+       - **Email**: `lifecycle-admin@gbstem.org`
+       - **Password**: `initialPassword123`
+       - **Confirm password**: `initialPassword123`
+     - Click the **"Sign up"** button.
+     - Verify you are redirected back to the sign-in page (`http://localhost:5173/signin`).
+  3. **Sign In and Trigger Email Verification Guard**:
+     - On the sign-in page, log in with `lifecycle-admin@gbstem.org` and `initialPassword123`.
+     - Verify you are immediately redirected to `/profile` (the URL must show `/profile`).
+     - Verify that a modal dialog displays: `"Please verify your email"`.
+     - Verify that a red warning alert banner is displayed at the top of the profile page: `"Email is not verified."`.
+     - Verify that the main navigation bar links (Dashboard, Classes, etc.) are hidden.
+     - Click the **"Close"** button to dismiss the verification dialog.
+  4. **Verify Email (Emulator Side-Channel)**:
+     - Open a new browser tab/window and navigate to the Firebase Emulator Suite UI at `http://localhost:4000/auth`.
+     - Click on the **"Emails"** tab at the top.
+     - Locate the verification email sent to `lifecycle-admin@gbstem.org` (subject: `"Verify your email for demo-gbstem"`).
+     - Click the verification link in the email body. A browser tab will open showing `"Your email has been verified"`.
+     - Navigate back to the admin page (`http://localhost:5173/profile`) and refresh the page.
+     - Verify the red warning banner and the verification dialog no longer appear.
+     - Verify that the full navigation menu links (Dashboard, Classes, Students, etc.) are now visible.
+  5. **Modify Profile Information**:
+     - **Update Name**: Change the full name to `Lifecycle Admin Updated` and click the Save button next to Name. Verify the success toast `"Name successfully updated."`.
+     - **Update Email**: In the Change Email card, enter `lifecycle-admin-new@gbstem.org` and click **"Update"**. In the reauthentication dialog, enter the password `initialPassword123` and click submit. Verify the grey notice banner `"A verification email was sent."`. Go to the emulator suite emails page (`http://localhost:4000/auth` -> Emails), find the verification email sent to `lifecycle-admin-new@gbstem.org`, click the link to verify, and refresh `http://localhost:5173/profile`. Verify the email displays as verified.
+     - **Update Password**: In the Change Password card, enter `newPassword789` and confirm it. Click **"Update"**. In the reauthentication dialog, enter the old password `initialPassword123` and click submit. Verify the success toast `"Password was successfully changed."`.
+  6. **Password Reset**:
+     - Click the profile menu and select **"Sign out"**.
+     - On the sign-in page, click **"Forgot password?"**.
+     - Enter the updated email `lifecycle-admin-new@gbstem.org` and click **"Send email"**. Verify the toast `"Password reset email was sent. Please check your inbox."`.
+     - Go to the emulator suite Emails tab (`http://localhost:4000/auth` -> Emails), find the password reset email, click the link, and enter a new password `finalPassword456`.
+     - Navigate to `http://localhost:5173/signin` and log in using `lifecycle-admin-new@gbstem.org` and `finalPassword456`. Verify you are logged in and redirected to `/dashboard`.
+  7. **Delete Account**:
+     - Navigate to `/profile`.
+     - Scroll to the bottom and click **"Delete account"**.
+     - In the modal dialog, type `finalPassword456` in the password input, and click **"Delete"**.
+     - Verify the success toast `"Account was successfully deleted."` appears.
+     - After 2 seconds, verify the page reloads, and you are redirected to the sign-in page.
+     - Optionally, check the Firebase Emulator Users tab (`http://localhost:4000/auth`) to confirm that the user `lifecycle-admin-new@gbstem.org` has been deleted from the database.

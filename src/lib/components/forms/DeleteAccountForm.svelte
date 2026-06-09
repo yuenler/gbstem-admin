@@ -58,12 +58,17 @@
   }
 </script>
 
-<form on:submit|preventDefault={() => dialogEl.open()} class="w-full">
+<div class="w-full">
   <span class="font-bold">Delete account</span>
   <div class="mt-2">
-    <Button color="red" type="submit">Delete account</Button>
+    <button
+      type="button"
+      on:click={() => dialogEl.open()}
+      class="rounded-md shadow-xs transition-colors duration-300 px-4 py-2 bg-red-100 text-red-900 hover:bg-red-200 disabled:bg-red-200 disabled:text-red-700"
+      >Delete account</button
+    >
   </div>
-</form>
+</div>
 
 <Dialog bind:this={dialogEl} on:cancel={handleCancel} disabled={$delayed} alert>
   <svelte:fragment slot="title">Delete account</svelte:fragment>

@@ -55,8 +55,7 @@ describe('Section B: Dashboard and Navigation Layout', () => {
         ])
       })
     })
-    cy.get('.bg-green-200').should(
-      'contain',
+    cy.waitForNotification(
       'Emails of uncompleted registrations copied to clipboard.',
     )
 
@@ -75,8 +74,7 @@ describe('Section B: Dashboard and Navigation Layout', () => {
         ])
       })
     })
-    cy.get('.bg-green-200').should(
-      'contain',
+    cy.waitForNotification(
       'Emails of uncompleted applications copied to clipboard.',
     )
 
@@ -118,6 +116,6 @@ describe('Section B: Dashboard and Navigation Layout', () => {
       })
 
     // Verify success alert triggers
-    cy.get('.bg-green-200').should('contain', 'A reminder email was sent!')
+    cy.waitForNotification('A reminder email was sent!')
   })
 })

@@ -88,3 +88,37 @@ Cypress.Commands.add(
     return cy.wrap(updatedRows)
   },
 )
+
+Cypress.Commands.add(
+  'getLatestOobLink',
+  (
+    email: string,
+    requestType: 'VERIFY_EMAIL' | 'PASSWORD_RESET' | 'VERIFY_AND_CHANGE_EMAIL',
+  ) => {
+    return cy
+      .request(
+        'GET',
+        'http://127.0.0.1:9099/emulator/v1/projects/demo-gbstem/oobCodes',
+      )
+      .then((response) => {
+        const codes = response.body.oobCodes || []
+        const match = codes
+          .filter((c: any) => {
+            const emailMatch = c.email === email || c.newEmail === email
+            return emailMatch && c.requestType === requestType
+          })
+          .pop()
+        expect(match).to.not.equal(undefined)
+        return match.oobLink
+      })
+  },
+)
+
+Cypress.Commands.add(
+  'waitForNotification',
+  (text: string, timeoutMs: number = 15000) => {
+    return cy
+      .get('.bg-green-200', { timeout: timeoutMs })
+      .should('contain', text)
+  },
+)

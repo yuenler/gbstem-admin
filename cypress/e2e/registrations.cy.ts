@@ -210,10 +210,7 @@ describe('Section G: Pre-Registrations Directory', () => {
       .within(() => {
         cy.get('td').eq(8).find('input[type="checkbox"]').check()
       })
-    cy.get('.bg-green-200', { timeout: 15000 }).should(
-      'contain',
-      'Bypass age limits updated successfully.',
-    )
+    cy.waitForNotification('Bypass age limits updated successfully.')
 
     // Open Registration details modal for Charlie Brown
     cy.contains('td', 'Charlie Brown').click()
@@ -231,10 +228,7 @@ describe('Section G: Pre-Registrations Directory', () => {
 
     // Click Save changes
     cy.contains('button', 'Save changes').scrollIntoView().click()
-    cy.get('.bg-green-200', { timeout: 10000 }).should(
-      'contain',
-      'Changes were saved successfully.',
-    )
+    cy.waitForNotification('Changes were saved successfully.')
 
     // Close dialog
     cy.contains('button', 'Close').click()
