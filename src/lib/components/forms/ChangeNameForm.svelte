@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { superForm, defaults } from 'sveltekit-superforms'
-  import { zod } from 'sveltekit-superforms/adapters'
-  import { z } from 'zod'
-  import { Field, Control, Label, FieldErrors } from 'formsnap'
+  import { user } from '$lib/client/firebase'
   import { alert } from '$lib/stores'
   import { updateProfile } from 'firebase/auth'
-  import { user } from '$lib/client/firebase'
+  import { Control, Field, FieldErrors } from 'formsnap'
   import { onMount } from 'svelte'
+  import { defaults, superForm } from 'sveltekit-superforms'
+  import { zod } from 'sveltekit-superforms/adapters'
+  import { z } from 'zod'
   import Button from '../Button.svelte'
 
   const schema = z.object({
@@ -20,6 +20,7 @@
       validators: zod(schema as any) as any,
       invalidateAll: false,
       applyAction: false,
+      resetForm: false,
       async onUpdate({ form: formVal }) {
         if (!formVal.valid) return
         if ($user) {
@@ -54,7 +55,7 @@
         <Control>
           {#snippet children({ props })}
             <span class="font-bold text-sm">Name</span>
-            <div class="flex gap-2">
+            <div class="relative">
               <input
                 {...props}
                 name="full-name"
@@ -64,31 +65,14 @@
                 required
                 class="block h-12 w-full appearance-none rounded-md border border-gray-400 px-3 transition-colors placeholder:text-gray-500 focus:border-gray-600 focus:outline-hidden disabled:bg-white disabled:text-gray-400"
               />
-              <Button
-                class="flex h-12 w-12 shrink-0 items-center justify-center p-0"
-                color="blue"
-                type="submit"
-                disabled={$delayed}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="h-6 w-6"
+              <div class="absolute right-2 top-0 flex h-12 items-center">
+                <Button
+                  color="blue"
+                  class="px-2 py-1"
+                  type="submit"
+                  disabled={$delayed}>Update</Button
                 >
-                  <path
-                    d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
-                  />
-                  <polyline points="17 21 17 13 7 13 7 21" />
-                  <polyline points="7 3 7 8 15 8" />
-                </svg>
-              </Button>
+              </div>
             </div>
           {/snippet}
         </Control>
