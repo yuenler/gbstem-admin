@@ -7,7 +7,7 @@
 </script>
 
 <script lang="ts">
-  import clsx from 'clsx'
+  import { cn } from '$lib/utils'
   import { onMount } from 'svelte'
   import { uniqueId } from 'lodash-es'
   import { slide } from 'svelte/transition'
@@ -33,7 +33,7 @@
 
 <div>
   <button
-    class={clsx(
+    class={cn(
       'flex w-full items-center rounded-md border border-gray-200 p-4 shadow-sm',
       className,
     )}
@@ -51,7 +51,7 @@
       <slot name="title" />
     </div>
     <svg
-      class={clsx(
+      class={cn(
         'h-6 w-6 transition-transform shrink-0 ml-3',
         openState && 'rotate-180',
       )}

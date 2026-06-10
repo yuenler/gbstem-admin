@@ -1,11 +1,10 @@
 <script lang="ts">
-  import clsx from 'clsx'
   import { createEventDispatcher } from 'svelte'
   import { browser } from '$app/environment'
   import { uniqueId } from 'lodash-es'
   import { dialog } from '$lib/stores'
   import { fade } from 'svelte/transition'
-  import { clickOutside, trapFocus } from '$lib/utils'
+  import { clickOutside, trapFocus, cn } from '$lib/utils'
 
   type Size = 'min' | 'full'
 
@@ -69,7 +68,7 @@
       class="relative flex items-end sm:items-center justify-center min-h-screen py-d px-d/2"
     >
       <div
-        class={clsx(
+        class={cn(
           'p-4 sm:p-8 bg-white grid gap-3 sm:gap-6 w-full rounded-lg relative',
           size === 'full' && 'min-h-full h-fit',
           size === 'min' && 'max-w-2xl',

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { alert } from '$lib/stores'
-  import clsx from 'clsx'
+  import { cn } from '$lib/utils'
   import { navigating } from '$app/stores'
   import { fade } from 'svelte/transition'
   import { onDestroy, onMount } from 'svelte'
@@ -53,7 +53,7 @@
   >
     <button class="w-full" type="button" on:click={close} transition:fade>
       <div
-        class={clsx(
+        class={cn(
           'flex w-full items-center gap-2 rounded-md p-3 shadow-sm',
           $alert.type === 'success' && 'bg-green-200',
           $alert.type === 'info' && 'bg-gray-200',

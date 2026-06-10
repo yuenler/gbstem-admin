@@ -7,8 +7,7 @@
     interviewTimesCollection,
   } from '$lib/data/collections'
   import { alert } from '$lib/stores'
-  import { formatDate, formatDateLocal, toLocalISOString } from '$lib/utils'
-  import clsx from 'clsx'
+  import { formatDate, formatDateLocal, toLocalISOString, cn } from '$lib/utils'
   import {
     collection,
     deleteDoc,
@@ -262,7 +261,7 @@
   {#await allInterviewSlots then value}
     {#await interviewSlotRequests then interviewRequests}
       {#await intervieweeNames then intervieweeNames}
-        <Form class={clsx(showValidation && 'show-validation', className)}>
+        <Form class={cn(showValidation && 'show-validation', className)}>
           <div class="right-2 items-center">
             <Card class="mb-4">
               <h2 class="font-bold">Interview Time Requests</h2>
@@ -365,7 +364,7 @@
               {#if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser.object.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
                 <Card>
                   <Form
-                    class={clsx(showValidation && 'show-validation', className)}
+                    class={cn(showValidation && 'show-validation', className)}
                     on:submit={() => updateTime(interview)}
                   >
                     <div style="padding:1rem;">

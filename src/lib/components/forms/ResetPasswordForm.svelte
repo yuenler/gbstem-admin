@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { ActionRequestBody } from '../../../routes/api/action/+server'
   import Input from '$lib/components/Input.svelte'
-  import clsx from 'clsx'
+  import { cn } from '$lib/utils'
   import { alert } from '$lib/stores'
   import Brand from '$lib/components/Brand.svelte'
   import Form from '$lib/components/Form.svelte'
@@ -50,7 +50,7 @@
 </script>
 
 <Form
-  class={clsx('max-w-lg', showValidation && 'show-validation')}
+  class={cn('max-w-lg', showValidation && 'show-validation')}
   on:submit={handleSubmit}
 >
   <fieldset class="space-y-4" {disabled}>

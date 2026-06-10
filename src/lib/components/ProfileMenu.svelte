@@ -1,7 +1,6 @@
 <script lang="ts">
-  import clsx from 'clsx'
   import { fade } from 'svelte/transition'
-  import { clickOutside } from '$lib/utils'
+  import { clickOutside, cn } from '$lib/utils'
   import { navigating } from '$app/stores'
   import { signOut } from 'firebase/auth'
   import { auth } from '$lib/client/firebase'
@@ -28,7 +27,7 @@
 </script>
 
 <div
-  class={clsx('relative md:flex md:items-center', className)}
+  class={cn('relative md:flex md:items-center', className)}
   use:clickOutside
   on:outclick={() => {
     open = false

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import clsx from 'clsx'
+  import { cn } from '$lib/utils'
   import { createEventDispatcher } from 'svelte'
 
   export let className: string
@@ -23,7 +23,7 @@
 </script>
 
 <form
-  class={clsx('w-full', className)}
+  class={cn('w-full', className)}
   novalidate
   bind:this={self}
   on:submit|preventDefault={handleSubmit}

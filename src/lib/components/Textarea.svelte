@@ -1,5 +1,5 @@
 <script lang="ts">
-  import clsx from 'clsx'
+  import { cn } from '$lib/utils'
   import { uniqueId, kebabCase } from 'lodash-es'
   import { onDestroy } from 'svelte'
   import { fade } from 'svelte/transition'
@@ -41,11 +41,11 @@
 <div class="relative mt-2">
   <label for={id} class="font-bold text-sm">
     <span>
-      {label}<span class={clsx('text-red-500', !required && 'hidden')}>*</span>
+      {label}<span class={cn('text-red-500', !required && 'hidden')}>*</span>
     </span>
   </label>
   <textarea
-    class={clsx(
+    class={cn(
       'mt-2 block h-min w-full appearance-none rounded-md border border-gray-400 p-3 transition-colors placeholder:text-gray-500 focus:border-gray-600 focus:outline-hidden disabled:bg-white disabled:text-gray-400 disabled:placeholder:text-gray-400',
       className,
     )}

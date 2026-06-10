@@ -1,5 +1,5 @@
 <script lang="ts">
-  import clsx from 'clsx'
+  import { cn } from '$lib/utils'
   import { fade } from 'svelte/transition'
 
   let className = ''
@@ -7,7 +7,7 @@
 </script>
 
 <div
-  class={clsx(
+  class={cn(
     'bg-gray-200 flex items-center justify-center rounded-lg opacity-60',
     className,
   )}
