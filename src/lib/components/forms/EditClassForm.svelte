@@ -43,7 +43,6 @@
       applyAction: false,
       async onUpdate({ form: formVal }) {
         if (!formVal.valid) return
-        disabled = true
         if (id !== undefined) {
           const updatedValues = {
             ...values,
@@ -52,6 +51,7 @@
           setDoc(doc(db, classesCollection, id), updatedValues)
             .then(() => {
               values = updatedValues
+              disabled = true
               invalidate('app:registrations').then(() => {
                 alert.trigger('success', 'Changes were saved successfully.')
               })
@@ -59,14 +59,13 @@
             .catch((err: FirebaseError) => {
               console.error('Class save changes error:', err)
               alert.trigger('error', err.code, true)
-              disabled = false
             })
         }
       },
     },
   )
 
-  const { form, enhance } = formResult
+  const { form, enhance, submitting } = formResult
 
   // React to parent values changing (e.g. initial load or cancel changes)
   $: if (values) {
@@ -83,7 +82,7 @@
 </script>
 
 <form bind:this={formEl} use:enhance class="w-full max-w-4xl">
-  <fieldset class="mt-4 space-y-4" {disabled}>
+  <fieldset class="mt-4 space-y-4" disabled={disabled || $submitting}>
     <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
       <div class="flex flex-col gap-1">
         <FormNativeSelect

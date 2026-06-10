@@ -92,7 +92,6 @@
       dataType: 'json',
       async onUpdate({ form: formVal }) {
         if (!formVal.valid) return
-        disabled = true
         if (id !== undefined) {
           const updatedValues = {
             ...values,
@@ -121,6 +120,7 @@
             .then(() => {
               values = updatedValues
               dbValues = cloneDeep(updatedValues)
+              disabled = true
               invalidate('app:registrations').then(() => {
                 alert.trigger('success', 'Changes were saved successfully.')
               })
@@ -128,14 +128,13 @@
             .catch((err: FirebaseError) => {
               console.error('Registration save changes error:', err)
               alert.trigger('error', err.code, true)
-              disabled = false
             })
         }
       },
     },
   )
 
-  const { form, enhance } = formResult
+  const { form, enhance, submitting } = formResult
 
   // React to parent values changing (e.g. loaded data or cancel changes)
   $: if (values) {
@@ -198,7 +197,7 @@
 </script>
 
 <form bind:this={formEl} use:enhance class="w-full max-w-2xl">
-  <fieldset class="space-y-14" {disabled}>
+  <fieldset class="space-y-14" disabled={disabled || $submitting}>
     <div class="grid gap-1">
       <span class="font-bold">Personal</span>
       <div class="grid gap-1 sm:grid-cols-2 sm:gap-3">
