@@ -4,7 +4,7 @@
   import { uniqueId } from 'lodash-es'
   import { dialog } from '$lib/stores'
   import { fade } from 'svelte/transition'
-  import { clickOutside, trapFocus, cn } from '$lib/utils'
+  import { clickOutside, cn, trapFocus } from '$lib/utils'
 
   type Size = 'min' | 'full'
 
