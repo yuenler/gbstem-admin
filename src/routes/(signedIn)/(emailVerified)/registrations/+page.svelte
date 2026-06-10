@@ -249,7 +249,7 @@
   <CollectionFilter type="registrations" />
   <StatusFilter type="registrations" />
   <PerPageControl />
-  <Button class="h-12 flex items-center"><a href={url}>Download</a></Button>
+  <Button class="flex h-12 items-center"><a href={url}>Download</a></Button>
 </div>
 
 <Table>
@@ -258,7 +258,7 @@
       <div class="flex items-center">
         <input
           id="check-all"
-          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-hidden focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
           type="checkbox"
           checked={checked.length === data.registrations.length &&
             checked.length > 0}
@@ -281,7 +281,7 @@
   <svelte:fragment slot="body">
     {#each data.registrations as registration, i}
       <tr
-        class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
+        class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
         on:click={(e) => {
           if ((e.target as HTMLElement).tagName === 'INPUT') return
           current = i
@@ -292,7 +292,7 @@
           <div class="flex items-center">
             <input
               id={`check-${i}`}
-              class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-hidden focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+              class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
               type="checkbox"
               checked={checked.includes(i)}
               on:input={(e) => handleCheck(e, i)}
@@ -310,7 +310,7 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="w-5 h-5"
+              class="h-5 w-5"
             >
               <path
                 stroke-linecap="round"
@@ -341,7 +341,7 @@
         <td class="px-6 py-4">
           <input
             id={`bypass-${i}`}
-            class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-hidden focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+            class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
             type="checkbox"
             checked={registration.values.agreements.bypassAgeLimits}
             on:change={() => bypassAgeLimits(registration.id)}
@@ -355,7 +355,7 @@
   </svelte:fragment>
 </Table>
 
-<div class="flex justify-between mt-4 w-full">
+<div class="mt-4 flex w-full justify-between">
   <Button><a href={schoolsUrl}>Download Schools List</a></Button>
   {#if !data.query && data.registrations}
     <div class="flex gap-2">

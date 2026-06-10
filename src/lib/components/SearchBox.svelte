@@ -50,7 +50,7 @@
   }
 </script>
 
-<Form class="flex gap-4 w-96 shrink-0" on:submit={handleSearch}>
+<Form class="flex w-96 shrink-0 gap-4" on:submit={handleSearch}>
   <div class="relative grow">
     <Input
       class={{
@@ -60,9 +60,9 @@
       bind:value={search}
       {placeholder}
     />
-    <div class="absolute right-2 top-0 flex h-12 items-center">
+    <div class="absolute top-0 right-2 flex h-12 items-center">
       <Button
-        class="uppercase px-2 py-1"
+        class="px-2 py-1 uppercase"
         on:click={handleClear}
         disabled={searching}
       >
@@ -72,14 +72,14 @@
   </div>
 
   <Button
-    class="shrink-0 h-12 w-12 p-0 flex items-center justify-center"
+    class="flex h-12 w-12 shrink-0 items-center justify-center p-0"
     type="submit"
     disabled={searching}
   >
     {#if searching}
       <svg
         aria-hidden="true"
-        class="inline w-6 h-6 text-white animate-spin fill-blue-500"
+        class="inline h-6 w-6 animate-spin fill-blue-500 text-white"
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -100,7 +100,7 @@
         viewBox="0 0 24 24"
         stroke-width="1.5"
         stroke="currentColor"
-        class="w-6 h-6"
+        class="h-6 w-6"
       >
         <path
           stroke-linecap="round"

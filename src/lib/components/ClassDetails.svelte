@@ -210,7 +210,7 @@
     </div>
 
     <div>
-      <Card class="mb-4 mt-5">
+      <Card class="mt-5 mb-4">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="font-bold">Class List</h2>
           <Button
@@ -303,13 +303,13 @@
           style="margin-top:1rem;"
         >
           <div>
-            <div class="rounded-lg bg-gray-100 p-4 mb-2">
+            <div class="mb-2 rounded-lg bg-gray-100 p-4">
               <strong>Schedule</strong>
             </div>
             {#if values.meetingTimes}
               {#each values.meetingTimes as meetingTime, i}
                 {#if values.classStatuses[i] === ClassStatus.EverythingComplete}
-                  <div class="rounded-lg bg-green-100 p-4 mb-2">
+                  <div class="mb-2 rounded-lg bg-green-100 p-4">
                     <div class="flex items-center justify-between">
                       <p class="meeting-time">
                         {formatDate(timestampToDate(meetingTime))}
@@ -317,7 +317,7 @@
                     </div>
                   </div>
                 {:else if values.classStatuses[i] === ClassStatus.FeedbackIncomplete}
-                  <div class="rounded-lg bg-yellow-100 p-4 mb-2">
+                  <div class="mb-2 rounded-lg bg-yellow-100 p-4">
                     <div class="flex items-center justify-between">
                       <p class="meeting-time">
                         {formatDate(timestampToDate(meetingTime))}
@@ -325,7 +325,7 @@
                     </div>
                   </div>
                 {:else if values.classStatuses[i] === ClassStatus.ClassUpcomingSoon}
-                  <div class="rounded-lg bg-blue-100 p-4 mb-2">
+                  <div class="mb-2 rounded-lg bg-blue-100 p-4">
                     <div class="flex items-center justify-between">
                       <p class="meeting-time">
                         {formatDate(timestampToDate(meetingTime))}
@@ -333,7 +333,7 @@
                     </div>
                   </div>
                 {:else if values.classStatuses[i] === ClassStatus.ClassNotHeld}
-                  <div class="rounded-lg bg-red-100 p-4 mb-2">
+                  <div class="mb-2 rounded-lg bg-red-100 p-4">
                     <div class="flex items-center justify-between">
                       <p class="meeting-time">
                         {formatDate(timestampToDate(meetingTime))}
@@ -341,7 +341,7 @@
                     </div>
                   </div>
                 {:else}
-                  <div class="rounded-lg bg-gray-100 p-4 mb-2">
+                  <div class="mb-2 rounded-lg bg-gray-100 p-4">
                     <div class="flex items-center justify-between">
                       <p class="meeting-time">
                         {formatDate(timestampToDate(meetingTime))}

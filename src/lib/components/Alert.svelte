@@ -49,7 +49,7 @@
 <svelte:document on:keydown={visible ? handleEscape : undefined} />
 {#if visible}
   <div
-    class="fixed left-1/2 -translate-x-1/2 w-full max-w-xl bottom-3 px-3 z-50"
+    class="fixed bottom-3 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 px-3"
   >
     <button class="w-full" type="button" on:click={close} transition:fade>
       <div

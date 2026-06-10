@@ -47,7 +47,7 @@
       openState = !openState
     }}
   >
-    <div class="font-bold text-left grow">
+    <div class="grow text-left font-bold">
       <slot name="title" />
     </div>
     <svg

@@ -119,7 +119,7 @@
   <title>Tokens</title>
 </svelte:head>
 
-<div class="flex flex-wrap items-center gap-4 mb-4">
+<div class="mb-4 flex flex-wrap items-center gap-4">
   <PerPageControl />
 </div>
 
@@ -129,7 +129,7 @@
       <div class="flex items-center">
         <input
           id="check-all"
-          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-hidden focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
           type="checkbox"
           checked={checked.length === data.tokens.length && checked.length > 0}
           on:input={handleCheckAll}
@@ -142,9 +142,9 @@
     <th scope="col" class="px-6 py-3">Role</th>
     <th scope="col" class="px-6 py-3">Consumable</th>
     <th scope="col" class="px-6 py-3">Consumers</th>
-    <th scope="col" class="px-6 py-3 flex justify-end">
+    <th scope="col" class="flex justify-end px-6 py-3">
       <Button
-        class="flex items-center justify-center h-10 w-10 p-0"
+        class="flex h-10 w-10 items-center justify-center p-0"
         color="blue"
         on:click={handleCreate}
         disabled={disabled.create}
@@ -155,7 +155,7 @@
           viewBox="0 0 24 24"
           stroke-width="1.5"
           stroke="currentColor"
-          class="w-5 h-5"
+          class="h-5 w-5"
         >
           <path
             stroke-linecap="round"
@@ -168,12 +168,12 @@
   </svelte:fragment>
   <svelte:fragment slot="body">
     {#each data.tokens as token, i}
-      <tr class="bg-white border-b">
+      <tr class="border-b bg-white">
         <td class="w-4 p-4">
           <div class="flex items-center">
             <input
               id={`check-${i}`}
-              class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-hidden focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+              class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
               type="checkbox"
               checked={checked.includes(i)}
               on:input={(e) => handleCheck(e, i)}
@@ -190,7 +190,7 @@
         </td>
         <th
           scope="row"
-          class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+          class="px-6 py-4 font-medium whitespace-nowrap text-gray-900 dark:text-white"
         >
           {token.id}
         </th>
@@ -203,7 +203,7 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="w-5 h-5"
+              class="h-5 w-5"
             >
               <path
                 stroke-linecap="round"
@@ -218,7 +218,7 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="w-5 h-5"
+              class="h-5 w-5"
             >
               <path
                 stroke-linecap="round"
@@ -229,16 +229,16 @@
           {/if}
         </td>
         <td class="px-6 py-4"> {token.values.consumers.length} </td>
-        <td class="px-6 py-4 whitespace-nowrap space-x-2">
+        <td class="space-x-2 px-6 py-4 whitespace-nowrap">
           <button
-            class="text-gray-700 hover:text-gray-500 transition-colors duration-300"
+            class="text-gray-700 transition-colors duration-300 hover:text-gray-500"
             type="button"
             on:click={() => handleCopyAction(token)}
           >
             Copy
           </button>
           <button
-            class="text-red-700 hover:text-red-500 transition-colors duration-300"
+            class="text-red-700 transition-colors duration-300 hover:text-red-500"
             type="button"
             on:click={() => handleDeleteAction(token)}
           >
@@ -251,7 +251,7 @@
 </Table>
 
 {#if data.tokens}
-  <div class="flex justify-end gap-2 mt-4">
+  <div class="mt-4 flex justify-end gap-2">
     {#if currentPage > 1}
       <Button href={prevHref}>Previous</Button>
     {/if}

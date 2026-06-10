@@ -32,7 +32,7 @@
 
 <h1 class="mb-8 text-5xl font-bold md:text-6xl">Announcements</h1>
 
-<div class="flex flex-wrap items-center gap-4 mb-4">
+<div class="mb-4 flex flex-wrap items-center gap-4">
   <PerPageControl />
 </div>
 
@@ -44,7 +44,7 @@
   </svelte:fragment>
   <svelte:fragment slot="body">
     {#each data.announcements as announcement}
-      <tr class="bg-white border-b hover:bg-gray-50">
+      <tr class="border-b bg-white hover:bg-gray-50">
         <td class="px-6 py-4 whitespace-nowrap text-gray-400">
           {format(announcement.timestamp, 'yyyy.MM.dd')}
         </td>
@@ -60,7 +60,7 @@
 </Table>
 
 {#if data.announcements}
-  <div class="flex justify-end gap-2 mt-4">
+  <div class="mt-4 flex justify-end gap-2">
     {#if currentPage > 1}
       <Button href={prevHref}>Previous</Button>
     {/if}

@@ -269,7 +269,7 @@
                 {#if intervieweeOptions.find((option) => option.meta.uid === request.id)?.meta.interview === false}
                   {#if request.date > new Date()}
                     <div
-                      class="flex items-center justify-between rounded-lg p-4 bg-blue-100 mt-2"
+                      class="mt-2 flex items-center justify-between rounded-lg bg-blue-100 p-4"
                     >
                       <p>{formatDateLocal(request.date)}</p>
                       <p>{request.firstName}{' '}{request.lastName}</p>
@@ -277,7 +277,7 @@
                     </div>
                   {:else if request.date > new Date(new Date().setDate(new Date().getDate() - 30))}
                     <div
-                      class="flex items-center justify-between rounded-lg p-4 bg-red-100 mt-2"
+                      class="mt-2 flex items-center justify-between rounded-lg bg-red-100 p-4"
                     >
                       <p>{formatDateLocal(request.date)}</p>
                       <p>{request.firstName}{' '}{request.lastName}</p>
@@ -299,7 +299,7 @@
                 bind:value={interviewSlotToAdd.meetingLink}
                 label="Interview Meeting Link"
               />
-              <div class="flex gap-4 items-end">
+              <div class="flex items-end gap-4">
                 <Select
                   bind:value={interviewee}
                   label="Assign Interviewee (ONLY USE when fulfilling that person's interview time request)"
@@ -335,7 +335,7 @@
               <div class="right-2 items-center">
                 <Button
                   color="blue"
-                  class="px-2 py-1 my-4"
+                  class="my-4 px-2 py-1"
                   on:click={() => {
                     addTime().then(() => {
                       alert.trigger('success', 'Timeslot added successfully.')
@@ -345,7 +345,7 @@
               </div>
             </Card>
 
-            <div class="flex gap-5 my-5">
+            <div class="my-5 flex gap-5">
               <Input
                 type="checkbox"
                 bind:value={onlyIncludeMyInterviews}
@@ -383,7 +383,7 @@
                         <div class="right-2 items-center">
                           <Button
                             color="blue"
-                            class="px-2 py-1 my-4"
+                            class="my-4 px-2 py-1"
                             on:click={() => {
                               updateTime(interview)
                               editSlot = ''
@@ -393,7 +393,7 @@
                         <div class="right-2 items-center">
                           <Button
                             color="blue"
-                            class="px-2 py-1 my-4"
+                            class="my-4 px-2 py-1"
                             on:click={() => {
                               deleteTime(interview)
                               editSlot = ''
@@ -439,7 +439,7 @@
                   <div>
                     <Button
                       color="blue"
-                      class="px-2 py-1 my-4"
+                      class="my-4 px-2 py-1"
                       on:click={() => (editSlot = interview.id)}>Edit</Button
                     >
                   </div>

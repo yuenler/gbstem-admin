@@ -54,7 +54,7 @@
       <Field form={formResult} name="fullName">
         <Control>
           {#snippet children({ props })}
-            <span class="font-bold text-sm">Name</span>
+            <span class="text-sm font-bold">Name</span>
             <div class="relative">
               <input
                 {...props}
@@ -65,7 +65,7 @@
                 required
                 class="block h-12 w-full appearance-none rounded-md border border-gray-400 px-3 transition-colors placeholder:text-gray-500 focus:border-gray-600 focus:outline-hidden disabled:bg-white disabled:text-gray-400"
               />
-              <div class="absolute right-2 top-0 flex h-12 items-center">
+              <div class="absolute top-0 right-2 flex h-12 items-center">
                 <Button
                   color="blue"
                   class="px-2 py-1"
@@ -76,7 +76,7 @@
             </div>
           {/snippet}
         </Control>
-        <FieldErrors class="text-xs text-red-500 font-semibold" />
+        <FieldErrors class="text-xs font-semibold text-red-500" />
       </Field>
     </div>
   </fieldset>

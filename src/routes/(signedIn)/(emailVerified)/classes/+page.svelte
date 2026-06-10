@@ -106,13 +106,13 @@
   <SearchBox basePath="/classes" />
   <CourseFilter />
   <PerPageControl />
-  <Button color="blue" class="h-12 flex items-center"
+  <Button color="blue" class="flex h-12 items-center"
     ><a href={url}>Download</a></Button
   >
   <Button
     on:click={() =>
       copyEmails(data.classes.map((instructor) => instructor.email))}
-    class="h-12 flex items-center gap-1"
+    class="flex h-12 items-center gap-1"
   >
     <svg
       fill="#000000"
@@ -153,7 +153,7 @@
     <svelte:fragment slot="body">
       {#each feedback.classes as value, i}
         <tr
-          class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
+          class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
           on:click={() => {
             selectedClassId = value.id
             dialogEl.open()
@@ -192,7 +192,7 @@
     </svelte:fragment>
   </Table>
   {#if !data.query && feedback.classes}
-    <div class="flex justify-end gap-2 mt-4">
+    <div class="mt-4 flex justify-end gap-2">
       {#if currentPage > 1}
         <Button href={prevHref}>Previous</Button>
       {/if}

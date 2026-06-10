@@ -226,7 +226,7 @@
   <CollectionFilter type="applications" />
   <StatusFilter type="applications" />
   <PerPageControl />
-  <Button class="h-12 flex items-center"><a href={url}>Download</a></Button>
+  <Button class="flex h-12 items-center"><a href={url}>Download</a></Button>
 </div>
 
 <Table>
@@ -235,7 +235,7 @@
       <div class="flex items-center">
         <input
           id="check-all"
-          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-hidden focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
           type="checkbox"
           checked={checked.length === data.applications.length &&
             checked.length > 0}
@@ -260,7 +260,7 @@
   <svelte:fragment slot="body">
     {#each data.applications as application, i}
       <tr
-        class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
+        class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
         on:click={() => {
           current = i
           dialogEl.open()
@@ -270,7 +270,7 @@
           <div class="flex items-center">
             <input
               id={`check-${i}`}
-              class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-hidden focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+              class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
               type="checkbox"
               checked={checked.includes(i)}
               on:input={(e) => handleCheck(e, i)}
@@ -286,7 +286,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5 text-green-300"
+                class="h-5 w-5 text-green-300"
               >
                 <path
                   fill-rule="evenodd"
@@ -299,7 +299,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5 text-red-300"
+                class="h-5 w-5 text-red-300"
               >
                 <path
                   fill-rule="evenodd"
@@ -312,7 +312,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5 text-yellow-300"
+                class="h-5 w-5 text-yellow-300"
               >
                 <path
                   fill-rule="evenodd"
@@ -338,7 +338,7 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="w-5 h-5"
+              class="h-5 w-5"
             >
               <path
                 stroke-linecap="round"
@@ -355,7 +355,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5 text-green-300"
+                class="h-5 w-5 text-green-300"
               >
                 <path
                   fill-rule="evenodd"
@@ -368,7 +368,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5 text-yellow-300"
+                class="h-5 w-5 text-yellow-300"
               >
                 <path
                   fill-rule="evenodd"
@@ -381,7 +381,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5 text-red-300"
+                class="h-5 w-5 text-red-300"
               >
                 <path
                   fill-rule="evenodd"
@@ -394,7 +394,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5 text-blue-300"
+                class="h-5 w-5 text-blue-300"
               >
                 <path
                   fill-rule="evenodd"
@@ -404,7 +404,7 @@
               </svg>
             {:else if application.values.meta.decision.type === 'substitute'}
               <svg
-                class="w-5 h-5 text-purple-300"
+                class="h-5 w-5 text-purple-300"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -447,7 +447,7 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="w-5 h-5"
+              class="h-5 w-5"
             >
               <path
                 stroke-linecap="round"
@@ -462,7 +462,7 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="w-5 h-5"
+              class="h-5 w-5"
             >
               <path
                 stroke-linecap="round"
@@ -478,7 +478,7 @@
 </Table>
 
 {#if !data.query && data.applications}
-  <div class="flex justify-end gap-2 mt-4">
+  <div class="mt-4 flex justify-end gap-2">
     {#if currentPage > 1}
       <Button href={prevHref}>Previous</Button>
     {/if}

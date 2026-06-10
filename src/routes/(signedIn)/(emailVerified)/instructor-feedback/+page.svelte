@@ -69,11 +69,11 @@
 
 <ClassFeedbackDetails bind:dialogEl id={selectedFeedbackId} />
 
-<div class="flex flex-wrap items-center gap-4 mb-4">
+<div class="mb-4 flex flex-wrap items-center gap-4">
   <SearchBox basePath="/instructor-feedback" />
   <CourseFilter paramName="course" />
   <PerPageControl />
-  <Button class="h-12 flex items-center"><a href={url}>Download</a></Button>
+  <Button class="flex h-12 items-center"><a href={url}>Download</a></Button>
 </div>
 
 <Table>
@@ -88,7 +88,7 @@
   <svelte:fragment slot="body">
     {#each data.feedback as value}
       <tr
-        class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
+        class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
         on:click={() => {
           selectedFeedbackId = value.id
           dialogEl.open()
@@ -114,7 +114,7 @@
 </Table>
 
 {#if !data.query && data.feedback}
-  <div class="flex justify-end gap-2 mt-4">
+  <div class="mt-4 flex justify-end gap-2">
     {#if currentPage > 1}
       <Button href={prevHref}>Previous</Button>
     {/if}

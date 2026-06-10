@@ -230,7 +230,7 @@
 <div class="mb-8">
   <a
     href="/announcements"
-    class="inline-flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+    class="inline-flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100"
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -238,7 +238,7 @@
       viewBox="0 0 24 24"
       stroke-width="2"
       stroke="currentColor"
-      class="w-5 h-5"
+      class="h-5 w-5"
     >
       <path
         stroke-linecap="round"
@@ -253,13 +253,13 @@
 <div class="relative w-full">
   {#if loading}
     <div
-      class="absolute top-0 left-0 right-0 h-[calc(100vh-216px-80px)] md:h-[calc(100vh-216px)] bg-gray-200 flex items-center justify-center rounded-lg opacity-60"
+      class="absolute top-0 right-0 left-0 flex h-[calc(100vh-216px-80px)] items-center justify-center rounded-lg bg-gray-200 opacity-60 md:h-[calc(100vh-216px)]"
       transition:fade
     >
       <div role="status">
         <svg
           aria-hidden="true"
-          class="inline w-10 h-10 text-white animate-spin fill-gray-700"
+          class="inline h-10 w-10 animate-spin fill-gray-700 text-white"
           viewBox="0 0 100 101"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -341,12 +341,12 @@
       <Card class="space-y-2">
         <h2 class="text-xl font-bold">Classes Today</h2>
         {#if classesToday.length === 0}
-          <p class="text-gray-500 text-sm italic p-2">
+          <p class="p-2 text-sm text-gray-500 italic">
             No classes scheduled for today.
           </p>
         {:else}
           <div
-            class="hidden sm:grid grid-cols-12 gap-4 px-4 py-2 text-sm font-semibold text-gray-500 border-b border-gray-200"
+            class="hidden grid-cols-12 gap-4 border-b border-gray-200 px-4 py-2 text-sm font-semibold text-gray-500 sm:grid"
           >
             <span class="col-span-3">Course</span>
             <span class="col-span-3">Instructor</span>
@@ -358,11 +358,11 @@
               {@const status =
                 classToday.class.classStatuses[classToday.classNumber]}
               <li
-                class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center rounded-lg p-4 {getClassStatusBg(
+                class="grid grid-cols-1 items-center gap-4 rounded-lg p-4 sm:grid-cols-12 {getClassStatusBg(
                   status,
                 )}"
               >
-                <p class="font-semibold sm:font-normal sm:col-span-3">
+                <p class="font-semibold sm:col-span-3 sm:font-normal">
                   {classToday.class.course}
                 </p>
                 <p class="sm:col-span-3">

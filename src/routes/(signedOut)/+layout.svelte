@@ -1,3 +1,3 @@
-<main class="grow flex justify-center items-center py-8 px-d">
+<main class="flex grow items-center justify-center px-d py-8">
   <slot />
 </main>

@@ -433,7 +433,7 @@
       <div
         class="sticky top-2 z-50 flex flex-wrap items-center justify-between gap-3 p-3 md:p-3"
       >
-        <fieldset class="flex flex-wrap gap-2 items-center" disabled={loading}>
+        <fieldset class="flex flex-wrap items-center gap-2" disabled={loading}>
           {#if disabled}
             <Button
               color={!loading &&
@@ -448,7 +448,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5"
+                class="h-5 w-5"
               >
                 <path
                   fill-rule="evenodd"
@@ -471,7 +471,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5"
+                class="h-5 w-5"
               >
                 <path
                   fill-rule="evenodd"
@@ -494,7 +494,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5"
+                class="h-5 w-5"
               >
                 <path
                   fill-rule="evenodd"
@@ -513,7 +513,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5"
+                class="h-5 w-5"
               >
                 <path
                   fill-rule="evenodd"
@@ -552,7 +552,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5"
+                class="h-5 w-5"
               >
                 <path
                   fill-rule="evenodd"
@@ -570,7 +570,7 @@
               class="flex items-center gap-1"
               on:click={() => handleDecision('substitute')}
               ><svg
-                class="w-5 h-5 text-purple-300"
+                class="h-5 w-5 text-purple-300"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -598,7 +598,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5"
+                class="h-5 w-5"
               >
                 <path
                   fill-rule="evenodd"
@@ -620,7 +620,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5"
+                class="h-5 w-5"
               >
                 <path
                   fill-rule="evenodd"
@@ -639,7 +639,7 @@
             >
           {/if}
         </fieldset>
-        <div class="flex flex-wrap gap-2 items-center">
+        <div class="flex flex-wrap items-center gap-2">
           <Button
             color="green"
             on:click={() => (showInterviewForm = !showInterviewForm)}
@@ -654,9 +654,9 @@
         </div>
       </div>
     </Card>
-    <div class="mt-4 flex justify-center flex-wrap gap-4">
-      <Card class="flex-1 min-w-[300px] md:min-w-[450px] w-full">
-        <h2 class="text-2xl font-bold my-4">Application Details</h2>
+    <div class="mt-4 flex flex-wrap justify-center gap-4">
+      <Card class="w-full min-w-[300px] flex-1 md:min-w-[450px]">
+        <h2 class="my-4 text-2xl font-bold">Application Details</h2>
         <EditApplicationForm
           bind:formEl
           bind:disabled
@@ -670,13 +670,13 @@
         />
       </Card>
       {#if showInterviewForm}
-        <Card class="flex-1 min-w-[300px] md:min-w-[450px] w-full">
+        <Card class="w-full min-w-[300px] flex-1 md:min-w-[450px]">
           <Form class="w-full">
             <div>
-              <h2 class="text-2xl font-bold my-4">
+              <h2 class="my-4 text-2xl font-bold">
                 Interview Guide & Evaluation Form
               </h2>
-              <div class="text-xs text-gray-500 mt-2">
+              <div class="mt-2 text-xs text-gray-500">
                 Autosave is enabled for this browser
               </div>
               <Input
@@ -698,7 +698,7 @@
                 label="Attendance"
                 required
               />
-              <ul class="rounded-lg bg-gray-100 p-4 px-8 my-4 list-disc">
+              <ul class="my-4 list-disc rounded-lg bg-gray-100 p-4 px-8">
                 <li>
                   Greet the candidate when they arrive & ask them how they are,
                   general conversational beginning. Try to be personable and
@@ -727,7 +727,7 @@
                 label="Conversation Notes"
                 optional
               />
-              <div class="rounded-lg bg-gray-100 p-4 my-4">
+              <div class="my-4 rounded-lg bg-gray-100 p-4">
                 Clarify the subject they are applying to teach for (plus the
                 level), clarify if there are other subjects that they could be
                 considered for. Ask them to state their preferences, such as top
@@ -744,7 +744,7 @@
                 label="Have they taught for gbSTEM before? (This should be pre-set to the correct value, but if not simply check/uncheck the box as needed)."
               />
               {#if values.essay.taughtBefore}
-                <div class="rounded-lg bg-gray-100 p-4 my-4">
+                <div class="my-4 rounded-lg bg-gray-100 p-4">
                   <div>
                     Ask them about their experience as an instructor. For
                     example, “You're a returning instructor, correct? I would
@@ -785,7 +785,7 @@
                   required
                 />
               {:else}
-                <div class="rounded-lg bg-gray-100 p-4 my-4">
+                <div class="my-4 rounded-lg bg-gray-100 p-4">
                   <div class="font-bold">
                     Talk a little about the logistics of being an instructor.
                   </div>
@@ -815,7 +815,7 @@
                   </ul>
                 </div>
               {/if}
-              <div class="rounded-lg bg-gray-100 p-4 my-4">
+              <div class="my-4 rounded-lg bg-gray-100 p-4">
                 <div>
                   Continue onto the mock lessons. Send the link for the
                   candidate’s top subject to teach. Allow each candidate 3
@@ -825,7 +825,7 @@
                   and clearly, quality of explanations, as well as their
                   attitude.
                 </div>
-                <div class="font-bold mt-8">Mock Lesson Materials</div>
+                <div class="mt-8 font-bold">Mock Lesson Materials</div>
                 <div class="flex gap-4">
                   <Button
                     class="bg-gray-200"
@@ -843,7 +843,7 @@
                     target="_blank">Engineering</Button
                   >
                 </div>
-                <div class="flex gap-4 mt-4">
+                <div class="mt-4 flex gap-4">
                   <Button
                     color="blue"
                     href="https://docs.google.com/document/d/1ruPmF-SRdWQ_LlilQz0PBFX1p7gDpfGZ1jVBmSpdgyI/edit#"
@@ -903,7 +903,7 @@
                 label="Any tech or other issues that could hinder their ability to be a good instructor?"
                 required
               />
-              <div class="rounded-lg bg-gray-100 p-4 my-4">
+              <div class="my-4 rounded-lg bg-gray-100 p-4">
                 <div class="font-bold">Continue:</div>
                 <ul class="list-disc px-8">
                   <li>
@@ -934,7 +934,7 @@
                 label="Availability notes. When is the candidate not available? Are there any potential concerns with the candidate's availability?"
                 required
               />
-              <div class="rounded-lg bg-gray-100 p-4 my-4">
+              <div class="my-4 rounded-lg bg-gray-100 p-4">
                 <div>
                   Thank them for speaking with you, and let them know that they
                   can reach us at contact@gbstem.org. Additionally, tell them

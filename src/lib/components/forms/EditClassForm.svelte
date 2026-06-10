@@ -134,15 +134,15 @@
     {/if}
 
     <div class="grid gap-1">
-      <span class="font-bold text-sm text-gray-700"
+      <span class="text-sm font-bold text-gray-700"
         >Online classes meet twice weekly at consistent days and times
         throughout the semester and run for 45-60 minutes each. In-person
         classes meet once a week on a weekend afternoon at the Cambridge Public
         Library.
       </span>
 
-      <div class="grid gap-1 sm:grid-cols-3 sm:gap-3 mt-2">
-        <div class="sm:col-span-2 flex flex-col gap-1">
+      <div class="mt-2 grid gap-1 sm:grid-cols-3 sm:gap-3">
+        <div class="flex flex-col gap-1 sm:col-span-2">
           <FormNativeSelect
             form={formResult}
             name="classDay1"
@@ -168,8 +168,8 @@
       </div>
 
       {#if $form.online}
-        <div class="grid gap-1 sm:grid-cols-3 sm:gap-3 mt-2">
-          <div class="sm:col-span-2 flex flex-col gap-1">
+        <div class="mt-2 grid gap-1 sm:grid-cols-3 sm:gap-3">
+          <div class="flex flex-col gap-1 sm:col-span-2">
             <FormNativeSelect
               form={formResult}
               name="classDay2"

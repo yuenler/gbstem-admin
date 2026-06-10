@@ -361,7 +361,7 @@
       {#each classes as value, i}
         <Card>
           <div
-            class="flex flex-wrap items-start sm:items-center justify-between gap-3"
+            class="flex flex-wrap items-start justify-between gap-3 sm:items-center"
           >
             <h2 class="font-bold">Class {i + 1} Information</h2>
             <Button
@@ -381,9 +381,9 @@
               Send {value.course} Class Reminder To Student?
             </Button>
           </div>
-          <fieldset class="mt-4 space-y-4 min-w-0">
+          <fieldset class="mt-4 min-w-0 space-y-4">
             <div class="w-full overflow-x-auto">
-              <table class="w-full text-left border-collapse min-w-[600px]">
+              <table class="w-full min-w-[600px] border-collapse text-left">
                 <thead>
                   <tr>
                     <th class="border-b p-2 whitespace-nowrap">Course</th>
@@ -422,7 +422,7 @@
             </div>
             <h2 class="font-bold">Attendance</h2>
             <div class="w-full overflow-x-auto">
-              <table class="w-full text-left border-collapse min-w-[500px]">
+              <table class="w-full min-w-[500px] border-collapse text-left">
                 <thead>
                   <tr>
                     <th class="border-b p-2 whitespace-nowrap">Class Number</th>
@@ -454,7 +454,7 @@
       {/each}
     </div>
 
-    <Card class="mb-4 mt-5">
+    <Card class="mt-5 mb-4">
       <div class="mb-4 flex items-center justify-between">
         <h2 class="font-bold">Student Information</h2>
         <Button
@@ -476,7 +476,7 @@
         </Button>
       </div>
       <div class="m-5 overflow-auto">
-        <table class="w-full text-left border-collapse min-w-[600px]">
+        <table class="w-full min-w-[600px] border-collapse text-left">
           <thead>
             <tr>
               <th class="border-b p-2 whitespace-nowrap">Student Name</th>
@@ -530,7 +530,7 @@
       {/if}
     </Card>
 
-    <Card class="mb-4 mt-5">
+    <Card class="mt-5 mb-4">
       <div class="mb-4 flex items-center justify-between">
         <h2 class="font-bold">Check In & Meals</h2>
       </div>
@@ -538,25 +538,25 @@
         <div class="p-4 text-gray-500">Loading check-in details…</div>
       {:else if confirmed}
         <div>
-          <div class="mb-4 text-green-700 font-medium">
+          <div class="mb-4 font-medium text-green-700">
             Confirmation form was submitted.
           </div>
-          <div class="flex items-center gap-2 mb-4">
+          <div class="mb-4 flex items-center gap-2">
             <span class="font-semibold">Checked in:</span>
             <div>
               {#if checkedIn}
-                <span class="text-green-600 font-medium">
+                <span class="font-medium text-green-600">
                   {checkedInAt ? format(checkedInAt, 'yyyy.MM.dd p') : 'Yes'}
                 </span>
               {:else}
-                <div class="flex items-center text-red-500 gap-1">
+                <div class="flex items-center gap-1 text-red-500">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke-width="1.5"
                     stroke="currentColor"
-                    class="w-5 h-5"
+                    class="h-5 w-5"
                   >
                     <path
                       stroke-linecap="round"
@@ -576,10 +576,10 @@
           </div>
           <div class="space-y-4">
             {#if checkedIn}
-              <div class="font-bold border-b pb-1">Meal Status</div>
+              <div class="border-b pb-1 font-bold">Meal Status</div>
               {#each Object.keys(food).sort() as date}
-                <div class="bg-gray-50 p-3 rounded-md">
-                  <div class="font-semibold text-gray-700 mb-2">{date}</div>
+                <div class="rounded-md bg-gray-50 p-3">
+                  <div class="mb-2 font-semibold text-gray-700">{date}</div>
                   <div class="flex flex-wrap gap-2">
                     {#each Object.keys(food[date]) as meal}
                       <Button
@@ -599,7 +599,7 @@
           </div>
         </div>
       {:else}
-        <div class="text-red-500 font-medium">
+        <div class="font-medium text-red-500">
           Did not send in a confirmation form.
         </div>
       {/if}

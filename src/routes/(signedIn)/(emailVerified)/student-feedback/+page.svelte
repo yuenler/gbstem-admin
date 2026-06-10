@@ -56,11 +56,11 @@
   <title>Student Feedback</title>
 </svelte:head>
 
-<div class="flex flex-wrap items-center gap-4 mb-4">
+<div class="mb-4 flex flex-wrap items-center gap-4">
   <SearchBox basePath="/student-feedback" />
   <CourseFilter paramName="course" />
   <PerPageControl />
-  <Button class="h-12 flex items-center"><a href={url}>Download</a></Button>
+  <Button class="flex h-12 items-center"><a href={url}>Download</a></Button>
 </div>
 
 <Table>
@@ -74,7 +74,7 @@
   </svelte:fragment>
   <svelte:fragment slot="body">
     {#each data.feedback as value}
-      <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer">
+      <tr class="border-b bg-white hover:cursor-pointer hover:bg-gray-50">
         <td class="px-6 py-4"> {value.studentName} </td>
         <td class="px-6 py-4">
           {value.course}
@@ -95,7 +95,7 @@
 </Table>
 
 {#if !data.query && data.feedback}
-  <div class="flex justify-end gap-2 mt-4">
+  <div class="mt-4 flex justify-end gap-2">
     {#if currentPage > 1}
       <Button href={prevHref}>Previous</Button>
     {/if}

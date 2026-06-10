@@ -155,13 +155,13 @@
     open = false
   }}
 >
-  <label for={id} class="font-bold text-sm">
+  <label for={id} class="text-sm font-bold">
     <span>
       {label}<span class={cn('text-red-500', !required && 'hidden')}>*</span>
     </span>
   </label>
   <div class="relative">
-    <div class="absolute right-0 top-0 flex h-12 items-center pr-2">
+    <div class="absolute top-0 right-0 flex h-12 items-center pr-2">
       <button
         type="button"
         aria-label="Toggle dropdown"
@@ -208,7 +208,7 @@
     />
     {#if open}
       <div
-        class="absolute left-0 top-14 z-20 max-h-60 w-full overflow-hidden overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-xs"
+        class="absolute top-14 left-0 z-20 max-h-60 w-full overflow-hidden overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-xs"
         transition:fade={{ duration: 100 }}
       >
         {#if filteredOptions.length === 0}

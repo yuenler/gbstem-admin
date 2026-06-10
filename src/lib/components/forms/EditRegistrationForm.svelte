@@ -202,7 +202,7 @@
     <div class="grid gap-1">
       <span class="font-bold">Personal</span>
       <div class="grid gap-1 sm:grid-cols-2 sm:gap-3">
-        <div class="flex flex-col gap-1.5 mt-2">
+        <div class="mt-2 flex flex-col gap-1.5">
           <FormInput
             form={formResult}
             name="personal.studentFirstName"
@@ -211,7 +211,7 @@
           />
         </div>
 
-        <div class="flex flex-col gap-1.5 mt-2">
+        <div class="mt-2 flex flex-col gap-1.5">
           <FormInput
             form={formResult}
             name="personal.studentLastName"
@@ -222,7 +222,7 @@
       </div>
 
       <div class="grid gap-1 sm:grid-cols-2 sm:gap-3">
-        <div class="flex flex-col gap-1.5 mt-2">
+        <div class="mt-2 flex flex-col gap-1.5">
           <FormInput
             form={formResult}
             name="personal.email"
@@ -232,7 +232,7 @@
           />
         </div>
 
-        <div class="flex flex-col gap-1.5 mt-2">
+        <div class="mt-2 flex flex-col gap-1.5">
           <FormInput
             form={formResult}
             name="personal.secondaryEmail"
@@ -244,7 +244,7 @@
       </div>
 
       <div class="grid gap-1 sm:grid-cols-2 sm:gap-3">
-        <div class="flex flex-col gap-1.5 mt-2">
+        <div class="mt-2 flex flex-col gap-1.5">
           <FormInput
             form={formResult}
             name="personal.phoneNumber"
@@ -254,7 +254,7 @@
           />
         </div>
 
-        <div class="flex flex-col gap-1.5 mt-2">
+        <div class="mt-2 flex flex-col gap-1.5">
           <FormInput
             form={formResult}
             name="personal.dateOfBirth"
@@ -266,7 +266,7 @@
       </div>
 
       <div class="grid gap-1 sm:grid-cols-2 sm:gap-3">
-        <div class="flex flex-col gap-1.5 mt-2">
+        <div class="mt-2 flex flex-col gap-1.5">
           <FormSelect
             form={formResult}
             name="personal.gender"
@@ -276,7 +276,7 @@
           />
         </div>
 
-        <div class="flex flex-col gap-1.5 mt-2">
+        <div class="mt-2 flex flex-col gap-1.5">
           <FormSelect
             form={formResult}
             name="personal.frlp"
@@ -287,7 +287,7 @@
         </div>
       </div>
 
-      <div class="flex flex-col gap-1.5 mt-2">
+      <div class="mt-2 flex flex-col gap-1.5">
         <FormSelect
           form={formResult}
           name="personal.parentEducation"
@@ -297,11 +297,11 @@
         />
       </div>
 
-      <div class="grid gap-1 mt-4">
-        <span class="font-semibold text-sm"
+      <div class="mt-4 grid gap-1">
+        <span class="text-sm font-semibold"
           >Race / ethnicity (check all that apply)</span
         >
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {#each raceJson as race}
             <div class="flex items-center">
               <input
@@ -309,11 +309,11 @@
                 value={race.name}
                 bind:group={$form.personal.race}
                 id={`race-${race.name}`}
-                class="peer h-5 w-5 shrink-0 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-hidden focus:ring-1 focus:ring-gray-600"
+                class="peer h-5 w-5 shrink-0 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:outline-hidden"
               />
               <label
                 for={`race-${race.name}`}
-                class="ml-2 text-sm cursor-pointer peer-disabled:text-gray-400"
+                class="ml-2 cursor-pointer text-sm peer-disabled:text-gray-400"
               >
                 {race.name}
               </label>
@@ -326,7 +326,7 @@
     <div class="grid gap-1">
       <span class="font-bold">Academic</span>
       <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
-        <div class="sm:col-span-2 flex flex-col gap-1.5 mt-2">
+        <div class="mt-2 flex flex-col gap-1.5 sm:col-span-2">
           <FormInput
             form={formResult}
             name="academic.school"
@@ -351,7 +351,7 @@
     <div class="grid gap-1">
       <span class="font-bold">Program Details</span>
       <div class="grid gap-1 sm:grid-cols-2 sm:gap-3">
-        <div class="flex flex-col gap-1.5 mt-2">
+        <div class="mt-2 flex flex-col gap-1.5">
           <FormSelect
             form={formResult}
             name="program.csCourse"
@@ -361,7 +361,7 @@
           />
         </div>
 
-        <div class="flex flex-col gap-1.5 mt-2">
+        <div class="mt-2 flex flex-col gap-1.5">
           <FormSelect
             form={formResult}
             name="program.mathCourse"
@@ -373,7 +373,7 @@
       </div>
 
       <div class="grid gap-1 sm:grid-cols-2 sm:gap-3">
-        <div class="flex flex-col gap-1.5 mt-2">
+        <div class="mt-2 flex flex-col gap-1.5">
           <FormSelect
             form={formResult}
             name="program.engineeringCourse"
@@ -383,7 +383,7 @@
           />
         </div>
 
-        <div class="flex flex-col gap-1.5 mt-2">
+        <div class="mt-2 flex flex-col gap-1.5">
           <FormSelect
             form={formResult}
             name="program.scienceCourse"
@@ -394,7 +394,7 @@
         </div>
       </div>
 
-      <div class="flex flex-col gap-1.5 mt-2">
+      <div class="mt-2 flex flex-col gap-1.5">
         <FormSelect
           form={formResult}
           name="program.reason"
@@ -416,13 +416,13 @@
 
     {#if $form.program.inPerson}
       <div class="grid gap-1">
-        <span class="font-bold text-lg">In Person</span>
-        <span class="text-sm text-gray-500 mb-2 leading-tight"
+        <span class="text-lg font-bold">In Person</span>
+        <span class="mb-2 text-sm leading-tight text-gray-500"
           >Hybrid classes meet once a week on weekend afternoons at the
           Cambridge Public Library.</span
         >
         <div class="grid gap-1 sm:grid-cols-2 sm:gap-3">
-          <div class="flex flex-col gap-1.5 mt-2">
+          <div class="mt-2 flex flex-col gap-1.5">
             <FormInput
               form={formResult}
               name="inPerson.allergies"
@@ -432,7 +432,7 @@
             />
           </div>
 
-          <div class="flex flex-col gap-1.5 mt-2">
+          <div class="mt-2 flex flex-col gap-1.5">
             <FormInput
               form={formResult}
               name="inPerson.parentPickup"

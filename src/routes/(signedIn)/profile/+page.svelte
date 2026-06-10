@@ -66,7 +66,7 @@
 
 <PageLayout>
   <svelte:fragment slot="title">Profile</svelte:fragment>
-  <div class="max-w-2xl grid gap-6 w-full">
+  <div class="grid w-full max-w-2xl gap-6">
     {#if !data.user.emailVerified}
       <div
         class="mt-2 flex w-full items-center gap-4 rounded-md bg-red-200 px-5 py-4 shadow-sm"
@@ -108,7 +108,7 @@
         </Field>
         <div class="absolute top-2.5 right-2">
           <button
-            class="text-black hover:text-gray-700 transition-colors duration-300"
+            class="text-black transition-colors duration-300 hover:text-gray-700"
             type="button"
             aria-label="Copy user ID to clipboard"
             on:click={() => {
@@ -116,7 +116,7 @@
             }}
           >
             <svg
-              class="w-5 h-5"
+              class="h-5 w-5"
               xmlns="http://www.w3.org/2000/svg"
               width="32"
               height="32"

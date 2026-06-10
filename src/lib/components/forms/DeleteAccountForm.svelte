@@ -64,7 +64,7 @@
     <button
       type="button"
       on:click={() => dialogEl.open()}
-      class="rounded-md shadow-xs transition-colors duration-300 px-4 py-2 bg-red-100 text-red-900 hover:bg-red-200 disabled:bg-red-200 disabled:text-red-700"
+      class="rounded-md bg-red-100 px-4 py-2 text-red-900 shadow-xs transition-colors duration-300 hover:bg-red-200 disabled:bg-red-200 disabled:text-red-700"
       >Delete account</button
     >
   </div>
@@ -72,16 +72,16 @@
 
 <Dialog bind:this={dialogEl} on:cancel={handleCancel} disabled={$delayed} alert>
   <svelte:fragment slot="title">Delete account</svelte:fragment>
-  <div slot="description" class="flex justify-center w-full">
+  <div slot="description" class="flex w-full justify-center">
     <form use:enhance class="w-full max-w-lg">
       <fieldset class="space-y-4" disabled={$delayed}>
         <div class="flex justify-center">
-          <div class="space-y-4 w-full">
+          <div class="w-full space-y-4">
             <div class="flex flex-col gap-1.5">
               <Field form={formResult} name="password">
                 <Control>
                   {#snippet children({ props })}
-                    <Label class="font-bold text-sm">Password</Label>
+                    <Label class="text-sm font-bold">Password</Label>
                     <input
                       {...props}
                       type="password"
@@ -93,10 +93,10 @@
                     />
                   {/snippet}
                 </Control>
-                <FieldErrors class="text-xs text-red-500 font-semibold" />
+                <FieldErrors class="text-xs font-semibold text-red-500" />
               </Field>
             </div>
-            <div class="font-bold text-red-600 text-center">
+            <div class="text-center font-bold text-red-600">
               Warning! This is irreversible.
             </div>
           </div>

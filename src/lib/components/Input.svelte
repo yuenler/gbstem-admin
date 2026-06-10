@@ -155,7 +155,7 @@
   {/if}
 {:else if type === 'file'}
   <div class={cn('mt-2', className instanceof Object && className.container)}>
-    <label for={id} class="font-bold text-sm">
+    <label for={id} class="text-sm font-bold">
       <span>
         {label}<span class="text-red-500">*</span>
       </span>
@@ -179,7 +179,7 @@
   </div>
 {:else}
   <div class={cn('mt-2', className instanceof Object && className.container)}>
-    <label for={id} class="font-bold text-sm">
+    <label for={id} class="text-sm font-bold">
       <span>
         {label}<span class={cn('text-red-500', !required && 'hidden')}>*</span>
       </span>
@@ -208,7 +208,7 @@
         {...$$restProps}
       />
       {#if type === 'password'}
-        <div class="absolute right-3 top-0 bottom-0 flex items-center">
+        <div class="absolute top-0 right-3 bottom-0 flex items-center">
           <button
             class="text-gray-500"
             type="button"
@@ -223,7 +223,7 @@
                 viewBox="0 0 24 24"
                 stroke-width="1.5"
                 stroke="currentColor"
-                class="w-6 h-6"
+                class="h-6 w-6"
               >
                 <path
                   stroke-linecap="round"
@@ -238,7 +238,7 @@
                 viewBox="0 0 24 24"
                 stroke-width="1.5"
                 stroke="currentColor"
-                class="w-6 h-6"
+                class="h-6 w-6"
               >
                 <path
                   stroke-linecap="round"

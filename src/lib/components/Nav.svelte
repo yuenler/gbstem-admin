@@ -83,7 +83,7 @@
   <!-- Middle Pages Links (visible on sm and larger, scales down spacing/text size) -->
   {#if user.emailVerified && $actions === null}
     <div
-      class="hidden sm:flex flex-1 items-center justify-start lg:justify-center min-w-0 gap-0.5 md:gap-1 lg:gap-1.5 xl:gap-2 overflow-x-auto no-scrollbar py-1 px-2"
+      class="no-scrollbar hidden min-w-0 flex-1 items-center justify-start gap-0.5 overflow-x-auto px-2 py-1 sm:flex md:gap-1 lg:justify-center lg:gap-1.5 xl:gap-2"
     >
       {#each pages as page}
         <a
@@ -102,12 +102,12 @@
   <!-- Middle Active Actions (visible on sm and larger, takes up remaining middle space) -->
   {#if user.emailVerified && $actions !== null}
     <div
-      class="hidden sm:flex flex-1 items-center justify-between gap-3 overflow-x-auto min-w-0"
+      class="hidden min-w-0 flex-1 items-center justify-between gap-3 overflow-x-auto sm:flex"
     >
       <fieldset class="flex items-center gap-3" {disabled}>
         {#each $actions as action}
           <Button
-            class="rounded-sm py-1 px-3 whitespace-nowrap"
+            class="rounded-sm px-3 py-1 whitespace-nowrap"
             color={action.color}
             on:click={() => {
               progress.start()
@@ -127,12 +127,12 @@
   {/if}
 
   <!-- Right Profile and Mobile Menu button -->
-  <div class="flex items-center gap-1 sm:gap-3 md:gap-4 shrink-0">
+  <div class="flex shrink-0 items-center gap-1 sm:gap-3 md:gap-4">
     {#if $actions === null}
       <ProfileMenu class="hidden sm:block" />
     {/if}
     <button
-      class="sm:hidden hover:bg-gray-200 rounded-full h-10 w-10 flex items-center justify-center transition-colors"
+      class="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-gray-200 sm:hidden"
       type="button"
       on:click={() => {
         open = !open
@@ -174,7 +174,7 @@
 </nav>
 {#if open}
   <div
-    class="p-d fixed left-0 top-20 z-50 flex h-[calc(100vh-5rem)] w-screen flex-col gap-2 bg-white sm:hidden"
+    class="fixed top-20 left-0 z-50 flex h-[calc(100vh-5rem)] w-screen flex-col gap-2 bg-white p-d sm:hidden"
     transition:fade={{
       easing: cubicInOut,
       duration: 200,

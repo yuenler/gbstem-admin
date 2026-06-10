@@ -65,7 +65,7 @@
     transition:fade={{ duration: 200 }}
   >
     <div
-      class="relative flex items-end sm:items-center justify-center min-h-screen py-d px-d/2"
+      class="relative flex min-h-screen items-end justify-center px-d/2 py-d sm:items-center"
     >
       <div
         class={cn(
@@ -84,7 +84,7 @@
       >
         <button
           type="button"
-          class="absolute top-2 right-2 sm:top-4 sm:right-4 text-gray-500 hover:text-gray-700 focus:outline-none disabled:opacity-50 z-50 cursor-pointer bg-white rounded-full p-1.5 shadow-sm border border-gray-200 hover:bg-gray-100 transition-colors"
+          class="absolute top-2 right-2 z-50 cursor-pointer rounded-full border border-gray-200 bg-white p-1.5 text-gray-500 shadow-sm transition-colors hover:bg-gray-100 hover:text-gray-700 focus:outline-none disabled:opacity-50 sm:top-4 sm:right-4"
           on:click={cancel}
           {disabled}
           aria-label="Close dialog"
@@ -104,7 +104,7 @@
           </svg>
         </button>
         <h1
-          class="text-xl uppercase bg-gray-200 px-4 py-3 rounded-md font-bold pr-12"
+          class="rounded-md bg-gray-200 px-4 py-3 pr-12 text-xl font-bold uppercase"
         >
           <slot name="title" />
         </h1>

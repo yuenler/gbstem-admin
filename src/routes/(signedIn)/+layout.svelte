@@ -7,7 +7,7 @@
 
 <Nav user={data.user} />
 <div class="grow">
-  <main class="mt-20 py-8 px-d">
+  <main class="mt-20 px-d py-8">
     <slot />
   </main>
 </div>

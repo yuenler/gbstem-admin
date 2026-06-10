@@ -71,7 +71,7 @@
     <span class="font-bold">Change email</span>
 
     <div class="flex flex-col gap-1.5">
-      <label class="font-bold text-sm" for="current-email">Current email</label>
+      <label class="text-sm font-bold" for="current-email">Current email</label>
       <input
         id="current-email"
         type="email"
@@ -86,7 +86,7 @@
       <Field form={formResult} name="newEmail">
         <Control>
           {#snippet children({ props })}
-            <Label class="font-bold text-sm">New email</Label>
+            <Label class="text-sm font-bold">New email</Label>
             <div class="relative">
               <input
                 {...props}
@@ -97,7 +97,7 @@
                 required
                 class="block h-12 w-full appearance-none rounded-md border border-gray-400 px-3 pr-21 transition-colors placeholder:text-gray-500 focus:border-gray-600 focus:outline-hidden disabled:bg-white disabled:text-gray-400"
               />
-              <div class="absolute right-2 top-0 flex h-12 items-center">
+              <div class="absolute top-0 right-2 flex h-12 items-center">
                 <Button
                   color="blue"
                   class="px-2 py-1"
@@ -108,7 +108,7 @@
             </div>
           {/snippet}
         </Control>
-        <FieldErrors class="text-xs text-red-500 font-semibold" />
+        <FieldErrors class="text-xs font-semibold text-red-500" />
       </Field>
     </div>
   </fieldset>

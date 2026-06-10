@@ -1,6 +1,6 @@
-<div class="relative overflow-x-auto rounded-md shadow-sm border-gray-200 mt-4">
-  <table class="w-full text-sm text-left text-gray-500">
-    <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+<div class="relative mt-4 overflow-x-auto rounded-md border-gray-200 shadow-sm">
+  <table class="w-full text-left text-sm text-gray-500">
+    <thead class="bg-gray-100 text-xs text-gray-700 uppercase">
       <tr>
         <slot name="head" />
       </tr>

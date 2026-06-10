@@ -65,11 +65,11 @@
   <title>Sub Requests Log</title>
 </svelte:head>
 
-<div class="flex flex-wrap items-center gap-4 mb-4">
+<div class="mb-4 flex flex-wrap items-center gap-4">
   <SearchBox basePath="/sub-requests" />
   <CourseFilter paramName="course" />
   <PerPageControl />
-  <Button class="h-12 flex items-center"><a href={url}>Download</a></Button>
+  <Button class="flex h-12 items-center"><a href={url}>Download</a></Button>
 </div>
 
 <div>
@@ -127,7 +127,7 @@
 </div>
 
 {#if !data.query && data.subRequests}
-  <div class="flex justify-end gap-2 mt-4">
+  <div class="mt-4 flex justify-end gap-2">
     {#if currentPage > 1}
       <Button href={prevHref}>Previous</Button>
     {/if}

@@ -107,7 +107,7 @@
           </table>
         </div>
       </Card>
-      <Card class="mb-4 mt-5">
+      <Card class="mt-5 mb-4">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="font-bold">Student Attendance</h2>
         </div>

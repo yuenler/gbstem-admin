@@ -64,8 +64,8 @@
 
 <form use:enhance class="w-full">
   <fieldset class="space-y-4" disabled={$delayed}>
-    <div class="flex justify-center w-full">
-      <div class="space-y-4 max-w-lg w-full text-left">
+    <div class="flex w-full justify-center">
+      <div class="w-full max-w-lg space-y-4 text-left">
         <div class="flex flex-col gap-1.5">
           <FormSelect
             form={formResult}
@@ -85,7 +85,7 @@
             label="Should this token be one-time use?"
             bind:checked={$form.consumable}
           />
-          <p class="text-sm mt-1 leading-tight text-gray-500">
+          <p class="mt-1 text-sm leading-tight text-gray-500">
             After one account is created with this token, no one else can use
             the token to sign up.
           </p>
@@ -100,7 +100,7 @@
             type="number"
             bind:value={$form.expires}
           />
-          <span class="text-xs text-gray-500 font-semibold"
+          <span class="text-xs font-semibold text-gray-500"
             >Maximum is 48 hours.</span
           >
         </div>

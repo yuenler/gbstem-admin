@@ -82,7 +82,7 @@
             viewBox="0 0 24 24"
             stroke-width="1.5"
             stroke="currentColor"
-            class="w-6 h-6"
+            class="h-6 w-6"
           >
             <path
               stroke-linecap="round"
@@ -98,7 +98,7 @@
         <Button on:click={handleCheckIn}>Check In</Button>
       {/if}
     </div>
-    <div class="space-y-8 mt-8">
+    <div class="mt-8 space-y-8">
       {#if data.applicant.hhid.checkedIn}
         {#each Object.keys(data.applicant.hhid.food).sort() as date}
           <div class="font-bold">

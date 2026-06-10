@@ -53,7 +53,7 @@
       <Field form={formResult} name="password">
         <Control>
           {#snippet children({ props })}
-            <Label class="font-bold text-sm">Password</Label>
+            <Label class="text-sm font-bold">Password</Label>
             <input
               {...props}
               type="password"
@@ -65,7 +65,7 @@
             />
           {/snippet}
         </Control>
-        <FieldErrors class="text-xs text-red-500 font-semibold" />
+        <FieldErrors class="text-xs font-semibold text-red-500" />
       </Field>
     </div>
 

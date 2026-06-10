@@ -18,7 +18,7 @@
 </script>
 
 <div class="flex min-h-screen flex-col">
-  <div class="grow flex flex-col">
+  <div class="flex grow flex-col">
     <slot />
   </div>
   <Footer />
