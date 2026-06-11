@@ -56,7 +56,7 @@
   <title>Student Feedback</title>
 </svelte:head>
 
-<div class="mb-4 flex flex-wrap items-center gap-4">
+<div class="mb-4 flex flex-wrap items-end gap-4">
   <SearchBox basePath="/student-feedback" />
   <CourseFilter paramName="course" />
   <PerPageControl />

@@ -221,7 +221,7 @@
   <title>Applications</title>
 </svelte:head>
 
-<div class="flex flex-wrap items-center gap-4">
+<div class="flex flex-wrap items-end gap-4">
   <SearchBox basePath="/applications" />
   <CollectionFilter type="applications" />
   <StatusFilter type="applications" />

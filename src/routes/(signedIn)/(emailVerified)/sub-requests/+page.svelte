@@ -65,7 +65,7 @@
   <title>Sub Requests Log</title>
 </svelte:head>
 
-<div class="mb-4 flex flex-wrap items-center gap-4">
+<div class="mb-4 flex flex-wrap items-end gap-4">
   <SearchBox basePath="/sub-requests" />
   <CourseFilter paramName="course" />
   <PerPageControl />

@@ -179,11 +179,14 @@
   </div>
 {:else}
   <div class={cn('mt-2', className instanceof Object && className.container)}>
-    <label for={id} class="text-sm font-bold">
-      <span>
-        {label}<span class={cn('text-red-500', !required && 'hidden')}>*</span>
-      </span>
-    </label>
+    {#if label}
+      <label for={id} class="text-sm font-bold">
+        <span>
+          {label}<span class={cn('text-red-500', !required && 'hidden')}>*</span
+          >
+        </span>
+      </label>
+    {/if}
     <div class="relative">
       <input
         class={cn(

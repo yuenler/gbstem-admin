@@ -102,7 +102,7 @@
 
 <ClassDetails bind:dialogEl id={selectedClassId} />
 
-<div class="flex flex-wrap items-center gap-4">
+<div class="flex flex-wrap items-end gap-4">
   <SearchBox basePath="/classes" />
   <CourseFilter />
   <PerPageControl />

@@ -155,11 +155,13 @@
     open = false
   }}
 >
-  <label for={id} class="text-sm font-bold">
-    <span>
-      {label}<span class={cn('text-red-500', !required && 'hidden')}>*</span>
-    </span>
-  </label>
+  {#if label}
+    <label for={id} class="text-sm font-bold">
+      <span>
+        {label}<span class={cn('text-red-500', !required && 'hidden')}>*</span>
+      </span>
+    </label>
+  {/if}
   <div class="relative">
     <div class="absolute top-0 right-0 flex h-12 items-center pr-2">
       <button

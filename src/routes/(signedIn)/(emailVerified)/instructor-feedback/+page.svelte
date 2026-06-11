@@ -69,7 +69,7 @@
 
 <ClassFeedbackDetails bind:dialogEl id={selectedFeedbackId} />
 
-<div class="mb-4 flex flex-wrap items-center gap-4">
+<div class="mb-4 flex flex-wrap items-end gap-4">
   <SearchBox basePath="/instructor-feedback" />
   <CourseFilter paramName="course" />
   <PerPageControl />

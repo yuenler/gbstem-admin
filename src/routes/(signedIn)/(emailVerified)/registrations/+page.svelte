@@ -248,7 +248,7 @@
   <title>Registrations</title>
 </svelte:head>
 
-<div class="flex flex-wrap items-center gap-4">
+<div class="flex flex-wrap items-end gap-4">
   <SearchBox basePath="/registrations" />
   <CollectionFilter type="registrations" />
   <StatusFilter type="registrations" />
