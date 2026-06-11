@@ -612,7 +612,7 @@ This section verifies that users with the `"reviewer"` role have correct read an
 
 #### Test Case 27: Reviewer Disallowed Write Operations (Firestore Level)
 
-- **Description**: Verify that a reviewer cannot modify registrations or token resources directly.
+- **Description**: Verify that a reviewer cannot modify registrations directly.
 - **Steps**:
   1. Navigate to `http://localhost:5173/registrations` (allowed read).
   2. Try to change the **Bypass Age Limits?** checkbox or edit registration details.
