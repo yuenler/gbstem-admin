@@ -66,6 +66,7 @@
 
   // Load student classes and info
   async function loadStudentClasses(studentId: string) {
+    checkInLoading = true
     classes = []
     classesOptions = []
     dropClassesOptions = []
@@ -76,61 +77,80 @@
     selectedClassId = ''
     selectedDropClassId = ''
 
-    // Start fetching everything in parallel to optimize load times and prevent timeout
-    const studentDocRef = doc(db, registrationsCollection, studentId)
-    const studentPromise = getDoc(studentDocRef)
-    const hhidPromise = getDoc(doc(db, 'hhids', studentId))
-    const classesPromise = getDocs(query(collection(db, classesCollection)))
-    const attendancePromise = getDocs(
-      query(collection(db, instructorFeedbackCollection)),
-    )
+    try {
+      // Start fetching everything in parallel to optimize load times and prevent timeout
+      const studentDocRef = doc(db, registrationsCollection, studentId)
+      const studentPromise = getDoc(studentDocRef)
+      const hhidPromise = getDoc(doc(db, 'hhids', studentId)).catch((err) => {
+        console.warn(
+          'Failed to fetch hhid details (possible permission issue):',
+          err,
+        )
+        return null
+      })
+      const classesPromise = getDocs(query(collection(db, classesCollection)))
+      const attendancePromise = getDocs(
+        query(collection(db, instructorFeedbackCollection)),
+      ).catch((err) => {
+        console.warn(
+          'Failed to fetch feedback details (possible permission issue):',
+          err,
+        )
+        return null
+      })
 
-    // Wait for the primary student data first
-    const studentDoc = await studentPromise
-    let confirmedPromise = null
+      // Wait for the primary student data first
+      const studentDoc = await studentPromise
+      let confirmedPromise = null
 
-    if (studentDoc.exists()) {
-      const data = studentDoc.data()
-      if (data) {
-        studentData = {
-          name: `${data.personal.studentFirstName} ${data.personal.studentLastName}`,
-          email: data.personal.email,
-          secondaryEmail: data.personal.secondaryEmail,
-          phone: data.personal.phoneNumber,
-          grade: data.academic.grade,
-          school: data.academic.school,
-          parentName: `${data.personal.parentFirstName} ${data.personal.parentLastName}`,
-        }
-        studentID = studentDoc.id
+      if (studentDoc.exists()) {
+        const data = studentDoc.data()
+        if (data) {
+          studentData = {
+            name: `${data.personal.studentFirstName} ${data.personal.studentLastName}`,
+            email: data.personal.email,
+            secondaryEmail: data.personal.secondaryEmail,
+            phone: data.personal.phoneNumber,
+            grade: data.academic.grade,
+            school: data.academic.school,
+            parentName: `${data.personal.parentFirstName} ${data.personal.parentLastName}`,
+          }
+          studentID = studentDoc.id
 
-        if (data.meta?.uid) {
-          confirmedPromise = getDoc(doc(db, 'confirmations', data.meta.uid))
+          if (data.meta?.uid) {
+            confirmedPromise = getDoc(
+              doc(db, 'confirmations', data.meta.uid),
+            ).catch((err) => {
+              console.warn(
+                'Failed to fetch confirmation details (possible permission issue):',
+                err,
+              )
+              return null
+            })
+          }
         }
       }
-    }
 
-    // Wait for all other parallel promises
-    const [confirmedDoc, hhidDoc, classesSnap, attendanceSnap] =
-      await Promise.all([
-        confirmedPromise || Promise.resolve(null),
-        hhidPromise,
-        classesPromise,
-        attendancePromise,
-      ])
+      // Wait for all other parallel promises
+      const [confirmedDoc, hhidDoc, classesSnap, attendanceSnap] =
+        await Promise.all([
+          confirmedPromise || Promise.resolve(null),
+          hhidPromise,
+          classesPromise,
+          attendancePromise,
+        ])
 
-    // Process check-in and confirmation details
-    try {
-      checkInLoading = true
+      // Process check-in and confirmation details
       confirmed = false
       checkedIn = false
       checkedInAt = null
       food = {}
 
-      if (confirmedDoc) {
+      if (confirmedDoc && confirmedDoc.exists()) {
         confirmed = confirmedDoc.exists()
       }
 
-      if (hhidDoc.exists()) {
+      if (hhidDoc && hhidDoc.exists()) {
         const hhidData = hhidDoc.data()
         if (hhidData) {
           checkedIn = hhidData.checkedIn
@@ -140,49 +160,51 @@
           food = hhidData.food || {}
         }
       }
-    } catch (err) {
-      console.error('Check-in load error:', err)
+
+      // Process classes
+      classes = []
+      classesOptions = []
+      dropClassesOptions = []
+      if (classesSnap) {
+        classesSnap.forEach((doc) => {
+          const data = doc.data() as ClassData
+          if (data) {
+            data.id = doc.id
+            const name =
+              `${data.course} taught by ${data.instructorFirstName} ${data.instructorLastName} at ${data.classTime1} ${data.classDay1} and ${data.classTime2} ${data.classDay2}`.trim()
+            nameToUid[name] = data.id
+            classesOptions.push({ name })
+            if (data.students.includes(studentId)) {
+              classes.push(data)
+              dropClassesOptions.push({ name })
+            }
+          }
+        })
+      }
+
+      // Process attendance
+      attendance = []
+      if (attendanceSnap) {
+        attendanceSnap.forEach((doc) => {
+          const data = doc.data()
+          if (data) {
+            attendance.push({
+              courseName: data.courseName,
+              date: data.date,
+              attendanceList: data.attendanceList,
+              feedback: data.feedback,
+              id: doc.id,
+              classNumber: data.classNumber,
+              instructorName: data.instructorName,
+              students: data.students,
+            })
+          }
+        })
+        attendance.sort((a, b) => a.classNumber - b.classNumber)
+      }
     } finally {
       checkInLoading = false
     }
-
-    // Process classes
-    classes = []
-    classesOptions = []
-    dropClassesOptions = []
-    classesSnap.forEach((doc) => {
-      const data = doc.data() as ClassData
-      if (data) {
-        data.id = doc.id
-        const name =
-          `${data.course} taught by ${data.instructorFirstName} ${data.instructorLastName} at ${data.classTime1} ${data.classDay1} and ${data.classTime2} ${data.classDay2}`.trim()
-        nameToUid[name] = data.id
-        classesOptions.push({ name })
-        if (data.students.includes(studentId)) {
-          classes.push(data)
-          dropClassesOptions.push({ name })
-        }
-      }
-    })
-
-    // Process attendance
-    attendance = []
-    attendanceSnap.forEach((doc) => {
-      const data = doc.data()
-      if (data) {
-        attendance.push({
-          courseName: data.courseName,
-          date: data.date,
-          attendanceList: data.attendanceList,
-          feedback: data.feedback,
-          id: doc.id,
-          classNumber: data.classNumber,
-          instructorName: data.instructorName,
-          students: data.students,
-        })
-      }
-    })
-    attendance.sort((a, b) => a.classNumber - b.classNumber)
   }
 
   // // Watch for id changes and reload
