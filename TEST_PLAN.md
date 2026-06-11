@@ -567,3 +567,54 @@ graph TD
      - Verify the success toast `"Account was successfully deleted."` appears.
      - After 2 seconds, verify the page reloads, and you are redirected to the sign-in page.
      - Optionally, check the Firebase Emulator Users tab (`http://localhost:4000/auth`) to confirm that the user `lifecycle-admin-new@gbstem.org` has been deleted from the database.
+
+---
+
+### Section O: Reviewer Role Access Control
+
+This section verifies that users with the `"reviewer"` role have correct read and write access for their permissions, but are restricted from accessing admin-only components (such as Tokens, Student Feedback, and Instructor Feedback).
+
+#### Test Case 24: Reviewer Navigation and Nav Bar Layout
+
+- **Description**: Ensure a logged-in reviewer's navigation bar only displays allowed pages and hides restricted pages.
+- **Steps**:
+  1. Clear any active session and navigate to `http://localhost:5173/signin`.
+  2. Log in using a Reviewer account (e.g. `reviewer@gbstem.org` / `penguin` - mock credentials seeded in emulator).
+  3. Inspect the top navigation bar.
+  4. Navigate to each of those pages (dashboard, classes, students, interviews, applications, registrations, sub requests log) and make sure some mock data loads for each page.
+- **Expected Results (Assertions)**:
+  - Navigation bar displays: **Dashboard**, **Classes**, **Students**, **Interviews**, **Applications**, **Registrations**, and **Sub Requests Log**.
+  - Navigation bar **does not** contain: **Tokens**, **Student Feedback**, or **Instructor Feedback**.
+  - No errors are thrown when navigating to any of the allowed pages.
+
+#### Test Case 25: Reviewer Blocked from Accessing Restricted Pages (Manual Navigation)
+
+- **Description**: Verify that manually navigating to restricted URLs blocks the reviewer and shows a permission error page.
+- **Steps**:
+  1. While signed in as a Reviewer, manually navigate to `http://localhost:5173/tokens`.
+  2. Manually navigate to `http://localhost:5173/student-feedback`.
+  3. Manually navigate to `http://localhost:5173/instructor-feedback`.
+- **Expected Results (Assertions)**:
+  - Each page load is rejected.
+  - SvelteKit renders a permission error page (e.g., displaying `400` or `403` with a message like `"You do not have permission to view this page."`).
+
+#### Test Case 26: Reviewer Allowed Operations
+
+- **Description**: Verify that the reviewer can perform allowed read and write operations (like filtering applications, marking likely decisions, making decisions, and viewing class lists).
+- **Steps**:
+  1. Navigate to `http://localhost:5173/applications`.
+  2. Click on the row for `David Miller` to open the details modal.
+  3. Click **"Likely Yes"** and close the modal. Verify the status updates.
+  4. Re-open the modal, click **"Accept"**, and confirm the browser alert.
+- **Expected Results (Assertions)**:
+  - The reviewer is able to view the applicant list.
+  - Updating "Likely Yes" and finalizing the "Accept" decision succeed without permission errors.
+
+#### Test Case 27: Reviewer Disallowed Write Operations (Firestore Level)
+
+- **Description**: Verify that a reviewer cannot modify registrations or token resources directly.
+- **Steps**:
+  1. Navigate to `http://localhost:5173/registrations` (allowed read).
+  2. Try to change the **Bypass Age Limits?** checkbox or edit registration details.
+- **Expected Results (Assertions)**:
+  - They get a permission denied modal dialog.

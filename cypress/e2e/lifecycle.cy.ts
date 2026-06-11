@@ -121,7 +121,7 @@ describe('Section N: End-to-End Account Lifecycle', () => {
     cy.url().should('include', '/profile')
     cy.get('[role="dialog"]').should('exist')
     cy.contains('Please verify your email').should('be.visible')
-    cy.get('.bg-red-200').should('contain', 'Email is not verified.')
+    cy.waitForNotification('Email is not verified.', 'bg-red-200')
 
     // Verify main navigation links are hidden
     cy.contains('a', 'Dashboard').should('not.exist')
@@ -178,7 +178,7 @@ describe('Section N: End-to-End Account Lifecycle', () => {
       .find('button[type="submit"]')
       .click({ force: true })
 
-    cy.get('.bg-gray-200').should('contain', 'A verification email was sent.')
+    cy.waitForNotification('A verification email was sent.', 'bg-gray-200')
     cy.wait(500)
 
     // Verify the new email using emulator side-channel

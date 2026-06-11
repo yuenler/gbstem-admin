@@ -65,7 +65,7 @@ describe('Section L: Profile and Account Customization', () => {
     cy.get('[role="dialog"]')
       .find('button[type="submit"]')
       .click({ force: true })
-    cy.get('.bg-gray-200').should('contain', 'A verification email was sent.')
+    cy.waitForNotification('A verification email was sent.', 'bg-gray-200')
     cy.wait(1000)
 
     // Change email back to demo@gbstem.org
@@ -83,7 +83,7 @@ describe('Section L: Profile and Account Customization', () => {
     cy.get('[role="dialog"]')
       .find('button[type="submit"]')
       .click({ force: true })
-    cy.get('.bg-gray-200').should('contain', 'A verification email was sent.')
+    cy.waitForNotification('A verification email was sent.', 'bg-gray-200')
     cy.wait(1000)
 
     // 4. Change password to temp and then change it back

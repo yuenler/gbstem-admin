@@ -127,7 +127,14 @@
             })
             .catch((err: FirebaseError) => {
               console.error('Registration save changes error:', err)
-              alert.trigger('error', err.code, true)
+              const isPermissionDenied =
+                err.code === 'permission-denied' ||
+                String(err).includes('permission') ||
+                String(err).includes('Permission')
+              const msg = isPermissionDenied
+                ? 'You do not have permission to modify this registration.'
+                : err.code
+              alert.trigger('error', msg, !isPermissionDenied)
             })
         }
       },

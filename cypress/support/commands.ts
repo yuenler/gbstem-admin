@@ -25,9 +25,11 @@ Cypress.Commands.add('signedInSession', (role: string) => {
     const email =
       role === 'admin'
         ? 'demo@gbstem.org'
-        : role === 'instructor'
-          ? 'instructor@gbstem.org'
-          : 'student@gbstem.org'
+        : role === 'reviewer'
+          ? 'reviewer@gbstem.org'
+          : role === 'instructor'
+            ? 'instructor@gbstem.org'
+            : 'student@gbstem.org'
     const password = 'penguin'
 
     cy.fillInput('input[type="email"]', email)
@@ -116,9 +118,13 @@ Cypress.Commands.add(
 
 Cypress.Commands.add(
   'waitForNotification',
-  (text: string, timeoutMs: number = 15000) => {
+  (
+    text: string,
+    colorClass: string = 'bg-green-200',
+    timeoutMs: number = 15000,
+  ) => {
     return cy
-      .get('.bg-green-200', { timeout: timeoutMs })
+      .get(`.${colorClass}`, { timeout: timeoutMs })
       .should('contain', text)
   },
 )

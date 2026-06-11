@@ -183,6 +183,13 @@ async function seed() {
     'Demo Student',
     'student',
   )
+  await createOrUpdateUser(
+    'reviewer-demo-uid',
+    'reviewer@gbstem.org',
+    'penguin',
+    'Demo Reviewer',
+    'reviewer',
+  )
 
   console.log('Seeding mock profiles in "users" and "ids" collections...')
   await db.collection('ids').doc('1111111').set({})
@@ -199,6 +206,14 @@ async function seed() {
     role: 'student',
     firstName: 'Demo',
     lastName: 'Student',
+  })
+
+  await db.collection('ids').doc('4444444').set({})
+  await db.collection('users').doc('reviewer-demo-uid').set({
+    id: '4444444',
+    role: 'reviewer',
+    firstName: 'Demo',
+    lastName: 'Reviewer',
   })
 
   await db.collection('ids').doc('3333333').set({})
@@ -973,6 +988,7 @@ async function seed() {
   console.log('--------------------------------------------------')
   console.log('Seeded Users (Password: penguin):')
   console.log('- Admin:      demo@gbstem.org')
+  console.log('- Reviewer:   reviewer@gbstem.org')
   console.log('- Instructor: instructor@gbstem.org')
   console.log('- Student:    student@gbstem.org')
   console.log('Sign-up Token:  demo-token')

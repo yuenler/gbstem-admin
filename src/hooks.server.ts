@@ -13,8 +13,8 @@ export const handle = (async ({ event, resolve }) => {
     if (
       userRecord.customClaims &&
       'role' in userRecord.customClaims &&
-      userRecord.customClaims.role !== 'instructor' &&
-      userRecord.customClaims.role !== 'student'
+      (userRecord.customClaims.role === 'admin' ||
+        userRecord.customClaims.role === 'reviewer')
     ) {
       const { role } = userRecord.customClaims as { role: Data.Role }
       event.locals.user = {

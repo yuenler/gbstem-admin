@@ -33,7 +33,7 @@ describe('Section A: Authentication and Navigation', () => {
 
     // Assert that we stay on signin and an alert error is visible
     cy.url().should('include', '/signin')
-    cy.get('.bg-red-200').should('be.visible')
+    cy.waitForNotification('Wrong password.', 'bg-red-200')
   })
 
   it('Test Case 2b: Unauthorized Role Sign In (Student & Instructor)', () => {
@@ -47,12 +47,10 @@ describe('Section A: Authentication and Navigation', () => {
 
     // Assert that we stay on signin and get the appropriate error message
     cy.url().should('include', '/signin')
-    cy.get('.bg-red-200')
-      .should('be.visible')
-      .and(
-        'contain',
-        'Unauthorized: You do not have permission to access the admin site.',
-      )
+    cy.waitForNotification(
+      'Unauthorized: You do not have permission to access the admin site.',
+      'bg-red-200',
+    )
 
     // Clear session/cookies and try logging in as student
     cy.clearAllCookies()
@@ -68,12 +66,10 @@ describe('Section A: Authentication and Navigation', () => {
 
     // Assert that we stay on signin and get the appropriate error message
     cy.url().should('include', '/signin')
-    cy.get('.bg-red-200')
-      .should('be.visible')
-      .and(
-        'contain',
-        'Unauthorized: You do not have permission to access the admin site.',
-      )
+    cy.waitForNotification(
+      'Unauthorized: You do not have permission to access the admin site.',
+      'bg-red-200',
+    )
   })
 
   it('Test Case 3: Successful Sign In', () => {

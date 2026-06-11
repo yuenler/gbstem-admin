@@ -324,13 +324,21 @@ describe('classes route', () => {
 describe('instructor-feedback route', () => {
   it('loads instructor feedback', async () => {
     const url = new URL('http://localhost/?filter=Scratch')
-    const res = await instructorFeedbackLoad({ url, depends: jest.fn() } as any)
+    const res = await instructorFeedbackLoad({
+      url,
+      depends: jest.fn(),
+      locals: { user: { role: 'admin' } },
+    } as any)
     expect(res).toHaveProperty('feedback')
   })
 
   it('loads instructor feedback with search query', async () => {
     const url = new URL('http://localhost/?query=test')
-    const res = await instructorFeedbackLoad({ url, depends: jest.fn() } as any)
+    const res = await instructorFeedbackLoad({
+      url,
+      depends: jest.fn(),
+      locals: { user: { role: 'admin' } },
+    } as any)
     expect(res).toHaveProperty('feedback')
   })
 })
@@ -366,13 +374,21 @@ describe('students route', () => {
 describe('student-feedback route', () => {
   it('loads student feedback without search query', async () => {
     const url = new URL('http://localhost/?filter=Scratch')
-    const res = await studentFeedbackLoad({ url, depends: jest.fn() } as any)
+    const res = await studentFeedbackLoad({
+      url,
+      depends: jest.fn(),
+      locals: { user: { role: 'admin' } },
+    } as any)
     expect(res).toHaveProperty('feedback')
   })
 
   it('loads student feedback with search query', async () => {
     const url = new URL('http://localhost/?query=test')
-    const res = await studentFeedbackLoad({ url, depends: jest.fn() } as any)
+    const res = await studentFeedbackLoad({
+      url,
+      depends: jest.fn(),
+      locals: { user: { role: 'admin' } },
+    } as any)
     expect(res).toHaveProperty('feedback')
   })
 })

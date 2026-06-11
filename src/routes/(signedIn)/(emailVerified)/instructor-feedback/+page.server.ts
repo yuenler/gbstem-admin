@@ -17,7 +17,10 @@ interface DBInstructorFeedback {
   classNumber: number
 }
 
-export const load = (async ({ url, depends }) => {
+export const load = (async ({ url, depends, locals }) => {
+  if (!locals.user || locals.user.role !== 'admin') {
+    throw error(403, 'You do not have permission to view this page.')
+  }
   depends('app:instructorFeedbackFall24')
   const query = url.searchParams.get('query')
   if (query === null || query === '') {

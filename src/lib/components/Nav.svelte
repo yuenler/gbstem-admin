@@ -52,14 +52,18 @@
       name: 'Registrations',
       href: '/registrations',
     },
-    {
-      name: 'Student Feedback',
-      href: '/student-feedback',
-    },
-    {
-      name: 'Instructor Feedback',
-      href: '/instructor-feedback',
-    },
+    ...(user.role === 'admin'
+      ? [
+          {
+            name: 'Student Feedback',
+            href: '/student-feedback',
+          },
+          {
+            name: 'Instructor Feedback',
+            href: '/instructor-feedback',
+          },
+        ]
+      : []),
     {
       name: 'Sub Requests Log',
       href: '/sub-requests',

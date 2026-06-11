@@ -15,7 +15,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
   const userRecord = await adminAuth.getUser(decodedIdToken.uid)
   const role = userRecord.customClaims?.role as string | undefined
-  if (role === 'instructor' || role === 'student' || !role) {
+  if (role !== 'admin' && role !== 'reviewer') {
     throw error(
       403,
       'Unauthorized: You do not have permission to access the admin site.',

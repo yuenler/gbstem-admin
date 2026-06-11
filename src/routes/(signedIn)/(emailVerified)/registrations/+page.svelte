@@ -171,10 +171,14 @@
       })
       .catch((err) => {
         console.error('Failed to update bypass age limits:', err)
-        alert.trigger(
-          'error',
-          `Failed to update bypass age limits: ${err.message || err}`,
-        )
+        const isPermissionDenied =
+          err.code === 'permission-denied' ||
+          String(err).includes('permission') ||
+          String(err).includes('Permission')
+        const msg = isPermissionDenied
+          ? 'You do not have permission to modify this registration.'
+          : `Failed to update bypass age limits: ${err.message || err}`
+        alert.trigger('error', msg)
       })
   }
   function getInterestedClasses(registration: any) {
