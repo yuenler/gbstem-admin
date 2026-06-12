@@ -117,30 +117,35 @@ service cloud.firestore {
     //
     // CLASSES
     //
-    match /classesSpring24/{userId} {
+    match /classesSpring24/{classId} {
       allow read: if isSignedIn();
-      allow create: if isInstructorOwnerOrAdmin(userId);
-      allow write: if isAdminOrReviewer();
+      allow create: if isInstructorOwnerOrAdmin(classId);
+      allow update: if isAdminOrReviewer() || isInstructorOfClass();
+      allow delete: if isAdminOrReviewer();
     }
-    match /classesFall24/{userId} {
+    match /classesFall24/{classId} {
       allow read: if isSignedIn();
-      allow create: if isInstructorOwnerOrAdmin(userId);
-      allow write: if isAdminOrReviewer();
+      allow create: if isInstructorOwnerOrAdmin(classId);
+      allow update: if isAdminOrReviewer() || isInstructorOfClass();
+      allow delete: if isAdminOrReviewer();
     }
-    match /classesSpring25/{userId} {
+    match /classesSpring25/{classId} {
       allow read: if isSignedIn();
-      allow create: if isInstructorOwnerOrAdmin(userId);
-      allow write: if isAdminOrReviewer();
+      allow create: if isInstructorOwnerOrAdmin(classId);
+      allow update: if isAdminOrReviewer() || isInstructorOfClass();
+      allow delete: if isAdminOrReviewer();
     }
-    match /classesFall25/{userId} {
+    match /classesFall25/{classId} {
       allow read: if isSignedIn();
-      allow create: if isInstructorOwnerOrAdmin(userId);
-      allow write: if isAdminOrReviewer();
+      allow create: if isInstructorOwnerOrAdmin(classId);
+      allow update: if isAdminOrReviewer() || isInstructorOfClass();
+      allow delete: if isAdminOrReviewer();
     }
-    match /classesSpring26/{userId} {
+    match /classesSpring26/{classId} {
       allow read: if isSignedIn();
-      allow create: if isInstructorOwnerOrAdmin(userId);
-      allow write: if isAdminOrReviewer();
+      allow create: if isInstructorOwnerOrAdmin(classId);
+      allow update: if isAdminOrReviewer() || isInstructorOfClass();
+      allow delete: if isAdminOrReviewer();
     }
 
     match /instructorClasses/{classId} {
@@ -211,7 +216,7 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow read: if isAdmin();
     }
-    match /classFeedback26/{feedbackId} {
+    match /classFeedbackSpring26/{feedbackId} {
       allow create: if isSignedIn();
       allow read: if isAdmin();
     }
@@ -248,16 +253,16 @@ service cloud.firestore {
       return userId.matches(request.auth.uid + '.*');
     }
     function hasRole(role) {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == role;
     }
     function hasRRole(role) {
-      return request.auth.token.role == role;
+      return 'role' in request.auth.token.keys() && request.auth.token.role == role;
     }
     function hasUserId(userId) {
       return request.auth.uid == userId;
     }
     function hasid(id) {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.id == id;
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('id', '') == id;
     }
     function isAdmin() {
       return isSignedIn() && hasRRole('admin');
@@ -267,6 +272,12 @@ service cloud.firestore {
     }
     function isInstructor() {
       return isSignedIn() && hasRole('instructor');
+    }
+    function isInstructorOfClass() {
+      return isInstructor() && (
+        request.auth.token.email == resource.data.instructorEmail ||
+        (resource.data.otherInstructorEmails != null && resource.data.otherInstructorEmails.matches('.*' + request.auth.token.email + '.*'))
+      );
     }
     function isInstructorOwnerOrAdmin(userId) {
       return (isInstructor() && hasUserId(userId)) || isAdmin();
