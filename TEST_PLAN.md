@@ -244,22 +244,67 @@ graph TD
   7. Click the **"Close"** button on the bulk actions bar.
   8. Verify the selection is cleared and the bulk actions bar disappears.
 
-#### Test Case 11: Application Details Modal and Decision Updates
+#### Test Case 11: Application Details Modal, Editing Details, and Decision Updates
 
-- **Description**: Open a single application modal and update decisions.
+- **Description**: Open a single application modal, edit fields using the application details form, cancel changes, save changes, and update decisions.
 - **Steps**:
   1. Click on the row for `David Miller` in the table.
   2. Verify that the **Application** details modal opens.
-  3. In the modal, locate the sticky header buttons: **Likely Yes**, **Likely Waitlist**, **Likely No**, **Clear Likely Decision**, **Interview**, **Accept**, **Substitute**, **Waitlist**, **Reject**.
-  4. Click **"Likely Yes"**.
-  5. Click **"Close"** to close the modal.
-  6. Verify the table row updates to show the green check icon for `Likely Yes`.
-  7. Re-open the details modal for `David Miller`.
-  8. Click the **"Accept"** button.
-  9. Click **"OK"** on the browser confirmation popup.
+  3. Click **"Close Interview Form"** (green button) to hide the interview evaluation guide card and reveal the **"Edit"** button.
+  4. Click the **"Edit"** button.
+  5. Verify that the form inputs inside the **Application Details** card become editable (such as Phone number, Date of birth, School, etc.).
+  6. In the **Phone number** input, change the value to `123-456-7890`.
+  7. Click the **"Cancel changes"** button.
+  8. Verify that the inputs become read-only and the phone number reverts to its original value.
+  9. Click the **"Edit"** button again.
+  10. In the **Phone number** input, change the value to `123-456-7890`.
+  11. Click the **"Save changes"** button.
+  12. Verify the notification toast says `"Changes were saved successfully."` and the inputs become read-only with the new phone number persisted.
+  13. Click the **"Show Interview Form"** button (green button) to restore the interview guide panel.
+  14. In the modal, locate the sticky header buttons: **Likely Yes**, **Likely Waitlist**, **Likely No**, **Clear Likely Decision**, **Interview**, **Accept**, **Substitute**, **Waitlist**, **Reject**.
+  15. Click **"Likely Yes"**.
+  16. Click **"Close"** to close the modal.
+  17. Verify the table row updates to show the green check icon for `Likely Yes`.
+  18. Re-open the details modal for `David Miller`.
+  19. Click the **"Accept"** button.
+  20. Click **"OK"** on the browser confirmation popup.
 - **Expected Results (Assertions)**:
+  - Clicking "Save changes" triggers a write to Firestore and disables form editing upon completion.
+  - Clicking "Cancel changes" restores original document values.
   - Clicking "Accept" triggers a POST request to `/api/decision` to send the acceptance email.
   - The applicant's status updates in the database and renders the accepted icon in the table.
+
+#### Test Case 11b: Instructor Interview Guide and Evaluation Form
+
+- **Description**: Open an application modal and fill out the interviewer's rubric, ratings, and feedback notes.
+- **Steps**:
+  1. Click on the row for `David Miller` in the table to open the details modal.
+  2. Click **"Show Interview Form"** if the Interview Guide & Evaluation Form is not already visible.
+  3. Locate the **Interview Guide & Evaluation Form** card.
+  4. Fill out the evaluation form fields:
+     - **Interview Date**: Set a future datetime (e.g. `2026-06-15T15:00`).
+     - **Interviewer**: Enter `Jane Doe`.
+     - **Attendance**: Select `attended` from the dropdown.
+     - **Friendliness (0-5 scale)**: Enter `4`.
+     - **Conversation Notes**: Enter `Very polite, comfortable speaking to kids.`.
+     - **What courses does the candidate want to teach?**: Enter `Python 1, Scratch`.
+     - **Clarity of explanations (0-5 scale)**: Enter `4`.
+     - **Engagement with audience (0-5 scale)**: Enter `3`.
+     - **Pace of mock lesson (0-5 scale)**: Enter `4`.
+     - **Overall quality (0-5 scale)**: Enter `4`.
+     - **Mock lesson notes**: Enter `Mock lesson on lists was well structured. Pacing was a bit fast but clear.`.
+     - **Tech or other issues**: Enter `None. Fast connection.`.
+     - **Availability notes**: Enter `Available Saturdays and weekdays after 4pm.`.
+     - **Recommendation summary**: Enter `Strong candidate, recommends for Scratch 1.`.
+  5. Click the green **"Save Notes"** button at the bottom of the form.
+  6. Verify the notification toast says `"Notes updated successfully."`.
+  7. Click **"Close"** to dismiss the modal.
+  8. Re-open the details modal for `David Miller`.
+  9. Click **"Show Interview Form"** if needed and verify that all inputted fields (ratings, notes, date, interviewer, attendance) are correctly loaded and displayed.
+- **Expected Results (Assertions)**:
+  - Saving the interview notes writes a document to the `decisionsSpring26` collection (merging fields).
+  - The success toast is triggered.
+  - Re-opening the modal retrieves and populates the saved interview values from Firestore.
 
 ---
 
