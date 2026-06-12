@@ -244,9 +244,6 @@ service cloud.firestore {
     //
     // HELPER FUNCTIONS
     //
-    function applicationSubmitted(userId) {
-      return exists(/databases/$(database)/documents/applicationsSpring24/$(userId)) && get(/databases/$(database)/documents/applicationsSpring24/$(userId)).data.meta.submitted == true;
-    }
     function belongsToSameUser(userId){
       return userId.matches(request.auth.uid + '.*');
     }
@@ -261,9 +258,6 @@ service cloud.firestore {
     }
     function hasid(id) {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.id == id;
-    }
-    function hasVerifiedEmail() {
-      return true;
     }
     function isAdmin() {
       return isSignedIn() && hasRRole('admin');
@@ -293,9 +287,6 @@ service cloud.firestore {
     function isUserWithId(id) {
       // Verifying the current user's profile document ID maps to the requested identifier
       return isSignedIn() && hasid(id);
-    }
-    function registrationSubmitted(userId) {
-      return exists(/databases/$(database)/documents/registrationsSpring24/$(userId)) && get(/databases/$(database)/documents/registrationsSpring24/$(userId)).data.meta.submitted == true;
     }
   }
 }
