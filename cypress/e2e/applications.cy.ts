@@ -220,10 +220,42 @@ describe('Section D: Instructor Applications Management', () => {
     cy.contains('button', 'Accept').should('not.exist')
   })
 
-  it('Test Case 11: Application Details Modal and Decision Updates', () => {
+  it('Test Case 11: Application Details Modal, Editing Details, and Decision Updates', () => {
     // Open application modal for David Miller
     cy.contains('td', 'David Miller').click()
     cy.get('[role="dialog"]').should('exist')
+
+    // Click Close Interview Form to reveal Edit button
+    cy.contains('button', 'Close Interview Form').click({ force: true })
+    cy.contains('button', 'Edit').should('be.visible')
+    cy.get('input[name="personal.phoneNumber"]').should('be.disabled')
+
+    // Click Edit to enable inputs
+    cy.contains('button', 'Edit').click({ force: true })
+    cy.get('input[name="personal.phoneNumber"]').should('not.be.disabled')
+
+    // Cancel changes test
+    cy.get('input[name="personal.phoneNumber"]').clear().type('123-456-7890')
+    cy.contains('button', 'Cancel changes').click({ force: true })
+    cy.get('input[name="personal.phoneNumber"]').should('be.disabled')
+    cy.get('input[name="personal.phoneNumber"]').should(
+      'not.have.value',
+      '123-456-7890',
+    )
+
+    // Save changes test
+    cy.contains('button', 'Edit').click({ force: true })
+    cy.get('input[name="personal.phoneNumber"]').clear().type('123-456-7890')
+    cy.contains('button', 'Save changes').click({ force: true })
+
+    // Verify toast success
+    cy.waitForNotification('Changes were saved successfully.')
+    cy.get('input[name="personal.phoneNumber"]')
+      .should('be.disabled')
+      .and('have.value', '123-456-7890')
+
+    // Restore Interview Form
+    cy.contains('button', 'Show Interview Form').click({ force: true })
 
     // Click Likely Yes
     cy.contains('button', 'Likely Yes').click({ force: true })
@@ -256,5 +288,99 @@ describe('Section D: Instructor Applications Management', () => {
       // It should have two text-green-300 icons now (Likely Yes and Accepted Decision)
       cy.get('.text-green-300').should('have.length', 2)
     })
+  })
+
+  it('Test Case 11b: Instructor Interview Guide and Evaluation Form', () => {
+    // Open application modal for David Miller
+    cy.contains('td', 'David Miller').click()
+    cy.get('[role="dialog"]').should('exist')
+
+    // Make sure Interview Guide is open (if it's not, click Show Interview Form)
+    cy.get('body').then(($body) => {
+      if ($body.text().includes('Show Interview Form')) {
+        cy.contains('button', 'Show Interview Form').click({ force: true })
+      }
+    })
+
+    // Fill out the evaluation guide form
+    cy.contains('h2', 'Interview Guide & Evaluation Form')
+      .closest('div')
+      .within(() => {
+        cy.get('input[type="datetime-local"]').type('2026-06-15T15:00')
+        cy.get('input[name="interviewer"]').type('Jane Doe')
+        cy.selectOption('input[name="attendance"]', 'On Time')
+
+        // Ratings inputs
+        cy.get('input[type="number"]').eq(0).clear().type('4') // Friendliness
+        cy.get('input[type="number"]').eq(1).clear().type('4') // Explanations
+        cy.get('input[type="number"]').eq(2).clear().type('3') // Engagement
+        cy.get('input[type="number"]').eq(3).clear().type('4') // Pacing
+        cy.get('input[type="number"]').eq(4).clear().type('4') // Overall
+
+        // Textarea fields
+        cy.get('textarea[name="conversation-notes"]').type(
+          'Very polite, comfortable speaking to kids.',
+        )
+        cy.get(
+          'textarea[name="what-courses-does-the-candidate-want-to-teach"]',
+        ).type('Python 1, Scratch')
+        cy.get('textarea[name="last-semester-notes"]').type(
+          'Did a good job with Python 1.',
+        )
+        cy.get('textarea[name^="mock-lesson-notes"]').type(
+          'Mock lesson was well structured. Pacing was clear.',
+        )
+        cy.get('textarea[name^="any-tech-or-other-issues"]').type(
+          'None. Fast connection.',
+        )
+        cy.get('textarea[name^="availability-notes"]').type(
+          'Available Saturdays and weekdays after 4pm.',
+        )
+        cy.get('textarea[name^="please-briefly-summarize"]').type(
+          'Strong candidate, recommends for Scratch 1.',
+        )
+
+        // Save notes
+        cy.contains('button', 'Save Notes').click({ force: true })
+      })
+
+    cy.waitForNotification('Notes updated successfully.')
+
+    // Close details modal
+    cy.contains('button', /^Close$/).click({ force: true })
+    cy.get('[role="dialog"]').should('not.exist')
+
+    // Re-open and verify filled values remain
+    cy.contains('td', 'David Miller').click()
+    cy.get('[role="dialog"]').should('exist')
+
+    cy.get('body').then(($body) => {
+      if ($body.text().includes('Show Interview Form')) {
+        cy.contains('button', 'Show Interview Form').click({ force: true })
+      }
+    })
+
+    // Verify fields populated
+    cy.contains('h2', 'Interview Guide & Evaluation Form')
+      .closest('div')
+      .within(() => {
+        cy.get('input[type="datetime-local"]').should(
+          'have.value',
+          '2026-06-15T15:00',
+        )
+        cy.get('input[name="interviewer"]').should('have.value', 'Jane Doe')
+        cy.get('input[name="attendance"]').should('have.value', 'On Time')
+        cy.get('input[type="number"]').eq(0).should('have.value', '4')
+        cy.get('textarea[name="conversation-notes"]').should(
+          'have.value',
+          'Very polite, comfortable speaking to kids.',
+        )
+        cy.get(
+          'textarea[name="what-courses-does-the-candidate-want-to-teach"]',
+        ).should('have.value', 'Python 1, Scratch')
+      })
+
+    // Close
+    cy.contains('button', /^Close$/).click({ force: true })
   })
 })
