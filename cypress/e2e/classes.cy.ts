@@ -52,11 +52,11 @@ describe('Section E: Classes Directory', () => {
       const text = stub.lastCall.args[0]
       cy.parseCopiedEmails(text).then((emails) => {
         expect(emails.slice(0, 5)).to.deep.equal([
-          'instructor-fake-13@gbstem.org',
-          'instructor-fake-17@gbstem.org',
+          'instructor-fake-11@gbstem.org',
+          'instructor-fake-16@gbstem.org',
           'instructor-fake-1@gbstem.org',
           'instructor-fake-21@gbstem.org',
-          'instructor-fake-25@gbstem.org',
+          'instructor-fake-26@gbstem.org',
         ])
       })
     })
@@ -101,11 +101,11 @@ describe('Section E: Classes Directory', () => {
               'Monday at 4:00 PM, Wednesday at 4:00 PM',
             ],
             [
-              'class-fake-13',
-              'Susan Wilson',
-              'instructor-fake-13@gbstem.org',
+              'class-fake-11',
+              'Barbara Lopez',
+              'instructor-fake-11@gbstem.org',
               'Python 1',
-              'student-fake-13',
+              'student-fake-11',
               '0',
               '0',
               '0',
@@ -113,11 +113,11 @@ describe('Section E: Classes Directory', () => {
               'Monday at 4:00 PM, Wednesday at 4:00 PM',
             ],
             [
-              'class-fake-17',
-              'Sarah Moore',
-              'instructor-fake-17@gbstem.org',
+              'class-fake-16',
+              'Thomas Taylor',
+              'instructor-fake-16@gbstem.org',
               'Python 1',
-              'student-fake-17',
+              'student-fake-16',
               '0',
               '0',
               '0',
@@ -137,11 +137,11 @@ describe('Section E: Classes Directory', () => {
               'Monday at 4:00 PM, Wednesday at 4:00 PM',
             ],
             [
-              'class-fake-25',
-              'Betty Sanchez',
-              'instructor-fake-25@gbstem.org',
+              'class-fake-26',
+              'Anthony Clark',
+              'instructor-fake-26@gbstem.org',
               'Python 1',
-              'student-fake-25',
+              'student-fake-26',
               '0',
               '0',
               '0',

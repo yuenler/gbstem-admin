@@ -2,11 +2,15 @@ import { defineConfig } from 'cypress'
 import installLogsPrinter from 'cypress-terminal-report/src/installLogsPrinter'
 import fs from 'fs'
 import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 function loadEnv() {
   const env: Record<string, string> = {}
   for (const filename of ['.env', '.env.local']) {
-    const filePath = path.resolve(process.cwd(), filename)
+    const filePath = path.resolve(__dirname, filename)
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf-8')
       for (const line of content.split('\n')) {

@@ -139,6 +139,21 @@ async function deleteCollection(collectionPath: string) {
 }
 
 async function seed() {
+  console.log('Clearing old accounts from emulator Auth...')
+  try {
+    const res = await fetch(
+      'http://127.0.0.1:9099/emulator/v1/projects/demo-gbstem/accounts',
+      { method: 'DELETE' },
+    )
+    if (res.ok) {
+      console.log('Successfully cleared Auth Emulator accounts.')
+    } else {
+      console.error('Failed to clear Auth Emulator accounts:', await res.text())
+    }
+  } catch (err) {
+    console.error('Error clearing Auth Emulator accounts:', err)
+  }
+
   console.log('Clearing old documents from emulator Firestore...')
   const collectionsToClear = [
     classesCollection,
@@ -177,6 +192,20 @@ async function seed() {
     'instructor',
   )
   await createOrUpdateUser(
+    'instructor-rejected-uid',
+    'instructor-rejected@gbstem.org',
+    'penguin',
+    'Rejected Instructor',
+    'instructor',
+  )
+  await createOrUpdateUser(
+    'instructor-interview-uid',
+    'instructor-interview@gbstem.org',
+    'penguin',
+    'Interview Instructor',
+    'instructor',
+  )
+  await createOrUpdateUser(
     'student-demo-uid',
     'student@gbstem.org',
     'penguin',
@@ -197,6 +226,22 @@ async function seed() {
     id: '1111111',
     role: 'instructor',
     firstName: 'Demo',
+    lastName: 'Instructor',
+  })
+
+  await db.collection('ids').doc('5555555').set({})
+  await db.collection('users').doc('instructor-rejected-uid').set({
+    id: '5555555',
+    role: 'instructor',
+    firstName: 'Rejected',
+    lastName: 'Instructor',
+  })
+
+  await db.collection('ids').doc('6666666').set({})
+  await db.collection('users').doc('instructor-interview-uid').set({
+    id: '6666666',
+    role: 'instructor',
+    firstName: 'Interview',
     lastName: 'Instructor',
   })
 
@@ -554,7 +599,13 @@ async function seed() {
     'Riverdale Charter',
   ]
   const grades = ['1', '2', '3', '4', '5', '6']
-  const courses = ['Scratch 1', 'Python 1', 'Python 2', 'Web Development']
+  const courses = [
+    'Scratch 1',
+    'Python 1',
+    'Python 2',
+    'Web Development',
+    'Mathematics 2a',
+  ]
 
   for (let i = 0; i < 30; i++) {
     const id = `reg-fake-${i}`
@@ -748,6 +799,68 @@ async function seed() {
       classIds: ['class-python1'],
     })
 
+  console.log(`Seeding mock application for instructor-rejected-uid...`)
+  const appInstructorRejected = {
+    ...appInstructorDemo,
+    personal: {
+      ...appInstructorDemo.personal,
+      email: 'instructor-rejected@gbstem.org',
+      firstName: 'Rejected',
+      lastName: 'Instructor',
+    },
+    meta: {
+      id: 'instructor-rejected-uid',
+      uid: 'instructor-rejected-uid',
+      interview: true,
+      submitted: true,
+      decision: db
+        .collection(decisionsCollection)
+        .doc('instructor-rejected-uid'),
+    },
+  }
+  validateApplication(appInstructorRejected, 'instructor-rejected-uid')
+  await db
+    .collection(applicationsCollection)
+    .doc('instructor-rejected-uid')
+    .set(appInstructorRejected)
+
+  console.log(`Seeding mock decision for instructor-rejected-uid...`)
+  await db.collection(decisionsCollection).doc('instructor-rejected-uid').set({
+    type: 'rejected',
+    notes: 'We are unable to offer you a position.',
+  })
+
+  console.log(`Seeding mock application for instructor-interview-uid...`)
+  const appInstructorInterview = {
+    ...appInstructorDemo,
+    personal: {
+      ...appInstructorDemo.personal,
+      email: 'instructor-interview@gbstem.org',
+      firstName: 'Interview',
+      lastName: 'Instructor',
+    },
+    meta: {
+      id: 'instructor-interview-uid',
+      uid: 'instructor-interview-uid',
+      interview: true,
+      submitted: true,
+      decision: db
+        .collection(decisionsCollection)
+        .doc('instructor-interview-uid'),
+    },
+  }
+  validateApplication(appInstructorInterview, 'instructor-interview-uid')
+  await db
+    .collection(applicationsCollection)
+    .doc('instructor-interview-uid')
+    .set(appInstructorInterview)
+
+  console.log(`Seeding mock decision for instructor-interview-uid...`)
+  await db.collection(decisionsCollection).doc('instructor-interview-uid').set({
+    type: 'interview',
+    notes: 'Please schedule your interview.',
+  })
+
   // Seeding 30 applications
   console.log('Seeding 30 additional mock applications...')
   for (let i = 0; i < 30; i++) {
@@ -922,18 +1035,22 @@ async function seed() {
   console.log(
     `Seeding mock interview slots in "${interviewTimesCollection}"...`,
   )
-  await db.collection(interviewTimesCollection).doc('slot-1').set({
-    date: '2026-02-15T10:00:00Z',
-    id: 'slot-1',
-    interviewerName: 'Demo Admin',
-    intervieweeFirstName: 'David',
-    intervieweeLastName: 'Miller',
-    intervieweeEmail: 'applicant1@gmail.com',
-    intervieweeId: 'user_app1',
-    interviewerEmail: 'demo@gbstem.org',
-    interviewSlotStatus: 'available',
-    meetingLink: 'https://zoom.us/j/555555555',
-  })
+  const dynamicFutureDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+  await db
+    .collection(interviewTimesCollection)
+    .doc('slot-1')
+    .set({
+      date: admin.firestore.Timestamp.fromDate(dynamicFutureDate),
+      id: 'slot-1',
+      interviewerName: 'Demo Admin',
+      intervieweeFirstName: 'David',
+      intervieweeLastName: 'Miller',
+      intervieweeEmail: 'applicant1@gmail.com',
+      intervieweeId: 'user_app1',
+      interviewerEmail: 'demo@gbstem.org',
+      interviewSlotStatus: 'available',
+      meetingLink: 'https://zoom.us/j/555555555',
+    })
 
   // Create Announcements (30 records)
   console.log('Seeding 30 mock announcements...')

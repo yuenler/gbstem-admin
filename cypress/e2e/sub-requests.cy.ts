@@ -99,24 +99,24 @@ describe('Section J: Substitute Requests Log', () => {
                 'Dentist appointment fake #1.',
               ],
               [
-                'sub-req-fake-13',
+                'sub-req-fake-11',
                 'Python 1',
-                '2',
-                'instructor-fake-13@gbstem.org',
-                'accepted',
-                'Jessica',
-                'sub-13@gbstem.org',
-                'Dentist appointment fake #13.',
+                '4',
+                'instructor-fake-11@gbstem.org',
+                'completed',
+                'Susan',
+                'sub-11@gbstem.org',
+                'Dentist appointment fake #11.',
               ],
               [
-                'sub-req-fake-17',
+                'sub-req-fake-16',
                 'Python 1',
-                '2',
-                'instructor-fake-17@gbstem.org',
-                'completed',
-                'Karen',
-                'sub-17@gbstem.org',
-                'Dentist appointment fake #17.',
+                '1',
+                'instructor-fake-16@gbstem.org',
+                'accepted',
+                'Charles',
+                'sub-16@gbstem.org',
+                'Dentist appointment fake #16.',
               ],
               [
                 'sub-req-fake-21',
@@ -129,14 +129,14 @@ describe('Section J: Substitute Requests Log', () => {
                 'Dentist appointment fake #21.',
               ],
               [
-                'sub-req-fake-25',
+                'sub-req-fake-26',
                 'Python 1',
-                '2',
-                'instructor-fake-25@gbstem.org',
-                'accepted',
-                'Margaret',
-                'sub-25@gbstem.org',
-                'Dentist appointment fake #25.',
+                '3',
+                'instructor-fake-26@gbstem.org',
+                'completed',
+                'Mark',
+                'sub-26@gbstem.org',
+                'Dentist appointment fake #26.',
               ],
             ])
           })
@@ -161,9 +161,9 @@ describe('Section J: Substitute Requests Log', () => {
       })
 
     // Click on a row containing notes
-    cy.contains('tr', 'instructor-fake-25@gbstem.org').click()
+    cy.contains('tr', 'instructor-fake-26@gbstem.org').click()
     cy.get('[role="dialog"]').should('exist')
-    cy.get('[role="dialog"]').contains('div', 'Dentist appointment fake #25.')
+    cy.get('[role="dialog"]').contains('div', 'Dentist appointment fake #26.')
 
     // Click Close inside the dialog
     cy.contains('button', 'Close').click()
