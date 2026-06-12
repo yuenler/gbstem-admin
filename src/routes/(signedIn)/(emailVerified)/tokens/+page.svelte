@@ -44,23 +44,22 @@
           checked.length > 1 ? 'tokens' : 'token'
         }`,
         color: 'red',
-        callback: () =>
-          new Promise<void>((resolve, reject) => {
-            Promise.all(
+        callback: async () => {
+          try {
+            await Promise.all(
               checked.map((i) => {
                 const token = data.tokens[i]
                 return deleteDoc(doc(db, 'tokens', token.id))
               }),
             )
-              .then(() => {
-                invalidate('app:tokens').then(() => {
-                  checked = []
-                  alert.trigger('success', 'Token deleted.')
-                  resolve()
-                })
-              })
-              .catch(reject)
-          }),
+            await invalidate('app:tokens')
+            checked = []
+            alert.trigger('success', 'Token deleted.')
+          } catch (err: any) {
+            console.error('Failed to delete tokens:', err)
+            throw err
+          }
+        },
       },
     ])
   } else {
@@ -90,28 +89,28 @@
   function handleCreate() {
     create = true
   }
-  function handleCopyAction(token: { id: string; values: Data.Token<'pojo'> }) {
-    writeToClipboard(`${$page.url.host}/signup?token=${token.id}`)
-      .then(() => {
-        alert.trigger('success', 'Token copied.')
-      })
-      .catch(() => {
-        alert.trigger('error', 'Failed to copy token.')
-      })
-  }
-  function handleDeleteAction(token: {
+  async function handleCopyAction(token: {
     id: string
     values: Data.Token<'pojo'>
   }) {
-    deleteDoc(doc(db, 'tokens', token.id))
-      .then(() => {
-        invalidate('app:tokens').then(() => {
-          alert.trigger('success', 'Token deleted.')
-        })
-      })
-      .catch((err: FirebaseError) => {
-        alert.trigger('error', err.message)
-      })
+    try {
+      await writeToClipboard(`${$page.url.host}/signup?token=${token.id}`)
+      alert.trigger('success', 'Token copied.')
+    } catch {
+      alert.trigger('error', 'Failed to copy token.')
+    }
+  }
+  async function handleDeleteAction(token: {
+    id: string
+    values: Data.Token<'pojo'>
+  }) {
+    try {
+      await deleteDoc(doc(db, 'tokens', token.id))
+      await invalidate('app:tokens')
+      alert.trigger('success', 'Token deleted.')
+    } catch (err: any) {
+      alert.trigger('error', err.message)
+    }
   }
 </script>
 

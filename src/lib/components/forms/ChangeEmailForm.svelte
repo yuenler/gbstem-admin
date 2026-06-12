@@ -40,28 +40,33 @@
     alert.trigger('info', 'Email change canceled.')
   }
 
-  function handleReauthenticate() {
+  async function handleReauthenticate() {
     if ($user) {
       dialogEl.close()
       const payload: ActionRequestBody = {
         type: 'changeEmail',
         newEmail: emailToUpdate,
       }
-      fetch('/api/action', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      }).then(async (res) => {
+      try {
+        const res = await fetch('/api/action', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        })
         if (res.ok) {
           alert.trigger('info', 'A verification email was sent.')
         } else {
           const { message } = await res.json()
           alert.trigger('error', message)
         }
+      } catch (err: any) {
+        console.error('Email change error:', err)
+        alert.trigger('error', err.message || 'An error occurred.')
+      } finally {
         reset()
-      })
+      }
     }
   }
 </script>

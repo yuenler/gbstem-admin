@@ -112,20 +112,22 @@
   let formEl: HTMLFormElement
 
   $: if (id !== undefined) {
-    loading = true
-    disabled = true
-    values = cloneDeep(defaultValues)
-    getDoc(doc(db, collection, id)).then((applicationSnapshot) => {
-      const data = applicationSnapshot.data() as Data.Application<'client'>
-      if (applicationSnapshot.exists()) {
-        values = cloneDeep(data)
-        dbValues = cloneDeep(data)
+    ;(async () => {
+      loading = true
+      disabled = true
+      values = cloneDeep(defaultValues)
+      try {
+        const applicationSnapshot = await getDoc(doc(db, collection, id))
+        if (applicationSnapshot.exists()) {
+          const data = applicationSnapshot.data() as Data.Application<'client'>
+          values = cloneDeep(data)
+          dbValues = cloneDeep(data)
 
-        // Data populated in form child component
-        if (data.meta.decision) {
-          getDoc(data.meta.decision).then((decisionSnapshot) => {
-            const data = decisionSnapshot.data() as Data.Interview
+          // Data populated in form child component
+          if (data.meta.decision) {
+            const decisionSnapshot = await getDoc(data.meta.decision)
             if (decisionSnapshot.exists()) {
+              const dData = decisionSnapshot.data() as Data.Interview
               const {
                 type,
                 likelyDecision,
@@ -144,7 +146,7 @@
                 teachingPreferences,
                 availabilityNotes,
                 date,
-              } = data
+              } = dData
               decision = type ?? null
               interview.type = type ?? ''
               interview.likelyDecision = likelyDecision ?? null
@@ -168,32 +170,45 @@
               interview.likelyDecision = null
               interview = cloneDeep(defaultInterview)
             }
-            loading = false
-          })
+          } else {
+            decision = null
+            interview.likelyDecision = null
+            interview = cloneDeep(defaultInterview)
+          }
         } else {
-          decision = null
-          interview.likelyDecision = null
-          interview = cloneDeep(defaultInterview)
-          loading = false
+          alert.trigger('error', 'Application not found.')
         }
-      } else {
-        alert.trigger('error', 'Application not found.')
+      } catch (err: any) {
+        console.error('Failed to load application:', err)
+        alert.trigger('error', 'Failed to load application.')
+      } finally {
+        loading = false
       }
-    })
-    getDoc(doc(db, 'semesterDates', semesterDatesDocument)).then((dateSnap) => {
-      if (dateSnap.exists()) {
-        semesterStartDate = formatDateShort(
-          new Date(dateSnap.data().classesStart),
+    })()
+    ;(async () => {
+      try {
+        const dateSnap = await getDoc(
+          doc(db, 'semesterDates', semesterDatesDocument),
         )
-        semesterEndDate = formatDateShort(new Date(dateSnap.data().classesEnd))
+        if (dateSnap.exists()) {
+          semesterStartDate = formatDateShort(
+            new Date(dateSnap.data().classesStart),
+          )
+          semesterEndDate = formatDateShort(
+            new Date(dateSnap.data().classesEnd),
+          )
+        }
+      } catch (err) {
+        console.error('Failed to load semester dates:', err)
       }
-    })
+    })()
   }
 
-  function saveNotes() {
+  async function saveNotes() {
     const frozenId = id
+    if (frozenId === undefined) return
     loading = true
-    if (frozenId !== undefined) {
+    try {
       const {
         conversation,
         conversationNotes,
@@ -211,8 +226,9 @@
         interviewer,
         attendance,
       } = interview
-      setDoc(
-        doc(db, decisionsCollection, frozenId),
+      const decisionDocRef = doc(db, decisionsCollection, frozenId)
+      await setDoc(
+        decisionDocRef,
         {
           conversation,
           conversationNotes,
@@ -232,62 +248,46 @@
         },
         { merge: true },
       )
-        .then(() => {
-          updateDoc(doc(db, applicationsCollection, frozenId), {
-            'meta.decision': doc(db, decisionsCollection, frozenId),
-          })
-            .then(() => {
-              invalidate('app:applications').then(() => {
-                alert.trigger('success', 'Notes updated successfully.')
-                loading = false
-              })
-            })
-            .catch(() => {
-              loading = false
-            })
-        })
-        .catch((err) => {
-          alert.trigger('error', 'Something went wrong. Please try again.')
-          loading = false
-          console.error('Decisions update error:', err)
-        })
+      await updateDoc(doc(db, applicationsCollection, frozenId), {
+        'meta.decision': decisionDocRef,
+      })
+      await invalidate('app:applications')
+      alert.trigger('success', 'Notes updated successfully.')
+    } catch (err: any) {
+      alert.trigger('error', 'Something went wrong. Please try again.')
+      console.error('Decisions update error:', err)
+    } finally {
+      loading = false
     }
   }
 
-  function handleLikelyDecision(
+  async function handleLikelyDecision(
     newDecision: 'likely yes' | 'likely no' | 'likely waitlist' | null,
   ) {
     const frozenId = id
+    if (frozenId === undefined) return
     loading = true
-    if (frozenId !== undefined) {
-      setDoc(
-        doc(db, decisionsCollection, frozenId),
+    try {
+      const decisionDocRef = doc(db, decisionsCollection, frozenId)
+      await setDoc(
+        decisionDocRef,
         {
           likelyDecision: newDecision,
           type: decision ?? null,
         },
         { merge: true },
       )
-        .then(() => {
-          updateDoc(doc(db, applicationsCollection, frozenId), {
-            'meta.decision': doc(db, decisionsCollection, frozenId),
-          })
-            .then(() => {
-              invalidate('app:applications').then(() => {
-                alert.trigger('success', 'Decision updated successfully.')
-                interview.likelyDecision = newDecision
-                loading = false
-              })
-            })
-            .catch(() => {
-              loading = false
-            })
-        })
-        .catch((err) => {
-          alert.trigger('error', 'Something went wrong. Please try again.')
-          loading = false
-          console.error('Decision likely decision update error:', err)
-        })
+      await updateDoc(doc(db, applicationsCollection, frozenId), {
+        'meta.decision': decisionDocRef,
+      })
+      await invalidate('app:applications')
+      alert.trigger('success', 'Decision updated successfully.')
+      interview.likelyDecision = newDecision
+    } catch (err: any) {
+      alert.trigger('error', 'Something went wrong. Please try again.')
+      console.error('Decision likely decision update error:', err)
+    } finally {
+      loading = false
     }
   }
 
@@ -296,18 +296,22 @@
     let weekDeadline = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
     let interviewDeadline = formatDateShort(weekDeadline)
 
-    const dueDate = await getDoc(
-      doc(db, 'semesterDates', semesterDatesDocument),
-    )
-    if (dueDate.exists()) {
-      interviewDeadline = formatDateShort(
-        new Date(
-          Math.min(
-            weekDeadline.getTime(),
-            new Date(dueDate.data().instructorOrientation).getTime(),
-          ),
-        ),
+    try {
+      const dueDate = await getDoc(
+        doc(db, 'semesterDates', semesterDatesDocument),
       )
+      if (dueDate.exists()) {
+        interviewDeadline = formatDateShort(
+          new Date(
+            Math.min(
+              weekDeadline.getTime(),
+              new Date(dueDate.data().instructorOrientation).getTime(),
+            ),
+          ),
+        )
+      }
+    } catch (err) {
+      console.error('Failed to get semester dates:', err)
     }
 
     const confirmation = confirm(
@@ -317,8 +321,9 @@
       return
     }
     const frozenId = id
+    if (frozenId === undefined) return
     loading = true
-    if (frozenId !== undefined) {
+    try {
       interview.type = newDecision
       const {
         type,
@@ -339,7 +344,8 @@
         date,
         likelyDecision,
       } = interview
-      setDoc(doc(db, decisionsCollection, frozenId), {
+      const decisionDocRef = doc(db, decisionsCollection, frozenId)
+      await setDoc(decisionDocRef, {
         type,
         likelyDecision,
         notes,
@@ -358,57 +364,49 @@
         availabilityNotes,
         date,
       })
-        .then(() => {
-          updateDoc(doc(db, applicationsCollection, frozenId), {
-            'meta.decision': doc(db, decisionsCollection, frozenId),
-          })
-            .then(() => {
-              invalidate('app:applications').then(() => {
-                alert.trigger('success', 'Decision updated successfully.')
-                decision = newDecision
-                loading = false
-              })
-              if (newDecision === 'interview') {
-                const payload: ScheduleInterviewRequestBody = {
-                  email: values.personal.email,
-                  name: values.personal.firstName,
-                  deadline: interviewDeadline,
-                }
-                fetch('/api/scheduleInterview', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify(payload),
-                })
-              } else {
-                const payload: DecisionRequestBody = {
-                  decision: newDecision as
-                    | 'rejected'
-                    | 'waitlisted'
-                    | 'substitute'
-                    | 'accepted',
-                  email: values.personal.email,
-                  name: values.personal.firstName,
-                }
-                fetch('/api/decision', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify(payload),
-                })
-              }
-            })
-            .catch(() => {
-              loading = false
-            })
+      await updateDoc(doc(db, applicationsCollection, frozenId), {
+        'meta.decision': decisionDocRef,
+      })
+      await invalidate('app:applications')
+      alert.trigger('success', 'Decision updated successfully.')
+      decision = newDecision
+
+      if (newDecision === 'interview') {
+        const payload: ScheduleInterviewRequestBody = {
+          email: values.personal.email,
+          name: values.personal.firstName,
+          deadline: interviewDeadline,
+        }
+        await fetch('/api/scheduleInterview', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
         })
-        .catch((err) => {
-          alert.trigger('error', 'Something went wrong. Please try again.')
-          loading = false
-          console.error('Decision update error:', err)
+      } else {
+        const payload: DecisionRequestBody = {
+          decision: newDecision as
+            | 'rejected'
+            | 'waitlisted'
+            | 'substitute'
+            | 'accepted',
+          email: values.personal.email,
+          name: values.personal.firstName,
+        }
+        await fetch('/api/decision', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
         })
+      }
+    } catch (err: any) {
+      alert.trigger('error', 'Something went wrong. Please try again.')
+      console.error('Decision update error:', err)
+    } finally {
+      loading = false
     }
   }
 

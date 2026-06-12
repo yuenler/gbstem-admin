@@ -13,7 +13,7 @@
   let values = {
     email: '',
   }
-  function handleSubmit(e: CustomEvent<SubmitData>) {
+  async function handleSubmit(e: CustomEvent<SubmitData>) {
     if (e.detail.error === null) {
       showValidation = false
       disabled = true
@@ -21,13 +21,14 @@
         type: 'resetPassword',
         email: values.email,
       }
-      fetch('/api/action', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      }).then(async (res) => {
+      try {
+        const res = await fetch('/api/action', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        })
         if (res.ok) {
           alert.trigger(
             'info',
@@ -37,11 +38,15 @@
           const { message } = await res.json()
           alert.trigger('error', message)
         }
+      } catch (err: any) {
+        console.error('Password reset error:', err)
+        alert.trigger('error', err.message || 'An error occurred.')
+      } finally {
         values = {
           email: '',
         }
         disabled = false
-      })
+      }
     } else {
       showValidation = true
       alert.trigger('error', e.detail.error)

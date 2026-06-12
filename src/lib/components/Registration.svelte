@@ -76,20 +76,27 @@
   let formEl: HTMLFormElement
 
   $: if (id !== undefined) {
-    loading = true
-    disabled = true
-    values = cloneDeep(defaultValues)
-    getDoc(doc(db, collection, id)).then((registrationSnapshot) => {
-      const data = registrationSnapshot.data() as Data.Registration<'client'>
-      if (registrationSnapshot.exists()) {
-        values = cloneDeep(data)
-        dbValues = cloneDeep(data)
-        loading = false
-      } else {
-        alert.trigger('error', 'Registration not found.')
+    ;(async () => {
+      loading = true
+      disabled = true
+      values = cloneDeep(defaultValues)
+      try {
+        const registrationSnapshot = await getDoc(doc(db, collection, id))
+        if (registrationSnapshot.exists()) {
+          const data =
+            registrationSnapshot.data() as Data.Registration<'client'>
+          values = cloneDeep(data)
+          dbValues = cloneDeep(data)
+        } else {
+          alert.trigger('error', 'Registration not found.')
+        }
+      } catch (err: any) {
+        console.error('Failed to load registration:', err)
+        alert.trigger('error', 'Failed to load registration.')
+      } finally {
         loading = false
       }
-    })
+    })()
   }
 
   function handleEdit() {

@@ -78,12 +78,13 @@ function userStore() {
     undefined,
     (set) => {
       if (!isBrowser) return
-      return onAuthStateChanged(auth, (userObject) => {
+      return onAuthStateChanged(auth, async (userObject) => {
         if (userObject) {
           if (!userObject.emailVerified) {
             localStorage.setItem('emailVerified', 'false')
           }
-          userObject.getIdTokenResult().then((idTokenResult) => {
+          try {
+            const idTokenResult = await userObject.getIdTokenResult()
             const { role } = idTokenResult.claims as { role: Data.Role }
             set({
               object: userObject,
@@ -91,7 +92,10 @@ function userStore() {
                 role,
               },
             })
-          })
+          } catch (err) {
+            console.error('Failed to get user id token result:', err)
+            set(null)
+          }
         } else {
           set(null)
         }

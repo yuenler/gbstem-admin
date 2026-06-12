@@ -125,30 +125,28 @@ if (!building) {
   adminDb = {} as Firestore
 }
 
-export function verifyToken(token: string) {
-  return new Promise<Data.Token<'server'>>((resolve, reject) => {
-    adminDb
-      .collection('tokens')
-      .doc(token)
-      .get()
-      .then((tokenDoc: DocumentSnapshot) => {
-        if (tokenDoc.exists) {
-          const tokenData = tokenDoc.data() as Data.Token<'server'>
-          if (tokenData.expires.toDate() > new Date()) {
-            // even if `consumable`, allows for 2 consumers as race condition
-            // it's alright though
-            if (tokenData.consumable && tokenData.consumers.length >= 1) {
-              reject('consumed')
-            } else {
-              resolve(tokenData)
-            }
-          } else {
-            reject('expired')
-          }
-        } else {
-          reject('fake')
-        }
-      })
-      .catch(() => reject('unknown'))
-  })
+export async function verifyToken(
+  token: string,
+): Promise<Data.Token<'server'>> {
+  try {
+    const tokenDoc = await adminDb.collection('tokens').doc(token).get()
+    if (!tokenDoc.exists) {
+      throw 'fake'
+    }
+    const tokenData = tokenDoc.data() as Data.Token<'server'>
+    if (tokenData.expires.toDate() <= new Date()) {
+      throw 'expired'
+    }
+    // even if `consumable`, allows for 2 consumers as race condition
+    // it's alright though
+    if (tokenData.consumable && tokenData.consumers.length >= 1) {
+      throw 'consumed'
+    }
+    return tokenData
+  } catch (err) {
+    if (err === 'fake' || err === 'expired' || err === 'consumed') {
+      throw err
+    }
+    throw 'unknown'
+  }
 }

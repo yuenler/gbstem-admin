@@ -298,37 +298,35 @@
           <li>{data.applications.enrolled} students enrolled.</li>
         </ol>
         <Button
-          on:click={() => {
-            writeToClipboard(uncompletedRegistrationsEmails)
-              .then(() => {
-                alert.trigger(
-                  'success',
-                  'Emails of uncompleted registrations copied to clipboard.',
-                )
-              })
-              .catch(() => {
-                alert.trigger(
-                  'error',
-                  'Failed to copy emails of uncompleted registrations.',
-                )
-              })
+          on:click={async () => {
+            try {
+              await writeToClipboard(uncompletedRegistrationsEmails)
+              alert.trigger(
+                'success',
+                'Emails of uncompleted registrations copied to clipboard.',
+              )
+            } catch {
+              alert.trigger(
+                'error',
+                'Failed to copy emails of uncompleted registrations.',
+              )
+            }
           }}>Copy Emails for Uncompleted Registrations</Button
         >
         <Button
-          on:click={() => {
-            writeToClipboard(uncompletedApplicationsEmails)
-              .then(() => {
-                alert.trigger(
-                  'success',
-                  'Emails of uncompleted applications copied to clipboard.',
-                )
-              })
-              .catch(() => {
-                alert.trigger(
-                  'error',
-                  'Failed to copy emails of uncompleted applications.',
-                )
-              })
+          on:click={async () => {
+            try {
+              await writeToClipboard(uncompletedApplicationsEmails)
+              alert.trigger(
+                'success',
+                'Emails of uncompleted applications copied to clipboard.',
+              )
+            } catch {
+              alert.trigger(
+                'error',
+                'Failed to copy emails of uncompleted applications.',
+              )
+            }
           }}>Copy Emails for Uncompleted Applications</Button
         >
       </Card>

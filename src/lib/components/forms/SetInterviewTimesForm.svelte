@@ -7,7 +7,7 @@
     interviewTimesCollection,
   } from '$lib/data/collections'
   import { alert } from '$lib/stores'
-  import { formatDate, formatDateLocal, toLocalISOString, cn } from '$lib/utils'
+  import { cn, formatDate, formatDateLocal, toLocalISOString } from '$lib/utils'
   import {
     collection,
     deleteDoc,
@@ -167,34 +167,41 @@
       },
     ]
 
-    await setDoc(doc(db, interviewTimesCollection, interviewSlotToAdd.id), {
-      ...interviewSlotToAdd,
-      date: new Date(interviewSlotToAdd.date),
-    })
-    if (interviewSlotToAdd.intervieweeId != '') {
-      await updateDoc(
-        doc(db, applicationsCollection, selectedIntervieweeDocId),
-        {
-          'meta.interview': true,
-        },
-      )
-      const payload: AssignInterviewRequestBody = {
-        intervieweeEmail: interviewSlotToAdd.intervieweeEmail || '',
-        firstName: interviewSlotToAdd.intervieweeFirstName || '',
-        interviewer: interviewSlotToAdd.interviewerName || '',
-        email: interviewSlotToAdd.interviewerEmail || '',
-        link: interviewSlotToAdd.meetingLink || '',
-        date: formatDateLocal(interviewSlotToAdd.date),
-      }
-      await fetch('/api/assignInterview', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+    try {
+      await setDoc(doc(db, interviewTimesCollection, interviewSlotToAdd.id), {
+        ...interviewSlotToAdd,
+        date: new Date(interviewSlotToAdd.date),
       })
+      if (interviewSlotToAdd.intervieweeId != '') {
+        await updateDoc(
+          doc(db, applicationsCollection, selectedIntervieweeDocId),
+          {
+            'meta.interview': true,
+          },
+        )
+        const payload: AssignInterviewRequestBody = {
+          intervieweeEmail: interviewSlotToAdd.intervieweeEmail || '',
+          firstName: interviewSlotToAdd.intervieweeFirstName || '',
+          interviewer: interviewSlotToAdd.interviewerName || '',
+          email: interviewSlotToAdd.interviewerEmail || '',
+          link: interviewSlotToAdd.meetingLink || '',
+          date: formatDateLocal(interviewSlotToAdd.date),
+        }
+        await fetch('/api/assignInterview', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        })
+        alert.trigger('success', 'Interviewee assigned and email sent.')
+      } else {
+        alert.trigger('success', 'Timeslot added successfully.')
+      }
+    } catch (err: any) {
+      console.error('Add timeslot error:', err)
+      alert.trigger('error', 'Failed to add timeslot.')
     }
-    alert.trigger('success', 'Interviewee assigned and email sent.')
     interviewSlotToAdd.meetingLink = ''
     interviewSlotToAdd.date = ''
     interviewSlotToAdd.intervieweeId = ''
@@ -227,12 +234,17 @@
       )
       return
     }
-    setDoc(doc(db, interviewTimesCollection, interview.id), {
-      ...interview,
-      date: new Date(interview.date),
-    })
-    alert.trigger('success', 'Timeslot updated successfully.')
-    allInterviewSlots = await getData()
+    try {
+      await setDoc(doc(db, interviewTimesCollection, interview.id), {
+        ...interview,
+        date: new Date(interview.date),
+      })
+      alert.trigger('success', 'Timeslot updated successfully.')
+      allInterviewSlots = await getData()
+    } catch (err: any) {
+      console.error('Update timeslot error:', err)
+      alert.trigger('error', 'Failed to update timeslot.')
+    }
   }
 
   const deleteTime = async (interview: Data.InterviewSlot) => {
@@ -244,13 +256,15 @@
         'error',
         'This interview does not belong to you and you are not an admin!',
       )
-    } else {
-      deleteDoc(doc(db, interviewTimesCollection, interview.id)).then(
-        async () => {
-          allInterviewSlots = await getData()
-          alert.trigger('success', 'Timeslot successfully deleted.')
-        },
-      )
+      return
+    }
+    try {
+      await deleteDoc(doc(db, interviewTimesCollection, interview.id))
+      allInterviewSlots = await getData()
+      alert.trigger('success', 'Timeslot successfully deleted.')
+    } catch (err: any) {
+      console.error('Delete timeslot error:', err)
+      alert.trigger('error', 'Failed to delete timeslot.')
     }
   }
 </script>
@@ -333,14 +347,8 @@
                 >
               </div>
               <div class="right-2 items-center">
-                <Button
-                  color="blue"
-                  class="my-4 px-2 py-1"
-                  on:click={() => {
-                    addTime().then(() => {
-                      alert.trigger('success', 'Timeslot added successfully.')
-                    })
-                  }}>Confirm Timeslot</Button
+                <Button color="blue" class="my-4 px-2 py-1" on:click={addTime}
+                  >Confirm Timeslot</Button
                 >
               </div>
             </Card>

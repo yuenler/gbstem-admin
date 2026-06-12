@@ -43,16 +43,23 @@
   }
 
   $: if (id !== undefined) {
-    loading = true
-    disabled = true
-    getDoc(doc(db, instructorFeedbackCollection, id)).then((snapshot) => {
-      let data = snapshot.data() as ClientInstructorFeedback
-      if (snapshot.exists()) {
-        values = data
-      } else {
-        alert.trigger('error', 'Registration not found.')
+    ;(async () => {
+      loading = true
+      disabled = true
+      try {
+        const snapshot = await getDoc(doc(db, instructorFeedbackCollection, id))
+        if (snapshot.exists()) {
+          values = snapshot.data() as ClientInstructorFeedback
+        } else {
+          alert.trigger('error', 'Feedback not found.')
+        }
+      } catch (err: any) {
+        console.error('Failed to load feedback:', err)
+        alert.trigger('error', 'Failed to load feedback.')
+      } finally {
+        loading = false
       }
-    })
+    })()
   }
 </script>
 

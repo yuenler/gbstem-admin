@@ -29,32 +29,32 @@
     {
       SPA: true,
       validators: zod(schema as any) as any,
-      onUpdate({ form: formVal }) {
+      async onUpdate({ form: formVal }) {
         if (!formVal.valid) return
 
-        addDoc(collection(db, 'tokens'), {
-          role: formVal.data.role,
-          consumable: formVal.data.consumable,
-          expires: addHours(new Date(), formVal.data.expires),
-          consumers: [],
-        } as Data.Token<'pojo'>)
-          .then((snapshot) => {
-            invalidate('app:applications').then(() => {
-              const next = () => {
-                invalidate('app:tokens').then(() => {
-                  alert.trigger('success', 'Changes were saved successfully.')
-                  dialogEl.close()
-                })
-              }
-              writeToClipboard(`${$page.url.host}/signup?token=${snapshot.id}`)
-                .then(next)
-                .catch(next)
-            })
-          })
-          .catch((err: FirebaseError) => {
-            console.error('Token creation error:', err)
-            alert.trigger('error', err.code, true)
-          })
+        try {
+          const snapshot = await addDoc(collection(db, 'tokens'), {
+            role: formVal.data.role,
+            consumable: formVal.data.consumable,
+            expires: addHours(new Date(), formVal.data.expires),
+            consumers: [],
+          } as Data.Token<'pojo'>)
+
+          await invalidate('app:applications')
+          try {
+            await writeToClipboard(
+              `${$page.url.host}/signup?token=${snapshot.id}`,
+            )
+          } catch {
+            // ignore clipboard errors
+          }
+          await invalidate('app:tokens')
+          alert.trigger('success', 'Changes were saved successfully.')
+          dialogEl.close()
+        } catch (err: any) {
+          console.error('Token creation error:', err)
+          alert.trigger('error', err.code || err.message, true)
+        }
       },
     },
   )

@@ -210,17 +210,16 @@
   // // Watch for id changes and reload
   $: if (id && id !== currentStudentId) {
     currentStudentId = id
-
-    loading = true
-
-    loadStudentClasses(id)
-      .then(() => {
-        loading = false
-      })
-      .catch((err) => {
+    ;(async () => {
+      loading = true
+      try {
+        await loadStudentClasses(id)
+      } catch (err) {
         console.error('Student classes load error:', err)
+      } finally {
         loading = false
-      })
+      }
+    })()
   }
 
   // Update selected class IDs

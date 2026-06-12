@@ -48,18 +48,16 @@
             ...values,
             ...formVal.data,
           }
-          setDoc(doc(db, classesCollection, id), updatedValues)
-            .then(() => {
-              values = updatedValues
-              disabled = true
-              invalidate('app:registrations').then(() => {
-                alert.trigger('success', 'Changes were saved successfully.')
-              })
-            })
-            .catch((err: FirebaseError) => {
-              console.error('Class save changes error:', err)
-              alert.trigger('error', err.code, true)
-            })
+          try {
+            await setDoc(doc(db, classesCollection, id), updatedValues)
+            values = updatedValues
+            disabled = true
+            await invalidate('app:registrations')
+            alert.trigger('success', 'Changes were saved successfully.')
+          } catch (err: any) {
+            console.error('Class save changes error:', err)
+            alert.trigger('error', err.code || err.message, true)
+          }
         }
       },
     },

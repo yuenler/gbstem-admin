@@ -39,10 +39,10 @@ describe('Section H: Interview Timeslots Configuration', () => {
       })
     cy.wait(200)
 
-    // Confirm Timeslot
+    // Confirm Timeslot with an assigned interviewe
     cy.on('window:confirm', () => true)
     cy.contains('button', 'Confirm Timeslot').click({ force: true })
-    cy.waitForNotification('Timeslot added successfully.')
+    cy.waitForNotification('Interviewee assigned and email sent.')
     cy.wait(500)
 
     // Verify slot is created and appears in list

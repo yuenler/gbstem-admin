@@ -148,47 +148,37 @@
         checked.length > 1 ? 'applicants' : 'applicant'
       }`,
       color,
-      callback: () =>
-        new Promise<void>((resolve, reject) => {
-          Promise.all(
-            checked.map((i) => {
+      callback: async () => {
+        try {
+          await Promise.all(
+            checked.map(async (i) => {
               const id = data.applications[i].id
-              return new Promise<void>((resolve, reject) => {
-                setDoc(doc(db, 'decisions', id), {
-                  type: decision,
-                })
-                  .then(() => {
-                    updateDoc(doc(db, selectedCollection, id), {
-                      'meta.decision': doc(db, 'decisions', id),
-                    })
-                      .then(resolve)
-                      .catch(reject)
-                  })
-                  .catch(reject)
+              const decisionDocRef = doc(db, 'decisions', id)
+              await setDoc(decisionDocRef, {
+                type: decision,
+              })
+              await updateDoc(doc(db, selectedCollection, id), {
+                'meta.decision': decisionDocRef,
               })
             }),
           )
-            .then(() => {
-              invalidate('app:applications').then(() => {
-                alert.trigger(
-                  'success',
-                  `${checked.length} ${
-                    checked.length > 1 ? 'applicants' : 'applicant'
-                  } ${decision}.`,
-                )
-                checked = []
-                resolve()
-              })
-            })
-            .catch((err) => {
-              console.error('Failed to update decisions:', err)
-              alert.trigger(
-                'error',
-                `Failed to update decision: ${err.message || err}`,
-              )
-              reject(err)
-            })
-        }),
+          await invalidate('app:applications')
+          alert.trigger(
+            'success',
+            `${checked.length} ${
+              checked.length > 1 ? 'applicants' : 'applicant'
+            } ${decision}.`,
+          )
+          checked = []
+        } catch (err: any) {
+          console.error('Failed to update decisions:', err)
+          alert.trigger(
+            'error',
+            `Failed to update decision: ${err.message || err}`,
+          )
+          throw err
+        }
+      },
     }
   }
   function handleCheck(

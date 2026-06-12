@@ -9,49 +9,44 @@
 
   export let data: PageData
 
-  function handleCheckIn() {
+  async function handleCheckIn() {
     const hhidRef = doc(db, 'hhids', data.applicant.user.hhid)
-    updateDoc(hhidRef, {
-      checkedIn: true,
-      checkedInAt: serverTimestamp(),
-      food: {
-        '2023-10-20': {
-          dinner: false,
+    try {
+      await updateDoc(hhidRef, {
+        checkedIn: true,
+        checkedInAt: serverTimestamp(),
+        food: {
+          '2023-10-20': {
+            dinner: false,
+          },
+          '2023-10-21': {
+            breakfast: false,
+            lunch: false,
+            dinner: false,
+          },
+          '2023-10-22': {
+            breakfast: false,
+          },
         },
-        '2023-10-21': {
-          breakfast: false,
-          lunch: false,
-          dinner: false,
-        },
-        '2023-10-22': {
-          breakfast: false,
-        },
-      },
-    })
-      .then(() => {
-        invalidateAll()
-        alert.trigger('success', 'Checked in successfully.')
       })
-      .catch((err) => {
-        console.error('Check in failed:', err)
-        alert.trigger('error', `Check in failed: ${err.message || err}`)
-      })
+      await invalidateAll()
+      alert.trigger('success', 'Checked in successfully.')
+    } catch (err: any) {
+      console.error('Check in failed:', err)
+      alert.trigger('error', `Check in failed: ${err.message || err}`)
+    }
   }
 
-  function handleMeal(date: string, meal: string, state: boolean) {
-    updateDoc(doc(db, 'hhids', data.applicant.user.hhid), {
-      [`food.${date}.${meal}`]: !state,
-    })
-      .then(() => {
-        invalidateAll()
+  async function handleMeal(date: string, meal: string, state: boolean) {
+    try {
+      await updateDoc(doc(db, 'hhids', data.applicant.user.hhid), {
+        [`food.${date}.${meal}`]: !state,
       })
-      .catch((err) => {
-        console.error('Meal status update failed:', err)
-        alert.trigger(
-          'error',
-          `Meal status update failed: ${err.message || err}`,
-        )
-      })
+      await invalidateAll()
+    } catch (err: any) {
+      console.error('Meal status update failed:', err)
+      alert.trigger('error', `Meal status update failed: ${err.message || err}`)
+    }
   }
 </script>
 

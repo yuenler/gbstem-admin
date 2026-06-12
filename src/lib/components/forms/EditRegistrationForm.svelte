@@ -116,26 +116,24 @@
               ...formVal.data.agreements,
             },
           }
-          setDoc(doc(db, collection, id), updatedValues)
-            .then(() => {
-              values = updatedValues
-              dbValues = cloneDeep(updatedValues)
-              disabled = true
-              invalidate('app:registrations').then(() => {
-                alert.trigger('success', 'Changes were saved successfully.')
-              })
-            })
-            .catch((err: FirebaseError) => {
-              console.error('Registration save changes error:', err)
-              const isPermissionDenied =
-                err.code === 'permission-denied' ||
-                String(err).includes('permission') ||
-                String(err).includes('Permission')
-              const msg = isPermissionDenied
-                ? 'You do not have permission to modify this registration.'
-                : err.code
-              alert.trigger('error', msg, !isPermissionDenied)
-            })
+          try {
+            await setDoc(doc(db, collection, id), updatedValues)
+            values = updatedValues
+            dbValues = cloneDeep(updatedValues)
+            disabled = true
+            await invalidate('app:registrations')
+            alert.trigger('success', 'Changes were saved successfully.')
+          } catch (err: any) {
+            console.error('Registration save changes error:', err)
+            const isPermissionDenied =
+              err.code === 'permission-denied' ||
+              String(err).includes('permission') ||
+              String(err).includes('Permission')
+            const msg = isPermissionDenied
+              ? 'You do not have permission to modify this registration.'
+              : err.code || err.message
+            alert.trigger('error', msg, !isPermissionDenied)
+          }
         }
       },
     },

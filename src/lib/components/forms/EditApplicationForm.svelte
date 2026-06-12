@@ -108,21 +108,19 @@
               ...formVal.data.agreements,
             },
           }
-          setDoc(doc(db, collection, id), updatedValues)
-            .then(() => {
-              values = updatedValues
-              dbValues = cloneDeep(updatedValues)
-              disabled = true
-              invalidate('app:applications').then(() => {
-                alert.trigger('success', 'Changes were saved successfully.')
-                loading = false
-              })
-            })
-            .catch((err: FirebaseError) => {
-              console.error('Applications save changes error:', err)
-              alert.trigger('error', err.code, true)
-              loading = false
-            })
+          try {
+            await setDoc(doc(db, collection, id), updatedValues)
+            values = updatedValues
+            dbValues = cloneDeep(updatedValues)
+            disabled = true
+            await invalidate('app:applications')
+            alert.trigger('success', 'Changes were saved successfully.')
+          } catch (err: any) {
+            console.error('Applications save changes error:', err)
+            alert.trigger('error', err.code || err.message, true)
+          } finally {
+            loading = false
+          }
         }
       },
     },

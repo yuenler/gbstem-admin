@@ -138,14 +138,19 @@
     })
   }
 
-  const getStudentList = (studentUids: string[]) => {
-    studentUids.forEach((studentUid) => {
-      const studentDocRef = doc(db, registrationsCollection, studentUid)
-      getDoc(studentDocRef).then((studentDoc) => {
+  const getStudentList = async (studentUids: string[]) => {
+    try {
+      const docs = await Promise.all(
+        studentUids.map((studentUid) =>
+          getDoc(doc(db, registrationsCollection, studentUid)),
+        ),
+      )
+      const list: Student[] = []
+      docs.forEach((studentDoc) => {
         if (studentDoc.exists()) {
           const data = studentDoc.data()
           if (data) {
-            studentList.push({
+            list.push({
               name: `${normalizeCapitals(data.personal.studentFirstName + ' ' + data.personal.studentLastName)}`,
               email: data.personal.email,
               secondaryEmail: data.personal.secondaryEmail,
@@ -154,10 +159,13 @@
               school: data.academic.school,
             })
           }
-          studentList = [...studentList]
         }
       })
-    })
+      studentList = list
+    } catch (err) {
+      console.error('Failed to load student list:', err)
+      alert.trigger('error', 'Failed to load student list.')
+    }
   }
 </script>
 
