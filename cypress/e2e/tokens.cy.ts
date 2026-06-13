@@ -88,9 +88,16 @@ describe('Section K: Registration Signup Tokens', () => {
     cy.waitForNotification('Token copied.')
 
     // Click Delete on the admin token row
-    cy.get('@newAdminRow').within(() => {
-      cy.contains('button', 'Delete').click({ force: true })
-    })
-    cy.waitForNotification('Token deleted.')
+    cy.get('@newAdminRow')
+      .find('th')
+      .invoke('text')
+      .then((text) => {
+        const tokenId = text.trim()
+        cy.get('@newAdminRow').within(() => {
+          cy.contains('button', 'Delete').click({ force: true })
+        })
+        cy.waitForNotification('Token deleted.')
+        cy.get('tbody').should('not.contain', tokenId)
+      })
   })
 })

@@ -42,6 +42,7 @@ describe('Section L: Profile and Account Customization', () => {
       .find('button[type="submit"]')
       .click({ force: true })
     cy.waitForNotification('Name successfully updated.')
+    cy.get('input[name="full-name"]').should('have.value', newName)
     cy.wait(500)
 
     // 3. Change email to temp and then change it back
@@ -102,6 +103,12 @@ describe('Section L: Profile and Account Customization', () => {
       .find('button[type="submit"]')
       .click({ force: true })
     cy.waitForNotification('Password was successfully changed.')
+    cy.contains('span', 'Change password')
+      .parent()
+      .within(() => {
+        cy.get('input[name="new-password"]').should('have.value', '')
+        cy.get('input[name="confirm-password"]').should('have.value', '')
+      })
     cy.wait(1000)
 
     // Change password back to penguin
@@ -123,5 +130,11 @@ describe('Section L: Profile and Account Customization', () => {
       .find('button[type="submit"]')
       .click({ force: true })
     cy.waitForNotification('Password was successfully changed.')
+    cy.contains('span', 'Change password')
+      .parent()
+      .within(() => {
+        cy.get('input[name="new-password"]').should('have.value', '')
+        cy.get('input[name="confirm-password"]').should('have.value', '')
+      })
   })
 })

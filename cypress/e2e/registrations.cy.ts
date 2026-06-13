@@ -208,6 +208,9 @@ describe('Section G: Pre-Registrations Directory', () => {
         cy.get('td').eq(8).find('input[type="checkbox"]').check()
       })
     cy.waitForNotification('Bypass age limits updated successfully.')
+    cy.contains('tr', 'Charlie Brown').within(() => {
+      cy.get('td').eq(8).find('input[type="checkbox"]').should('be.checked')
+    })
 
     // Open Registration details modal for Charlie Brown
     cy.contains('td', 'Charlie Brown').click()
