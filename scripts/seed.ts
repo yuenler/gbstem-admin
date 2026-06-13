@@ -171,6 +171,9 @@ async function seed() {
     'users',
     'ids',
     'instructorClasses',
+    'interviewTimeRequests',
+    'mail',
+    'semesterDates',
   ]
   for (const collectionName of collectionsToClear) {
     await deleteCollection(collectionName)

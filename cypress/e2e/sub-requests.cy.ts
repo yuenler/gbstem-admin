@@ -12,10 +12,7 @@ describe('Section J: Substitute Requests Log', () => {
     })
 
     // Authenticate as Admin
-    cy.signedInSession('admin')
-    cy.visit('/sub-requests')
-    cy.title().should('contain', 'Sub Requests Log')
-    cy.wait(1000) // Wait for page to load
+    cy.signedInSession('admin', { initialPage: '/sub-requests' })
   })
 
   it('Test Case 19: Filter, Search, and Audit Sub Requests', () => {

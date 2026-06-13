@@ -1,10 +1,7 @@
 describe('Section C: Announcements Page', () => {
   beforeEach(() => {
     // Authenticate as Admin using the optimized session command
-    cy.signedInSession('admin')
-    cy.visit('/announcements')
-    cy.get('h1').should('contain', 'Announcements')
-    cy.wait(500) // Wait for page to load
+    cy.signedInSession('admin', { initialPage: '/announcements' })
   })
 
   it('Test Case 8: View Announcements and Control Pagination', () => {

@@ -11,11 +11,7 @@ describe('Section B: Dashboard and Navigation Layout', () => {
       return true
     })
 
-    // Authenticate as Admin using the optimized session command
-    cy.signedInSession('admin')
-    cy.visit('/dashboard')
-    cy.get('h1').should('contain', 'Dashboard')
-    cy.wait(1000) // Wait for stats to load
+    cy.signedInSession('admin', { initialPage: '/dashboard' })
   })
 
   it('Test Case 6: Stats Verification and Clipboard Actions', () => {

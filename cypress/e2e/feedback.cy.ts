@@ -11,7 +11,6 @@ describe('Section I: Feedback Views', () => {
       return true
     })
 
-    // Authenticate as Admin
     cy.signedInSession('admin')
   })
 

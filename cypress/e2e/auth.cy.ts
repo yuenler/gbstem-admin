@@ -1,13 +1,6 @@
 import { generateDateHash } from '../support/utils'
 
 describe('Section A: Authentication and Navigation', () => {
-  beforeEach(() => {
-    // Clear cookies/localStorage to ensure we start unauthenticated
-    cy.clearAllCookies()
-    cy.clearAllLocalStorage()
-    cy.clearAllSessionStorage()
-  })
-
   it('Test Case 1: Unauthenticated Redirect to Sign In', () => {
     // Attempting to visit protected routes should redirect to signin
     cy.visit('/')

@@ -12,10 +12,7 @@ describe('Section G: Pre-Registrations Directory', () => {
     })
 
     // Authenticate as Admin
-    cy.signedInSession('admin')
-    cy.visit('/registrations')
-    cy.title().should('contain', 'Registrations')
-    cy.wait(1000) // Wait for registrations to load
+    cy.signedInSession('admin', { initialPage: '/registrations' })
   })
 
   it('Test Case 15: Filter, Search, and Edit Pre-Registrations', () => {

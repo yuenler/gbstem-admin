@@ -12,10 +12,7 @@ describe('Section D: Instructor Applications Management', () => {
     })
 
     // Authenticate as Admin
-    cy.signedInSession('admin')
-    cy.visit('/applications')
-    cy.title().should('contain', 'Applications')
-    cy.wait(1000) // Wait for applications list to load
+    cy.signedInSession('admin', { initialPage: '/applications' })
   })
 
   it('Test Case 9: Filter, Search, and Download Applications Table', () => {

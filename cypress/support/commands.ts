@@ -3,6 +3,7 @@ import Papa from 'papaparse'
 
 Cypress.Commands.add('fillInput', (selector: string, text: string) => {
   cy.get(selector)
+    .scrollIntoView()
     .should('be.visible')
     .focus()
     .clear()
@@ -17,29 +18,69 @@ Cypress.Commands.add('fillInput', (selector: string, text: string) => {
   })
 })
 
-Cypress.Commands.add('signedInSession', (role: string) => {
-  cy.session(`signedIn-${role}`, () => {
-    cy.visit('/signin')
-    cy.get('input[type="email"]').should('be.visible')
-    cy.wait(2500) // Wait for Svelte page and HMR to settle
-    const email =
-      role === 'admin'
-        ? 'demo@gbstem.org'
-        : role === 'reviewer'
-          ? 'reviewer@gbstem.org'
-          : role === 'instructor'
-            ? 'instructor@gbstem.org'
-            : 'student@gbstem.org'
-    const password = 'penguin'
+Cypress.Commands.add(
+  'signedInSession',
+  (
+    role: 'admin' | 'instructor' | 'reviewer' | 'student',
+    options: {
+      email?: string
+      initialPage?: string
+    } = {},
+  ) => {
+    const emailToUse =
+      options.email ||
+      (role === 'admin' ? 'demo@gbstem.org' : `${role}@gbstem.org`)
 
-    cy.fillInput('input[type="email"]', email)
-    cy.fillInput('input[type="password"]', password)
-    cy.get('button[type="submit"]').click()
+    cy.session(`signedIn-${emailToUse}`, () => {
+      cy.visit('/signin')
+      cy.get('input[type="email"]').should('be.visible')
+      cy.wait(2500) // Wait for Svelte page and HMR to settle
+      const password = 'penguin'
 
-    cy.url().should('include', '/dashboard')
-    cy.get('h1').should('contain', 'Dashboard')
-  })
-})
+      cy.fillInput('input[type="email"]', emailToUse)
+      cy.fillInput('input[type="password"]', password)
+      cy.get('button[type="submit"]').click()
+      cy.wait(1000) // Wait for Svelte page and HMR to settle
+    })
+
+    const initialPage = options.initialPage || '/dashboard'
+    cy.visit(initialPage)
+    if (initialPage === '/announcements') {
+      cy.title().should('contain', 'Announcements')
+      cy.get('h1').should('contain', 'Announcements', { timeout: 10000 })
+    } else if (initialPage === '/applications') {
+      cy.title().should('contain', 'Applications')
+    } else if (initialPage === '/classes') {
+      cy.title().should('contain', 'Classes')
+    } else if (initialPage === '/instructor-feedback') {
+      cy.title().should('contain', 'Class Feedback')
+    } else if (initialPage === '/interviews') {
+      cy.title().should('contain', 'Interview Timeslots')
+      cy.get('h1').should('contain', 'Set Interview Timeslots', {
+        timeout: 10000,
+      })
+    } else if (initialPage === '/registrations') {
+      cy.title().should('contain', 'Registrations')
+    } else if (initialPage === '/student-feedback') {
+      cy.title().should('contain', 'Student Feedback')
+    } else if (initialPage === '/students') {
+      cy.title().should('contain', 'Students')
+    } else if (initialPage === '/sub-requests') {
+      cy.title().should('contain', 'Sub Requests Log')
+    } else if (initialPage === '/dashboard') {
+      cy.title().should('contain', 'Dashboard')
+      cy.get('h1').should('contain', 'Dashboard', { timeout: 10000 })
+    } else if (initialPage === '/profile') {
+      cy.title().should('contain', 'Profile')
+      cy.get('h1').should('contain', 'Profile', { timeout: 10000 })
+    } else if (initialPage === '/tokens') {
+      cy.title().should('contain', 'Tokens')
+    } else if (initialPage.startsWith('/user/')) {
+      cy.title().should('contain', 'Check In')
+    }
+    cy.wait(1000)
+  },
+)
 
 Cypress.Commands.add('signOutViaUi', () => {
   cy.get('body').then(($body) => {

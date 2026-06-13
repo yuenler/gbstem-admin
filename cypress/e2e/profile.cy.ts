@@ -12,10 +12,7 @@ describe('Section L: Profile and Account Customization', () => {
     })
 
     // Authenticate as Admin
-    cy.signedInSession('admin')
-    cy.visit('/profile')
-    cy.title().should('contain', 'Profile')
-    cy.wait(1000) // Wait for profile page to load
+    cy.signedInSession('admin', { initialPage: '/profile' })
   })
 
   it('Test Case 21: Name, Email, and Password Mutations', () => {

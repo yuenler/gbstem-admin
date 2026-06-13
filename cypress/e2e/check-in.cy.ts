@@ -12,10 +12,7 @@ describe('Section M: Check In Details and Meals', () => {
     })
 
     // Authenticate as Admin
-    cy.signedInSession('admin')
-    cy.visit('/students')
-    cy.title().should('contain', 'Students')
-    cy.wait(1000) // Wait for page to load
+    cy.signedInSession('admin', { initialPage: '/students' })
   })
 
   it('Test Case 22: Student Attendance and Meal Checkouts', () => {

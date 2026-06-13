@@ -12,10 +12,7 @@ describe('Section K: Registration Signup Tokens', () => {
     })
 
     // Authenticate as Admin
-    cy.signedInSession('admin')
-    cy.visit('/tokens')
-    cy.title().should('contain', 'Tokens')
-    cy.wait(1000) // Wait for tokens to load
+    cy.signedInSession('admin', { initialPage: '/tokens' })
     cy.selectOption('input[name="per-page"]', '50')
     cy.wait(500)
   })

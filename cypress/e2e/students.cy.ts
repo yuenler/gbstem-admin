@@ -12,10 +12,7 @@ describe('Section F: Students Directory', () => {
     })
 
     // Authenticate as Admin
-    cy.signedInSession('admin')
-    cy.visit('/students')
-    cy.title().should('contain', 'Students')
-    cy.wait(1000) // Wait for students list to load
+    cy.signedInSession('admin', { initialPage: '/students' })
   })
 
   it('Test Case 14: Students Search, Filtering, and Enrolling/Dropping Classes', () => {

@@ -12,10 +12,7 @@ describe('Section E: Classes Directory', () => {
     })
 
     // Authenticate as Admin
-    cy.signedInSession('admin')
-    cy.visit('/classes')
-    cy.title().should('contain', 'Classes')
-    cy.wait(1000) // Wait for classes to load
+    cy.signedInSession('admin', { initialPage: '/classes' })
   })
 
   it('Test Case 12: Classes Search, Filters, and Email Export', () => {

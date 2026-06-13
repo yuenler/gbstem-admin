@@ -12,10 +12,7 @@ describe('Section H: Interview Timeslots Configuration', () => {
     })
 
     // Authenticate as Admin
-    cy.signedInSession('admin')
-    cy.visit('/interviews')
-    cy.title().should('contain', 'Interview Timeslots')
-    cy.wait(1000) // Wait for page to load
+    cy.signedInSession('admin', { initialPage: '/interviews' })
   })
 
   it('Test Case 16: View, Create, and Manage Interview Slots', () => {

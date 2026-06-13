@@ -12,19 +12,11 @@ describe('Section N: End-to-End Account Lifecycle', () => {
       }
       return true
     })
-
-    // Clear sessions
-    cy.clearAllCookies()
-    cy.clearAllLocalStorage()
-    cy.clearAllSessionStorage()
   })
 
   it('Test Case 23: Complete Account Creation and Management Lifecycle', () => {
     // 1. Generate the Registration Token
-    cy.signedInSession('admin')
-    cy.visit('/tokens')
-    cy.title().should('contain', 'Tokens')
-    cy.wait(1000)
+    cy.signedInSession('admin', { initialPage: '/tokens' })
     cy.selectOption('input[name="per-page"]', '50')
     cy.wait(500)
 
