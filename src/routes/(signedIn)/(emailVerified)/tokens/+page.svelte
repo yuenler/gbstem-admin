@@ -189,7 +189,7 @@
         </td>
         <th
           scope="row"
-          class="px-6 py-4 font-medium whitespace-nowrap text-gray-900 dark:text-white"
+          class="px-6 py-4 font-medium whitespace-nowrap text-gray-900"
         >
           {token.id}
         </th>
