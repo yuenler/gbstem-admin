@@ -46,13 +46,7 @@ export const load = (async ({ url, depends }) => {
       } else if (filter === 'complete') {
         dbQuery = adminDb
           .collection(collectionName)
-          .where('agreements.entireProgram', '==', true)
-          .where('agreements.submitting', '==', true)
-          .where('agreements.timeCommitment', '==', true)
-          .where('essay.academicBackground', '!=', '')
-          .where('essay.teachingScenario', '!=', '')
-          .where('essay.why', '!=', '')
-          .where('program.timeSlots', '!=', '')
+          .where('meta.submitted', '==', true)
           .orderBy('timestamps.updated', 'desc')
       } else {
         dbQuery = adminDb
