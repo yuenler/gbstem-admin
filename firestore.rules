@@ -276,7 +276,9 @@ service cloud.firestore {
     function isInstructorOfClass() {
       return isInstructor() && (
         request.auth.token.email == resource.data.instructorEmail ||
-        (resource.data.otherInstructorEmails != null && resource.data.otherInstructorEmails.matches('.*' + request.auth.token.email + '.*'))
+        (resource.data.otherInstructorEmails != null &&
+         resource.data.otherInstructorEmails is string &&
+         request.auth.token.email in resource.data.otherInstructorEmails.replace('[\\s,;]+', ',').split(','))
       );
     }
     function isInstructorOwnerOrAdmin(userId) {

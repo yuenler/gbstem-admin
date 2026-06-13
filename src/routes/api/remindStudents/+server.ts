@@ -1,15 +1,15 @@
+import { otherInstructorEmailsSchema } from '$lib/components/forms/schemas'
 import { classReminderEmailTemplate } from '$lib/data/emailTemplates/classReminderEmailTemplate'
 import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
 import { addDataToHtmlTemplate } from '$lib/utils'
 import { json } from '@sveltejs/kit'
-import type { RequestHandler } from './$types'
-
 import { z } from 'zod'
+import type { RequestHandler } from './$types'
 
 const remindStudentsSchema = z.object({
   email: z.string().email('Invalid email address'),
-  otherInstructorEmails: z.string().optional().default(''),
+  otherInstructorEmails: otherInstructorEmailsSchema,
   name: z.string().min(1, 'Name is required'),
   class: z.string().min(1, 'Class is required'),
   classTime: z.string().min(1, 'Class time is required'),
