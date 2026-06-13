@@ -16,7 +16,7 @@ export const load = (async ({ url, depends }) => {
     const limitVal = parseInt(limitStr, 10)
     const offsetVal = (pageNum - 1) * limitVal
 
-    const filter = url.searchParams.get('filter')
+    const filter = url.searchParams.get('filter') ?? 'submitted'
     try {
       let dbQuery: Query
 

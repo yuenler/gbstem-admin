@@ -5,11 +5,15 @@
 
   export let type: 'students' | 'registrations' | 'applications'
 
-  let lastUrlFilter = $page.url.searchParams.get('filter') ?? 'all'
+  $: defaultFilter = type === 'registrations' ? 'submitted' : 'all'
+
+  let lastUrlFilter =
+    $page.url.searchParams.get('filter') ??
+    (type === 'registrations' ? 'submitted' : 'all')
   let value = lastUrlFilter
 
   $: {
-    const urlFilter = $page.url.searchParams.get('filter') ?? 'all'
+    const urlFilter = $page.url.searchParams.get('filter') ?? defaultFilter
     if (urlFilter !== lastUrlFilter) {
       lastUrlFilter = urlFilter
       value = urlFilter
@@ -17,11 +21,11 @@
   }
 
   function handleChange(newValue: string) {
-    const urlFilter = $page.url.searchParams.get('filter') ?? 'all'
+    const urlFilter = $page.url.searchParams.get('filter') ?? defaultFilter
     if (newValue === urlFilter) return
 
     const base = new URLSearchParams($page.url.searchParams)
-    if (newValue === 'all' || !newValue) {
+    if (newValue === defaultFilter || !newValue) {
       base.delete('filter')
     } else {
       base.set('filter', newValue)
