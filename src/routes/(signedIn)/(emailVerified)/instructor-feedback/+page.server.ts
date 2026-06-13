@@ -21,7 +21,7 @@ export const load = (async ({ url, depends, locals }) => {
   if (!locals.user || locals.user.role !== 'admin') {
     throw error(403, 'You do not have permission to view this page.')
   }
-  depends('app:instructorFeedbackFall24')
+  depends('app:instructorFeedback')
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
     const pageStr = url.searchParams.get('page') ?? '1'

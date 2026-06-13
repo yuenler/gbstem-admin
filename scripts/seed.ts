@@ -73,15 +73,17 @@ admin.initializeApp({
 const auth = admin.auth()
 const db = admin.firestore()
 
-// Define collection names matching collections.ts
-const classesCollection = 'classesSpring26'
-const registrationsCollection = 'registrationsSpring26'
-const decisionsCollection = 'decisionsSpring26'
-const applicationsCollection = 'applicationsSpring26'
-const subRequestsCollection = 'subRequests'
-const interviewTimesCollection = 'instructorInterviewTimesSpring26'
-const classFeedbackCollection = 'classFeedbackSpring26'
-const instructorFeedbackCollection = 'instructorFeedbackSpring26'
+import {
+  applicationsCollection,
+  classesCollection,
+  classFeedbackCollection,
+  decisionsCollection,
+  instructorFeedbackCollection,
+  interviewTimesCollection,
+  registrationsCollection,
+  semesterDatesDocument,
+  subRequestsCollection,
+} from '../src/lib/data/collections'
 
 async function createOrUpdateUser(
   uid: string | null,
@@ -286,8 +288,8 @@ async function seed() {
   await db.collection('tokens').doc('demo-token').set(demoToken)
 
   // Create Semester Dates Document
-  console.log('Creating semesterDates/spring26 document...')
-  await db.collection('semesterDates').doc('spring26').set({
+  console.log(`Creating semesterDates/${semesterDatesDocument} document...`)
+  await db.collection('semesterDates').doc(semesterDatesDocument).set({
     classesStart: '2026-03-01T09:00:00Z',
     classesEnd: '2026-06-30T17:00:00Z',
     instructorOrientation: '2026-02-20T09:00:00Z',

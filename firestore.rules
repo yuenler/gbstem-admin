@@ -35,117 +35,37 @@ service cloud.firestore {
     //
     // APPLICATIONS
     //
-    match /applicationsSpring24/{userId} {
-      allow read, write: if isUser(userId) || isAdminOrReviewer();
+    match /{colId}/{userId} {
+      allow read, write: if colId.matches('applications(Spring|Fall)\\d+') && (isUser(userId) || isAdminOrReviewer());
       match /meta/scheduled {
-        allow read, write: if isUser(userId) || isAdminOrReviewer();
-      }
-    }
-    match /applicationsFall24/{userId} {
-      allow read, write: if isUser(userId) || isAdminOrReviewer();
-      match /meta/scheduled {
-        allow read, write: if isUser(userId) || isAdminOrReviewer();
-      }
-    }
-    match /applicationsSpring25/{userId} {
-      allow read, write: if isUser(userId) || isAdminOrReviewer();
-      match /meta/scheduled {
-        allow read, write: if isUser(userId) || isAdminOrReviewer();
-      }
-    }
-    match /applicationsFall25/{userId} {
-      allow read, write: if isUser(userId) || isAdminOrReviewer();
-      match /meta/scheduled {
-        allow read, write: if isUser(userId) || isAdminOrReviewer();
-      }
-    }
-    match /applicationsSpring26/{userId} {
-      allow read, write: if isUser(userId) || isAdminOrReviewer();
-      match /meta/scheduled {
-        allow read, write: if isUser(userId) || isAdminOrReviewer();
+        allow read, write: if colId.matches('applications(Spring|Fall)\\d+') && (isUser(userId) || isAdminOrReviewer());
       }
     }
 
     //
     // REGISTRATIONS
     //
-    match /registrationsSpring24/{userId} {
-      allow read: if isSignedIn() && belongsToSameUser(userId) || isStaff();
-      allow write: if isOwnerOrAdmin(userId);
-    }
-    match /registrationsFall24/{userId} {
-      allow read: if isSignedIn() && belongsToSameUser(userId) || isStaff();
-      allow write: if isOwnerOrAdmin(userId);
-    }
-    match /registrationsSpring25/{userId} {
-      allow read: if isSignedIn() && belongsToSameUser(userId) || isStaff();
-      allow write: if isOwnerOrAdmin(userId);
-    }
-    match /registrationsFall25/{userId} {
-      allow read: if isSignedIn() && belongsToSameUser(userId) || isStaff();
-      allow write: if isOwnerOrAdmin(userId);
-    }
-    match /registrationsSpring26/{userId} {
-      allow read: if isSignedIn() && belongsToSameUser(userId) || isStaff();
-      allow write: if isOwnerOrAdmin(userId);
+    match /{colId}/{userId} {
+      allow read: if colId.matches('registrations(Spring|Fall)\\d+') && (isSignedIn() && belongsToSameUser(userId) || isStaff());
+      allow write: if colId.matches('registrations(Spring|Fall)\\d+') && isOwnerOrAdmin(userId);
     }
 
     //
     // DECISIONS
     //
-    match /decisionsSpring24/{userId} {
-      allow read: if isUser(userId);
-      allow read, write: if isAdminOrReviewer();
-    }
-    match /decisionsFall24/{userId} {
-      allow read: if isUser(userId);
-      allow read, write: if isAdminOrReviewer();
-    }
-    match /decisionsSpring25/{userId} {
-      allow read: if isUser(userId);
-      allow read, write: if isAdminOrReviewer();
-    }
-    match /decisionsFall25/{userId} {
-      allow read: if isUser(userId);
-      allow read, write: if isAdminOrReviewer();
-    }
-    match /decisionsSpring26/{userId} {
-      allow read: if isUser(userId);
-      allow read, write: if isAdminOrReviewer();
+    match /{colId}/{userId} {
+      allow read: if colId.matches('decisions(Spring|Fall)\\d+') && isUser(userId);
+      allow read, write: if colId.matches('decisions(Spring|Fall)\\d+') && isAdminOrReviewer();
     }
 
     //
     // CLASSES
     //
-    match /classesSpring24/{classId} {
-      allow read: if isSignedIn();
-      allow create: if isInstructorOwnerOrAdmin(classId);
-      allow update: if isAdminOrReviewer() || isInstructorOfClass();
-      allow delete: if isAdminOrReviewer();
-    }
-    match /classesFall24/{classId} {
-      allow read: if isSignedIn();
-      allow create: if isInstructorOwnerOrAdmin(classId);
-      allow update: if isAdminOrReviewer() || isInstructorOfClass();
-      allow delete: if isAdminOrReviewer();
-    }
-    match /classesSpring25/{classId} {
-      allow read: if isSignedIn();
-      allow create: if isInstructorOwnerOrAdmin(classId);
-      allow update: if isAdminOrReviewer() || isInstructorOfClass();
-      allow delete: if isAdminOrReviewer();
-    }
-    match /classesFall25/{classId} {
-      allow read: if isSignedIn();
-      allow create: if isInstructorOwnerOrAdmin(classId);
-      allow update: if isAdminOrReviewer() || isInstructorOfClass();
-      allow delete: if isAdminOrReviewer();
-    }
-    match /classesSpring26/{classId} {
-      allow read: if isSignedIn();
-      allow create: if isInstructorOwnerOrAdmin(classId);
-      allow update: if isAdminOrReviewer() || isInstructorOfClass();
-      allow delete: if isAdminOrReviewer();
+    match /{colId}/{classId} {
+      allow read: if colId.matches('classes(Spring|Fall)\\d+') && isSignedIn();
+      allow create: if colId.matches('classes(Spring|Fall)\\d+') && isInstructorOwnerOrAdmin(classId);
+      allow update: if colId.matches('classes(Spring|Fall)\\d+') && (isAdminOrReviewer() || isInstructorOfClass());
+      allow delete: if colId.matches('classes(Spring|Fall)\\d+') && isAdminOrReviewer();
     }
 
     match /instructorClasses/{classId} {
@@ -155,17 +75,9 @@ service cloud.firestore {
     //
     // INTERVIEW TIMES / REQUESTS
     //
-    match /instructorInterviewTimes/{interviewId} {
-      allow read, update: if isStaff();
-      allow create, delete: if isAdminOrReviewer();
-    }
-    match /instructorInterviewTimesFall25/{interviewId} {
-      allow read, update: if isStaff();
-      allow create, delete: if isAdminOrReviewer();
-    }
-    match /instructorInterviewTimesSpring26/{interviewId} {
-      allow read, update: if isStaff();
-      allow create, delete: if isAdminOrReviewer();
+    match /{colId}/{interviewId} {
+      allow read, update: if colId.matches('instructorInterviewTimes((Spring|Fall)\\d+)?') && isStaff();
+      allow create, delete: if colId.matches('instructorInterviewTimes((Spring|Fall)\\d+)?') && isAdminOrReviewer();
     }
 
     match /interviewTimeRequests/{time} {
@@ -208,42 +120,9 @@ service cloud.firestore {
     //
     // FEEDBACK
     //
-    match /classFeedback24/{feedbackId} {
-      allow create: if isSignedIn();
-      allow read: if isAdmin();
-    }
-    match /classFeedback25/{feedbackId} {
-      allow create: if isSignedIn();
-      allow read: if isAdmin();
-    }
-    match /classFeedbackSpring26/{feedbackId} {
-      allow create: if isSignedIn();
-      allow read: if isAdmin();
-    }
-
-    match /instructorFeedback24/{feedbackId} {
-      allow create: if isSignedIn();
-      allow read: if isAdmin();
-    }
-    match /instructorFeedback25/{feedbackId} {
-      allow create: if isSignedIn();
-      allow read: if isAdmin();
-    }
-    match /instructorFeedbackFall24/{feedbackId} {
-      allow create: if isSignedIn();
-      allow read: if isAdmin();
-    }
-    match /instructorFeedbackSpring25/{feedbackId} {
-      allow create: if isSignedIn();
-      allow read: if isAdmin();
-    }
-    match /instructorFeedbackFall25/{feedbackId} {
-      allow create: if isSignedIn();
-      allow read: if isAdmin();
-    }
-    match /instructorFeedbackSpring26/{feedbackId} {
-      allow create: if isSignedIn();
-      allow read: if isAdmin();
+    match /{colId}/{feedbackId} {
+      allow create: if colId.matches('(class|instructor)Feedback(Spring|Fall)?\\d+') && isSignedIn();
+      allow read: if colId.matches('(class|instructor)Feedback(Spring|Fall)?\\d+') && isAdmin();
     }
 
     //

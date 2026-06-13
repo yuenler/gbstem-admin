@@ -217,7 +217,7 @@ graph TD
   2. In the **Search Box**, type `David`.
   3. Verify the table filters down to show only `David Miller`.
   4. Clear the search box.
-  5. Locate the **Collection** dropdown (default is `"Spring 2026"`). Select `"Fall 2025"`.
+  5. Locate the **Collection** dropdown (default is the latest collection). Select the previous collection (e.g., `"Fall 2025"`).
   6. Verify the table updates.
   7. Locate the **Decision** dropdown. Select `"Undecided"`.
   8. Verify the table displays only undecided applicants.
@@ -302,7 +302,7 @@ graph TD
   8. Re-open the details modal for `David Miller`.
   9. Click **"Show Interview Form"** if needed and verify that all inputted fields (ratings, notes, date, interviewer, attendance) are correctly loaded and displayed.
 - **Expected Results (Assertions)**:
-  - Saving the interview notes writes a document to the `decisionsSpring26` collection (merging fields).
+  - Saving the interview notes writes a document to the latest decisions collection (merging fields).
   - The success toast is triggered.
   - Re-opening the modal retrieves and populates the saved interview values from Firestore.
 
@@ -377,7 +377,7 @@ graph TD
   4. Verify that only registrations matching `Charlie` (e.g., `Charlie Brown`) are displayed in the table.
   5. Select a status filter (e.g., `"submitted"` or `"enrolled"`) from the **Status** dropdown.
   6. Verify that the table updates to display registrations matching both the name query and selected status.
-  7. Select a collection (e.g., `"Spring 2026"`) from the **Collection** dropdown.
+  7. Select a collection (e.g., the latest collection) from the **Collection** dropdown.
   8. Verify that the registrations list updates to load records from the selected collection.
   9. Click the **"Download"** button to trigger the CSV download.
   10. In the **Bypass Age Limits?** column on `Charlie Brown`'s row, check the checkbox.
