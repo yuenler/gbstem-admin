@@ -2,12 +2,12 @@
   import { user } from '$lib/client/firebase'
   import { alert } from '$lib/stores'
   import { updateProfile } from 'firebase/auth'
-  import { Control, Field, FieldErrors } from 'formsnap'
   import { onMount } from 'svelte'
   import { defaults, superForm } from 'sveltekit-superforms'
   import { zod } from 'sveltekit-superforms/adapters'
   import { z } from 'zod'
   import Button from '../Button.svelte'
+  import FormInput from '../FormInput.svelte'
 
   const schema = z.object({
     fullName: z.string().trim().min(1, 'Full name is required'),
@@ -49,35 +49,25 @@
 </script>
 
 <form use:enhance class="w-full">
-  <fieldset class="space-y-2" disabled={$delayed}>
-    <div class="flex flex-col gap-1.5">
-      <Field form={formResult} name="fullName">
-        <Control>
-          {#snippet children({ props })}
-            <span class="text-sm font-bold">Name</span>
-            <div class="relative">
-              <input
-                {...props}
-                name="full-name"
-                bind:value={$form.fullName}
-                type="text"
-                placeholder="Full name"
-                required
-                class="block h-12 w-full appearance-none rounded-md border border-gray-400 px-3 transition-colors placeholder:text-gray-500 focus:border-gray-600 focus:outline-hidden disabled:bg-white disabled:text-gray-400"
-              />
-              <div class="absolute top-0 right-2 flex h-12 items-center">
-                <Button
-                  color="blue"
-                  class="px-2 py-1"
-                  type="submit"
-                  disabled={$delayed}>Update</Button
-                >
-              </div>
-            </div>
-          {/snippet}
-        </Control>
-        <FieldErrors class="text-xs font-semibold text-red-500" />
-      </Field>
+  <fieldset class="space-y-4" disabled={$delayed}>
+    <div class="flex items-end gap-2">
+      <div class="w-full">
+        <FormInput
+          form={formResult}
+          name="fullName"
+          label="Name"
+          inputName="full-name"
+          bind:value={$form.fullName}
+        />
+      </div>
+      <Button
+        class="h-12 shrink-0"
+        color="blue"
+        type="submit"
+        disabled={$delayed}
+      >
+        Update
+      </Button>
     </div>
   </fieldset>
 </form>

@@ -36,10 +36,11 @@ describe('Section L: Profile and Account Customization', () => {
 
     // 2. Change name
     const newName = 'Demo Admin Test'
+    cy.get('input[name="full-name"]').should('have.value', 'Demo Admin')
     cy.get('input[name="full-name"]').clear().type(newName)
-    cy.contains('span', 'Name')
-      .parent()
-      .find('button[type="submit"]')
+    cy.get('input[name="full-name"]')
+      .closest('.items-end')
+      .contains('button', 'Update')
       .click({ force: true })
     cy.waitForNotification('Name successfully updated.')
     cy.get('input[name="full-name"]').should('have.value', newName)
@@ -51,7 +52,10 @@ describe('Section L: Profile and Account Customization', () => {
       .parent()
       .within(() => {
         cy.get('input[name="new-email"]').clear().type('tempadmin@gbstem.org')
-        cy.contains('button', 'Update').click({ force: true })
+        cy.get('input[name="new-email"]')
+          .closest('.items-end')
+          .contains('button', 'Update')
+          .click({ force: true })
       })
 
     // Reauthenticate dialog opens
@@ -71,7 +75,10 @@ describe('Section L: Profile and Account Customization', () => {
       .parent()
       .within(() => {
         cy.get('input[name="new-email"]').clear().type('demo@gbstem.org')
-        cy.contains('button', 'Update').click({ force: true })
+        cy.get('input[name="new-email"]')
+          .closest('.items-end')
+          .contains('button', 'Update')
+          .click({ force: true })
       })
     cy.get('[role="dialog"]').should('exist')
     cy.get('[role="dialog"]')
@@ -90,7 +97,10 @@ describe('Section L: Profile and Account Customization', () => {
       .within(() => {
         cy.get('input[name="new-password"]').clear().type('penguin123')
         cy.get('input[name="confirm-password"]').clear().type('penguin123')
-        cy.contains('button', 'Update').click({ force: true })
+        cy.get('input[name="confirm-password"]')
+          .closest('.items-end')
+          .contains('button', 'Update')
+          .click({ force: true })
       })
 
     // Reauthenticate dialog
@@ -117,7 +127,10 @@ describe('Section L: Profile and Account Customization', () => {
       .within(() => {
         cy.get('input[name="new-password"]').clear().type('penguin')
         cy.get('input[name="confirm-password"]').clear().type('penguin')
-        cy.contains('button', 'Update').click({ force: true })
+        cy.get('input[name="confirm-password"]')
+          .closest('.items-end')
+          .contains('button', 'Update')
+          .click({ force: true })
       })
 
     // Reauthenticate dialog (now password is penguin123!)

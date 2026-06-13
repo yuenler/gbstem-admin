@@ -143,12 +143,14 @@ describe('Section N: End-to-End Account Lifecycle', () => {
     // 5. Modify Profile Information
     // Update Name
     const updatedName = 'Lifecycle Admin Updated'
+    cy.get('input[name="full-name"]').should('have.value', 'Lifecycle Test')
     cy.get('input[name="full-name"]').clear().type(updatedName)
-    cy.contains('span', 'Name')
-      .parent()
-      .find('button[type="submit"]')
+    cy.get('input[name="full-name"]')
+      .closest('.items-end')
+      .contains('button', 'Update')
       .click({ force: true })
     cy.waitForNotification('Name successfully updated.')
+    cy.get('input[name="full-name"]').should('have.value', updatedName)
     cy.wait(500)
 
     // Update Email
@@ -157,8 +159,11 @@ describe('Section N: End-to-End Account Lifecycle', () => {
       .parent()
       .within(() => {
         cy.get('input[name="new-email"]').clear().type(updatedEmail)
-        cy.contains('button', 'Update').click({ force: true })
       })
+    cy.get('input[name="new-email"]')
+      .closest('.items-end')
+      .contains('button', 'Update')
+      .click({ force: true })
 
     // Reauthenticate dialog opens
     cy.get('[role="dialog"]').should('exist')
@@ -191,8 +196,11 @@ describe('Section N: End-to-End Account Lifecycle', () => {
       .within(() => {
         cy.get('input[name="new-password"]').clear().type(newPassword)
         cy.get('input[name="confirm-password"]').clear().type(newPassword)
-        cy.contains('button', 'Update').click({ force: true })
       })
+    cy.get('input[name="confirm-password"]')
+      .closest('.items-end')
+      .contains('button', 'Update')
+      .click({ force: true })
 
     // Reauthenticate dialog opens
     cy.get('[role="dialog"]').should('exist')

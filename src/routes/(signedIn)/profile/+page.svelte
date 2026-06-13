@@ -9,7 +9,6 @@
   import Card from '$lib/components/Card.svelte'
   import type { PageData } from './$types'
   import { user } from '$lib/client/firebase'
-  import PageLayout from '$lib/components/PageLayout.svelte'
   import Field from '$lib/components/Field.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
   import Button from '$lib/components/Button.svelte'
@@ -64,8 +63,9 @@
   </div>
 </Dialog>
 
-<PageLayout>
-  <svelte:fragment slot="title">Profile</svelte:fragment>
+<h1 class="mb-8 text-5xl font-bold md:text-6xl">Profile</h1>
+
+<div class="flex flex-col items-center">
   <div class="grid w-full max-w-2xl gap-6">
     {#if !data.user.emailVerified}
       <div
@@ -141,4 +141,4 @@
     <ChangePasswordForm />
     <DeleteAccountForm />
   </div>
-</PageLayout>
+</div>

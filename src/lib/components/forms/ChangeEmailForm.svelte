@@ -3,13 +3,13 @@
   import { superForm, defaults } from 'sveltekit-superforms'
   import { zod } from 'sveltekit-superforms/adapters'
   import { z } from 'zod'
-  import { Field, Control, Label, FieldErrors } from 'formsnap'
   import { alert } from '$lib/stores'
   import Dialog from '$lib/components/Dialog.svelte'
   import ReauthenticateForm from '$lib/components/forms/ReauthenticateForm.svelte'
   import { user } from '$lib/client/firebase'
   import DialogActions from '../DialogActions.svelte'
   import Button from '../Button.svelte'
+  import FormInput from '../FormInput.svelte'
 
   const schema = z.object({
     newEmail: z.string().email('Invalid email address'),
@@ -75,46 +75,46 @@
   <fieldset class="space-y-4" disabled={$delayed}>
     <span class="font-bold">Change email</span>
 
-    <div class="flex flex-col gap-1.5">
-      <label class="text-sm font-bold" for="current-email">Current email</label>
-      <input
-        id="current-email"
-        type="email"
-        value={$user && $user.object.email ? $user.object.email : ''}
-        readonly
-        disabled
-        class="block h-12 w-full appearance-none rounded-md border border-gray-300 bg-gray-50 px-3 text-gray-500 outline-hidden"
-      />
+    <div class="flex items-end gap-2">
+      <div class="flex w-full flex-col gap-1.5">
+        <label class="text-sm font-bold" for="current-email"
+          >Current email</label
+        >
+        <input
+          id="current-email"
+          type="email"
+          value={$user && $user.object.email ? $user.object.email : ''}
+          readonly
+          disabled
+          class="block h-12 w-full appearance-none rounded-md border border-gray-300 bg-gray-50 px-3 text-gray-500 outline-hidden"
+        />
+      </div>
+      <Button
+        class="invisible h-12 shrink-0 select-none"
+        type="button"
+        tabindex="-1">Update</Button
+      >
     </div>
 
-    <div class="flex flex-col gap-1.5">
-      <Field form={formResult} name="newEmail">
-        <Control>
-          {#snippet children({ props })}
-            <Label class="text-sm font-bold">New email</Label>
-            <div class="relative">
-              <input
-                {...props}
-                name="new-email"
-                type="email"
-                bind:value={$form.newEmail}
-                placeholder="New email"
-                required
-                class="block h-12 w-full appearance-none rounded-md border border-gray-400 px-3 pr-21 transition-colors placeholder:text-gray-500 focus:border-gray-600 focus:outline-hidden disabled:bg-white disabled:text-gray-400"
-              />
-              <div class="absolute top-0 right-2 flex h-12 items-center">
-                <Button
-                  color="blue"
-                  class="px-2 py-1"
-                  type="submit"
-                  disabled={$delayed}>Update</Button
-                >
-              </div>
-            </div>
-          {/snippet}
-        </Control>
-        <FieldErrors class="text-xs font-semibold text-red-500" />
-      </Field>
+    <div class="flex items-end gap-2">
+      <div class="flex w-full flex-col gap-1.5">
+        <FormInput
+          form={formResult}
+          name="newEmail"
+          label="New email"
+          type="email"
+          inputName="new-email"
+          bind:value={$form.newEmail}
+        />
+      </div>
+      <Button
+        color="blue"
+        class="h-12 shrink-0"
+        type="submit"
+        disabled={$delayed}
+      >
+        Update
+      </Button>
     </div>
   </fieldset>
 </form>
