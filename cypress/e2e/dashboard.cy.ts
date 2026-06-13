@@ -51,9 +51,7 @@ describe('Section B: Dashboard and Navigation Layout', () => {
         ])
       })
     })
-    cy.waitForNotification(
-      'Emails of uncompleted registrations copied to clipboard.',
-    )
+    cy.waitForNotification('Emails copied to clipboard!')
 
     // Click "Copy Emails for Uncompleted Applications"
     cy.contains('button', 'Copy Emails for Uncompleted Applications').click()
@@ -70,9 +68,7 @@ describe('Section B: Dashboard and Navigation Layout', () => {
         ])
       })
     })
-    cy.waitForNotification(
-      'Emails of uncompleted applications copied to clipboard.',
-    )
+    cy.waitForNotification('Emails copied to clipboard!')
 
     /* This isn't enabled in the UI yet.
     // Click "View Announcements" and assert redirect

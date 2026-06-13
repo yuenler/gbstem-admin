@@ -157,9 +157,9 @@ TODO: Update this to check for the actual email being sent, not just the toast, 
      - `33 pre-registrations started.`
      - `16 students enrolled.`
   3. Click the **"Copy Emails for Uncompleted Registrations"** button.
-  4. Verify that clipboard contains the emails and a success toast notification appears: `"Emails of uncompleted registrations copied to clipboard."`.
+  4. Verify that clipboard contains the emails and a success toast notification appears: `"Emails copied to clipboard!"`.
   5. Click the **"Copy Emails for Uncompleted Applications"** button.
-  6. Verify that clipboard contains the emails and a success toast notification appears: `"Emails of uncompleted applications copied to clipboard."`.
+  6. Verify that clipboard contains the emails and a success toast notification appears: `"Emails copied to clipboard!"`.
   7. Click the **"View Announcements"** link under the Dashboard title.
 - **Expected Results (Assertions)**:
   - The Dashboard page renders the `<h1>` title `"Dashboard"` at the top taking up full window width.
