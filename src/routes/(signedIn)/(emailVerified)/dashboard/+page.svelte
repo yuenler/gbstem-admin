@@ -10,7 +10,12 @@
   import sendClassReminder from '$lib/data/helpers/sendClassReminders'
   import { ClassStatus } from '$lib/data/types/ClassStatus'
   import { alert } from '$lib/stores'
-  import { formatDate, timestampToDate, writeToClipboard } from '$lib/utils'
+  import {
+    formatDate,
+    timestampToDate,
+    writeToClipboard,
+    copyEmails,
+  } from '$lib/utils'
   import {
     collection,
     getCountFromServer,
@@ -44,8 +49,8 @@
   let classesToday: ClassToday[] = []
 
   let loading = true
-  let uncompletedRegistrationsEmails = ''
-  let uncompletedApplicationsEmails = ''
+  let uncompletedRegistrationsEmails: string[] = []
+  let uncompletedApplicationsEmails: string[] = []
 
   let data: DashboardData = {
     applications: {
@@ -133,21 +138,21 @@
       ] = await Promise.race([fetchPromise, timeoutPromise])
 
       // Process uncompleted registration emails
-      let regEmails = ''
+      const regEmails: string[] = []
       uncompletedRegistrationsSnapshot.forEach((doc) => {
         const email = doc.data().personal?.email
         if (email) {
-          regEmails += email + ', '
+          regEmails.push(email)
         }
       })
       uncompletedRegistrationsEmails = regEmails
 
       // Process uncompleted application emails
-      let appEmails = ''
+      const appEmails: string[] = []
       uncompletedApplicationsSnapshot.forEach((doc) => {
         const email = doc.data().personal?.email
         if (email) {
-          appEmails += email + ', '
+          appEmails.push(email)
         }
       })
       uncompletedApplicationsEmails = appEmails
@@ -297,37 +302,11 @@
           </li>
           <li>{data.applications.enrolled} students enrolled.</li>
         </ol>
-        <Button
-          on:click={async () => {
-            try {
-              await writeToClipboard(uncompletedRegistrationsEmails)
-              alert.trigger(
-                'success',
-                'Emails of uncompleted registrations copied to clipboard.',
-              )
-            } catch {
-              alert.trigger(
-                'error',
-                'Failed to copy emails of uncompleted registrations.',
-              )
-            }
-          }}>Copy Emails for Uncompleted Registrations</Button
+        <Button on:click={() => copyEmails(uncompletedRegistrationsEmails)}
+          >Copy Emails for Uncompleted Registrations</Button
         >
-        <Button
-          on:click={async () => {
-            try {
-              await writeToClipboard(uncompletedApplicationsEmails)
-              alert.trigger(
-                'success',
-                'Emails of uncompleted applications copied to clipboard.',
-              )
-            } catch {
-              alert.trigger(
-                'error',
-                'Failed to copy emails of uncompleted applications.',
-              )
-            }
-          }}>Copy Emails for Uncompleted Applications</Button
+        <Button on:click={() => copyEmails(uncompletedApplicationsEmails)}
+          >Copy Emails for Uncompleted Applications</Button
         >
       </Card>
       <Card class="space-y-2">
