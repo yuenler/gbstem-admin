@@ -173,12 +173,14 @@ Below is an alphabetical list of the top-level directories and significant confi
 
 ### Files
 
-- **`.eslintignore`**: Specifies which files and directories ESLint should ignore.
+- **`.env.example`**: Template file defining required local environment variables.
+- **`.firebaserc`**: Firebase project configuration mapping aliases to Firebase project IDs.
 - **`.gitignore`**: Specifies which files and directories Git should ignore (like `node_modules/` and `.svelte-kit/`).
 - **`.prettierignore`**: Specifies which files and directories Prettier should ignore when formatting.
 - **`cypress.config.ts`**: The configuration file for the Cypress e2e testing interface and environmental triggers.
 - **`eslint.config.js`**: ESLint configuration mapping coding rules and checks (replacing the legacy `.eslintrc.cjs`).
 - **`firebase.json`**: Defines local configurations for Firebase emulator environments and project builds.
+- **`firestore.rules`**: Firebase security rules defining read/write permissions for the Cloud Firestore database. This is applied by the Firebase emulators for local testing, but needs to be manually pushed to production because it has to be merged with the `curriculum` repo version of this file in production (simple copy-and-paste).
 - **`jest.config.ts`**: The configuration file for our Jest testing environment, specifically tailored to work alongside TypeScript and Svelte.
 - **`jest.setup.ts`**: Initial setup code that runs before our Jest tests, importing tools like `@testing-library/jest-dom` for custom DOM matchers.
 - **`package.json`**: Defines the project's details, scripts, and dependencies (the npm packages we rely on).
@@ -186,6 +188,6 @@ Below is an alphabetical list of the top-level directories and significant confi
 - **`postcss.config.js`**: Configuration for PostCSS, typically used for transforming CSS with plugins.
 - **`prettier.config.js`**: Configuration rules for Prettier, ensuring consistent code formatting across the project.
 - **`svelte.config.js`**: SvelteKit-specific configuration (like adapter configurations and compiler options).
-- **`tailwind.config.js`**: Tailwind CSS configuration, determining design tokens like themes and spacing.
+- **`TEST_PLAN.md`**: A comprehensive test plan outlining testing strategies, test scenarios, coverage, and instructions for running Jest and Cypress tests.
 - **`tsconfig.json`**: Configuration settings for the TypeScript compiler.
 - **`vite.config.js`**: Vite configuration file for compiling, bundling, and configuring build plugins.
