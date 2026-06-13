@@ -74,10 +74,12 @@ describe('Section B: Dashboard and Navigation Layout', () => {
       'Emails of uncompleted applications copied to clipboard.',
     )
 
+    /* This isn't enabled in the UI yet.
     // Click "View Announcements" and assert redirect
     cy.contains('a', 'View Announcements').click()
     cy.url().should('include', '/announcements')
     cy.get('h1').should('contain', 'Announcements')
+    */
   })
 
   it('Test Case 7: Classes Today Alerts and Reminders', () => {

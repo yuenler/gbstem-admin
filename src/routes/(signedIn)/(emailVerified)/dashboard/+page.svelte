@@ -232,6 +232,10 @@
 </svelte:head>
 <h1 class="mb-4 text-5xl font-bold md:text-6xl">Dashboard</h1>
 
+<!--
+  View Announcements link is temporarily hidden since gbSTEM has no UI implementation to write/create announcements.
+  The announcements page code currently only exists for displaying announcements, not creating them.
+  This link can be re-enabled here in the future if announcement creation is added.
 <div class="mb-8">
   <a
     href="/announcements"
@@ -254,6 +258,7 @@
     View Announcements
   </a>
 </div>
+-->
 
 <div class="relative w-full">
   {#if loading}
