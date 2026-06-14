@@ -66,11 +66,9 @@
     },
   }
 
-  let timer: any
   let queryTimeout: any
 
   onDestroy(() => {
-    if (timer) window.clearTimeout(timer)
     if (queryTimeout) window.clearTimeout(queryTimeout)
   })
 
@@ -96,10 +94,6 @@
       const usersColl = collection(db, 'users')
       const registrationsColl = collection(db, registrationsCollection)
       const classesColl = collection(db, classesCollection)
-
-      const timerPromise = new Promise<void>((resolve) => {
-        timer = window.setTimeout(resolve, 400)
-      })
 
       const timeoutPromise = new Promise<never>((_, reject) => {
         queryTimeout = window.setTimeout(() => {
@@ -204,9 +198,6 @@
         }
       })
       classesToday = todayClasses
-
-      // Wait for minimum loader time
-      await timerPromise
     } catch (err: any) {
       console.error('Error loading dashboard data:', err)
       alert.trigger(
@@ -214,7 +205,6 @@
         `Failed to load dashboard data: ${err.message || err}`,
       )
     } finally {
-      if (timer) window.clearTimeout(timer)
       if (queryTimeout) window.clearTimeout(queryTimeout)
       loading = false
     }
