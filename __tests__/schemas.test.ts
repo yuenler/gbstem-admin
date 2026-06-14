@@ -419,9 +419,9 @@ describe('Zod Validation Schemas', () => {
   })
 
   describe('passwordSchema', () => {
-    it('passes for a valid password within 6 to 64 characters', () => {
+    it('passes for a valid password within 6 to 64 characters with a non-alphabet character', () => {
       expect(passwordSchema.safeParse('123456').success).toBe(true)
-      expect(passwordSchema.safeParse('a'.repeat(64)).success).toBe(true)
+      expect(passwordSchema.safeParse('a'.repeat(63) + '1').success).toBe(true)
     })
 
     it('denies a password shorter than 6 characters', () => {
@@ -435,11 +435,21 @@ describe('Zod Validation Schemas', () => {
     })
 
     it('denies a password longer than 64 characters', () => {
-      const result = passwordSchema.safeParse('a'.repeat(65))
+      const result = passwordSchema.safeParse('a'.repeat(64) + '1')
       expect(result.success).toBe(false)
       if (!result.success) {
         expect(result.error.issues[0].message).toBe(
           'Password must be at most 64 characters',
+        )
+      }
+    })
+
+    it('denies a password with only alphabet characters', () => {
+      const result = passwordSchema.safeParse('abcdefg')
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe(
+          'Password must contain at least one non-alphabet character',
         )
       }
     })

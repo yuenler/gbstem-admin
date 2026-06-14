@@ -121,12 +121,13 @@ describe('Section L: Profile and Account Customization', () => {
       })
     cy.wait(1000)
 
-    // Change password back to penguin
+    // Change password to penguin!, which allows us to test that the previous
+    // password change worked during the reauthenticate step.
     cy.contains('span', 'Change password')
       .parent()
       .within(() => {
-        cy.get('input[name="new-password"]').clear().type('penguin')
-        cy.get('input[name="confirm-password"]').clear().type('penguin')
+        cy.get('input[name="new-password"]').clear().type('penguin!')
+        cy.get('input[name="confirm-password"]').clear().type('penguin!')
         cy.get('input[name="confirm-password"]')
           .closest('.items-end')
           .contains('button', 'Update')

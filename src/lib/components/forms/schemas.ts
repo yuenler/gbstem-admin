@@ -176,3 +176,7 @@ export const passwordSchema = z
     PASSWORD_MAX_LENGTH,
     `Password must be at most ${PASSWORD_MAX_LENGTH} characters`,
   )
+  .regex(
+    /.*[^a-zA-Z].*/,
+    'Password must contain at least one non-alphabet character',
+  )
