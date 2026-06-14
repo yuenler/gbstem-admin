@@ -132,6 +132,8 @@
       <div class="text-sm">
         Any problems with changing your profile? Contact us at <a
           href="mailto:contact@gbstem.org"
+          target="_blank"
+          rel="noopener"
           class="link">contact@gbstem.org</a
         >.
       </div>
