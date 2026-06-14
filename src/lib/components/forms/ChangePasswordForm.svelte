@@ -2,6 +2,7 @@
   import { superForm, defaults } from 'sveltekit-superforms'
   import { zod } from 'sveltekit-superforms/adapters'
   import { z } from 'zod'
+  import { passwordSchema } from './schemas'
   import { alert } from '$lib/stores'
   import { updatePassword } from 'firebase/auth'
   import Dialog from '$lib/components/Dialog.svelte'
@@ -13,9 +14,7 @@
 
   const schema = z
     .object({
-      newPassword: z
-        .string()
-        .min(6, 'Password must be at least 6-characters long'),
+      newPassword: passwordSchema,
       confirmPassword: z.string().min(1, 'Confirm password is required'),
     })
     .refine((data) => data.newPassword === data.confirmPassword, {
