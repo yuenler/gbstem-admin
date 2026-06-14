@@ -69,7 +69,9 @@
   <SearchBox basePath="/sub-requests" />
   <CourseFilter paramName="course" />
   <PerPageControl />
-  <Button class="flex h-12 items-center"><a href={url}>Download</a></Button>
+  <Button class="flex h-12 items-center" href={url} download="sub-requests.csv"
+    >Download</Button
+  >
 </div>
 
 <div>

@@ -253,7 +253,9 @@
   <CollectionFilter type="registrations" />
   <StatusFilter type="registrations" />
   <PerPageControl />
-  <Button class="flex h-12 items-center"><a href={url}>Download</a></Button>
+  <Button class="flex h-12 items-center" href={url} download="registrations.csv"
+    >Download</Button
+  >
 </div>
 
 <Table>
@@ -360,7 +362,9 @@
 </Table>
 
 <div class="mt-4 flex w-full justify-between">
-  <Button><a href={schoolsUrl}>Download Schools List</a></Button>
+  <Button href={schoolsUrl} download="schools-list.txt"
+    >Download Schools List</Button
+  >
   {#if !data.query && data.registrations}
     <div class="flex gap-2">
       {#if currentPage > 1}

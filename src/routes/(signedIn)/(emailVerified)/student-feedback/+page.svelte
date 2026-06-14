@@ -60,7 +60,11 @@
   <SearchBox basePath="/student-feedback" />
   <CourseFilter paramName="course" />
   <PerPageControl />
-  <Button class="flex h-12 items-center"><a href={url}>Download</a></Button>
+  <Button
+    class="flex h-12 items-center"
+    href={url}
+    download="student-feedback.csv">Download</Button
+  >
 </div>
 
 <Table>

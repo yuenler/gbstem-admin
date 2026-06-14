@@ -106,8 +106,11 @@
   <SearchBox basePath="/classes" />
   <CourseFilter />
   <PerPageControl />
-  <Button color="blue" class="flex h-12 items-center"
-    ><a href={url}>Download</a></Button
+  <Button
+    color="blue"
+    class="flex h-12 items-center"
+    href={url}
+    download="classes.csv">Download</Button
   >
   <Button
     on:click={() =>

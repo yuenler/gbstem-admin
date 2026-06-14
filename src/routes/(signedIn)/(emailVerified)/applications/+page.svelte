@@ -216,7 +216,9 @@
   <CollectionFilter type="applications" />
   <StatusFilter type="applications" />
   <PerPageControl />
-  <Button class="flex h-12 items-center"><a href={url}>Download</a></Button>
+  <Button class="flex h-12 items-center" href={url} download="applications.csv"
+    >Download</Button
+  >
 </div>
 
 <Table>
