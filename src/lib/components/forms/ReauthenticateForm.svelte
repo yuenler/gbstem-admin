@@ -1,6 +1,8 @@
 <script lang="ts">
-  import Input from '$lib/components/Input.svelte'
-  import clsx from 'clsx'
+  import { superForm, defaults } from 'sveltekit-superforms'
+  import { zod } from 'sveltekit-superforms/adapters'
+  import { z } from 'zod'
+  import { Field, Control, Label, FieldErrors } from 'formsnap'
   import { user } from '$lib/client/firebase'
   import { alert } from '$lib/stores'
   import {
@@ -8,55 +10,65 @@
     reauthenticateWithCredential,
   } from 'firebase/auth'
   import { createEventDispatcher } from 'svelte'
-  import Form from '$lib/components/Form.svelte'
 
-  const dispatch = createEventDispatcher()
-  let disabled = false
-  let showValidation = false
-  let values = {
-    password: '',
-  }
-  function handleSubmit(e: CustomEvent<SubmitData>) {
-    if ($user) {
-      if (e.detail.error === null) {
-        showValidation = false
-        disabled = true
-        reauthenticateWithCredential(
-          $user.object,
-          EmailAuthProvider.credential(
-            $user.object.email as string,
-            values.password,
-          ),
-        )
-          .then(() => {
+  const dispatch = createEventDispatcher<{
+    reauthenticate: boolean
+  }>()
+
+  const schema = z.object({
+    password: z.string().min(1, 'Password is required'),
+  })
+
+  const formResult = superForm(
+    defaults({ password: '' }, zod(schema as any) as any) as any,
+    {
+      SPA: true,
+      validators: zod(schema as any) as any,
+      async onUpdate({ form: formVal }) {
+        if (!formVal.valid) return
+        if ($user) {
+          try {
+            await reauthenticateWithCredential(
+              $user.object,
+              EmailAuthProvider.credential(
+                $user.object.email as string,
+                formVal.data.password,
+              ),
+            )
             dispatch('reauthenticate', true)
-          })
-          .catch((err) => {
-            disabled = false
+          } catch (err: any) {
             alert.trigger('error', err.code, true)
-          })
-      } else {
-        showValidation = true
-        alert.trigger('error', e.detail.error)
-      }
-    }
-  }
+          }
+        }
+      },
+    },
+  )
+
+  const { form, enhance, delayed } = formResult
 </script>
 
-<Form
-  class={clsx(showValidation && 'show-validation')}
-  on:submit={handleSubmit}
->
-  <fieldset class="space-y-4" {disabled}>
-    <Input
-      type="password"
-      bind:value={values.password}
-      label="Password"
-      floating
-      required
-      autocomplete="current-password"
-      focus
-    />
+<form use:enhance class="w-full">
+  <fieldset class="space-y-4" disabled={$delayed}>
+    <div class="flex flex-col gap-1.5">
+      <Field form={formResult} name="password">
+        <Control>
+          {#snippet children({ props })}
+            <Label class="text-sm font-bold">Password</Label>
+            <input
+              {...props}
+              type="password"
+              bind:value={$form.password}
+              placeholder="Password"
+              required
+              autocomplete="current-password"
+              class="block h-12 w-full appearance-none rounded-md border border-gray-400 px-3 transition-colors placeholder:text-gray-500 focus:border-gray-600 focus:outline-hidden disabled:bg-white disabled:text-gray-400"
+            />
+          {/snippet}
+        </Control>
+        <FieldErrors class="text-xs font-semibold text-red-500" />
+      </Field>
+    </div>
+
     <slot />
   </fieldset>
-</Form>
+</form>

@@ -1,8 +1,8 @@
 import { adminAuth, adminDb, verifyToken } from '$lib/server/firebase'
-import { FieldValue } from 'firebase-admin/firestore'
-import type { Actions, PageServerLoad } from './$types'
 import { error, fail, redirect } from '@sveltejs/kit'
 import type { FirebaseError } from 'firebase-admin'
+import { FieldValue } from 'firebase-admin/firestore'
+import type { Actions, PageServerLoad } from './$types'
 
 export const load = (async ({ url }) => {
   const token = url.searchParams.get('token')
@@ -95,7 +95,7 @@ export const actions = {
               })
               return { success: true }
             } catch (err) {
-              console.log(err)
+              console.error('Signup database error:', err)
             }
           } catch (err) {
             await adminAuth.deleteUser(uid)

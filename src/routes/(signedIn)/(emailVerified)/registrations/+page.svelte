@@ -1,114 +1,113 @@
 <script lang="ts">
-  import Registration from '$lib/components/Registration.svelte'
-  import type Dialog from '$lib/components/Dialog.svelte'
-  import { format } from 'date-fns'
-  import Input from '$lib/components/Input.svelte'
-  import Form from '$lib/components/Form.svelte'
-  import Button from '$lib/components/Button.svelte'
-  import type { PageData } from './$types'
-  import { goto, invalidate } from '$app/navigation'
+  import { browser } from '$app/environment'
   import { page } from '$app/stores'
+  import { db } from '$lib/client/firebase'
+  import Button from '$lib/components/Button.svelte'
+  import CollectionFilter from '$lib/components/CollectionFilter.svelte'
+  import type Dialog from '$lib/components/Dialog.svelte'
+  import PerPageControl from '$lib/components/PerPageControl.svelte'
+  import Registration from '$lib/components/Registration.svelte'
+  import SearchBox from '$lib/components/SearchBox.svelte'
+  import StatusFilter from '$lib/components/StatusFilter.svelte'
   import Table from '$lib/components/Table.svelte'
-  import { actions, alert } from '$lib/stores'
-  import { db, user } from '$lib/client/firebase'
-  import { doc, updateDoc, getDoc, collection, query, getDocs, where} from 'firebase/firestore'
-  import fi from 'date-fns/locale/fi'
-  import Select from '$lib/components/Select.svelte'
+  import {
+    classesCollection,
+    registrationsCollection,
+  } from '$lib/data/collections'
+  import { alert } from '$lib/stores'
+  import { generateCSV, normalizeCapitals } from '$lib/utils'
+  import { format } from 'date-fns'
+  import {
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    query,
+    updateDoc,
+    where,
+  } from 'firebase/firestore'
   import { kebabCase } from 'lodash-es'
-  import { normalizeCapitals } from '$lib/utils'
-  import { classesCollection, registrationsCollection } from '$lib/data/collections'
-  import { writable } from 'svelte/store'
+  import type { PageData } from './$types'
 
   export let data: PageData
   let dialogEl: Dialog
-  let search: string = data.query ?? ''
   let current: number | undefined
   let checked: Array<number> = []
-  let decisionFilter: 'all' | 'submitted' | 'enrolled' | 'inPerson' | 'incomplete' | 'not enrolled' =
-    ($page.url.searchParams.get('filter') as any) ?? 'all'
-
-  // const mathCourseMap = {
-  //   'Mathematics 5b': 'mathematics-v',
-  //   'Mathematics 4b': 'mathematics-iv',
-  //   'Mathematics 3b': 'mathematics-iii',
-  //   'Mathematics 2b': 'mathematics-ii',
-  //   'Mathematics 1b': 'mathematics-i',
-  // }
-
-  const collectionOptions = [
-    { name: 'Spring 2026', value: 'registrationsSpring26' },
-    { name: 'Fall 2025', value: 'registrationsFall25' },
-    { name: 'Spring 2025', value: 'registrationsSpring25' },
-    { name: 'Fall 2024', value: 'registrationsFall24' },
-    { name: 'Spring 2024', value: 'registrationsSpring24' },
-  ]
-
-  // Default to the current collection or the default
-  let selectedCollection =
+  $: selectedCollection =
     $page.url.searchParams.get('collection') ?? registrationsCollection
 
-  function handleCollectionChange() {
-    const base = $page.url.searchParams
-    base.set('collection', selectedCollection)
-    base.delete('updated') // Remove pagination param if present
-    goto(`?${base.toString()}`)
-  }
-
-  const csv = data.registrations
-    .map((registration) => {
-      const {
-        id,
-        values: {
-          personal: {
-            studentFirstName,
-            studentLastName,
-            parentFirstName,
-            parentLastName,
-            email,
-            secondaryEmail,
-          },
-          academic: { school, grade },
-          program: {
-            csCourse,
-            engineeringCourse,
-            mathCourse,
-            scienceCourse,
-            inPerson,
-          },
+  const csvHeaders = [
+    'id',
+    'studentFirstName',
+    'studentLastName',
+    'parentFirstName',
+    'parentLastName',
+    'email',
+    'secondaryEmail',
+    'school',
+    'grade',
+    'csCourse',
+    'engineeringCourse',
+    'mathCourse',
+    'scienceCourse',
+    'In-person',
+  ]
+  $: rows = data.registrations.map((registration) => {
+    const {
+      id,
+      values: {
+        personal: {
+          studentFirstName,
+          studentLastName,
+          parentFirstName,
+          parentLastName,
+          email,
+          secondaryEmail,
         },
-      } = registration
-      return [
-        id,
-        normalizeCapitals(studentFirstName),
-        normalizeCapitals(studentLastName),
-        normalizeCapitals(parentFirstName),
-        normalizeCapitals(parentLastName),
-        email,
-        secondaryEmail,
-        school.replace(/,/g, ''),
-        grade,
-        (csCourse ?? '').toLowerCase().replace(/ /g, '-'),
-        (engineeringCourse ?? '').toLowerCase().replace(/ /g, '-'),
-        kebabCase(mathCourse ?? ''),
-        (scienceCourse ?? '').toLowerCase().replace(/ /g, '-'),
-        inPerson ? 'Yes' : 'No',
-      ].join(',')
-    })
-    .join('\n')
-  // add column names
-  const csvWithHeaders = `id,studentFirstName,studentLastName,parentFirstName,parentLastName,email,secondaryEmail,school,grade,csCourse,engineeringCourse,mathCourse,scienceCourse,In-person\n${csv}`
+        academic: { school, grade },
+        program: {
+          csCourse,
+          engineeringCourse,
+          mathCourse,
+          scienceCourse,
+          inPerson,
+        },
+      },
+    } = registration
+    return [
+      id,
+      normalizeCapitals(studentFirstName),
+      normalizeCapitals(studentLastName),
+      normalizeCapitals(parentFirstName),
+      normalizeCapitals(parentLastName),
+      email,
+      secondaryEmail,
+      school,
+      grade,
+      (csCourse ?? '').toLowerCase().replace(/ /g, '-'),
+      (engineeringCourse ?? '').toLowerCase().replace(/ /g, '-'),
+      kebabCase(mathCourse ?? ''),
+      (scienceCourse ?? '').toLowerCase().replace(/ /g, '-'),
+      inPerson ? 'Yes' : 'No',
+    ]
+  })
 
-  const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
+  $: csvWithHeaders = generateCSV(csvHeaders, rows)
+
+  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
+  $: url = URL.createObjectURL(blob)
 
   const schools: string[] = data.registrations
-    .map((registration) => registration.values.academic.school.trim().toLocaleLowerCase()).sort()
+    .map((registration) =>
+      registration.values.academic.school.trim().toLocaleLowerCase(),
+    )
+    .sort()
   let uniqueSchools: string[] = []
   schools.map((school: string) => {
-      if (!uniqueSchools.includes(school)) {
-        uniqueSchools.push(school)
-      }
-    })
+    if (!uniqueSchools.includes(school)) {
+      uniqueSchools.push(school)
+    }
+  })
 
   const schoolsBlob = new Blob([uniqueSchools.join('\n')], { type: 'text/csv' })
   const schoolsUrl = URL.createObjectURL(schoolsBlob)
@@ -117,30 +116,24 @@
     data.registrations.length === 0
       ? undefined
       : current === undefined
-      ? undefined
-      : data.registrations[current]
-  let nextHref = ''
-  let filterRef = ''
-  $: {
-    const base = $page.url.searchParams
-    base.set(
-      'updated',
-      data.registrations[
-        data.registrations.length - 1
-      ].values.timestamps.updated.toString(),
-    )
-    nextHref = `?${base.toString()}`
-  }
-  $: {
-    const base = $page.url.searchParams
-    if (decisionFilter !== 'all') {
-      base.set('filter', decisionFilter)
-      base.delete('updated')
-    } else {
-      base.delete('filter')
-    }
-    filterRef = `?${base.toString()}`
-  }
+        ? undefined
+        : data.registrations[current]
+  $: currentPage = data.page ?? 1
+  $: currentLimit = data.limit ?? 25
+
+  $: prevHref = (() => {
+    if (currentPage <= 1) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage - 1))
+    return `?${base.toString()}`
+  })()
+
+  $: nextHref = (() => {
+    if (data.registrations.length < currentLimit) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage + 1))
+    return `?${base.toString()}`
+  })()
 
   function handleCheck(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
@@ -163,132 +156,107 @@
       checked = []
     }
   }
-  function handleSearch() {
-    if (search === '') {
-      goto('/registrations')
-    } else {
-      const base = $page.url.searchParams
-      base.set('query', search)
-      goto(`?${base.toString()}`)
-    }
+  function bypassAgeLimits(id: string) {
+    getDoc(doc(db, registrationsCollection, id))
+      .then((applicationSnapshot) => {
+        if (applicationSnapshot.exists()) {
+          return updateDoc(doc(db, registrationsCollection, id), {
+            'agreements.bypassAgeLimits':
+              !applicationSnapshot.data().agreements.bypassAgeLimits,
+          })
+        }
+      })
+      .then(() => {
+        alert.trigger('success', 'Bypass age limits updated successfully.')
+      })
+      .catch((err) => {
+        console.error('Failed to update bypass age limits:', err)
+        const isPermissionDenied =
+          err.code === 'permission-denied' ||
+          String(err).includes('permission') ||
+          String(err).includes('Permission')
+        const msg = isPermissionDenied
+          ? 'You do not have permission to modify this registration.'
+          : `Failed to update bypass age limits: ${err.message || err}`
+        alert.trigger('error', msg)
+      })
   }
-  function bypassAgeLimits(id:string) {
-    getDoc(doc(db, registrationsCollection, id)).then((applicationSnapshot) => {
-      if (applicationSnapshot.exists()) {
-        console.log(applicationSnapshot.data().agreements.bypassAgeLimits)
-        updateDoc(doc(db, registrationsCollection, id), {'agreements.bypassAgeLimits': !applicationSnapshot.data().agreements.bypassAgeLimits});
-      }
-    })
-  }
-  async function handleClear() {
-    goto('/registrations').then(() => {
-      search = ''
-    })
-  }
-  function getInterestedClasses(registration:any) {
+  function getInterestedClasses(registration: any) {
     let interestedClasses = ''
-    if(registration) {
-      interestedClasses += (registration.values.program.csCourse ?? '').includes('I am not interested') ? '' : registration.values.program.csCourse + ', '
-      interestedClasses += (registration.values.program.engineeringCourse ?? '').includes('I am not interested') ? '' : registration.values.program.engineeringCourse + ', '
-      interestedClasses += (registration.values.program.mathCourse ?? '').includes('I am not interested') ? '' : registration.values.program.mathCourse + ', '
-      interestedClasses += (registration.values.program.scienceCourse ?? '').includes('I am not interested') ? '' : registration.values.program.scienceCourse
+    if (registration) {
+      interestedClasses += (
+        registration.values.program.csCourse ?? ''
+      ).includes('I am not interested')
+        ? ''
+        : registration.values.program.csCourse + ', '
+      interestedClasses += (
+        registration.values.program.engineeringCourse ?? ''
+      ).includes('I am not interested')
+        ? ''
+        : registration.values.program.engineeringCourse + ', '
+      interestedClasses += (
+        registration.values.program.mathCourse ?? ''
+      ).includes('I am not interested')
+        ? ''
+        : registration.values.program.mathCourse + ', '
+      interestedClasses += (
+        registration.values.program.scienceCourse ?? ''
+      ).includes('I am not interested')
+        ? ''
+        : registration.values.program.scienceCourse
     }
     return interestedClasses
   }
 
   async function getCourses(id: string) {
-    let enrolled = true
-    const q = query(collection(db, classesCollection), where('students', 'array-contains', id))
-    const snapshot = await getDocs(q)
-    const courses = snapshot.docs.map((doc) => doc.data().course)
-    if (courses.length === 0) {
-      enrolled = false
+    if (!browser) return 'Loading...'
+    try {
+      let enrolled = true
+      const q = query(
+        collection(db, classesCollection),
+        where('students', 'array-contains', id),
+      )
+      const snapshot = await getDocs(q)
+      const courses = snapshot.docs.map((doc) => doc.data().course)
+      if (courses.length === 0) {
+        enrolled = false
+      }
+
+      const reg = data.registrations.find((r) => r.id === id)
+      const currentEnrolled = (reg?.values as any)?.enrolled
+      if (currentEnrolled !== enrolled) {
+        const registrationDocRef = doc(db, registrationsCollection, id)
+        await updateDoc(registrationDocRef, { enrolled: enrolled }).catch(
+          (err) => {
+            console.warn(
+              `Failed to update enrolled status for registration ${id}:`,
+              err,
+            )
+          },
+        )
+      }
+
+      return enrolled ? courses : 'NO CLASS ENROLLMENT FOUND'
+    } catch (err: any) {
+      console.error(`Error fetching courses for student ${id}:`, err)
+      return 'ERROR LOADING ENROLLMENT'
     }
-
-     const registrationDocRef = doc(db, registrationsCollection, id)  
-      updateDoc(registrationDocRef, { enrolled: enrolled })
-
-    return enrolled? courses : "NO CLASS ENROLLMENT FOUND"
   }
-
 </script>
 
 <svelte:head>
-  <title>registrations</title>
+  <title>Registrations</title>
 </svelte:head>
 
-<Form class="flex gap-4" on:submit={handleSearch}>
-  <div class="relative grow">
-    <Input
-      class={{
-        container: 'mt-0',
-        input: 'mt-0 pr-20',
-      }}
-      bind:value={search}
-      placeholder="Search"
-    />
-    <div class="absolute right-2 top-0 flex h-12 items-center">
-      <Button class="uppercase px-2 py-1" on:click={handleClear}>Clear</Button>
-    </div>
-  </div>
-
-  <Button
-    class="shrink-0 h-12 w-12 p-0 flex items-center justify-center"
-    type="submit"
+<div class="flex flex-wrap items-end gap-4">
+  <SearchBox basePath="/registrations" />
+  <CollectionFilter type="registrations" />
+  <StatusFilter type="registrations" />
+  <PerPageControl />
+  <Button class="flex h-12 items-center" href={url} download="registrations.csv"
+    >Download</Button
   >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke-width="1.5"
-      stroke="currentColor"
-      class="w-6 h-6"
-    >
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-      />
-    </svg>
-  </Button>
-
-<div class="relative flex items-end">
-  <select
-    id="collection-select"
-    bind:value={selectedCollection}
-    on:change={handleCollectionChange}
-    class="block w-full h-12 px-4 pr-10 text-base bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition appearance-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-    required
-  >
-    <option value="" disabled hidden selected>Select collection…</option>
-    {#each collectionOptions as option}
-      <option value={option.value}>{option.name}</option>
-    {/each}
-  </select>
-  <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-    </svg>
-  </span>
 </div>
-
-  <div class="flex">
-    <Select
-      bind:value={decisionFilter}
-      label="Filter"
-      options={[{ name: 'all' }, { name: 'submitted' }, {name: 'enrolled'}, { name: 'inPerson' }, { name: 'incomplete' }, { name: 'not enrolled' }]}
-      floating
-      required
-    />
-    <a
-      href={filterRef}
-      class="flex items-center bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
-    >
-      Filter
-    </a>
-  </div>
-  <Button><a href={url}>Download</a></Button>
-</Form>
 
 <Table>
   <svelte:fragment slot="head">
@@ -296,7 +264,7 @@
       <div class="flex items-center">
         <input
           id="check-all"
-          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
           type="checkbox"
           checked={checked.length === data.registrations.length &&
             checked.length > 0}
@@ -319,8 +287,9 @@
   <svelte:fragment slot="body">
     {#each data.registrations as registration, i}
       <tr
-        class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
-        on:click={() => {
+        class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
+        on:click={(e) => {
+          if ((e.target as HTMLElement).tagName === 'INPUT') return
           current = i
           dialogEl.open()
         }}
@@ -329,11 +298,10 @@
           <div class="flex items-center">
             <input
               id={`check-${i}`}
-              class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+              class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
               type="checkbox"
               checked={checked.includes(i)}
               on:input={(e) => handleCheck(e, i)}
-              on:click|stopPropagation
             />
             <label for="check-all" class="sr-only">checkbox</label>
           </div>
@@ -348,7 +316,7 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="w-5 h-5"
+              class="h-5 w-5"
             >
               <path
                 stroke-linecap="round"
@@ -370,34 +338,50 @@
           {registration.values.academic.grade}
         </td>
         <td class="px-6 py-4">
-          {normalizeCapitals(registration.values.personal.parentFirstName + ' ' + registration.values.personal.parentLastName)}
-        <td class="px-6 py-4">{getInterestedClasses(registration)}</td>
+          {normalizeCapitals(
+            registration.values.personal.parentFirstName +
+              ' ' +
+              registration.values.personal.parentLastName,
+          )}
+        </td><td class="px-6 py-4">{getInterestedClasses(registration)}</td>
         <td class="px-6 py-4">
-        <input
-          id={`check-${i}`}
-          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
-          type="checkbox"
-          checked={registration.values.agreements.bypassAgeLimits}
-          on:input={() => bypassAgeLimits(registration.id)}
-          on:click|stopPropagation
-        />
+          <input
+            id={`bypass-${i}`}
+            class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+            type="checkbox"
+            checked={registration.values.agreements.bypassAgeLimits}
+            on:change={() => bypassAgeLimits(registration.id)}
+          />
         </td>
         {#await getCourses(registration.id) then courses}
-        <td class="px-6 py-4"
-          >{courses}</td
-        >
+          <td class="px-6 py-4">{courses}</td>
         {/await}
       </tr>
     {/each}
   </svelte:fragment>
 </Table>
 
-<div class="flex justify-between mt-4 w-full">
-  <Button><a href={schoolsUrl}>Download Schools List</a></Button>
-  <Button href={nextHref}>Next</Button>
+<div class="mt-4 flex w-full justify-between">
+  <Button href={schoolsUrl} download="schools-list.txt"
+    >Download Schools List</Button
+  >
+  {#if !data.query && data.registrations}
+    <div class="flex gap-2">
+      {#if currentPage > 1}
+        <Button href={prevHref}>Previous</Button>
+      {/if}
+      {#if data.registrations.length >= currentLimit}
+        <Button href={nextHref}>Next</Button>
+      {/if}
+    </div>
+  {/if}
 </div>
 
-<Registration bind:dialogEl id={registration?.id} collection={selectedCollection} />
+<Registration
+  bind:dialogEl
+  id={registration?.id}
+  collection={selectedCollection}
+/>
 
 <style>
   input:checked {

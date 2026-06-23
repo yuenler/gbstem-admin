@@ -1,92 +1,74 @@
-import { error, json } from '@sveltejs/kit'
-import type { RequestHandler } from './$types'
-import postmark from 'postmark'
-import type { FirebaseError } from 'firebase-admin'
-import {
-  SENDGRID_API_TOKEN,
-} from '$env/static/private'
-import { addDataToHtmlTemplate } from '$lib/utils'
 import { interviewScheduledEmailTemplate } from '$lib/data/emailTemplates/interviewScheduledEmailTemplate'
-import MailService, { type MailDataRequired } from '@sendgrid/mail'
+import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
+import { sendEmail } from '$lib/server/email'
+import { addDataToHtmlTemplate } from '$lib/utils'
+import { json } from '@sveltejs/kit'
+import type { RequestHandler } from './$types'
+
+import { z } from 'zod'
+
+const assignInterviewSchema = z.object({
+  email: z.string().email('Invalid interviewer email address'),
+  date: z.string().min(1, 'Date is required'),
+  link: z.string().min(1, 'Meeting link is required'),
+  interviewer: z.string().min(1, 'Interviewer name is required'),
+  firstName: z.string().min(1, 'Interviewee first name is required'),
+  intervieweeEmail: z.string().email('Invalid interviewee email address'),
+})
+
+export type AssignInterviewRequestBody = z.infer<typeof assignInterviewSchema>
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-  let topError
   try {
-    const body = await request.json()
-    try {
-      const interviewerEmail = body.email;
-      const interviewDate = body.date
-      const interviewLink = body.link;
-      const interviewerName = body.interviewer;
-      const intervieweeFirstName = body.firstName;
-      const intervieweeEmail = body.intervieweeEmail;
-      if (locals.user === null) {
-        throw error(400, 'User not signed in.')
-      } else {
-        const template = {
-          name: 'interviewScheduled',
-          data: {
-            subject: `${intervieweeFirstName}, your interview with ${interviewerName} has been scheduled`,
-            app: {
-              name: 'Portal',
-              link: 'https://portal.gbstem.org',
-            },
-            interview: {
-              interviewee: intervieweeFirstName,
-              name: interviewerName,
-              date: interviewDate,
-              link: interviewLink,
-            }
-          },
-        }
+    verifyAdmin(locals)
+    const body = assignInterviewSchema.parse(await request.json())
 
-        const htmlBody = addDataToHtmlTemplate(interviewScheduledEmailTemplate, template);
+    const interviewerEmail = body.email
+    const interviewDate = body.date
+    const interviewLink = body.link
+    const interviewerName = body.interviewer
+    const intervieweeFirstName = body.firstName
+    const intervieweeEmail = body.intervieweeEmail
 
-        const emailData: MailDataRequired = {
-          from: 'donotreply@gbstem.org',
-          to: intervieweeEmail,
-          cc: interviewerEmail,
-          subject: String(template.data.subject),
-          html: htmlBody,
-          replyTo: interviewerEmail,
-          text: 'Interview Assigned',
-        }
-        MailService.setApiKey(SENDGRID_API_TOKEN)
-        try {
-          await MailService.send(emailData);
-          console.log('Email sent');
-        } catch (mailError) {
-          console.error('Error sending email:', mailError);
-          return json({ error: 'Failed to send email. Please try again later.' }, { status: 500 });
-        }
-          return json({ message: 'Email sent successfully.' });
-        }
-    } catch (err) {
-      if (typeof err === 'string') {
-        topError = error(400, err)
-      } else {
-        const typedErr = err as
-          | FirebaseError
-          | {
-            errorInfo: FirebaseError
-            codePrefix: string
-          }
-        if ('errorInfo' in typedErr) {
-          topError = error(
-            400,
-            typedErr.errorInfo.message ||
-            'Please wait a few minutes before trying again.',
-          )
-        } else if ('message' in typedErr) {
-          topError = error(400, typedErr.message)
-        } else {
-          topError = error(400, 'Something went wrong. Please try again.')
-        }
-      }
+    const template = {
+      name: 'interviewScheduled',
+      data: {
+        subject: `${intervieweeFirstName}, your interview with ${interviewerName} has been scheduled`,
+        app: {
+          name: 'Portal',
+          link: 'https://portal.gbstem.org',
+        },
+        interview: {
+          interviewee: intervieweeFirstName,
+          name: interviewerName,
+          date: interviewDate,
+          link: interviewLink,
+        },
+      },
     }
-  } catch (err) {
-    topError = error(400, 'Invalid request body.')
-  }
-  throw topError
 
+    const htmlBody = addDataToHtmlTemplate(
+      interviewScheduledEmailTemplate,
+      template,
+    )
+
+    try {
+      await sendEmail({
+        to: intervieweeEmail,
+        cc: interviewerEmail,
+        subject: String(template.data.subject),
+        html: htmlBody,
+        replyTo: interviewerEmail,
+      })
+    } catch (mailError) {
+      return json(
+        { error: 'Failed to send email. Please try again later.' },
+        { status: 500 },
+      )
+    }
+
+    return json({ message: 'Email sent successfully.' })
+  } catch (err) {
+    throw handleApiError(err)
+  }
 }

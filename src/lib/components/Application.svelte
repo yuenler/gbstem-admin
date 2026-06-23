@@ -1,4 +1,19 @@
 <script lang="ts">
+  import { invalidate } from '$app/navigation'
+  import { db } from '$lib/client/firebase'
+  import Card from '$lib/components/Card.svelte'
+  import Form from '$lib/components/Form.svelte'
+  import Input from '$lib/components/Input.svelte'
+  import Select from '$lib/components/Select.svelte'
+  import Textarea from '$lib/components/Textarea.svelte'
+  import { interviewAttendanceJson } from '$lib/data'
+  import {
+    applicationsCollection,
+    decisionsCollection,
+    semesterDatesDocument,
+  } from '$lib/data/collections'
+  import { alert } from '$lib/stores'
+  import { formatDateShort, toLocalISOString } from '$lib/utils'
   import {
     type Timestamp,
     doc,
@@ -7,40 +22,12 @@
     setDoc,
     updateDoc,
   } from 'firebase/firestore'
-  import Input from '$lib/components/Input.svelte'
-  import Select from '$lib/components/Select.svelte'
-  import Textarea from '$lib/components/Textarea.svelte'
-  import {
-    gendersJson,
-    reasonsJson,
-    raceJson,
-    coursesJson,
-    timeSlotsJson,
-    classesPerWeekJson,
-    interviewAttendanceJson,
-  } from '$lib/data'
-  import Card from '$lib/components/Card.svelte'
-  import Form from '$lib/components/Form.svelte'
-  import { db } from '$lib/client/firebase'
-  import Field from '$lib/components/Field.svelte'
+  import { cloneDeep } from 'lodash-es'
+  import type { DecisionRequestBody } from '../../routes/api/decision/+server'
+  import type { ScheduleInterviewRequestBody } from '../../routes/api/scheduleInterview/+server'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
-  import { alert } from '$lib/stores'
-  import { cloneDeep } from 'lodash-es'
-  import type { FirebaseError } from 'firebase/app'
-  import { invalidate } from '$app/navigation'
-  import {
-    formatDate,
-    formatDateShort,
-    timestampToDate,
-    toLocalISOString,
-  } from '$lib/utils'
-  import {
-    applicationsCollection,
-    decisionsCollection,
-    semesterDatesDocument,
-  } from '$lib/data/collections'
-  import { afterUpdate } from 'svelte'
+  import EditApplicationForm from './forms/EditApplicationForm.svelte'
 
   export let dialogEl: Dialog
   export let id: string | undefined
@@ -51,15 +38,6 @@
   let showInterviewForm = true
   let semesterStartDate = ''
   let semesterEndDate = ''
-  let autosaveTimeout: ReturnType<typeof setTimeout> | null = null
-  let lastAutosaved = ''
-  // $: {
-  //   if (loading) {
-  //     nProgress.start()
-  //   } else {
-  //     nProgress.done()
-  //   }
-  // }
   let dbValues: Data.Application<'client'>
   const defaultValues: Data.Application<'client'> = {
     personal: {
@@ -129,23 +107,27 @@
   }
 
   let interview: Data.Interview = cloneDeep(defaultInterview)
-
   let values: Data.Application<'client'> = cloneDeep(defaultValues)
   let decision: Data.Decision | null
-  let notes = ''
+  let formEl: HTMLFormElement
+
   $: if (id !== undefined) {
-    loading = true
-    disabled = true
-    values = cloneDeep(defaultValues)
-    getDoc(doc(db, collection, id)).then((applicationSnapshot) => {
-      const data = applicationSnapshot.data() as Data.Application<'client'>
-      if (applicationSnapshot.exists()) {
-        values = cloneDeep(data)
-        dbValues = cloneDeep(data)
-        if (data.meta.decision) {
-          getDoc(data.meta.decision).then((decisionSnapshot) => {
-            const data = decisionSnapshot.data() as Data.Interview
+    ;(async () => {
+      loading = true
+      disabled = true
+      values = cloneDeep(defaultValues)
+      try {
+        const applicationSnapshot = await getDoc(doc(db, collection, id))
+        if (applicationSnapshot.exists()) {
+          const data = applicationSnapshot.data() as Data.Application<'client'>
+          values = cloneDeep(data)
+          dbValues = cloneDeep(data)
+
+          // Data populated in form child component
+          if (data.meta.decision) {
+            const decisionSnapshot = await getDoc(data.meta.decision)
             if (decisionSnapshot.exists()) {
+              const dData = decisionSnapshot.data() as Data.Interview
               const {
                 type,
                 likelyDecision,
@@ -164,7 +146,7 @@
                 teachingPreferences,
                 availabilityNotes,
                 date,
-              } = data
+              } = dData
               decision = type ?? null
               interview.type = type ?? ''
               interview.likelyDecision = likelyDecision ?? null
@@ -186,68 +168,47 @@
             } else {
               decision = null
               interview.likelyDecision = null
-              notes = ''
+              interview = cloneDeep(defaultInterview)
             }
-            loading = false
-          })
+          } else {
+            decision = null
+            interview.likelyDecision = null
+            interview = cloneDeep(defaultInterview)
+          }
         } else {
-          decision = null
-          interview.likelyDecision = null
-          notes = ''
-          loading = false
+          alert.trigger('error', 'Application not found.')
         }
-      } else {
-        alert.trigger('error', 'Application not found.')
+      } catch (err: any) {
+        console.error('Failed to load application:', err)
+        alert.trigger('error', 'Failed to load application.')
+      } finally {
+        loading = false
       }
-    })
-    getDoc(doc(db, 'semesterDates', semesterDatesDocument)).then((dateSnap) => {
-      if(dateSnap.exists()) {
-        semesterStartDate = formatDateShort(
-        new Date(
-          dateSnap.data().classesStart
+    })()
+    ;(async () => {
+      try {
+        const dateSnap = await getDoc(
+          doc(db, 'semesterDates', semesterDatesDocument),
         )
-      )
-      semesterEndDate = formatDateShort(
-        new Date(
-          dateSnap.data().classesEnd
-        )
-      )
+        if (dateSnap.exists()) {
+          semesterStartDate = formatDateShort(
+            new Date(dateSnap.data().classesStart),
+          )
+          semesterEndDate = formatDateShort(
+            new Date(dateSnap.data().classesEnd),
+          )
+        }
+      } catch (err) {
+        console.error('Failed to load semester dates:', err)
       }
-    })
+    })()
   }
 
-  function autosaveValues() {
-  if (id !== undefined && !disabled) {
-    setDoc(doc(db, applicationsCollection, id), values, { merge: true })
-      .then(() => {
-        lastAutosaved = new Date().toLocaleTimeString()
-      })
-      .catch((err: FirebaseError) => {
-        console.log('Autosave error:', err)
-      })
-  }
-}
-
-// Autosave handler for interview notes
-function autosaveInterview() {
-  if (id !== undefined && !disabled && showInterviewForm) {
-    setDoc(doc(db, decisionsCollection, id), interview, { merge: true })
-      .then(() => {
-        lastAutosaved = new Date().toLocaleTimeString()
-      })
-      .catch((err: FirebaseError) => {
-        console.log('Autosave error:', err)
-      })
-  }
-}
-
-// Remove the problematic afterUpdate that causes infinite loops in Svelte 5
-// The autosave will be handled by specific reactive statements instead
-
-  function saveNotes() {
+  async function saveNotes() {
     const frozenId = id
+    if (frozenId === undefined) return
     loading = true
-    if (frozenId !== undefined) {
+    try {
       const {
         conversation,
         conversationNotes,
@@ -265,8 +226,9 @@ function autosaveInterview() {
         interviewer,
         attendance,
       } = interview
-      setDoc(
-        doc(db, decisionsCollection, frozenId),
+      const decisionDocRef = doc(db, decisionsCollection, frozenId)
+      await setDoc(
+        decisionDocRef,
         {
           conversation,
           conversationNotes,
@@ -286,86 +248,70 @@ function autosaveInterview() {
         },
         { merge: true },
       )
-        .then(() => {
-          updateDoc(doc(db, applicationsCollection, frozenId), {
-            'meta.decision': doc(db, decisionsCollection, frozenId),
-          })
-            .then(() => {
-              invalidate('app:applications').then(() => {
-                alert.trigger('success', 'Notes updated successfully.')
-                loading = false
-              })
-            })
-            .catch(() => {
-              loading = false
-            })
-        })
-        .catch((err) => {
-          alert.trigger('error', 'Something went wrong. Please try again.')
-          loading = false
-          console.log(err)
-        })
+      await updateDoc(doc(db, applicationsCollection, frozenId), {
+        'meta.decision': decisionDocRef,
+      })
+      await invalidate('app:applications')
+      alert.trigger('success', 'Notes updated successfully.')
+    } catch (err: any) {
+      alert.trigger('error', 'Something went wrong. Please try again.')
+      console.error('Decisions update error:', err)
+    } finally {
+      loading = false
     }
   }
 
-  function handleLikelyDecision(
+  async function handleLikelyDecision(
     newDecision: 'likely yes' | 'likely no' | 'likely waitlist' | null,
   ) {
     const frozenId = id
+    if (frozenId === undefined) return
     loading = true
-    if (frozenId !== undefined) {
-      updateDoc(doc(db, decisionsCollection, frozenId), {
-        likelyDecision: newDecision,
-        type: decision,
+    try {
+      const decisionDocRef = doc(db, decisionsCollection, frozenId)
+      await setDoc(
+        decisionDocRef,
+        {
+          likelyDecision: newDecision,
+          type: decision ?? null,
+        },
+        { merge: true },
+      )
+      await updateDoc(doc(db, applicationsCollection, frozenId), {
+        'meta.decision': decisionDocRef,
       })
-        .then(() => {
-          updateDoc(doc(db, applicationsCollection, frozenId), {
-            'meta.decision': doc(db, decisionsCollection, frozenId),
-          })
-            .then(() => {
-              invalidate('app:applications').then(() => {
-                alert.trigger('success', 'Decision updated successfully.')
-                interview.likelyDecision = newDecision
-                loading = false
-              })
-            })
-            .catch(() => {
-              loading = false
-            })
-        })
-        .catch((err) => {
-          alert.trigger('error', 'Something went wrong. Please try again.')
-          loading = false
-          console.log(err)
-        })
+      await invalidate('app:applications')
+      alert.trigger('success', 'Decision updated successfully.')
+      interview.likelyDecision = newDecision
+    } catch (err: any) {
+      alert.trigger('error', 'Something went wrong. Please try again.')
+      console.error('Decision likely decision update error:', err)
+    } finally {
+      loading = false
     }
   }
 
-  async function clearLikelyDecision() {
-    interview.likelyDecision = null
-    alert.trigger('success', 'Likely decision cleared.')
-  }
-
   async function handleDecision(newDecision: Data.Decision) {
-    // Get today's date
     let today = new Date()
-
-    // Calculate the date 7 days from today
     let weekDeadline = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
     let interviewDeadline = formatDateShort(weekDeadline)
 
-    const dueDate = await getDoc(
-      doc(db, 'semesterDates', semesterDatesDocument),
-    )
-    if (dueDate.exists()) {
-      interviewDeadline = formatDateShort(
-        new Date(
-          Math.min(
-            weekDeadline,
-            new Date(dueDate.data().instructorOrientation),
-          ),
-        ),
+    try {
+      const dueDate = await getDoc(
+        doc(db, 'semesterDates', semesterDatesDocument),
       )
+      if (dueDate.exists()) {
+        interviewDeadline = formatDateShort(
+          new Date(
+            Math.min(
+              weekDeadline.getTime(),
+              new Date(dueDate.data().instructorOrientation).getTime(),
+            ),
+          ),
+        )
+      }
+    } catch (err) {
+      console.error('Failed to get semester dates:', err)
     }
 
     const confirmation = confirm(
@@ -375,8 +321,9 @@ function autosaveInterview() {
       return
     }
     const frozenId = id
+    if (frozenId === undefined) return
     loading = true
-    if (frozenId !== undefined) {
+    try {
       interview.type = newDecision
       const {
         type,
@@ -397,7 +344,8 @@ function autosaveInterview() {
         date,
         likelyDecision,
       } = interview
-      setDoc(doc(db, decisionsCollection, frozenId), {
+      const decisionDocRef = doc(db, decisionsCollection, frozenId)
+      await setDoc(decisionDocRef, {
         type,
         likelyDecision,
         notes,
@@ -416,74 +364,58 @@ function autosaveInterview() {
         availabilityNotes,
         date,
       })
-        .then(() => {
-          updateDoc(doc(db, applicationsCollection, frozenId), {
-            'meta.decision': doc(db, decisionsCollection, frozenId),
-          })
-            .then(() => {
-              invalidate('app:applications').then(() => {
-                alert.trigger('success', 'Decision updated successfully.')
-                decision = newDecision
-                loading = false
-              })
-              if (newDecision === 'interview') {
-                fetch('/api/scheduleInterview', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    type: 'scheduleInterview',
-                    email: values.personal.email,
-                    name: values.personal.firstName,
-                    deadline: interviewDeadline,
-                  }),
-                })
-              } else {
-                fetch('/api/decision', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    type: 'decision',
-                    decision: newDecision,
-                    email: values.personal.email,
-                    name: values.personal.firstName,
-                  }),
-                })
-              }
-            })
-            .catch(() => {
-              loading = false
-            })
+      await updateDoc(doc(db, applicationsCollection, frozenId), {
+        'meta.decision': decisionDocRef,
+      })
+      await invalidate('app:applications')
+      alert.trigger('success', 'Decision updated successfully.')
+      decision = newDecision
+
+      if (newDecision === 'interview') {
+        const payload: ScheduleInterviewRequestBody = {
+          email: values.personal.email,
+          name: values.personal.firstName,
+          deadline: interviewDeadline,
+        }
+        await fetch('/api/scheduleInterview', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
         })
-        .catch((err) => {
-          alert.trigger('error', 'Something went wrong. Please try again.')
-          loading = false
-          console.log(err)
+      } else {
+        const payload: DecisionRequestBody = {
+          decision: newDecision as
+            | 'rejected'
+            | 'waitlisted'
+            | 'substitute'
+            | 'accepted',
+          email: values.personal.email,
+          name: values.personal.firstName,
+        }
+        await fetch('/api/decision', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
         })
+      }
+    } catch (err: any) {
+      alert.trigger('error', 'Something went wrong. Please try again.')
+      console.error('Decision update error:', err)
+    } finally {
+      loading = false
     }
   }
+
   function handleEdit() {
     disabled = false
   }
   function handleSaveChanges() {
-    loading = true
-    disabled = true
-    if (id !== undefined) {
-      setDoc(doc(db, applicationsCollection, id), values)
-        .then(() => {
-          invalidate('app:applications').then(() => {
-            alert.trigger('success', 'Changes were saved successfully.')
-            loading = false
-          })
-        })
-        .catch((err: FirebaseError) => {
-          console.log(err)
-          alert.trigger('error', err.code, true)
-          loading = false
-        })
+    if (formEl) {
+      formEl.requestSubmit()
     }
   }
   function handleDeleteChanges() {
@@ -494,10 +426,12 @@ function autosaveInterview() {
 
 <Dialog bind:this={dialogEl} size="full" alert>
   <svelte:fragment slot="title">Application</svelte:fragment>
-  <div slot="description">
+  <div slot="description" class="w-full min-w-0">
     <Card>
-      <div class="sticky top-2 z-50 flex justify-between gap-3 p-3 md:p-3">
-        <fieldset class="flex gap-3" disabled={loading}>
+      <div
+        class="sticky top-2 z-50 flex flex-wrap items-center justify-between gap-3 p-3 md:p-3"
+      >
+        <fieldset class="flex flex-wrap items-center gap-2" disabled={loading}>
           {#if disabled}
             <Button
               color={!loading &&
@@ -512,7 +446,7 @@ function autosaveInterview() {
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5"
+                class="h-5 w-5"
               >
                 <path
                   fill-rule="evenodd"
@@ -535,7 +469,7 @@ function autosaveInterview() {
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5"
+                class="h-5 w-5"
               >
                 <path
                   fill-rule="evenodd"
@@ -558,7 +492,7 @@ function autosaveInterview() {
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5"
+                class="h-5 w-5"
               >
                 <path
                   fill-rule="evenodd"
@@ -569,24 +503,24 @@ function autosaveInterview() {
               <span>Likely No</span></Button
             >
             <Button
-            color={'gray'}
-            class="flex items-center gap-1"
-            on:click={() => handleLikelyDecision(null)}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              class="w-5 h-5"
+              color={'gray'}
+              class="flex items-center gap-1"
+              on:click={() => handleLikelyDecision(null)}
             >
-              <path
-                fill-rule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            <span>Clear Likely Decision</span></Button
-          >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="h-5 w-5"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>Clear Likely Decision</span></Button
+            >
             <Button
               color={!loading && (decision === null || decision === 'interview')
                 ? 'blue'
@@ -599,7 +533,7 @@ function autosaveInterview() {
                 height="16"
                 width="10"
                 viewBox="0 0 320 512"
-                ><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path
+                ><path
                   d="M112 48a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm40 304V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V256.9L59.4 304.5c-9.1 15.1-28.8 20-43.9 10.9s-20-28.8-10.9-43.9l58.3-97c17.4-28.9 48.6-46.6 82.3-46.6h29.7c33.7 0 64.9 17.7 82.3 46.6l58.3 97c9.1 15.1 4.2 34.8-10.9 43.9s-34.8 4.2-43.9-10.9L232 256.9V480c0 17.7-14.3 32-32 32s-32-14.3-32-32V352H152z"
                 /></svg
               >
@@ -616,7 +550,7 @@ function autosaveInterview() {
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5"
+                class="h-5 w-5"
               >
                 <path
                   fill-rule="evenodd"
@@ -634,7 +568,7 @@ function autosaveInterview() {
               class="flex items-center gap-1"
               on:click={() => handleDecision('substitute')}
               ><svg
-                class="w-5 h-5 text-purple-300"
+                class="h-5 w-5 text-purple-300"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -662,7 +596,7 @@ function autosaveInterview() {
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5"
+                class="h-5 w-5"
               >
                 <path
                   fill-rule="evenodd"
@@ -684,7 +618,7 @@ function autosaveInterview() {
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5"
+                class="h-5 w-5"
               >
                 <path
                   fill-rule="evenodd"
@@ -703,7 +637,7 @@ function autosaveInterview() {
             >
           {/if}
         </fieldset>
-        <div class="flex gap-3">
+        <div class="flex flex-wrap items-center gap-2">
           <Button
             color="green"
             on:click={() => (showInterviewForm = !showInterviewForm)}
@@ -718,235 +652,41 @@ function autosaveInterview() {
         </div>
       </div>
     </Card>
-    <div class="mt-4 flex justify-center flex-wrap gap-4">
-      <Card class="w-fit">
-        <Form class="max-w-2xl">
-          <fieldset class="space-y-14">
-            <div class="grid gap-1">
-              <span class="font-bold">Personal</span>
-              <Card class="my-2 grid gap-3">
-                <div class="rounded-md bg-gray-100 px-3 py-2 shadow-sm">
-                  {`Name: ${values.personal.firstName} ${values.personal.lastName}`}
-                </div>
-                <div class="rounded-md bg-gray-100 px-3 py-2 shadow-sm">
-                  {`Email: ${values.personal.email}`}
-                </div>
-                <div class="text-sm">
-                  Wrong name or email? Go to your <a
-                    class="link"
-                    href="/profile">profile</a
-                  > to update your information.
-                </div>
-              </Card>
-              <Input
-                type="tel"
-                bind:value={values.personal.phoneNumber}
-                label="Phone number"
-                floating
-                required
-                pattern="[\d\s\-\+]+"
-              />
-              <Input
-                type="date"
-                bind:value={values.personal.dateOfBirth}
-                label="Date of birth"
-                floating
-                required
-              />
-
-              <Select
-                bind:value={values.personal.gender}
-                label="Gender"
-                options={gendersJson}
-                floating
-                required
-              />
-              <div class="grid gap-1">
-                <span>Race / ethnicity (check all that apply)</span>
-                <div class="grid grid-cols-2">
-                  {#each raceJson as race}
-                    <Input
-                      type="checkbox"
-                      bind:value={values.personal.race}
-                      label={race.name}
-                    />
-                  {/each}
-                </div>
-              </div>
-            </div>
-            <div class="grid gap-1">
-              <span class="font-bold">Academic</span>
-              <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
-                <div class="sm:col-span-2">
-                  <Input
-                    type="text"
-                    bind:value={values.academic.school}
-                    label="Current school"
-                    floating
-                    required
-                  />
-                </div>
-                <Input
-                  type="number"
-                  bind:value={values.academic.graduationYear}
-                  label="Graduation year"
-                  min={new Date().getFullYear()}
-                  max={new Date().getFullYear() + 20}
-                  floating
-                  required
-                />
-              </div>
-            </div>
-            <div class="grid gap-1">
-              <div class="mt-3 grid gap-1">
-                <span class="font-bold"
-                  >Which of the following courses are you comfortable teaching?
-                  Check all that apply. Course descriptions are on our website.</span
-                >
-                <div class="grid grid-cols-2 gap-2">
-                  {#each coursesJson as course}
-                    <Input
-                      type="checkbox"
-                      bind:value={values.program.courses}
-                      label={course.name}
-                      required
-                    />
-                  {/each}
-                </div>
-              </div>
-
-              <div class="mt-4">
-                <span class="font-bold"
-                  >If you have any preferences for the courses you teach, please
-                  list them here.</span
-                >
-                <Input
-                  type="text"
-                  bind:value={values.program.preferences}
-                  label="Preferences"
-                  floating
-                />
-              </div>
-
-              <div class="mt-3 grid gap-1">
-                <span class="font-bold">Timeslots</span>
-                <Input
-                  type="text"
-                  bind:value={values.program.timeSlots}
-                  label="Please describe your weekly availability. For example, 'weekdays after 4pm' or 'weekends anytime'."
-                  required
-                />
-              </div>
-
-              <div class="mt-2">
-                <Textarea
-                  bind:value={values.program.notAvailable}
-                  label="When will you not be available to teach classes during the semester? Include potential conflicts such as medical absences, vacations, and athletic events."
-                  required
-                />
-              </div>
-
-              <Input
-                type="checkbox"
-                bind:value={values.program.inPerson}
-                label="For our in-person offering in the fall, gbSTEM is holding a new Lego Robotics competition program for students grade 5 and up. The program will meet weekly in-person at the Cambridge Public Library on Saturdays 1:00-3:00pm; parents are encouraged to help coach the robotics team. There are 10 slots available this year and will be more in the future. You may apply for this program on top of two courses, but if you are selected you will only be able to enroll in one additional course. Would you like to apply for the robotics program?"
-              />
-
-              <div class="mt-2">
-                <Select
-                  bind:value={values.program.reason}
-                  label="How did you learn about gbSTEM?"
-                  options={reasonsJson}
-                  floating
-                  required
-                />
-              </div>
-
-              <div class="mt-5">
-                <span class="font-bold">Essays</span>
-                <div class="mt-2">
-                  <Input
-                    type="checkbox"
-                    bind:value={values.essay.taughtBefore}
-                    label="Have you taught for gbSTEM before?"
-                  />
-                </div>
-                <div class="mt-2">
-                  <Textarea
-                    bind:value={values.essay.academicBackground}
-                    label="Describe your academic background in any of the classes you said you were comfortable teaching. List any relevant coursework, projects, or extracurriculars. (500 char limit)"
-                    required
-                    maxlength={500}
-                  />
-                </div>
-                {#if !values.essay.taughtBefore}
-                  <div class="mt-2">
-                    <Textarea
-                      bind:value={values.essay.teachingScenario}
-                      label="Suppose your students are not engaging in the class. What would you do? (500 char limit)"
-                      required
-                      maxlength={500}
-                    />
-                  </div>
-                  <div class="mt-2">
-                    <Textarea
-                      bind:value={values.essay.why}
-                      label="Why do you want to teach for gbSTEM? (500 char limit)"
-                      required
-                      maxlength={500}
-                    />
-                  </div>
-                {/if}
-              </div>
-              <div class="grid gap-1">
-                <span class="font-bold">Agreements</span>
-                <div class="grid">
-                  <Input
-                    type="checkbox"
-                    bind:value={values.agreements.entireProgram}
-                    label='gbSTEM will run from {semesterStartDate} to {semesterEndDate}. Do you confirm that you will be able to teach for the entirety of the program?'
-                    required
-                  />
-                  <Input
-                    type="checkbox"
-                    bind:value={values.agreements.timeCommitment}
-                    label="Do you hereby confirm that if you are selected as an instructor, that you will be able to make the weekly time commitment of 2 hours a week for each class you teach? "
-                    required
-                  />
-                  <Input
-                    type="checkbox"
-                    bind:value={values.agreements.submitting}
-                    label="I understand submitting means I can no longer make changes to my application. Don't check this box until you are sure that you are ready to submit."
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-          </fieldset>
-        </Form>
+    <div class="mt-4 flex flex-wrap justify-center gap-4">
+      <Card class="w-full min-w-[300px] flex-1 md:min-w-[450px]">
+        <h2 class="my-4 text-2xl font-bold">Application Details</h2>
+        <EditApplicationForm
+          bind:formEl
+          bind:disabled
+          bind:loading
+          bind:values
+          bind:dbValues
+          {id}
+          {collection}
+          {semesterStartDate}
+          {semesterEndDate}
+        />
       </Card>
       {#if showInterviewForm}
-        <Card class="w-fit">
-          <Form class="max-w-2xl">
+        <Card class="w-full min-w-[300px] flex-1 md:min-w-[450px]">
+          <Form class="w-full">
             <div>
-              <h2 class="text-2xl font-bold my-4">
+              <h2 class="my-4 text-2xl font-bold">
                 Interview Guide & Evaluation Form
               </h2>
-                <div class="text-xs text-gray-500 mt-2">
-                  Autosaved at {lastAutosaved}
-                </div>
+              <div class="mt-2 text-xs text-gray-500">
+                Autosave is enabled for this browser
+              </div>
               <Input
                 type="datetime-local"
                 bind:value={interview.date}
                 label="Interview Date"
-                floating
                 required
               />
               <Input
                 type="text"
                 bind:value={interview.interviewer}
                 label="Interviewer"
-                floating
                 required
               />
               <Select
@@ -954,10 +694,9 @@ function autosaveInterview() {
                 bind:value={interview.attendance}
                 options={interviewAttendanceJson}
                 label="Attendance"
-                floating
                 required
               />
-              <ul class="rounded-lg bg-gray-100 p-4 px-8 my-4 list-disc">
+              <ul class="my-4 list-disc rounded-lg bg-gray-100 p-4 px-8">
                 <li>
                   Greet the candidate when they arrive & ask them how they are,
                   general conversational beginning. Try to be personable and
@@ -986,7 +725,7 @@ function autosaveInterview() {
                 label="Conversation Notes"
                 optional
               />
-              <div class="rounded-lg bg-gray-100 p-4 my-4">
+              <div class="my-4 rounded-lg bg-gray-100 p-4">
                 Clarify the subject they are applying to teach for (plus the
                 level), clarify if there are other subjects that they could be
                 considered for. Ask them to state their preferences, such as top
@@ -1001,10 +740,9 @@ function autosaveInterview() {
                 type="checkbox"
                 bind:value={values.essay.taughtBefore}
                 label="Have they taught for gbSTEM before? (This should be pre-set to the correct value, but if not simply check/uncheck the box as needed)."
-                floating
               />
               {#if values.essay.taughtBefore}
-                <div class="rounded-lg bg-gray-100 p-4 my-4">
+                <div class="my-4 rounded-lg bg-gray-100 p-4">
                   <div>
                     Ask them about their experience as an instructor. For
                     example, “You're a returning instructor, correct? I would
@@ -1045,7 +783,7 @@ function autosaveInterview() {
                   required
                 />
               {:else}
-                <div class="rounded-lg bg-gray-100 p-4 my-4">
+                <div class="my-4 rounded-lg bg-gray-100 p-4">
                   <div class="font-bold">
                     Talk a little about the logistics of being an instructor.
                   </div>
@@ -1075,7 +813,7 @@ function autosaveInterview() {
                   </ul>
                 </div>
               {/if}
-              <div class="rounded-lg bg-gray-100 p-4 my-4">
+              <div class="my-4 rounded-lg bg-gray-100 p-4">
                 <div>
                   Continue onto the mock lessons. Send the link for the
                   candidate’s top subject to teach. Allow each candidate 3
@@ -1085,7 +823,7 @@ function autosaveInterview() {
                   and clearly, quality of explanations, as well as their
                   attitude.
                 </div>
-                <div class="font-bold mt-8">Mock Lesson Materials</div>
+                <div class="mt-8 font-bold">Mock Lesson Materials</div>
                 <div class="flex gap-4">
                   <Button
                     class="bg-gray-200"
@@ -1103,7 +841,7 @@ function autosaveInterview() {
                     target="_blank">Engineering</Button
                   >
                 </div>
-                <div class="flex gap-4 mt-4">
+                <div class="mt-4 flex gap-4">
                   <Button
                     color="blue"
                     href="https://docs.google.com/document/d/1ruPmF-SRdWQ_LlilQz0PBFX1p7gDpfGZ1jVBmSpdgyI/edit#"
@@ -1112,7 +850,7 @@ function autosaveInterview() {
                   <Button
                     color="blue"
                     href="https://docs.google.com/document/d/1-Q40jjtKjt1dvX09qndC1ZEA7amiieAQgXF8qPDEvOE/edit"
-                    target="_blank">Python I</Button
+                    target="_blank">Python 1</Button
                   >
                   <Button
                     color="blue"
@@ -1163,7 +901,7 @@ function autosaveInterview() {
                 label="Any tech or other issues that could hinder their ability to be a good instructor?"
                 required
               />
-              <div class="rounded-lg bg-gray-100 p-4 my-4">
+              <div class="my-4 rounded-lg bg-gray-100 p-4">
                 <div class="font-bold">Continue:</div>
                 <ul class="list-disc px-8">
                   <li>
@@ -1194,7 +932,7 @@ function autosaveInterview() {
                 label="Availability notes. When is the candidate not available? Are there any potential concerns with the candidate's availability?"
                 required
               />
-              <div class="rounded-lg bg-gray-100 p-4 my-4">
+              <div class="my-4 rounded-lg bg-gray-100 p-4">
                 <div>
                   Thank them for speaking with you, and let them know that they
                   can reach us at contact@gbstem.org. Additionally, tell them

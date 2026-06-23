@@ -1,36 +1,36 @@
-import { error, json } from '@sveltejs/kit'
-import type { RequestHandler } from './$types'
-import MailService, { MailDataRequired } from '@sendgrid/mail'
-import { SENDGRID_API_TOKEN } from '$env/static/private'
-import { addDataToHtmlTemplate, formatTime24to12 } from '$lib/utils'
-import { onlineClassEnrolledEmailTemplate } from '$lib/data/emailTemplates/onlineClassEnrolledEmailTemplate'
 import { inPersonClassEnrolledEmailTemplate } from '$lib/data/emailTemplates/inPersonClassEnrolledEmailTemplate'
+import { onlineClassEnrolledEmailTemplate } from '$lib/data/emailTemplates/onlineClassEnrolledEmailTemplate'
+import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
+import { sendEmail } from '$lib/server/email'
+import { addDataToHtmlTemplate, formatTime24to12 } from '$lib/utils'
+import { json } from '@sveltejs/kit'
+import type { RequestHandler } from './$types'
+
+import { z } from 'zod'
+
+const enrollSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  firstName: z.string().min(1, 'First name is required'),
+  instructor: z.string().min(1, 'Instructor name is required'),
+  instructorEmail: z.string().email('Invalid instructor email address'),
+  classTimes: z.array(z.string()).min(1, 'At least one class time is required'),
+  classDays: z.array(z.string()).min(1, 'At least one class day is required'),
+  course: z.string().min(1, 'Course is required'),
+  studentName: z.string().min(1, 'Student name is required'),
+  meetingLink: z.string().optional().default(''),
+  online: z.boolean(),
+})
+
+export type EnrollRequestBody = z.infer<typeof enrollSchema>
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-  let topError
   try {
-    const body = await request.json()
-
-    if (locals.user === null) {
-      throw error(400, 'User not signed in.')
-    }
-
-    // Validate required fields, you can add more validations as needed
-    if (
-      !body.email ||
-      !body.firstName ||
-      !body.instructor ||
-      !body.instructorEmail ||
-      !body.classTimes ||
-      !body.classDays ||
-      !body.course ||
-      !body.studentName
-    ) {
-      throw error(400, 'Missing required fields in request body.')
-    }
+    verifyAdmin(locals)
+    const body = enrollSchema.parse(await request.json())
 
     const classes = body.classDays.map(
-      (day: string, index: number) => `${day} at ${formatTime24to12(body.classTimes[index])}`
+      (day: string, index: number) =>
+        `${day} at ${formatTime24to12(body.classTimes[index])}`,
     )
     const class1Time = classes[0]
     const class2Time = classes[1]
@@ -51,7 +51,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
           instructorEmail: body.instructorEmail,
           online: body.online,
           studentName: body.studentName,
-        }
+        },
       },
     }
 
@@ -61,34 +61,22 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
     const htmlBody = addDataToHtmlTemplate(emailTemplate, template)
 
-    const emailData: MailDataRequired = {
-      to: body.email,
-      cc: body.instructorEmail,
-      from: 'donotreply@gbstem.org',
-      subject: String(template.data.subject),
-      html: htmlBody,
-      replyTo: 'contact@gbstem.org',
-      text: 'Class Enrollment Confirmation',
-    }
-
-    MailService.setApiKey(SENDGRID_API_TOKEN)
-
     try {
-      await MailService.send(emailData)
-      console.log('Email sent')
-      return json({ message: 'Email sent successfully.' })
+      await sendEmail({
+        to: body.email,
+        cc: body.instructorEmail,
+        subject: String(template.data.subject),
+        html: htmlBody,
+      })
     } catch (mailError) {
-      console.error('Error sending email:', mailError)
-      return json({ error: 'Failed to send email. Please try again later.' }, { status: 500 })
+      return json(
+        { error: 'Failed to send email. Please try again later.' },
+        { status: 500 },
+      )
     }
+
+    return json({ message: 'Email sent successfully.' })
   } catch (err) {
-    if (typeof err === 'string') {
-      topError = error(400, err)
-    } else if ('message' in err) {
-      topError = error(400, err.message)
-    } else {
-      topError = error(400, 'Invalid request body or unknown error.')
-    }
-    throw topError
+    throw handleApiError(err)
   }
 }

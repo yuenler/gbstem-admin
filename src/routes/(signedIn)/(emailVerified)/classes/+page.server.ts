@@ -1,38 +1,45 @@
-import { error } from '@sveltejs/kit'
-import type { PageServerLoad } from './$types'
-import { adminDb } from '$lib/server/firebase'
-import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
-import algoliasearch from 'algoliasearch'
 import { classesCollection } from '$lib/data/collections'
+import { adminDb } from '$lib/server/firebase'
+import { searchIndex } from '$lib/server/search'
 import { formatClassTimes } from '$lib/utils'
+import { error } from '@sveltejs/kit'
+import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
+import type { PageServerLoad } from './$types'
 // import { db } from '$lib/client/firebase'
 
 export const load = (async ({ url, depends }) => {
   depends('app:classes')
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
+    const pageStr = url.searchParams.get('page') ?? '1'
+    const limitStr = url.searchParams.get('limit') ?? '25'
+    const pageNum = parseInt(pageStr, 10)
+    const limitVal = parseInt(limitStr, 10)
+    const offsetVal = (pageNum - 1) * limitVal
+
     const filter = url.searchParams.get('filter')
     try {
-      let dbQuery;
+      let dbQuery: Query
 
       const collectionName = classesCollection
-      if (filter === 'Python I' || filter === 'Python II' || filter === 'Scratch' || filter === 'Web Development' || filter === 'Engineering I' || filter === 'Engineering II' || filter === 'Engineering III' || filter === 'Math I' || filter === 'Math II' || filter === 'Math III' || filter === 'Math IV' || filter === 'Math V' || filter === 'Environmental Science'){ 
+      if (filter && filter !== 'all') {
         dbQuery = adminDb
-            .collection(collectionName)
-            .where('course', '==', filter)
+          .collection(collectionName)
+          .where('course', '==', filter)
+          .orderBy('course')
       } else {
-        dbQuery = adminDb
-        .collection(collectionName)
-        .orderBy('course')
+        dbQuery = adminDb.collection(collectionName).orderBy('course')
       }
+
+      dbQuery = dbQuery.limit(limitVal).offset(offsetVal)
 
       const snapshot = await dbQuery.get()
 
       return {
-        classes: snapshot.docs.map((doc) => {
+        classes: snapshot.docs.map((doc: QueryDocumentSnapshot) => {
           const data = doc.data() as Data.Class
 
-        return {
+          return {
             id: doc.id,
             name: data.instructorFirstName + ' ' + data.instructorLastName,
             email: data.instructorEmail,
@@ -41,21 +48,26 @@ export const load = (async ({ url, depends }) => {
             meetingLink: data.meetingLink,
             classStatuses: data.classStatuses,
             classTimes: formatClassTimes(
-                [data.classDay1, data.classDay2],
-                [data.classTime1, data.classTime2],
+              [data.classDay1, data.classDay2],
+              [data.classTime1, data.classTime2],
             ),
-        }
+          }
         }),
+        page: pageNum,
+        limit: limitVal,
       }
-    } catch (err) {
-      console.log(err)
-      throw error(400, 'Something went wrong. Please try again later.')
+    } catch (err: any) {
+      console.error('[Load Error] classes page load:', err)
+      throw error(500, {
+        message:
+          'Something went wrong while fetching classes. Please try again later.',
+        details: err.message || err.toString(),
+        code: err.code || 'UNKNOWN',
+      })
     }
   } else {
     try {
-      const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY)
-      const index = client.initIndex(classesCollection)
-      const { hits } = await index.search<
+      const hits = await searchIndex<
         Omit<Data.Class, 'classCap' | 'meetingTimes' | 'feedbackCompleted'> & {
           meta: {
             id: string
@@ -68,7 +80,7 @@ export const load = (async ({ url, depends }) => {
             created: Date
           }
         }
-      >(query)
+      >(classesCollection, query)
       return {
         query,
         classes: hits.map((hit) => {
@@ -81,14 +93,19 @@ export const load = (async ({ url, depends }) => {
             classStatuses: hit.classStatuses,
             meetingLink: hit.meetingLink,
             classTimes: formatClassTimes(
-                [hit.classDay1, hit.classDay2],
-                [hit.classTime1, hit.classTime2],
+              [hit.classDay1, hit.classDay2],
+              [hit.classTime1, hit.classTime2],
             ),
-          
-        }})
+          }
+        }),
       }
-    } catch (err) {
-      throw error(400, 'The search failed. Please try again later.')
+    } catch (err: any) {
+      console.error('[Search Error] classes search load:', err)
+      throw error(500, {
+        message: 'The search failed. Please try again later.',
+        details: err.message || err.toString(),
+        code: err.code || 'UNKNOWN',
+      })
     }
   }
 }) satisfies PageServerLoad

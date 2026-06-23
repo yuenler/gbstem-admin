@@ -1,60 +1,70 @@
-import { error } from '@sveltejs/kit'
-import type { PageServerLoad } from './$types'
-import { adminDb } from '$lib/server/firebase'
-import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
-import algoliasearch from 'algoliasearch'
 import { registrationsCollection } from '$lib/data/collections'
-// import { db } from '$lib/client/firebase'
+import { coursesJson } from '$lib/data'
+import { adminDb } from '$lib/server/firebase'
+import { searchIndex } from '$lib/server/search'
+import { error } from '@sveltejs/kit'
+import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
+import type { PageServerLoad } from './$types'
+
+function getCourseField(courseName: string): string | null {
+  const course = coursesJson.find((c) => c.name === courseName)
+  if (!course) return null
+  switch (course.track) {
+    case 'cs':
+      return 'program.csCourse'
+    case 'engineering':
+      return 'program.engineeringCourse'
+    case 'math':
+      return 'program.mathCourse'
+    case 'science':
+      return 'program.scienceCourse'
+    default:
+      return null
+  }
+}
 
 export const load = (async ({ url, depends }) => {
   depends('app:registrations')
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
-    const updated = url.searchParams.get('updated')
+    const pageStr = url.searchParams.get('page') ?? '1'
+    const limitStr = url.searchParams.get('limit') ?? '25'
+    const pageNum = parseInt(pageStr, 10)
+    const limitVal = parseInt(limitStr, 10)
+    const offsetVal = (pageNum - 1) * limitVal
+
     const filter = url.searchParams.get('filter')
+    const course = url.searchParams.get('course')
     try {
-      let dbQuery;
+      let dbQuery: Query
 
       const collectionName = registrationsCollection
+      dbQuery = adminDb.collection(collectionName)
+
       if (filter === 'submitted') {
-        dbQuery = updated
-          ? adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
-            .startAfter(new Date(updated))
-          : adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
+        dbQuery = dbQuery.where('meta.submitted', '==', true)
       } else if (filter === 'enrolled') {
-        dbQuery = updated
-          ? adminDb
-            .collection(collectionName)
-            .where('enrolled', '==', true)
-          : adminDb
-            .collection(collectionName)
-            .where('enrolled', '==', true)
+        dbQuery = dbQuery.where('enrolled', '==', true)
       } else {
-        dbQuery = updated
-          ? adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
-            .orderBy('timestamps.updated', 'desc')
-            .startAfter(new Date(updated))
-          : adminDb
-            .collection(collectionName)
-            .where('meta.submitted', '==', true)
-            .orderBy('timestamps.updated', 'desc')
+        dbQuery = dbQuery.where('meta.submitted', '==', true)
       }
 
+      if (course && course !== 'all') {
+        const fieldName = getCourseField(course)
+        if (fieldName) {
+          dbQuery = dbQuery.where(fieldName, '==', course)
+        }
+      }
 
-      // const snapshot = await dbQuery.limit(25).get()
+      dbQuery = dbQuery.orderBy('timestamps.updated', 'desc')
+
+      // Apply pagination limit and offset
+      dbQuery = dbQuery.limit(limitVal).offset(offsetVal)
+
       const snapshot = await dbQuery.get()
 
-      // const snapshot = await dbQuery.get()
-
-
       return {
-        registrations: snapshot.docs.map((doc) => {
+        registrations: snapshot.docs.map((doc: QueryDocumentSnapshot) => {
           const data = doc.data() as Data.Registration<'server'>
           return {
             id: doc.id,
@@ -70,16 +80,21 @@ export const load = (async ({ url, depends }) => {
             },
           }
         }),
+        page: pageNum,
+        limit: limitVal,
       }
-    } catch (err) {
-      console.log(err)
-      throw error(400, 'Something went wrong. Please try again later.')
+    } catch (err: any) {
+      console.error('[Load Error] students page load:', err)
+      throw error(500, {
+        message:
+          'Something went wrong while fetching students. Please try again later.',
+        details: err.message || err.toString(),
+        code: err.code || 'UNKNOWN',
+      })
     }
   } else {
     try {
-      const client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY)
-      const index = client.initIndex(registrationsCollection)
-      const { hits } = await index.search<
+      const hits = await searchIndex<
         Omit<Data.Registration<'server'>, 'meta' | 'timestamps'> & {
           meta: {
             hhid: string
@@ -92,15 +107,19 @@ export const load = (async ({ url, depends }) => {
             created: Date
           }
         }
-      >(query)
+      >(registrationsCollection, query)
       const decisions = (
         await Promise.all(
           hits.map((hit) => {
-            const decision = hit.meta.decision
-            return decision ? adminDb.doc(decision).get() : null
+            const decision = hit.meta.decision as any
+            return decision
+              ? typeof decision.get === 'function'
+                ? decision.get()
+                : adminDb.doc(decision).get()
+              : null
           }),
         )
-      ).map((doc) =>
+      ).map((doc: any) =>
         doc ? (doc.data() as { type: Data.Decision }).type : null,
       )
       return {
@@ -122,8 +141,13 @@ export const load = (async ({ url, depends }) => {
           }
         }),
       }
-    } catch (err) {
-      throw error(400, 'The search failed. Please try again later.')
+    } catch (err: any) {
+      console.error('[Search Error] students search load:', err)
+      throw error(500, {
+        message: 'The search failed. Please try again later.',
+        details: err.message || err.toString(),
+        code: err.code || 'UNKNOWN',
+      })
     }
   }
 }) satisfies PageServerLoad

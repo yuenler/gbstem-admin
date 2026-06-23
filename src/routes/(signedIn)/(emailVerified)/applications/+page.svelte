@@ -1,31 +1,45 @@
 <script lang="ts">
-  import Application from '$lib/components/Application.svelte'
-  import type Dialog from '$lib/components/Dialog.svelte'
-  import { format } from 'date-fns'
-  import Input from '$lib/components/Input.svelte'
-  import Form from '$lib/components/Form.svelte'
-  import Button from '$lib/components/Button.svelte'
-  import type { PageData } from './$types'
-  import { goto, invalidate } from '$app/navigation'
+  import { invalidate } from '$app/navigation'
   import { page } from '$app/stores'
-  import Table from '$lib/components/Table.svelte'
-  import { actions, alert } from '$lib/stores'
   import { db } from '$lib/client/firebase'
-  import { doc, setDoc, updateDoc } from 'firebase/firestore'
-  import Select from '$lib/components/Select.svelte'
+  import Application from '$lib/components/Application.svelte'
+  import Button from '$lib/components/Button.svelte'
+  import CollectionFilter from '$lib/components/CollectionFilter.svelte'
+  import type Dialog from '$lib/components/Dialog.svelte'
+  import PerPageControl from '$lib/components/PerPageControl.svelte'
+  import SearchBox from '$lib/components/SearchBox.svelte'
+  import StatusFilter from '$lib/components/StatusFilter.svelte'
+  import Table from '$lib/components/Table.svelte'
   import { applicationsCollection } from '$lib/data/collections'
-  import { writable } from 'svelte/store'
+  import { actions, alert } from '$lib/stores'
+  import { generateCSV } from '$lib/utils'
+  import { format } from 'date-fns'
+  import { doc, setDoc, updateDoc } from 'firebase/firestore'
+  import type { PageData } from './$types'
 
   export let data: PageData
   let dialogEl: Dialog
-  let search: string = data.query ?? ''
   let current: number | undefined
   let checked: Array<number> = []
-  let decisionFilter: 'all' | 'decided' | 'undecided' | 'inPerson' | 'incomplete' | 'complete' =
-    ($page.url.searchParams.get('filter') as any) ?? 'all'
 
-  const csv = data.applications
-    .map((application) => {
+  const csvHeaders = [
+    'ID',
+    'Submitted',
+    'Decision',
+    'Likely Decision',
+    'Notes',
+    'First Name',
+    'Last Name',
+    'Email',
+    'School',
+    'Graduation Year',
+    'Courses',
+    'Time Slots',
+    'Taught Before',
+    'In-person',
+  ]
+  $: rows = data.applications.map(
+    (application: PageData['applications'][number]) => {
       const {
         id,
         values: {
@@ -42,24 +56,24 @@
         submitted ? 'Submitted' : 'Not Submitted',
         decision?.type ?? 'Undecided',
         decision?.likelyDecision ?? 'Undecided',
-        decision?.notes?.replace(/,/g, '') ?? '',
+        decision?.notes ?? '',
         firstName,
         lastName,
         email,
-        school.replace(/,/g, ''),
+        school,
         graduationYear,
         courses.join(';'),
-        timeSlots.replace(/,/g, ''),
+        timeSlots,
         taughtBefore ? 'Yes' : 'No',
         inPerson ? 'Yes' : 'No',
       ]
-    })
-    .join('\n')
-  // add column names
-  const csvWithHeaders = `ID,Submitted,Decision,Likely Decision,Notes,First Name,Last Name,Email,School,Graduation Year,Courses,Time Slots,Taught Before,In-person\n${csv}`
+    },
+  )
 
-  const blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
+  $: csvWithHeaders = generateCSV(csvHeaders, rows)
+
+  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
+  $: url = URL.createObjectURL(blob)
 
   $: if (checked.length > 0) {
     actions.set([
@@ -72,39 +86,31 @@
   } else {
     actions.set(null)
   }
+  $: if ($actions === null) {
+    checked = []
+  }
   $: application =
     data.applications.length === 0
       ? undefined
       : current === undefined
-      ? undefined
-      : data.applications[current]
-  let nextHref = ''
-  let filterRef = ''
- $: {
-  const base = $page.url.searchParams
-  base.delete('updated')
-  if (data.applications.length > 0) {
-    base.set(
-      'updated',
-      data.applications[
-        data.applications.length - 1
-      ].values.timestamps.updated.toString(),
-    )
-    nextHref = `?${base.toString()}`
-  } else {
-    nextHref = '?'
-  }
-}
-  $: {
-    const base = $page.url.searchParams
-    if (decisionFilter !== 'all') {
-      base.set('filter', decisionFilter)
-      base.delete('updated')
-    } else {
-      base.delete('filter')
-    }
-    filterRef = `?${base.toString()}`
-  }
+        ? undefined
+        : data.applications[current]
+  $: currentPage = data.page ?? 1
+  $: currentLimit = data.limit ?? 25
+
+  $: prevHref = (() => {
+    if (currentPage <= 1) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage - 1))
+    return `?${base.toString()}`
+  })()
+
+  $: nextHref = (() => {
+    if (data.applications.length < currentLimit) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage + 1))
+    return `?${base.toString()}`
+  })()
 
   function createDecisionAction(decision: Data.Decision) {
     let name: 'Accept' | 'Waitlist' | 'Reject' | 'Interview' | 'Substitute'
@@ -142,40 +148,37 @@
         checked.length > 1 ? 'applicants' : 'applicant'
       }`,
       color,
-      callback: () =>
-        new Promise<void>((resolve, reject) => {
-          Promise.all(
-            checked.map((i) => {
+      callback: async () => {
+        try {
+          await Promise.all(
+            checked.map(async (i) => {
               const id = data.applications[i].id
-              return new Promise<void>((resolve, reject) => {
-                setDoc(doc(db, 'decisions', id), {
-                  type: decision,
-                })
-                  .then(() => {
-                    updateDoc(doc(db, selectedCollection, id), {
-                      'meta.decision': doc(db, 'decisions', id),
-                    })
-                      .then(resolve)
-                      .catch(reject)
-                  })
-                  .catch(reject)
+              const decisionDocRef = doc(db, 'decisions', id)
+              await setDoc(decisionDocRef, {
+                type: decision,
+              })
+              await updateDoc(doc(db, selectedCollection, id), {
+                'meta.decision': decisionDocRef,
               })
             }),
           )
-            .then(() => {
-              invalidate('app:applications').then(() => {
-                alert.trigger(
-                  'success',
-                  `${checked.length} ${
-                    checked.length > 1 ? 'applicants' : 'applicant'
-                  } ${decision}.`,
-                )
-                checked = []
-                resolve()
-              })
-            })
-            .catch(reject)
-        }),
+          await invalidate('app:applications')
+          alert.trigger(
+            'success',
+            `${checked.length} ${
+              checked.length > 1 ? 'applicants' : 'applicant'
+            } ${decision}.`,
+          )
+          checked = []
+        } catch (err: any) {
+          console.error('Failed to update decisions:', err)
+          alert.trigger(
+            'error',
+            `Failed to update decision: ${err.message || err}`,
+          )
+          throw err
+        }
+      },
     }
   }
   function handleCheck(
@@ -199,122 +202,24 @@
       checked = []
     }
   }
-  function handleSearch() {
-    if (search === '') {
-      goto('/applications')
-    } else {
-      const base = $page.url.searchParams
-      base.set('query', search)
-      base.delete('updated')
-      goto(`?${base.toString()}`)
-    }
-  }
-  async function handleClear() {
-    goto('/applications').then(() => {
-      search = ''
-    })
-  }
 
-  // Add your collection options here
-  const collectionOptions = [
-    { name: 'Spring 2026', value: 'applicationsSpring26' },
-    { name: 'Fall 2025', value: 'applicationsFall25' },
-    { name: 'Spring 2025', value: 'applicationsSpring25' },
-    { name: 'Fall 2024', value: 'applicationsFall24' },
-    { name: 'Spring 2024', value: 'applicationsSpring24'},
-  ]
-
-  // Default to the current collection or 'applications'
-  let selectedCollection =
+  $: selectedCollection =
     $page.url.searchParams.get('collection') ?? applicationsCollection
-
-  // When the dropdown changes, reload with the new collection as a query param
-  function handleCollectionChange() {
-    const base = $page.url.searchParams
-    base.set('collection', selectedCollection)
-    base.delete('updated')
-    goto(`?${base.toString()}`)
-  }
 </script>
 
 <svelte:head>
   <title>Applications</title>
 </svelte:head>
 
-<Form class="flex gap-4" on:submit={handleSearch}>
-  <div class="relative grow">
-    <Input
-      class={{
-        container: 'mt-0',
-        input: 'mt-0 pr-20',
-      }}
-      bind:value={search}
-      placeholder="Search"
-    />
-    <div class="absolute right-2 top-0 flex h-12 items-center">
-      <Button class="uppercase px-2 py-1" on:click={handleClear}>Clear</Button>
-    </div>
-  </div>
-
-  <Button
-    class="shrink-0 h-12 w-12 p-0 flex items-center justify-center"
-    type="submit"
+<div class="flex flex-wrap items-end gap-4">
+  <SearchBox basePath="/applications" />
+  <CollectionFilter type="applications" />
+  <StatusFilter type="applications" />
+  <PerPageControl />
+  <Button class="flex h-12 items-center" href={url} download="applications.csv"
+    >Download</Button
   >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke-width="1.5"
-      stroke="currentColor"
-      class="w-6 h-6"
-    >
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-      />
-    </svg>
-  </Button>
-
-<div class="flex items-center">
-  <label for="collection-select" class="sr-only">Collection</label>
-  <div class="relative">
-    <select
-      id="collection-select"
-      bind:value={selectedCollection}
-      on:change={handleCollectionChange}
-      class="block w-full h-12 px-4 pr-10 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white appearance-none transition"
-    >
-      {#each collectionOptions as option}
-        <option value={option.value}>{option.name}</option>
-      {/each}
-    </select>
-    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-      <!-- Down arrow SVG -->
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-      </svg>
-    </span>
-  </div>
 </div>
-
-  <div class="flex">
-    <Select
-      bind:value={decisionFilter}
-      label="Filter"
-      options={[{ name: 'all' }, { name: 'undecided' }, { name: 'inPerson' }, { name: 'incomplete' }, { name: 'complete' }]}
-      floating
-      required
-    />
-    <a
-      href={filterRef}
-      class="flex items-center inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg"
-    >
-      Filter
-    </a>
-  </div>
-  <Button><a href={url}>Download</a></Button>
-</Form>
 
 <Table>
   <svelte:fragment slot="head">
@@ -322,7 +227,7 @@
       <div class="flex items-center">
         <input
           id="check-all"
-          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
           type="checkbox"
           checked={checked.length === data.applications.length &&
             checked.length > 0}
@@ -347,7 +252,7 @@
   <svelte:fragment slot="body">
     {#each data.applications as application, i}
       <tr
-        class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer"
+        class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
         on:click={() => {
           current = i
           dialogEl.open()
@@ -357,7 +262,7 @@
           <div class="flex items-center">
             <input
               id={`check-${i}`}
-              class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+              class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
               type="checkbox"
               checked={checked.includes(i)}
               on:input={(e) => handleCheck(e, i)}
@@ -373,7 +278,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5 text-green-300"
+                class="h-5 w-5 text-green-300"
               >
                 <path
                   fill-rule="evenodd"
@@ -386,7 +291,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5 text-red-300"
+                class="h-5 w-5 text-red-300"
               >
                 <path
                   fill-rule="evenodd"
@@ -396,17 +301,17 @@
               </svg>
             {:else if application.values.meta.decision?.likelyDecision === 'likely waitlist'}
               <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              class="w-5 h-5 text-yellow-300"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
-                clip-rule="evenodd"
-              />
-            </svg>
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="h-5 w-5 text-yellow-300"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
+                  clip-rule="evenodd"
+                />
+              </svg>
             {/if}
           {:else}
             None
@@ -425,7 +330,7 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="w-5 h-5"
+              class="h-5 w-5"
             >
               <path
                 stroke-linecap="round"
@@ -442,7 +347,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5 text-green-300"
+                class="h-5 w-5 text-green-300"
               >
                 <path
                   fill-rule="evenodd"
@@ -455,7 +360,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5 text-yellow-300"
+                class="h-5 w-5 text-yellow-300"
               >
                 <path
                   fill-rule="evenodd"
@@ -468,7 +373,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5 text-red-300"
+                class="h-5 w-5 text-red-300"
               >
                 <path
                   fill-rule="evenodd"
@@ -481,17 +386,17 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
-                class="w-5 h-5 text-blue-300"
+                class="h-5 w-5 text-blue-300"
               >
                 <path
                   fill-rule="evenodd"
                   d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
                   clip-rule="evenodd"
                 />
-              </svg> 
+              </svg>
             {:else if application.values.meta.decision.type === 'substitute'}
-            <svg
-                class="w-5 h-5 text-purple-300"
+              <svg
+                class="h-5 w-5 text-purple-300"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -534,7 +439,7 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="w-5 h-5"
+              class="h-5 w-5"
             >
               <path
                 stroke-linecap="round"
@@ -549,7 +454,7 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="w-5 h-5"
+              class="h-5 w-5"
             >
               <path
                 stroke-linecap="round"
@@ -564,11 +469,22 @@
   </svelte:fragment>
 </Table>
 
-<div class="flex justify-end mt-4">
-  <Button href={nextHref}>Next</Button>
-</div>
+{#if !data.query && data.applications}
+  <div class="mt-4 flex justify-end gap-2">
+    {#if currentPage > 1}
+      <Button href={prevHref}>Previous</Button>
+    {/if}
+    {#if data.applications.length >= currentLimit}
+      <Button href={nextHref}>Next</Button>
+    {/if}
+  </div>
+{/if}
 
-<Application bind:dialogEl id={application?.id} collection={selectedCollection} />
+<Application
+  bind:dialogEl
+  id={application?.id}
+  collection={selectedCollection}
+/>
 
 <style>
   input:checked {

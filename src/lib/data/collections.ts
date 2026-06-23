@@ -1,9 +1,11 @@
-export const classesCollection = 'classesSpring26'
-export const registrationsCollection = 'registrationsSpring26'
-export const decisionsCollection = 'decisionsSpring26'
-export const applicationsCollection = 'applicationsSpring26'
-export const instructorFeedbackCollection = 'instructorFeedbackSpring26'
-export const classFeedbackCollection = 'classFeedbackSpring26'
-export const semesterDatesDocument = 'spring26'
+const suffix = 'Spring26'
+
+export const applicationsCollection = 'applications' + suffix
+export const classFeedbackCollection = 'classFeedback' + suffix
+export const classesCollection = 'classes' + suffix
+export const decisionsCollection = 'decisions' + suffix
+export const instructorFeedbackCollection = 'instructorFeedback' + suffix
+export const interviewTimesCollection = 'instructorInterviewTimes' + suffix
+export const registrationsCollection = 'registrations' + suffix
+export const semesterDatesDocument = suffix.toLowerCase()
 export const subRequestsCollection = 'subRequests'
-export const interviewTimesCollection = 'instructorInterviewTimesSpring26'

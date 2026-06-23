@@ -1,11 +1,11 @@
- type Student = {
-    name: '',
-    email: '',
-    secondaryEmail: '',
-    phone: '',
-    grade: 0,
-    school: ''
-    parentName?: '',
-  };
-  
-  export default Student;
+interface Student {
+  name: string
+  email: string
+  secondaryEmail: string
+  phone: string
+  grade: number
+  school: string
+  parentName?: string
+}
+
+export type { Student as default }

@@ -1,7 +1,8 @@
+import { alert } from '$lib/stores'
 import type { ClassValue } from 'clsx'
 import clsx from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { alert } from '$lib/stores'
+import type { Timestamp } from 'firebase/firestore'
 
 export function cn(...classes: Array<ClassValue>) {
   return twMerge(clsx(...classes))
@@ -55,19 +56,23 @@ export function trapFocus(node: HTMLElement) {
   }
 }
 
-export function addDataToHtmlTemplate(html, template) {
-  const htmlBody = html.replace(/{{(.*?)}}/g, (_, key) => {
-    const keys = key.trim().split('.');
-    let value = template.data;
+export function addDataToHtmlTemplate(
+  html: string,
+  template: { data: Record<string, any> },
+): string {
+  const htmlBody = html.replace(/{{(.*?)}}/g, (_: string, key: string) => {
+    const keys = key.trim().split('.')
+    let value: any = template.data
     for (const k of keys) {
-      value = value[k];
-      if (value === undefined) {
-        return '';
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k]
+      } else {
+        return ''
       }
     }
-    return value;
-  });
-  return htmlBody;
+    return String(value ?? '')
+  })
+  return htmlBody
 }
 
 export function formatTime24to12(time24: string): string {
@@ -142,37 +147,83 @@ export const formatDateShort = (date: Date) => {
 }
 
 export const timestampToDate = (timestamp: Timestamp | Date) => {
-  return new Date(timestamp.seconds * 1000)
+  if (timestamp instanceof Date) {
+    return timestamp
+  }
+  if (timestamp && typeof timestamp === 'object' && 'seconds' in timestamp) {
+    return new Date(timestamp.seconds * 1000)
+  }
+  return new Date(timestamp)
 }
 
 export const classHeldToday = (datesHeld: Date[], classTimeToday: Date) => {
-  return datesHeld.filter((date) => new Date().toDateString() === timestampToDate(date).toDateString() && new Date() > date).length > 0 || timestampToDate(classTimeToday) > new Date()
+  return (
+    datesHeld.filter(
+      (date) =>
+        new Date().toDateString() === timestampToDate(date).toDateString() &&
+        new Date() > date,
+    ).length > 0 || timestampToDate(classTimeToday) > new Date()
+  )
 }
 
 export const isClassUpcoming = (date: Date) => {
-  return date.getTime() > Date.now() && Math.abs(date.getTime() - new Date().getTime()) / (1000*60) < 30
+  return (
+    date.getTime() > Date.now() &&
+    Math.abs(date.getTime() - new Date().getTime()) / (1000 * 60) < 30
+  )
 }
 
 export function normalizeCapitals(name: string) {
-  return name.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+  if (name === undefined) return ''
+  return name
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ')
 }
 
 export const getNearestFutureClass = (meetingTimes: Date[]) => {
-   const nextIndex = meetingTimes.findIndex(schedule => new Date(timestampToDate(schedule)) > new Date())
-   return nextIndex === -1 ? 'No Upcoming Classes' : formatDate(timestampToDate(meetingTimes[nextIndex]))
+  const nextIndex = meetingTimes.findIndex(
+    (schedule) => new Date(timestampToDate(schedule)) > new Date(),
+  )
+  return nextIndex === -1
+    ? 'No Upcoming Classes'
+    : formatDate(timestampToDate(meetingTimes[nextIndex]))
 }
 
 export const getNearestFutureClassIndex = (meetingTimes: Date[]) => {
-  return meetingTimes.findIndex(schedule => new Date(timestampToDate(schedule)) > new Date())
+  return meetingTimes.findIndex(
+    (schedule) => new Date(timestampToDate(schedule)) > new Date(),
+  )
 }
 
-export function copyEmails(email: string) {
-  navigator.clipboard
-    .writeText(email)
+export function writeToClipboard(text: string): Promise<void> {
+  if (
+    typeof navigator === 'undefined' ||
+    !navigator.clipboard ||
+    typeof navigator.clipboard.writeText !== 'function'
+  ) {
+    return Promise.reject(new Error('Clipboard API not supported'))
+  }
+  const promise = navigator.clipboard.writeText(text)
+  if (promise && typeof promise.then === 'function') {
+    return promise
+  }
+  return Promise.resolve()
+}
+
+export function copyEmails(emails: Array<string | null | undefined>) {
+  const cleanEmails = emails
+    .filter(
+      (email): email is string =>
+        typeof email === 'string' && email.trim() !== '',
+    )
+    .map((email) => email.trim())
+    .sort()
+  writeToClipboard(cleanEmails.join(', '))
     .then(() => {
       alert.trigger('success', 'Emails copied to clipboard!')
     })
-    .catch((err) => {
+    .catch(() => {
       alert.trigger('error', 'Failed to copy emails to clipboard!')
     })
 }
@@ -187,4 +238,74 @@ export function toLocalISOString(date: Date) {
   const minute = pad(date.getMinutes())
 
   return `${year}-${month}-${day}T${hour}:${minute}`.slice(0, 16)
+}
+
+export function cleanEnvVar(value: string | undefined): string | undefined {
+  if (!value) return ''
+
+  const trimmed = value.trim()
+  const firstChar = trimmed[0]
+  const lastChar = trimmed[trimmed.length - 1]
+
+  // Check if the string is wrapped in matching single or double quotes
+  if (
+    (firstChar === '"' && lastChar === '"') ||
+    (firstChar === "'" && lastChar === "'")
+  ) {
+    return trimmed.slice(1, -1)
+  }
+
+  return trimmed
+}
+
+export function escapeCSVCell(val: any): string {
+  if (val === null || val === undefined) {
+    return ''
+  }
+  const str = String(val)
+  if (
+    str.includes(',') ||
+    str.includes('"') ||
+    str.includes('\n') ||
+    str.includes('\r')
+  ) {
+    return `"${str.replace(/"/g, '""')}"`
+  }
+  return str
+}
+
+export function generateCSV(
+  headers: string[],
+  rows: any[][] | any[],
+  sort: boolean = true,
+  sortColumnIndex: number = 0,
+): string {
+  let rowData: any[][]
+  if (rows.length > 0 && !Array.isArray(rows[0])) {
+    rowData = []
+    const cols = headers.length
+    for (let i = 0; i < rows.length; i += cols) {
+      rowData.push(rows.slice(i, i + cols))
+    }
+  } else {
+    rowData = [...(rows as any[][])]
+  }
+
+  if (sort) {
+    rowData.sort((a, b) => {
+      const valA =
+        a[sortColumnIndex] !== undefined && a[sortColumnIndex] !== null
+          ? String(a[sortColumnIndex])
+          : ''
+      const valB =
+        b[sortColumnIndex] !== undefined && b[sortColumnIndex] !== null
+          ? String(b[sortColumnIndex])
+          : ''
+      return valA < valB ? -1 : valA > valB ? 1 : 0
+    })
+  }
+
+  const headerLine = headers.map(escapeCSVCell).join(',')
+  const rowLines = rowData.map((row) => row.map(escapeCSVCell).join(','))
+  return [headerLine, ...rowLines].join('\n')
 }

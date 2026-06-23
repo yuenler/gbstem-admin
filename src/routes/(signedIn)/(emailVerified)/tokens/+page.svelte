@@ -6,10 +6,12 @@
   import { deleteDoc, doc } from 'firebase/firestore'
   import { db } from '$lib/client/firebase'
   import { actions, alert } from '$lib/stores'
-  import { invalidate } from '$app/navigation'
+  import Token from '$lib/components/Token.svelte'
+  import PerPageControl from '$lib/components/PerPageControl.svelte'
+  import { goto, invalidate } from '$app/navigation'
   import { page } from '$app/stores'
   import type { FirebaseError } from 'firebase/app'
-  import Token from '$lib/components/Token.svelte'
+  import { writeToClipboard } from '$lib/utils'
 
   export let data: PageData
 
@@ -18,6 +20,23 @@
     create: false,
   }
   let checked: Array<number> = []
+
+  $: currentPage = data.page ?? 1
+  $: currentLimit = data.limit ?? 25
+
+  $: prevHref = (() => {
+    if (currentPage <= 1) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage - 1))
+    return `?${base.toString()}`
+  })()
+
+  $: nextHref = (() => {
+    if (data.tokens.length < currentLimit) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage + 1))
+    return `?${base.toString()}`
+  })()
   $: if (checked.length > 0) {
     actions.set([
       {
@@ -25,23 +44,22 @@
           checked.length > 1 ? 'tokens' : 'token'
         }`,
         color: 'red',
-        callback: () =>
-          new Promise<void>((resolve, reject) => {
-            Promise.all(
+        callback: async () => {
+          try {
+            await Promise.all(
               checked.map((i) => {
                 const token = data.tokens[i]
                 return deleteDoc(doc(db, 'tokens', token.id))
               }),
             )
-              .then(() => {
-                invalidate('app:tokens').then(() => {
-                  checked = []
-                  alert.trigger('success', 'Token deleted.')
-                  resolve()
-                })
-              })
-              .catch(reject)
-          }),
+            await invalidate('app:tokens')
+            checked = []
+            alert.trigger('success', 'Token deleted.')
+          } catch (err: any) {
+            console.error('Failed to delete tokens:', err)
+            throw err
+          }
+        },
       },
     ])
   } else {
@@ -71,26 +89,28 @@
   function handleCreate() {
     create = true
   }
-  function handleCopyAction(token: { id: string; values: Data.Token<'pojo'> }) {
-    navigator.clipboard
-      .writeText(`${$page.url.host}/signup?token=${token.id}`)
-      .then(() => {
-        alert.trigger('success', 'Token copied.')
-      })
-  }
-  function handleDeleteAction(token: {
+  async function handleCopyAction(token: {
     id: string
     values: Data.Token<'pojo'>
   }) {
-    deleteDoc(doc(db, 'tokens', token.id))
-      .then(() => {
-        invalidate('app:tokens').then(() => {
-          alert.trigger('success', 'Token deleted.')
-        })
-      })
-      .catch((err: FirebaseError) => {
-        alert.trigger('error', err.message)
-      })
+    try {
+      await writeToClipboard(`${$page.url.host}/signup?token=${token.id}`)
+      alert.trigger('success', 'Token copied.')
+    } catch {
+      alert.trigger('error', 'Failed to copy token.')
+    }
+  }
+  async function handleDeleteAction(token: {
+    id: string
+    values: Data.Token<'pojo'>
+  }) {
+    try {
+      await deleteDoc(doc(db, 'tokens', token.id))
+      await invalidate('app:tokens')
+      alert.trigger('success', 'Token deleted.')
+    } catch (err: any) {
+      alert.trigger('error', err.message)
+    }
   }
 </script>
 
@@ -98,13 +118,17 @@
   <title>Tokens</title>
 </svelte:head>
 
+<div class="mb-4 flex flex-wrap items-center gap-4">
+  <PerPageControl />
+</div>
+
 <Table>
   <svelte:fragment slot="head">
     <th scope="col" class="p-4">
       <div class="flex items-center">
         <input
           id="check-all"
-          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+          class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
           type="checkbox"
           checked={checked.length === data.tokens.length && checked.length > 0}
           on:input={handleCheckAll}
@@ -117,9 +141,9 @@
     <th scope="col" class="px-6 py-3">Role</th>
     <th scope="col" class="px-6 py-3">Consumable</th>
     <th scope="col" class="px-6 py-3">Consumers</th>
-    <th scope="col" class="px-6 py-3 flex justify-end">
+    <th scope="col" class="flex justify-end px-6 py-3">
       <Button
-        class="flex items-center justify-center h-10 w-10 p-0"
+        class="flex h-10 w-10 items-center justify-center p-0"
         color="blue"
         on:click={handleCreate}
         disabled={disabled.create}
@@ -130,7 +154,7 @@
           viewBox="0 0 24 24"
           stroke-width="1.5"
           stroke="currentColor"
-          class="w-5 h-5"
+          class="h-5 w-5"
         >
           <path
             stroke-linecap="round"
@@ -143,12 +167,12 @@
   </svelte:fragment>
   <svelte:fragment slot="body">
     {#each data.tokens as token, i}
-      <tr class="bg-white border-b">
+      <tr class="border-b bg-white">
         <td class="w-4 p-4">
           <div class="flex items-center">
             <input
               id={`check-${i}`}
-              class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
+              class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
               type="checkbox"
               checked={checked.includes(i)}
               on:input={(e) => handleCheck(e, i)}
@@ -165,7 +189,7 @@
         </td>
         <th
           scope="row"
-          class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+          class="px-6 py-4 font-medium whitespace-nowrap text-gray-900"
         >
           {token.id}
         </th>
@@ -178,7 +202,7 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="w-5 h-5"
+              class="h-5 w-5"
             >
               <path
                 stroke-linecap="round"
@@ -193,7 +217,7 @@
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="w-5 h-5"
+              class="h-5 w-5"
             >
               <path
                 stroke-linecap="round"
@@ -204,16 +228,16 @@
           {/if}
         </td>
         <td class="px-6 py-4"> {token.values.consumers.length} </td>
-        <td class="px-6 py-4 whitespace-nowrap space-x-2">
+        <td class="space-x-2 px-6 py-4 whitespace-nowrap">
           <button
-            class="text-gray-700 hover:text-gray-500 transition-colors duration-300"
+            class="text-gray-700 transition-colors duration-300 hover:text-gray-500"
             type="button"
             on:click={() => handleCopyAction(token)}
           >
             Copy
           </button>
           <button
-            class="text-red-700 hover:text-red-500 transition-colors duration-300"
+            class="text-red-700 transition-colors duration-300 hover:text-red-500"
             type="button"
             on:click={() => handleDeleteAction(token)}
           >
@@ -224,6 +248,17 @@
     {/each}
   </svelte:fragment>
 </Table>
+
+{#if data.tokens}
+  <div class="mt-4 flex justify-end gap-2">
+    {#if currentPage > 1}
+      <Button href={prevHref}>Previous</Button>
+    {/if}
+    {#if data.tokens.length >= currentLimit}
+      <Button href={nextHref}>Next</Button>
+    {/if}
+  </div>
+{/if}
 
 {#if create}
   <Token

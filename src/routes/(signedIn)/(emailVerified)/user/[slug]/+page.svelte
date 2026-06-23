@@ -5,38 +5,48 @@
   import Button from '$lib/components/Button.svelte'
   import { format } from 'date-fns'
   import { invalidateAll } from '$app/navigation'
+  import { alert } from '$lib/stores'
 
   export let data: PageData
 
-  function handleCheckIn() {
+  async function handleCheckIn() {
     const hhidRef = doc(db, 'hhids', data.applicant.user.hhid)
-    updateDoc(hhidRef, {
-      checkedIn: true,
-      checkedInAt: serverTimestamp(),
-      food: {
-        '2023-10-20': {
-          dinner: false,
+    try {
+      await updateDoc(hhidRef, {
+        checkedIn: true,
+        checkedInAt: serverTimestamp(),
+        food: {
+          '2023-10-20': {
+            dinner: false,
+          },
+          '2023-10-21': {
+            breakfast: false,
+            lunch: false,
+            dinner: false,
+          },
+          '2023-10-22': {
+            breakfast: false,
+          },
         },
-        '2023-10-21': {
-          breakfast: false,
-          lunch: false,
-          dinner: false,
-        },
-        '2023-10-22': {
-          breakfast: false,
-        },
-      },
-    }).then(() => {
-      invalidateAll()
-    })
+      })
+      await invalidateAll()
+      alert.trigger('success', 'Checked in successfully.')
+    } catch (err: any) {
+      console.error('Check in failed:', err)
+      alert.trigger('error', `Check in failed: ${err.message || err}`)
+    }
   }
 
-  function handleMeal(date: string, meal: string, state: boolean) {
-    updateDoc(doc(db, 'hhids', data.applicant.user.hhid), {
-      [`food.${date}.${meal}`]: !state,
-    }).then(() => {
-      invalidateAll()
-    })
+  async function handleMeal(date: string, meal: string, state: boolean) {
+    try {
+      await updateDoc(doc(db, 'hhids', data.applicant.user.hhid), {
+        [`food.${date}.${meal}`]: !state,
+      })
+      await invalidateAll()
+    } catch (err: any) {
+      console.error('Meal status update failed:', err)
+      alert.trigger('error', `Meal status update failed: ${err.message || err}`)
+    }
   }
 </script>
 
@@ -67,7 +77,7 @@
             viewBox="0 0 24 24"
             stroke-width="1.5"
             stroke="currentColor"
-            class="w-6 h-6"
+            class="h-6 w-6"
           >
             <path
               stroke-linecap="round"
@@ -83,7 +93,7 @@
         <Button on:click={handleCheckIn}>Check In</Button>
       {/if}
     </div>
-    <div class="space-y-8 mt-8">
+    <div class="mt-8 space-y-8">
       {#if data.applicant.hhid.checkedIn}
         {#each Object.keys(data.applicant.hhid.food).sort() as date}
           <div class="font-bold">

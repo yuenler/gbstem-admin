@@ -1,103 +1,78 @@
-import { error, json } from '@sveltejs/kit'
-import type { RequestHandler } from './$types'
-import postmark from 'postmark'
-import type { FirebaseError } from 'firebase-admin'
-import {
-  SENDGRID_API_TOKEN,
-} from '$env/static/private'
-import { addDataToHtmlTemplate } from '$lib/utils'
-import { rejectionEmailTemplate } from '$lib/data/emailTemplates/rejectionEmailTemplate'
-import { waitlistEmailTemplate } from '$lib/data/emailTemplates/waitlistEmailTemplate'
 import { acceptEmailTemplate } from '$lib/data/emailTemplates/acceptEmailTemplate'
+import { rejectionEmailTemplate } from '$lib/data/emailTemplates/rejectionEmailTemplate'
 import { subEmailTemplate } from '$lib/data/emailTemplates/subEmailTemplate'
-import MailService, { type MailDataRequired } from '@sendgrid/mail'
+import { waitlistEmailTemplate } from '$lib/data/emailTemplates/waitlistEmailTemplate'
+import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
+import { sendEmail } from '$lib/server/email'
+import { addDataToHtmlTemplate } from '$lib/utils'
+import { json } from '@sveltejs/kit'
+import type { RequestHandler } from './$types'
+
+import { z } from 'zod'
+
+const decisionSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  decision: z.enum(['rejected', 'waitlisted', 'substitute', 'accepted']),
+  name: z.string().min(1, 'Name is required'),
+})
+
+export type DecisionRequestBody = z.infer<typeof decisionSchema>
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-  let topError
   try {
-    const body = await request.json()
-    try {
-      const intervieweeEmail = body.email;
-      const decision = body.decision;
-      if (locals.user === null) {
-        throw error(400, 'User not signed in.')
-      } else {
-        const template = {
-          name: 'decision',
-          data: {
-            subject: 'gbSTEM Instructor Decision',
-            app: {
-              firstName: body.name,
-              name: 'Portal',
-              link: 'https://portal.gbstem.org',
-              orientation: 'Thursday, March 5th at 7:00 PM EST',
-              orientationLink: 'https://mit.zoom.us/j/95024505441'
-            },
-          },
-        }
+    verifyAdmin(locals)
+    const body = decisionSchema.parse(await request.json())
 
-        let htmlBody
-        switch (decision) {
-          case "rejected":
-            htmlBody = addDataToHtmlTemplate(rejectionEmailTemplate, template);
-            break;
-          case "waitlisted":
-            htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template);
-            break;
-          case "substitute":
-            htmlBody = addDataToHtmlTemplate(subEmailTemplate, template);
-            break;
-          case "accepted":
-            htmlBody = addDataToHtmlTemplate(acceptEmailTemplate, template);
-            break;
-          default:
-            htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template);
-        }
+    const intervieweeEmail = body.email
+    const decision = body.decision
 
-        const emailData: MailDataRequired = {
-          from: 'donotreply@gbstem.org',
-          to: intervieweeEmail,
-          subject: String(template.data.subject),
-          html: htmlBody,
-          replyTo: 'contact@gbstem.org',
-          text: 'Decision'
-        }
-        MailService.setApiKey(SENDGRID_API_TOKEN)
-        try {
-          await MailService.send(emailData);
-          console.log('Email sent');
-        } catch (mailError) {
-          console.error('Error sending email:', mailError);
-          return json({ error: 'Failed to send email. Please try again later.' }, { status: 500 });
-        }
-          return json({ message: 'Email sent successfully.' });
-      }
-    } catch (err) {
-      if (typeof err === 'string') {
-        topError = error(400, err)
-      } else {
-        const typedErr = err as
-          | FirebaseError
-          | {
-            errorInfo: FirebaseError
-            codePrefix: string
-          }
-        if ('errorInfo' in typedErr) {
-          topError = error(
-            400,
-            typedErr.errorInfo.message ||
-            'Please wait a few minutes before trying again.',
-          )
-        } else if ('message' in typedErr) {
-          topError = error(400, typedErr.message)
-        } else {
-          topError = error(400, 'Something went wrong. Please try again.')
-        }
-      }
+    const template = {
+      name: 'decision',
+      data: {
+        subject: 'gbSTEM Instructor Decision',
+        app: {
+          firstName: body.name,
+          name: 'Portal',
+          link: 'https://portal.gbstem.org',
+          orientation: 'Thursday, March 5th at 7:00 PM EST',
+          orientationLink: 'https://mit.zoom.us/j/95024505441',
+        },
+      },
     }
-  } catch (err) {
-    topError = error(400, 'Invalid request body.')
-  }
-  throw topError
 
+    let htmlBody
+    switch (decision) {
+      case 'rejected':
+        htmlBody = addDataToHtmlTemplate(rejectionEmailTemplate, template)
+        break
+      case 'waitlisted':
+        htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template)
+        break
+      case 'substitute':
+        htmlBody = addDataToHtmlTemplate(subEmailTemplate, template)
+        break
+      case 'accepted':
+        htmlBody = addDataToHtmlTemplate(acceptEmailTemplate, template)
+        break
+      default:
+        htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template)
+    }
+
+    try {
+      await sendEmail({
+        to: intervieweeEmail,
+        subject: String(template.data.subject),
+        html: htmlBody,
+      })
+    } catch (mailError) {
+      return json(
+        { error: 'Failed to send email. Please try again later.' },
+        { status: 500 },
+      )
+    }
+
+    return json({ message: 'Email sent successfully.' })
+  } catch (err) {
+    throw handleApiError(err)
+  }
 }

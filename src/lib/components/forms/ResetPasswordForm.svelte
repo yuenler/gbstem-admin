@@ -1,6 +1,7 @@
 <script lang="ts">
+  import type { ActionRequestBody } from '../../../routes/api/action/+server'
   import Input from '$lib/components/Input.svelte'
-  import clsx from 'clsx'
+  import { cn } from '$lib/utils'
   import { alert } from '$lib/stores'
   import Brand from '$lib/components/Brand.svelte'
   import Form from '$lib/components/Form.svelte'
@@ -12,20 +13,22 @@
   let values = {
     email: '',
   }
-  function handleSubmit(e: CustomEvent<SubmitData>) {
+  async function handleSubmit(e: CustomEvent<SubmitData>) {
     if (e.detail.error === null) {
       showValidation = false
       disabled = true
-      fetch('/api/action', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'resetPassword',
-          email: values.email,
-        }),
-      }).then(async (res) => {
+      const payload: ActionRequestBody = {
+        type: 'resetPassword',
+        email: values.email,
+      }
+      try {
+        const res = await fetch('/api/action', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        })
         if (res.ok) {
           alert.trigger(
             'info',
@@ -35,11 +38,15 @@
           const { message } = await res.json()
           alert.trigger('error', message)
         }
+      } catch (err: any) {
+        console.error('Password reset error:', err)
+        alert.trigger('error', err.message || 'An error occurred.')
+      } finally {
         values = {
           email: '',
         }
         disabled = false
-      })
+      }
     } else {
       showValidation = true
       alert.trigger('error', e.detail.error)
@@ -48,19 +55,13 @@
 </script>
 
 <Form
-  class={clsx('max-w-lg', showValidation && 'show-validation')}
+  class={cn('max-w-lg', showValidation && 'show-validation')}
   on:submit={handleSubmit}
 >
   <fieldset class="space-y-4" {disabled}>
     <Brand />
     <h1 class="text-2xl font-bold">Reset password</h1>
-    <Input
-      type="email"
-      bind:value={values.email}
-      label="Email"
-      floating
-      required
-    />
+    <Input type="email" bind:value={values.email} label="Email" required />
     <div class="flex items-center justify-between">
       <span>
         <Link href="/signup">Sign up</Link> or

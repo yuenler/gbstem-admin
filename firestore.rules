@@ -1,0 +1,184 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    //
+    // NOTE: THIS MUST BE MERGED WITH THE CURRICULUM REPO firestore.rules BEFORE DEPLOYMENT
+    //
+
+    //
+    // admin.gbstem.org and portal.gbstem.org data
+    //
+
+    // Only allows checking if a generated ID document exists, with no data returned.
+    match /ids/{id} {
+      allow read, create: if isSignedIn();
+      allow delete: if isUserWithId(id);
+    }
+
+    match /users/{userId} {
+      allow read, write: if isUser(userId);
+      allow read, write: if isAdmin();
+    }
+
+    // Used to queue outgoing emails before they are sent, with no read access.
+    match /mail/{mailId} {
+      allow create: if isSignedIn();
+    }
+
+    //
+    // ACCOUNT CREATION TOKENS
+    //
+    match /tokens/{token} {
+      allow read, write: if isAdmin();
+    }
+
+    //
+    // APPLICATIONS
+    //
+    match /{colId}/{userId} {
+      allow read, write: if colId.matches('applications(Spring|Fall)\\d+') && (isUser(userId) || isAdminOrReviewer());
+      match /meta/scheduled {
+        allow read, write: if colId.matches('applications(Spring|Fall)\\d+') && (isUser(userId) || isAdminOrReviewer());
+      }
+    }
+
+    //
+    // REGISTRATIONS
+    //
+    match /{colId}/{userId} {
+      allow read: if colId.matches('registrations(Spring|Fall)\\d+') && (isSignedIn() && belongsToSameUser(userId) || isStaff());
+      allow write: if colId.matches('registrations(Spring|Fall)\\d+') && isOwnerOrAdmin(userId);
+    }
+
+    //
+    // DECISIONS
+    //
+    match /{colId}/{userId} {
+      allow read: if colId.matches('decisions(Spring|Fall)\\d+') && isUser(userId);
+      allow read, write: if colId.matches('decisions(Spring|Fall)\\d+') && isAdminOrReviewer();
+    }
+
+    //
+    // CLASSES
+    //
+    match /{colId}/{classId} {
+      allow read: if colId.matches('classes(Spring|Fall)\\d+') && isSignedIn();
+      allow create: if colId.matches('classes(Spring|Fall)\\d+') && isInstructorOwnerOrAdmin(classId);
+      allow update: if colId.matches('classes(Spring|Fall)\\d+') && (isAdminOrReviewer() || isInstructorOfClass());
+      allow delete: if colId.matches('classes(Spring|Fall)\\d+') && isAdminOrReviewer();
+    }
+
+    match /instructorClasses/{classId} {
+      allow read, write: if isInstructor() || isAdmin();
+    }
+
+    //
+    // INTERVIEW TIMES / REQUESTS
+    //
+    match /{colId}/{interviewId} {
+      allow read, update: if colId.matches('instructorInterviewTimes((Spring|Fall)\\d+)?') && isStaff();
+      allow create, delete: if colId.matches('instructorInterviewTimes((Spring|Fall)\\d+)?') && isAdminOrReviewer();
+    }
+
+    match /interviewTimeRequests/{time} {
+      allow read, create: if isStaff();
+      allow update, delete: if isAdminOrReviewer();
+    }
+
+    //
+    // SUBSTITUTE INSTRUCTORS REQUESTS
+    //
+    match /subRequests/{subRequest} {
+      allow read, create: if isStaff();
+      allow update, delete: if isInstructor() || isAdmin();
+    }
+
+    //
+    // SEMESTER DATES
+    //
+    match /semesterDates/{semesterDate} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    //
+    // PARENT / GUARDIAN CONFIRMATIONS
+    //
+    match /confirmations/{userId} {
+      allow read: if isUser(userId) || isAdminOrReviewer();
+      allow write: if isUser(userId) || isAdmin();
+    }
+
+    //
+    // REAL-TIME PROGRAM CHECK-INS AND MEAL CHECKOUTS
+    //
+    match /hhids/{userId} {
+      allow read: if isSignedIn() && belongsToSameUser(userId) || isAdminOrReviewer();
+      allow write: if isSignedIn() && belongsToSameUser(userId) || isAdminOrReviewer();
+    }
+
+    //
+    // FEEDBACK
+    //
+    match /{colId}/{feedbackId} {
+      allow create: if colId.matches('(class|instructor)Feedback(Spring|Fall)?\\d+') && isSignedIn();
+      allow read: if colId.matches('(class|instructor)Feedback(Spring|Fall)?\\d+') && isAdmin();
+    }
+
+    //
+    // HELPER FUNCTIONS
+    //
+    function belongsToSameUser(userId){
+      return userId.matches(request.auth.uid + '.*');
+    }
+    function hasRole(role) {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == role;
+    }
+    function hasRRole(role) {
+      return 'role' in request.auth.token && request.auth.token.role == role;
+    }
+    function hasUserId(userId) {
+      return request.auth.uid == userId;
+    }
+    function hasid(id) {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('id', '') == id;
+    }
+    function isAdmin() {
+      return isSignedIn() && hasRRole('admin');
+    }
+    function isAdminOrReviewer() {
+      return isSignedIn() && (hasRRole('admin') || hasRRole('reviewer'));
+    }
+    function isInstructor() {
+      return isSignedIn() && hasRole('instructor');
+    }
+    function isInstructorOfClass() {
+      return isInstructor() && (
+        request.auth.token.email == resource.data.instructorEmail ||
+        (resource.data.otherInstructorEmails != null &&
+         resource.data.otherInstructorEmails is string &&
+         request.auth.token.email in resource.data.otherInstructorEmails.replace('[\\s,;]+', ',').split(','))
+      );
+    }
+    function isInstructorOwnerOrAdmin(userId) {
+      return (isInstructor() && hasUserId(userId)) || isAdmin();
+    }
+    function isOwnerOrAdmin(userId) {
+      return (isSignedIn() && belongsToSameUser(userId)) || isAdmin();
+    }
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isStaff() {
+      return isAdminOrReviewer() || isInstructor();
+    }
+    function isUser(userId) {
+      // Verifying the current user is the owner by UID
+      return isSignedIn() && hasUserId(userId);
+    }
+    function isUserWithId(id) {
+      // Verifying the current user's profile document ID maps to the requested identifier
+      return isSignedIn() && hasid(id);
+    }
+  }
+}

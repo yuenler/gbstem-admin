@@ -1,11 +1,11 @@
 [
-    {
-      "name": "No-Show"
-    },
-    {
-      "name": "On Time"
-    },
-    {
-      "name": "Late"
-    }
-  ]
+  {
+    "name": "No-Show"
+  },
+  {
+    "name": "On Time"
+  },
+  {
+    "name": "Late"
+  }
+]

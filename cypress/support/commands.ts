@@ -1,0 +1,171 @@
+// Add all new commands to index.d.ts as well.
+import Papa from 'papaparse'
+
+Cypress.Commands.add('fillInput', (selector: string, text: string) => {
+  cy.get(selector)
+    .scrollIntoView()
+    .should('be.visible')
+    .focus()
+    .clear()
+    .type(text, { delay: 20 })
+  cy.get(selector).then(($el) => {
+    if ($el.val() !== text) {
+      cy.get(selector)
+        .clear()
+        .type(text, { delay: 50 })
+        .should('have.value', text)
+    }
+  })
+})
+
+Cypress.Commands.add(
+  'signedInSession',
+  (
+    role: 'admin' | 'instructor' | 'reviewer' | 'student',
+    options: {
+      email?: string
+      initialPage?: string
+    } = {},
+  ) => {
+    const emailToUse =
+      options.email ||
+      (role === 'admin' ? 'demo@gbstem.org' : `${role}@gbstem.org`)
+
+    cy.session(`signedIn-${emailToUse}`, () => {
+      cy.visit('/signin')
+      cy.get('input[type="email"]').should('be.visible')
+      cy.wait(2500) // Wait for Svelte page and HMR to settle
+      const password = 'penguin'
+
+      cy.fillInput('input[type="email"]', emailToUse)
+      cy.fillInput('input[type="password"]', password)
+      cy.get('button[type="submit"]').click()
+      cy.wait(1000) // Wait for Svelte page and HMR to settle
+    })
+
+    const initialPage = options.initialPage || '/dashboard'
+    cy.visit(initialPage)
+    if (initialPage === '/announcements') {
+      cy.title().should('contain', 'Announcements')
+      cy.get('h1').should('contain', 'Announcements', { timeout: 10000 })
+    } else if (initialPage === '/applications') {
+      cy.title().should('contain', 'Applications')
+    } else if (initialPage === '/classes') {
+      cy.title().should('contain', 'Classes')
+    } else if (initialPage === '/instructor-feedback') {
+      cy.title().should('contain', 'Class Feedback')
+    } else if (initialPage === '/interviews') {
+      cy.title().should('contain', 'Interview Timeslots')
+      cy.get('h1').should('contain', 'Set Interview Timeslots', {
+        timeout: 10000,
+      })
+    } else if (initialPage === '/registrations') {
+      cy.title().should('contain', 'Registrations')
+    } else if (initialPage === '/student-feedback') {
+      cy.title().should('contain', 'Student Feedback')
+    } else if (initialPage === '/students') {
+      cy.title().should('contain', 'Students')
+    } else if (initialPage === '/sub-requests') {
+      cy.title().should('contain', 'Sub Requests Log')
+    } else if (initialPage === '/dashboard') {
+      cy.title().should('contain', 'Dashboard')
+      cy.get('h1').should('contain', 'Dashboard', { timeout: 10000 })
+    } else if (initialPage === '/profile') {
+      cy.title().should('contain', 'Profile')
+      cy.get('h1').should('contain', 'Profile', { timeout: 10000 })
+    } else if (initialPage === '/tokens') {
+      cy.title().should('contain', 'Tokens')
+    } else if (initialPage.startsWith('/user/')) {
+      cy.title().should('contain', 'Check In')
+    }
+    cy.wait(1000)
+  },
+)
+
+Cypress.Commands.add('signOutViaUi', () => {
+  cy.get('body').then(($body) => {
+    if ($body.find('button[aria-label="Profile menu"]:visible').length > 0) {
+      cy.get('button[aria-label="Profile menu"]').click()
+    }
+  })
+  cy.contains('button', 'Sign out').click({ force: true })
+  cy.url().should('include', '/signin')
+  cy.get('input[type="email"]').should('be.visible')
+})
+
+Cypress.Commands.add('selectOption', (selector: string, text: string) => {
+  cy.get(selector).then(($el) => {
+    const el = $el[0] as HTMLInputElement
+    el.value = text
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  cy.wait(300)
+  cy.get(selector).type('{enter}', { force: true })
+})
+
+Cypress.Commands.add('parseCsv', (csvText: string) => {
+  const parsed = Papa.parse<string[]>(csvText, {
+    skipEmptyLines: true,
+  })
+  return cy.wrap(parsed.data)
+})
+
+Cypress.Commands.add('parseCopiedEmails', (clipboardText: string) => {
+  const emails = clipboardText.split(',').map((e: string) => e.trim())
+  return cy.wrap(emails)
+})
+
+Cypress.Commands.add(
+  'dropCsvColumn',
+  (parsedRows: string[][], columnName: string) => {
+    const headers = parsedRows[0]
+    const colIndex = headers.indexOf(columnName)
+    if (colIndex === -1) {
+      throw new Error(
+        `Column "${columnName}" not found in CSV headers: ${headers.join(', ')}`,
+      )
+    }
+    const updatedRows = parsedRows.map((row) => {
+      return [...row.slice(0, colIndex), ...row.slice(colIndex + 1)]
+    })
+    return cy.wrap(updatedRows)
+  },
+)
+
+Cypress.Commands.add(
+  'getLatestOobLink',
+  (
+    email: string,
+    requestType: 'VERIFY_EMAIL' | 'PASSWORD_RESET' | 'VERIFY_AND_CHANGE_EMAIL',
+  ) => {
+    return cy
+      .request(
+        'GET',
+        'http://127.0.0.1:9099/emulator/v1/projects/demo-gbstem/oobCodes',
+      )
+      .then((response) => {
+        const codes = response.body.oobCodes || []
+        const match = codes
+          .filter((c: any) => {
+            const emailMatch = c.email === email || c.newEmail === email
+            return emailMatch && c.requestType === requestType
+          })
+          .pop()
+        expect(match).to.not.equal(undefined)
+        return match.oobLink
+      })
+  },
+)
+
+Cypress.Commands.add(
+  'waitForNotification',
+  (
+    text: string,
+    colorClass: string = 'bg-green-200',
+    timeoutMs: number = 15000,
+  ) => {
+    return cy
+      .get(`.${colorClass}`, { timeout: timeoutMs })
+      .should('contain', text)
+  },
+)

@@ -1,94 +1,110 @@
 <script lang="ts">
-    import {
-      collection,
-      query,
-      getDocs,
-      updateDoc,
-      doc,
-      getDoc,
-    } from 'firebase/firestore'
-    import { db, user } from '$lib/client/firebase'
-    import Form from '$lib/components/Form.svelte'
-    import clsx from 'clsx'
-    import { alert } from '$lib/stores'
-    import { onMount } from 'svelte'
-    import { get } from 'svelte/store'
-    import Table from '$lib/components/Table.svelte'
-    import { json } from '@sveltejs/kit'
-    import { connectStorageEmulator } from 'firebase/storage'
-    import { classFeedbackCollection } from '$lib/data/collections'
-  
-    let showValidation = false
-    let currentUser: Data.User.Store
-    let scheduled = false
-    let data: Data.StudentFeedback[] = []
-    let loading = true
-  
-    onMount(() => {
-      return user.subscribe(async (user) => {
-        if (user) {
-          currentUser = user
-          data = await getData()
-          loading = false
-        }
-      })
-    })
-  
-    async function getData() {
-      const q = query(collection(db, classFeedbackCollection))
-      const classFeedback = await getDocs(q)
-      classFeedback.forEach(async (document) => {
-        const session = document.data()
-          let tempClass: Data.StudentFeedback = {
-            instructorName: '',
-            studentName: '',
-            feedback: '',
-            rating: 0,
-            course: '',
-            date: '',
-          }
-          tempClass.instructorName = session.instructor
-          tempClass.date = session.date
-          tempClass.feedback = session.feedback
-          tempClass.studentName = session.studentName
-          tempClass.course = session.course
-          tempClass.rating = session.rating
-          data.push(tempClass)
-        })
-      return data
-    }
-  </script>
-  
-  {#await data then feedback}
-    <Table>
-      <svelte:fragment slot="head">
-        <th scope="col" class="px-6 py-3">Student Name</th>
-        <th scope="col" class="px-6 py-3">Course</th>
-        <th scope="col" class="px-6 py-3">Instructor Name</th>
-        <th scope="col" class="px-6 py-3">Date</th>
-        <th scope="col" class="px-6 py-3">Feedback</th>
-        <th scope="col" class="px-6 py-3">Rating</th>
-      </svelte:fragment>
-      <svelte:fragment slot="body">
-        {#each feedback as value}
-          <tr class="bg-white border-b hover:bg-gray-50 hover:cursor-pointer">
-            <td class="px-6 py-4"> {value.studentName} </td>
-            <td class="px-6 py-4">
-                {value.course}
-            </td>
-            <td class="px-6 py-4">
-              {value.instructorName}
-            </td>   
-            <td class="px-6 py-4">{value.date}</td>
-            <td class="px-6 py-4">
-              {value.feedback}
-            </td>
-            <td class="px-6 py-4">
-                {value.rating}
-            </td>
-          </tr>
-        {/each}
-      </svelte:fragment>
-    </Table>
-  {/await}
-  
+  import { page } from '$app/stores'
+  import Button from '$lib/components/Button.svelte'
+  import CourseFilter from '$lib/components/CourseFilter.svelte'
+  import PerPageControl from '$lib/components/PerPageControl.svelte'
+  import SearchBox from '$lib/components/SearchBox.svelte'
+  import Table from '$lib/components/Table.svelte'
+  import { generateCSV } from '$lib/utils'
+  import type { PageData } from './$types'
+
+  export let data: PageData
+
+  $: currentPage = data.page ?? 1
+  $: currentLimit = data.limit ?? 25
+
+  $: prevHref = (() => {
+    if (currentPage <= 1) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage - 1))
+    return `?${base.toString()}`
+  })()
+
+  $: nextHref = (() => {
+    if (data.feedback.length < currentLimit) return ''
+    const base = new URLSearchParams($page.url.searchParams)
+    base.set('page', String(currentPage + 1))
+    return `?${base.toString()}`
+  })()
+
+  const csvHeaders = [
+    'id',
+    'studentName',
+    'course',
+    'instructorName',
+    'date',
+    'feedback',
+    'rating',
+  ]
+  $: csvWithHeaders = generateCSV(
+    csvHeaders,
+    data.feedback.map((item) => [
+      item.id,
+      item.studentName,
+      item.course,
+      item.instructorName,
+      item.date,
+      item.feedback || '',
+      item.rating,
+    ]),
+  )
+  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
+  $: url = URL.createObjectURL(blob)
+</script>
+
+<svelte:head>
+  <title>Student Feedback</title>
+</svelte:head>
+
+<div class="mb-4 flex flex-wrap items-end gap-4">
+  <SearchBox basePath="/student-feedback" />
+  <CourseFilter paramName="course" />
+  <PerPageControl />
+  <Button
+    class="flex h-12 items-center"
+    href={url}
+    download="student-feedback.csv">Download</Button
+  >
+</div>
+
+<Table>
+  <svelte:fragment slot="head">
+    <th scope="col" class="px-6 py-3">Student Name</th>
+    <th scope="col" class="px-6 py-3">Course</th>
+    <th scope="col" class="px-6 py-3">Instructor Name</th>
+    <th scope="col" class="px-6 py-3">Date</th>
+    <th scope="col" class="px-6 py-3">Feedback</th>
+    <th scope="col" class="px-6 py-3">Rating</th>
+  </svelte:fragment>
+  <svelte:fragment slot="body">
+    {#each data.feedback as value}
+      <tr class="border-b bg-white hover:cursor-pointer hover:bg-gray-50">
+        <td class="px-6 py-4"> {value.studentName} </td>
+        <td class="px-6 py-4">
+          {value.course}
+        </td>
+        <td class="px-6 py-4">
+          {value.instructorName}
+        </td>
+        <td class="px-6 py-4">{value.date}</td>
+        <td class="px-6 py-4">
+          {value.feedback}
+        </td>
+        <td class="px-6 py-4">
+          {value.rating}
+        </td>
+      </tr>
+    {/each}
+  </svelte:fragment>
+</Table>
+
+{#if !data.query && data.feedback}
+  <div class="mt-4 flex justify-end gap-2">
+    {#if currentPage > 1}
+      <Button href={prevHref}>Previous</Button>
+    {/if}
+    {#if data.feedback.length >= currentLimit}
+      <Button href={nextHref}>Next</Button>
+    {/if}
+  </div>
+{/if}

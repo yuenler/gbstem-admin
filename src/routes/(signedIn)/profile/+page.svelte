@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { ActionRequestBody } from '../../api/action/+server'
   import ChangeEmailForm from '$lib/components/forms/ChangeEmailForm.svelte'
   import ChangePasswordForm from '$lib/components/forms/ChangePasswordForm.svelte'
   import DeleteAccountForm from '$lib/components/forms/DeleteAccountForm.svelte'
@@ -8,11 +9,11 @@
   import Card from '$lib/components/Card.svelte'
   import type { PageData } from './$types'
   import { user } from '$lib/client/firebase'
-  import PageLayout from '$lib/components/PageLayout.svelte'
   import Field from '$lib/components/Field.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
   import Button from '$lib/components/Button.svelte'
   import DialogActions from '$lib/components/DialogActions.svelte'
+  import { writeToClipboard } from '$lib/utils'
 
   export let data: PageData
 
@@ -22,14 +23,15 @@
   async function handleVerificationEmail() {
     if ($user) {
       disabled = true
+      const payload: ActionRequestBody = {
+        type: 'verifyEmail',
+      }
       fetch('/api/action', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          type: 'verifyEmail',
-        }),
+        body: JSON.stringify(payload),
       }).then(async (res) => {
         if (res.ok) {
           alert.trigger('info', 'Verification email was sent.')
@@ -61,12 +63,13 @@
   </div>
 </Dialog>
 
-<PageLayout>
-  <svelte:fragment slot="title">Profile</svelte:fragment>
-  <div class="max-w-2xl grid gap-6 w-full">
+<h1 class="mb-8 text-5xl font-bold md:text-6xl">Profile</h1>
+
+<div class="flex flex-col items-center">
+  <div class="grid w-full max-w-2xl gap-6">
     {#if !data.user.emailVerified}
       <div
-        class="mt-2 flex w-full items-center gap-4 rounded-md bg-red-200 px-5 py-4 shadow"
+        class="mt-2 flex w-full items-center gap-4 rounded-md bg-red-200 px-5 py-4 shadow-sm"
         transition:fade
       >
         <svg
@@ -105,17 +108,15 @@
         </Field>
         <div class="absolute top-2.5 right-2">
           <button
-            class="text-black hover:text-gray-700 transition-colors duration-300"
+            class="text-black transition-colors duration-300 hover:text-gray-700"
             type="button"
             aria-label="Copy user ID to clipboard"
             on:click={() => {
-              if ($user) {
-                navigator.clipboard.writeText(data.user.uid)
-              }
+              writeToClipboard(data.user.uid)
             }}
           >
             <svg
-              class="w-5 h-5"
+              class="h-5 w-5"
               xmlns="http://www.w3.org/2000/svg"
               width="32"
               height="32"
@@ -131,6 +132,8 @@
       <div class="text-sm">
         Any problems with changing your profile? Contact us at <a
           href="mailto:contact@gbstem.org"
+          target="_blank"
+          rel="noopener"
           class="link">contact@gbstem.org</a
         >.
       </div>
@@ -140,4 +143,4 @@
     <ChangePasswordForm />
     <DeleteAccountForm />
   </div>
-</PageLayout>
+</div>

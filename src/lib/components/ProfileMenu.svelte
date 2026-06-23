@@ -1,7 +1,6 @@
 <script lang="ts">
-  import clsx from 'clsx'
   import { fade } from 'svelte/transition'
-  import { clickOutside } from '$lib/utils'
+  import { clickOutside, cn } from '$lib/utils'
   import { navigating } from '$app/stores'
   import { signOut } from 'firebase/auth'
   import { auth } from '$lib/client/firebase'
@@ -23,20 +22,21 @@
         signOut(auth)
         goto('/signin')
       })
-      .catch((err) => console.log('Sign Out Error:', err))
+      .catch((err) => console.error('Sign out error:', err))
   }
 </script>
 
 <div
-  class={clsx('relative md:flex md:items-center', className)}
+  class={cn('relative md:flex md:items-center', className)}
   use:clickOutside
   on:outclick={() => {
     open = false
   }}
 >
   <button
-    class="hidden sm:flex h-10 w-10 justify-center items-center rounded-full border-2 border-black transition-colors hover:bg-gray-200"
+    class="hidden h-10 w-10 items-center justify-center rounded-full border-2 border-black transition-colors hover:bg-gray-200 sm:flex"
     type="button"
+    aria-label="Profile menu"
     on:click={() => {
       open = !open
     }}
@@ -47,7 +47,7 @@
       viewBox="0 0 24 24"
       stroke-width="2"
       stroke="currentColor"
-      class="w-6 h-6"
+      class="h-6 w-6"
     >
       <path
         stroke-linecap="round"
@@ -58,7 +58,7 @@
   </button>
   {#if open}
     <div
-      class="absolute right-0 top-14 w-40 rounded-md border border-gray-200 bg-white shadow"
+      class="absolute top-14 right-0 w-40 rounded-md border border-gray-200 bg-white shadow-sm"
       transition:fade={{ duration: 300, easing: circInOut }}
     >
       <a
@@ -76,11 +76,11 @@
   {/if}
   <div class="grid grid-cols-2 gap-3 text-center sm:hidden">
     <a
-      class="block w-full rounded-md border border-gray-200 px-6 py-2 shadow-sm transition-colors duration-300 hover:bg-gray-100"
+      class="block w-full rounded-md border border-gray-200 px-6 py-2 shadow-xs transition-colors duration-300 hover:bg-gray-100"
       href="/profile">Profile</a
     >
     <button
-      class="w-full rounded-md border border-gray-200 px-6 py-2 shadow-sm transition-colors duration-300 hover:bg-gray-100"
+      class="w-full rounded-md border border-gray-200 px-6 py-2 shadow-xs transition-colors duration-300 hover:bg-gray-100"
       type="button"
       on:click={handleSignOut}
     >

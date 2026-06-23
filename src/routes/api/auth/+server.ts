@@ -2,10 +2,25 @@ import { adminAuth } from '$lib/server/firebase'
 import { error, json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 
+import { z } from 'zod'
+
+const authSchema = z.object({
+  idToken: z.string().min(1, 'ID Token is required'),
+})
+
 export const POST: RequestHandler = async ({ request, cookies }) => {
-  const { idToken } = await request.json()
+  const { idToken } = authSchema.parse(await request.json())
   const expiresIn = 1000 * 60 * 60 * 24 * 7
   const decodedIdToken = await adminAuth.verifyIdToken(idToken)
+
+  const userRecord = await adminAuth.getUser(decodedIdToken.uid)
+  const role = userRecord.customClaims?.role as string | undefined
+  if (role !== 'admin' && role !== 'reviewer') {
+    throw error(
+      403,
+      'Unauthorized: You do not have permission to access the admin site.',
+    )
+  }
 
   if (new Date().getTime() / 1000 - decodedIdToken.auth_time < 5 * 60) {
     const cookie = await adminAuth.createSessionCookie(idToken, {
