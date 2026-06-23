@@ -117,7 +117,24 @@ Open [http://localhost:5173](http://localhost:5173) with your browser to see the
 
 To transition the gbSTEM system to a new semester (e.g., from `Spring26` to `Fall26`), you must update the configuration in both the admin and portal codebases and configure the Algolia search extension in Firebase.
 
-### 1. Update the Semester List
+> [!NOTE]
+> This is tedious and error prone due to a suboptimal Firestore database schema design. A better design would be to have a single collection for each collection type and use a field to denote the semester, but this would require migrating all existing data. This is really worth doing, however, because it will save us from doing this process in the future! Please consider doing this with your favorite AI as a helper, citing this documentation for context.
+
+### 1. Add Firestore Collections
+
+In the [Firebase Console](https://console.firebase.google.com/u/3/project/gbstem-core/firestore/databases/-default-/data/~2Fapplications), click the "Add Collection" button to create new collections for the new semester (e.g., `Fall26`):
+
+1. `applications{Semester}`
+1. `classFeedback{Semester}`
+1. `classes{Semester}`
+1. `decisions{Semester}`
+1. `instructorFeedback{Semester}`
+1. `instructorInterviewTimes{Semester}`
+1. `registrations{Semester}`
+
+Then in the `semesterDates` collection, add a new document with ID = suffix.toLowerCase() (e.g., `fall26`).
+
+### 2. Update the Semester List
 
 In the admin repository, update [collectionsList.json](src/lib/data/collectionsList.json). Add the new semester configuration to the **top** of the array so it is selected by default in the admin dashboard:
 
@@ -131,7 +148,9 @@ In the admin repository, update [collectionsList.json](src/lib/data/collectionsL
 ]
 ```
 
-### 2. Update Codebase Suffixes and Courses
+Commit this along with the changes for the next step.
+
+### 2. Update Collection Suffixes and Courses
 
 To ensure both applications write to and read from the new semester's Firestore collections, update the suffix variables and course catalogs:
 
@@ -141,6 +160,8 @@ To ensure both applications write to and read from the new semester's Firestore 
 - **Portal Repository:**
   - Update the `suffix` constant at the top of portal [`src/lib/data/collections.ts`](https://github.com/gbstem/portal/blob/main/src/lib/data/collections.ts) (e.g., `const suffix = 'Fall26'`).
   - Copy the updated `springCourses.json` or `fallCourses.json` catalog file directly from the admin repository (`admin/src/lib/data/`) to the portal repository (`portal/src/lib/data/`).
+
+At this point, you should test the full application, then commit these changes and set them live in production. The app will have problems with search filters until you complete the next steps, but those will get fixed pretty quickly without needing to redeploy the app.
 
 ### 3. Configure Algolia Search Indexing
 
@@ -155,7 +176,11 @@ Because our database uses separate Firestore collections per semester (e.g., `re
 > [!WARNING]
 > While the codebase automatically falls back to in-memory local searches with caching if Algolia is unreachable or unconfigured, doing so retrieves all documents in a collection. This can significantly increase Firestore read operations and lead to higher billing charges under our Firebase Blaze plan if the database grows.
 
-### 4. Firestore Security Rules
+### 4. Add Firestore Indices
+
+Within the deployed production admin site, go to each page and test the search box and each of the filters. You'll get errors with URLs that you can use to create the necessary Firestore indices in the Firebase Console, which do require waiting a few minutes but don't require re-deploying the app. For Course filters, you just need to try 1 value. For other filters, try each individual value because some require an index per value. Also try combinations of the filters. The Firestore error will tell you when the index is already building so you don't have to worry about creating duplicate indices.
+
+### 5. Firestore Security Rules
 
 > [!NOTE]
 > Previously, you had to manually edit [firestore.rules](firestore.rules) for every new semester and upload them to the [Firestore console rules page](https://console.firebase.google.com/project/gbstem-core/firestore/databases/-default-/security/rules).
