@@ -113,6 +113,55 @@ npm run deploy
 
 Open [http://localhost:5173](http://localhost:5173) with your browser to see the result for `npm run dev` or `npm start`. You can start editing any page or component, and when running in development mode, your changes will be reflected in the browser automatically.
 
+## Adding a New Semester
+
+To transition the gbSTEM system to a new semester (e.g., from `Spring26` to `Fall26`), you must update the configuration in both the admin and portal codebases and configure the Algolia search extension in Firebase.
+
+### 1. Update the Semester List
+
+In the admin repository, update [collectionsList.json](src/lib/data/collectionsList.json). Add the new semester configuration to the **top** of the array so it is selected by default in the admin dashboard:
+
+```json
+[
+  {
+    "id": "Fall26",
+    "name": "Fall 2026"
+  },
+  ...
+]
+```
+
+### 2. Update Codebase Suffixes and Courses
+
+To ensure both applications write to and read from the new semester's Firestore collections, update the suffix variables and course catalogs:
+
+- **Admin Repository:**
+  - Update the `suffix` constant at the top of [`src/lib/data/collections.ts`](src/lib/data/collections.ts) (e.g., `const suffix = 'Fall26'`).
+  - Review and update course catalog data in [springCourses.json](src/lib/data/springCourses.json) or [fallCourses.json](src/lib/data/fallCourses.json) under [`src/lib/data/`](src/lib/data/).
+- **Portal Repository:**
+  - Update the `suffix` constant at the top of portal [`src/lib/data/collections.ts`](https://github.com/gbstem/portal/blob/main/src/lib/data/collections.ts) (e.g., `const suffix = 'Fall26'`).
+  - Copy the updated `springCourses.json` or `fallCourses.json` catalog file directly from the admin repository (`admin/src/lib/data/`) to the portal repository (`portal/src/lib/data/`).
+
+### 3. Configure Algolia Search Indexing
+
+gbSTEM uses the free tier of [Algolia Search](https://www.algolia.com/pricing/) for performant admin website text queries. This relies on the [Search Firestore with Algolia](https://extensions.dev/extensions/algolia/firestore-algolia-search) Firebase extension to automatically sync Firestore records.
+
+Because our database uses separate Firestore collections per semester (e.g., `registrationsFall26`), you must create a new Algolia extension instance for the new semester's collections:
+
+1. View existing extension instances on the [Firebase Console Extensions List page](https://console.firebase.google.com/project/gbstem-core/extensions).
+2. Click the **Manage** button on the existing instances to see their configured **Collection Path** values. This will tell you which collections (like `registrationsSpring26` or `applicationsSpring26`) are currently indexed.
+3. Install new instances of the Algolia extension pointing to the corresponding collections of the new semester (e.g., `registrationsFall26`).
+
+> [!WARNING]
+> While the codebase automatically falls back to in-memory local searches with caching if Algolia is unreachable or unconfigured, doing so retrieves all documents in a collection. This can significantly increase Firestore read operations and lead to higher billing charges under our Firebase Blaze plan if the database grows.
+
+### 4. Firestore Security Rules
+
+> [!NOTE]
+> Previously, you had to manually edit [firestore.rules](firestore.rules) for every new semester and upload them to the [Firestore console rules page](https://console.firebase.google.com/project/gbstem-core/firestore/databases/-default-/security/rules).
+>
+> We now use regular expressions like `(Spring|Fall)\d+` in our rules (e.g. `colId.matches('classes(Spring|Fall)\\d+')`). You only need to manually update and upload the security rules if you use a custom semester ID name format that does not match this regex pattern.
+
 ## Updating Dependencies
 
 It is important to periodically update the project's dependencies to address security vulnerabilities, receive bug fixes, improve performance, and keep up with the latest features. Since this project is maintained by a rotating group of students, regular updates prevent the codebase from falling behind or becoming incompatible with modern deployment platforms.

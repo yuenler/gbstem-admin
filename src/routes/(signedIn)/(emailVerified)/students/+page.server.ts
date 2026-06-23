@@ -1,27 +1,12 @@
-import { registrationsCollection } from '$lib/data/collections'
-import { coursesJson } from '$lib/data'
+import {
+  registrationsCollection,
+  classesCollection,
+} from '$lib/data/collections'
 import { adminDb } from '$lib/server/firebase'
 import { searchIndex } from '$lib/server/search'
 import { error } from '@sveltejs/kit'
 import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import type { PageServerLoad } from './$types'
-
-function getCourseField(courseName: string): string | null {
-  const course = coursesJson.find((c) => c.name === courseName)
-  if (!course) return null
-  switch (course.track) {
-    case 'cs':
-      return 'program.csCourse'
-    case 'engineering':
-      return 'program.engineeringCourse'
-    case 'math':
-      return 'program.mathCourse'
-    case 'science':
-      return 'program.scienceCourse'
-    default:
-      return null
-  }
-}
 
 export const load = (async ({ url, depends }) => {
   depends('app:registrations')
@@ -50,10 +35,23 @@ export const load = (async ({ url, depends }) => {
       }
 
       if (course && course !== 'all') {
-        const fieldName = getCourseField(course)
-        if (fieldName) {
-          dbQuery = dbQuery.where(fieldName, '==', course)
+        const classesSnapshot = await adminDb
+          .collection(classesCollection)
+          .where('course', '==', course)
+          .get()
+        const classIds = classesSnapshot.docs.map((doc) => doc.id)
+        if (classIds.length === 0) {
+          return {
+            registrations: [],
+            page: pageNum,
+            limit: limitVal,
+          }
         }
+        dbQuery = dbQuery.where(
+          'classes',
+          'array-contains-any',
+          classIds.slice(0, 30),
+        )
       }
 
       dbQuery = dbQuery.orderBy('timestamps.updated', 'desc')

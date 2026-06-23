@@ -369,6 +369,25 @@ describe('students route', () => {
     const res = await studentsLoad({ url, depends: jest.fn() } as any)
     expect(res).toHaveProperty('registrations')
   })
+
+  it('loads students filtered by course', async () => {
+    const url = new URL('http://localhost/?course=Math+I')
+    const res = await studentsLoad({ url, depends: jest.fn() } as any)
+    expect(res).toHaveProperty('registrations')
+  })
+
+  it('loads empty list when course has no classes', async () => {
+    const url = new URL('http://localhost/?course=Nonexistent+Course')
+    const originalGet = mockCollection.get
+    mockCollection.get = jest.fn().mockResolvedValue({ docs: [] })
+    try {
+      const res = await studentsLoad({ url, depends: jest.fn() } as any)
+      expect(res).toHaveProperty('registrations')
+      expect(res.registrations).toHaveLength(0)
+    } finally {
+      mockCollection.get = originalGet
+    }
+  })
 })
 
 describe('student-feedback route', () => {
