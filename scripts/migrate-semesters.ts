@@ -245,29 +245,32 @@ async function verifyCollection(
 
   let ok = true
 
-  if (sourceSnap.size !== targetSnap.size) {
-    ok = false
-    console.error(
-      `  ✗ ${sourceName}: source has ${sourceSnap.size} doc(s), ` +
-        `target ${targetPath} has ${targetSnap.size}.`,
-    )
-  } else if (sourceSnap.size === 0) {
-    console.log(`  ${sourceName}: 0 docs, skipping sample comparison.`)
+  if (sourceSnap.size === 0) {
+    console.log(`  ${sourceName}: 0 docs, skipping.`)
     return ok
-  } else {
-    console.log(`  ${sourceName}: ${sourceSnap.size} docs, counts match.`)
   }
 
+  // Checked as "every source doc made it into the target", not exact count equality: the
+  // target collection can legitimately contain *other* docs this migration didn't put there
+  // (e.g. current-semester writes from the live app during rehearsal, or docs from an
+  // earlier idempotent run of this same script) without that being a migration failure.
   const targetById = new Map(targetSnap.docs.map((d) => [d.id, d]))
+  const missing = sourceSnap.docs.filter((d) => !targetById.has(d.id))
+  if (missing.length > 0) {
+    ok = false
+    console.error(
+      `  ✗ ${sourceName}: ${missing.length}/${sourceSnap.size} doc(s) missing from ` +
+        `${targetPath}: ${missing.map((d) => d.id).join(', ')}`,
+    )
+  } else {
+    console.log(
+      `  ${sourceName}: all ${sourceSnap.size} doc(s) present in ${targetPath}.`,
+    )
+  }
+
   for (const sourceDoc of sampleFrom(sourceSnap.docs, SAMPLE_SIZE)) {
     const targetDoc = targetById.get(sourceDoc.id)
-    if (!targetDoc) {
-      ok = false
-      console.error(
-        `  ✗ ${sourceName}/${sourceDoc.id}: missing from ${targetPath}.`,
-      )
-      continue
-    }
+    if (!targetDoc) continue // already reported above
     const { matches, mismatches } = compareMigratedDoc(
       sourceDoc.data(),
       targetDoc.data(),
