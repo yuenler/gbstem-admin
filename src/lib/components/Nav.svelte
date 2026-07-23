@@ -92,7 +92,7 @@
       {#each pages as page}
         <a
           class={cn(
-            'rounded-md px-1.5 py-1 text-[11px] md:px-2 md:py-1 md:text-xs lg:px-2.5 lg:py-1.5 lg:text-[13px] xl:text-[14px] transition-colors text-center leading-tight flex items-center justify-center min-h-10 max-w-[100px] shrink-0',
+            'rounded-md px-1.5 py-1 text-[11px] md:px-2 md:py-1 md:text-xs lg:px-2.5 lg:py-1.5 lg:text-[13px] xl:text-[14px] transition-colors text-center leading-tight flex items-center justify-center min-h-10 max-w-25 shrink-0',
             pathname === page.href ? 'bg-gray-200' : 'hover:bg-gray-100',
           )}
           href={page.href}

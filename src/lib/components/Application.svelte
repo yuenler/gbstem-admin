@@ -676,7 +676,7 @@
       </div>
     </Card>
     <div class="mt-4 flex flex-wrap justify-center gap-4">
-      <Card class="w-full min-w-[300px] flex-1 md:min-w-[450px]">
+      <Card class="w-full min-w-75 flex-1 md:min-w-112.5">
         <h2 class="my-4 text-2xl font-bold">Application Details</h2>
         <EditApplicationForm
           bind:formEl
@@ -691,7 +691,7 @@
         />
       </Card>
       {#if showInterviewForm}
-        <Card class="w-full min-w-[300px] flex-1 md:min-w-[450px]">
+        <Card class="w-full min-w-75 flex-1 md:min-w-112.5">
           <Form class="w-full">
             <div>
               <h2 class="my-4 text-2xl font-bold">

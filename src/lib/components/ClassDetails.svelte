@@ -256,7 +256,7 @@
         </div>
         <div class="m-5 overflow-auto">
           <table
-            class="min-w-[600px]"
+            class="min-w-150"
             style="border-collapse: collapse; width: 100%; text-align: left;"
           >
             <thead>

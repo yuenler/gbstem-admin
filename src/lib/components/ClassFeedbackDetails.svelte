@@ -80,7 +80,7 @@
         </div>
         <div class="m-5 overflow-auto">
           <table
-            class="min-w-[500px]"
+            class="min-w-125"
             style="border-collapse: collapse; width: 100%;"
           >
             <thead>
