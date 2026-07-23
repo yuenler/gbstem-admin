@@ -187,7 +187,11 @@ async function seedSemester(semesterId: string) {
     .set(regUnenrolled)
 
   // Applications: one decided (with a meta.decision reference, to exercise the migration
-  // script's decision-ref rewrite), one undecided.
+  // script's decision-ref rewrite), one undecided. Names are unique per semester *and* per
+  // decision state (not just "Legacy Applicant" for both) so Cypress tests can target either
+  // one unambiguously via cy.contains('tr', name) - both within a semester and across
+  // semesters, since a test switching the semester filter needs to assert a name it saw in
+  // one semester does NOT appear in another.
   const applicationBase = {
     personal: {
       email: `legacy-applicant-${semesterId}@gmail.com`,
@@ -229,6 +233,11 @@ async function seedSemester(semesterId: string) {
   const decisionRef = db.collection(col('decisions')).doc(appDecidedId)
   const appDecided = {
     ...applicationBase,
+    personal: {
+      ...applicationBase.personal,
+      firstName: 'LegacyDecided',
+      lastName: semesterId,
+    },
     meta: {
       id: appDecidedId,
       uid: `legacy-uid-app1-${semesterId}`,
@@ -248,6 +257,11 @@ async function seedSemester(semesterId: string) {
   const appUndecidedId = `legacy-app-undecided-${semesterId}`
   const appUndecided = {
     ...applicationBase,
+    personal: {
+      ...applicationBase.personal,
+      firstName: 'LegacyUndecided',
+      lastName: semesterId,
+    },
     meta: {
       id: appUndecidedId,
       uid: `legacy-uid-app2-${semesterId}`,

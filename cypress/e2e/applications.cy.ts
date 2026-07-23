@@ -217,16 +217,6 @@ describe('Section D: Instructor Applications Management', () => {
     cy.contains('button', 'Accept').should('not.exist')
   })
 
-  // TODO(dmeyer246) Ensure 10b and 10c are fully enabled and verified to work in later
-  // stages of our migration, then simplify the overly verbose test case comment to remove the legacy
-  // bug reference.
-
-  // Regression test for the bug documented in SEMESTER_MIGRATION_PLAN.md § 10.1: the bulk
-  // decision action wrote to a hardcoded top-level `decisions` collection instead of the
-  // semester-scoped decisionsCollection, which real Firestore rules reject (no rule matches
-  // a bare `decisions` path), so this action would silently fail against production rules
-  // even though it appeared to work. Not yet run against the emulator — verify/adjust
-  // selectors and the exact toast copy during the Phase 4 emulator rehearsal.
   it('Test Case 10b: Bulk Decisions Persist', () => {
     // Select a single applicant by name, scoped to their row, instead of by checkbox index,
     // so this test doesn't depend on the row ordering assumed by Test Case 10/11.
@@ -252,32 +242,18 @@ describe('Section D: Instructor Applications Management', () => {
     })
   })
 
-  // Regression test for ISSUES.md finding #1 / SEMESTER_MIGRATION_PLAN.md § 10.1's follow-up
-  // fix: Application.svelte's three decision-writing handlers (saveNotes, handleLikelyDecision,
-  // handleDecision) and the bulk-decision handler above both used to derive the decision doc's
-  // path from the static current-semester `decisionsCollection`/`applicationsCollection`
-  // imports instead of the semester actually being viewed (the `collection` /
-  // `selectedCollection` prop, driven by CollectionFilter). Deciding on an applicant while
-  // browsing a past semester would either throw ("No document to update", if that uid has no
-  // current-semester application) or — worse — silently overwrite an unrelated current-semester
-  // application's `meta.decision` for the same returning applicant. Both were fixed to derive
-  // the semester from the viewed collection via `semesterIdFromPath(...) ?? currentSemester`.
-  //
-  // SKIPPED: exercising this requires an applicant seeded into a *past* semester's applications
-  // collection under the new `semesters/{semesterId}/applications` schema (e.g.
-  // `semesters/Fall25/applications`), which doesn't exist yet — today's `scripts/seed.ts` only
-  // seeds the current semester. Un-skip this once Phase 3's seed/migration work adds such a
-  // fixture (tracked in SEMESTER_MIGRATION_PLAN.md § 10), filling in the applicant name below,
-  // and verify during the Phase 4 emulator rehearsal.
-  it.skip('Test Case 10c: Deciding On a Past-Semester Applicant Writes To That Semester (TODO: needs a past-semester seed fixture)', () => {
+  // Fixture: `scripts/seedLegacy.ts` seeds a "LegacyUndecided {Semester}" applicant into each of
+  // Fall25/Spring26's legacy collections, migrated by `migrate-semesters.ts` into
+  // `semesters/{Semester}/applications`. Names are unique per semester so this test can assert
+  // the Fall25 applicant does NOT show up after switching back to Spring 2026.
+  it('Test Case 10c: Deciding On a Past-Semester Applicant Writes To That Semester', () => {
     // Switch to a past semester via the Collection dropdown, same flow as Test Case 9.
     cy.get('input[name="collection"]').clear().type('Fall 2025')
     cy.wait(200)
     cy.get('input[name="collection"]').type('{enter}')
     cy.wait(500)
 
-    // TODO: replace with the name of a Fall25-only applicant once seeded.
-    const pastSemesterApplicantName = 'TODO Seed A Fall25 Applicant'
+    const pastSemesterApplicantName = 'LegacyUndecided Fall25'
 
     cy.contains('tr', pastSemesterApplicantName).within(() => {
       cy.get('input[type="checkbox"]').check({ force: true })
