@@ -13,6 +13,8 @@
   import {
     classesCollection,
     registrationsCollection,
+    resolveSemester,
+    semesterCollectionPath,
   } from '$lib/data/collections'
   import { alert } from '$lib/stores'
   import { generateCSV, normalizeCapitals } from '$lib/utils'
@@ -33,8 +35,10 @@
   let dialogEl: Dialog
   let current: number | undefined
   let checked: Array<number> = []
-  $: selectedCollection =
-    $page.url.searchParams.get('collection') ?? registrationsCollection
+  $: selectedCollection = semesterCollectionPath(
+    resolveSemester($page.url.searchParams.get('semester')),
+    'registrations',
+  )
 
   const csvHeaders = [
     'id',
@@ -250,7 +254,7 @@
 
 <div class="flex flex-wrap items-end gap-4">
   <SearchBox basePath="/registrations" />
-  <CollectionFilter type="registrations" />
+  <CollectionFilter />
   <StatusFilter type="registrations" />
   <PerPageControl />
   <Button class="flex h-12 items-center" href={url} download="registrations.csv"

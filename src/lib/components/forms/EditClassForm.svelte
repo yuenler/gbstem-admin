@@ -5,7 +5,7 @@
   import { invalidate } from '$app/navigation'
   import type { FirebaseError } from 'firebase/app'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
-  import { classesCollection } from '$lib/data/collections'
+  import { classesCollection, withSemester } from '$lib/data/collections'
   import type ClassData from '$lib/data/types/ClassData'
   import { superForm, defaults } from 'sveltekit-superforms'
   import { zod } from 'sveltekit-superforms/adapters'
@@ -49,7 +49,10 @@
             ...formVal.data,
           }
           try {
-            await setDoc(doc(db, classesCollection, id), updatedValues)
+            await setDoc(
+              doc(db, classesCollection, id),
+              withSemester(updatedValues),
+            )
             values = updatedValues
             disabled = true
             await invalidate('app:registrations')

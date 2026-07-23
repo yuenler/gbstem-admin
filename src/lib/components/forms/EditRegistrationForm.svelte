@@ -4,7 +4,12 @@
   import { alert } from '$lib/stores'
   import { invalidate } from '$app/navigation'
   import type { FirebaseError } from 'firebase/app'
-  import { registrationsCollection } from '$lib/data/collections'
+  import {
+    currentSemester,
+    registrationsCollection,
+    semesterIdFromPath,
+    withSemester,
+  } from '$lib/data/collections'
   import { superForm, defaults } from 'sveltekit-superforms'
   import { zod } from 'sveltekit-superforms/adapters'
   import { registrationSchema } from './schemas'
@@ -117,7 +122,13 @@
             },
           }
           try {
-            await setDoc(doc(db, collection, id), updatedValues)
+            await setDoc(
+              doc(db, collection, id),
+              withSemester(
+                updatedValues,
+                semesterIdFromPath(collection) ?? currentSemester,
+              ),
+            )
             values = updatedValues
             dbValues = cloneDeep(updatedValues)
             disabled = true

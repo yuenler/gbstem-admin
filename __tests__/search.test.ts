@@ -107,4 +107,53 @@ describe('search module', () => {
 
     consoleWarnSpy.mockRestore()
   })
+
+  it('uses the last path segment as the Algolia index name for a semester-scoped path', async () => {
+    mockSearchSingleIndex.mockResolvedValueOnce({ hits: [] })
+
+    await searchIndex('semesters/Spring26/registrations', 'Alice')
+
+    expect(mockSearchSingleIndex).toHaveBeenCalledWith({
+      indexName: 'registrations',
+      searchParams: {
+        query: 'Alice',
+        filters: 'semester:Spring26',
+      },
+    })
+  })
+
+  it('normalizes full-path Algolia objectIDs back to the bare doc ID', async () => {
+    mockSearchSingleIndex.mockResolvedValueOnce({
+      hits: [
+        {
+          objectID: 'semesters/Spring26/registrations/uid123',
+          name: 'Algolia Alice',
+        },
+      ],
+    })
+
+    const results = await searchIndex(
+      'semesters/Spring26/registrations',
+      'Alice',
+    )
+
+    expect(results).toHaveLength(1)
+    expect(results[0].objectID).toBe('uid123')
+  })
+
+  it('caches local fallback results per collection path so different semesters do not collide', async () => {
+    const consoleWarnSpy = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {})
+    mockSearchSingleIndex.mockRejectedValue(new Error('Algolia is down'))
+
+    await searchIndex('semesters/Fall25/registrations', 'Alice')
+    const callsAfterFirst = mockGet.mock.calls.length
+
+    // Same query, different semester path: must not reuse Fall25's cache entry.
+    await searchIndex('semesters/Spring25/registrations', 'Alice')
+    expect(mockGet.mock.calls.length).toBe(callsAfterFirst + 1)
+
+    consoleWarnSpy.mockRestore()
+  })
 })

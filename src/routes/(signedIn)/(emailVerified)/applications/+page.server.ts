@@ -1,4 +1,4 @@
-import { applicationsCollection } from '$lib/data/collections'
+import { resolveSemester, semesterCollectionPath } from '$lib/data/collections'
 import { adminDb } from '$lib/server/firebase'
 import { searchIndex } from '$lib/server/search'
 import { error } from '@sveltejs/kit'
@@ -12,6 +12,10 @@ import type { PageServerLoad } from './$types'
 
 export const load = (async ({ url, depends }) => {
   depends('app:applications')
+  const collectionName = semesterCollectionPath(
+    resolveSemester(url.searchParams.get('semester')),
+    'applications',
+  )
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
     const pageStr = url.searchParams.get('page') ?? '1'
@@ -24,8 +28,6 @@ export const load = (async ({ url, depends }) => {
     try {
       let dbQuery: Query
 
-      const collectionName =
-        url.searchParams.get('collection') ?? applicationsCollection
       if (filter === 'undecided') {
         dbQuery = adminDb
           .collection(collectionName)
@@ -125,7 +127,7 @@ export const load = (async ({ url, depends }) => {
             created: Date
           }
         }
-      >(applicationsCollection, query)
+      >(collectionName, query)
       const decisions = (
         await Promise.all(
           hits.map((hit) => {

@@ -9,8 +9,11 @@
   import { interviewAttendanceJson } from '$lib/data'
   import {
     applicationsCollection,
-    decisionsCollection,
+    currentSemester,
+    semesterCollectionPath,
     semesterDatesDocument,
+    semesterIdFromPath,
+    withSemester,
   } from '$lib/data/collections'
   import { alert } from '$lib/stores'
   import { formatDateShort, toLocalISOString } from '$lib/utils'
@@ -32,6 +35,14 @@
   export let dialogEl: Dialog
   export let id: string | undefined
   export let collection: string = applicationsCollection
+
+  // `collection` may point at a past semester (browsed via CollectionFilter), so decision
+  // writes must target that same semester's `decisions` subcollection, not always the
+  // current one — mirrors semesterIdFromPath(collection) ?? currentSemester in
+  // EditApplicationForm/EditRegistrationForm.
+  const viewedSemester = () => semesterIdFromPath(collection) ?? currentSemester
+  const decisionsCollectionForView = () =>
+    semesterCollectionPath(viewedSemester(), 'decisions')
 
   let loading = true
   let disabled = true
@@ -226,29 +237,32 @@
         interviewer,
         attendance,
       } = interview
-      const decisionDocRef = doc(db, decisionsCollection, frozenId)
+      const decisionDocRef = doc(db, decisionsCollectionForView(), frozenId)
       await setDoc(
         decisionDocRef,
-        {
-          conversation,
-          conversationNotes,
-          mockLessonExplanations,
-          mockLessonEngagement,
-          mockLessonPace,
-          mockLessonOverall,
-          mockLessonNotes,
-          teachingPreferences,
-          availabilityNotes,
-          notes,
-          techNotes,
-          lastSemesterNotes,
-          date,
-          interviewer,
-          attendance,
-        },
+        withSemester(
+          {
+            conversation,
+            conversationNotes,
+            mockLessonExplanations,
+            mockLessonEngagement,
+            mockLessonPace,
+            mockLessonOverall,
+            mockLessonNotes,
+            teachingPreferences,
+            availabilityNotes,
+            notes,
+            techNotes,
+            lastSemesterNotes,
+            date,
+            interviewer,
+            attendance,
+          },
+          viewedSemester(),
+        ),
         { merge: true },
       )
-      await updateDoc(doc(db, applicationsCollection, frozenId), {
+      await updateDoc(doc(db, collection, frozenId), {
         'meta.decision': decisionDocRef,
       })
       await invalidate('app:applications')
@@ -268,16 +282,19 @@
     if (frozenId === undefined) return
     loading = true
     try {
-      const decisionDocRef = doc(db, decisionsCollection, frozenId)
+      const decisionDocRef = doc(db, decisionsCollectionForView(), frozenId)
       await setDoc(
         decisionDocRef,
-        {
-          likelyDecision: newDecision,
-          type: decision ?? null,
-        },
+        withSemester(
+          {
+            likelyDecision: newDecision,
+            type: decision ?? null,
+          },
+          viewedSemester(),
+        ),
         { merge: true },
       )
-      await updateDoc(doc(db, applicationsCollection, frozenId), {
+      await updateDoc(doc(db, collection, frozenId), {
         'meta.decision': decisionDocRef,
       })
       await invalidate('app:applications')
@@ -344,27 +361,33 @@
         date,
         likelyDecision,
       } = interview
-      const decisionDocRef = doc(db, decisionsCollection, frozenId)
-      await setDoc(decisionDocRef, {
-        type,
-        likelyDecision,
-        notes,
-        interviewer,
-        attendance,
-        conversation,
-        conversationNotes,
-        lastSemesterNotes,
-        mockLessonEngagement,
-        mockLessonExplanations,
-        mockLessonNotes,
-        mockLessonPace,
-        mockLessonOverall,
-        teachingPreferences,
-        techNotes,
-        availabilityNotes,
-        date,
-      })
-      await updateDoc(doc(db, applicationsCollection, frozenId), {
+      const decisionDocRef = doc(db, decisionsCollectionForView(), frozenId)
+      await setDoc(
+        decisionDocRef,
+        withSemester(
+          {
+            type,
+            likelyDecision,
+            notes,
+            interviewer,
+            attendance,
+            conversation,
+            conversationNotes,
+            lastSemesterNotes,
+            mockLessonEngagement,
+            mockLessonExplanations,
+            mockLessonNotes,
+            mockLessonPace,
+            mockLessonOverall,
+            teachingPreferences,
+            techNotes,
+            availabilityNotes,
+            date,
+          },
+          viewedSemester(),
+        ),
+      )
+      await updateDoc(doc(db, collection, frozenId), {
         'meta.decision': decisionDocRef,
       })
       await invalidate('app:applications')

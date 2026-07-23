@@ -1,0 +1,106 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "registrations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "meta.submitted", "order": "ASCENDING" },
+        { "fieldPath": "timestamps.updated", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "registrations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "enrolled", "order": "ASCENDING" },
+        { "fieldPath": "timestamps.updated", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "registrations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "enrolled", "order": "ASCENDING" },
+        { "fieldPath": "meta.submitted", "order": "ASCENDING" },
+        { "fieldPath": "timestamps.updated", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "registrations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "program.inPerson", "order": "ASCENDING" },
+        { "fieldPath": "meta.submitted", "order": "ASCENDING" },
+        { "fieldPath": "timestamps.updated", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "registrations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "meta.submitted", "order": "ASCENDING" },
+        { "fieldPath": "classes", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "timestamps.updated", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "registrations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "enrolled", "order": "ASCENDING" },
+        { "fieldPath": "classes", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "timestamps.updated", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "meta.submitted", "order": "ASCENDING" },
+        { "fieldPath": "timestamps.updated", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "program.inPerson", "order": "ASCENDING" },
+        { "fieldPath": "timestamps.updated", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "meta.submitted", "order": "ASCENDING" },
+        { "fieldPath": "meta.decision", "order": "ASCENDING" },
+        { "fieldPath": "timestamps.updated", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "classFeedback",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "course", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "instructorFeedback",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "courseName", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "subRequests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "course", "order": "ASCENDING" },
+        { "fieldPath": "dateOfClass", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

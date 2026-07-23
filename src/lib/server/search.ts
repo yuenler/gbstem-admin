@@ -1,5 +1,6 @@
 import { env } from '$env/dynamic/private'
 import { ALGOLIA_APP_ID, ALGOLIA_PRIVATE_KEY } from '$env/static/private'
+import { semesterIdFromPath } from '$lib/data/collections'
 import { adminDb } from '$lib/server/firebase'
 import { algoliasearch } from 'algoliasearch'
 
@@ -37,9 +38,15 @@ const localCache = new Map<string, { timestamp: number; data: any[] }>()
 const CACHE_TTL_MS = 15000 // Cache for 15 seconds
 
 export async function searchIndex<T>(
-  indexName: string,
+  collectionPath: string,
   query: string,
 ): Promise<Array<T & { objectID: string }>> {
+  // The Algolia index is keyed by collection ID, not full path, and is now
+  // shared across every semester (semesters/{semesterId}/{name}), so the
+  // filter below scopes results back down to the requested semester.
+  const indexName = collectionPath.split('/').pop() as string
+  const semesterId = semesterIdFromPath(collectionPath)
+
   let shouldRunLocal = useLocalSearch
 
   if (!shouldRunLocal) {
@@ -50,9 +57,17 @@ export async function searchIndex<T>(
         indexName,
         searchParams: {
           query,
+          ...(semesterId ? { filters: `semester:${semesterId}` } : {}),
         },
       })
-      return hits as Array<T & { objectID: string }>
+      // objectID is the full document path (semesters/{id}/{name}/{docId}),
+      // set that way so records from every semester coexist in one index
+      // without colliding. Normalize it back to the bare doc ID so callers
+      // (which do `id: hit.objectID`) don't need to know that.
+      return hits.map((hit: any) => ({
+        ...hit,
+        objectID: hit.objectID.split('/').pop(),
+      })) as Array<T & { objectID: string }>
     } catch (err) {
       console.warn(
         `[Search] Algolia search failed for query "${query}" on index "${indexName}". Falling back to local search. Error:`,
@@ -64,15 +79,17 @@ export async function searchIndex<T>(
 
   if (shouldRunLocal) {
     console.log(
-      `[Search] Using local fallback search for query "${query}" on index "${indexName}"`,
+      `[Search] Using local fallback search for query "${query}" on collection "${collectionPath}"`,
     )
     let allDocs: any[] = []
 
-    const cached = isTest ? null : localCache.get(indexName)
+    // Keyed by the full collection path (not indexName) so each semester's
+    // subcollection gets its own cache entry instead of colliding.
+    const cached = isTest ? null : localCache.get(collectionPath)
     if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
       allDocs = cached.data
     } else {
-      const snapshot = await adminDb.collection(indexName).get()
+      const snapshot = await adminDb.collection(collectionPath).get()
 
       // Helper to sanitize Firestore Timestamps into standard Date objects
       const sanitize = (val: any): any => {
@@ -104,7 +121,7 @@ export async function searchIndex<T>(
       })
 
       if (!isTest) {
-        localCache.set(indexName, {
+        localCache.set(collectionPath, {
           timestamp: Date.now(),
           data: allDocs,
         })

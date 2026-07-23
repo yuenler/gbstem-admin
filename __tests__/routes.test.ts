@@ -305,6 +305,24 @@ describe('applications route', () => {
     const res = await applicationsLoad({ url, depends: jest.fn() } as any)
     expect(res).toHaveProperty('applications')
   })
+
+  it('queries the requested past semester when ?semester= is a known id', async () => {
+    const url = new URL('http://localhost/?filter=complete&semester=Fall25')
+    await applicationsLoad({ url, depends: jest.fn() } as any)
+    expect(mockAdminDb.collection).toHaveBeenCalledWith(
+      'semesters/Fall25/applications',
+    )
+  })
+
+  it('falls back to the current semester when ?semester= is unknown', async () => {
+    const url = new URL(
+      'http://localhost/?filter=complete&semester=NotASemester',
+    )
+    await applicationsLoad({ url, depends: jest.fn() } as any)
+    expect(mockAdminDb.collection).toHaveBeenCalledWith(
+      'semesters/Spring26/applications',
+    )
+  })
 })
 
 describe('classes route', () => {
@@ -354,6 +372,24 @@ describe('registrations route', () => {
     const url = new URL('http://localhost/?query=test')
     const res = await registrationsLoad({ url, depends: jest.fn() } as any)
     expect(res).toHaveProperty('registrations')
+  })
+
+  it('queries the requested past semester when ?semester= is a known id', async () => {
+    const url = new URL('http://localhost/?filter=enrolled&semester=Fall25')
+    await registrationsLoad({ url, depends: jest.fn() } as any)
+    expect(mockAdminDb.collection).toHaveBeenCalledWith(
+      'semesters/Fall25/registrations',
+    )
+  })
+
+  it('falls back to the current semester when ?semester= is unknown', async () => {
+    const url = new URL(
+      'http://localhost/?filter=enrolled&semester=NotASemester',
+    )
+    await registrationsLoad({ url, depends: jest.fn() } as any)
+    expect(mockAdminDb.collection).toHaveBeenCalledWith(
+      'semesters/Spring26/registrations',
+    )
   })
 })
 
