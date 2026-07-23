@@ -204,6 +204,7 @@ jest.mock('firebase/firestore', () => ({
 jest.mock('firebase/storage', () => ({ getStorage: jest.fn() }))
 
 // Import routes
+import { currentSemester } from '../src/lib/data/collections'
 import { handle } from '../src/hooks.server'
 import { load as emailVerifiedLayoutLoad } from '../src/routes/(signedIn)/(emailVerified)/+layout.server'
 import { load as applicationsLoad } from '../src/routes/(signedIn)/(emailVerified)/applications/+page.server'
@@ -320,7 +321,7 @@ describe('applications route', () => {
     )
     await applicationsLoad({ url, depends: jest.fn() } as any)
     expect(mockAdminDb.collection).toHaveBeenCalledWith(
-      'semesters/Spring26/applications',
+      `semesters/${currentSemester}/applications`,
     )
   })
 })
@@ -388,7 +389,7 @@ describe('registrations route', () => {
     )
     await registrationsLoad({ url, depends: jest.fn() } as any)
     expect(mockAdminDb.collection).toHaveBeenCalledWith(
-      'semesters/Spring26/registrations',
+      `semesters/${currentSemester}/registrations`,
     )
   })
 })

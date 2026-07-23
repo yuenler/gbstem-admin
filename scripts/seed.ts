@@ -77,6 +77,7 @@ import {
   applicationsCollection,
   classesCollection,
   classFeedbackCollection,
+  currentSemester,
   decisionsCollection,
   instructorFeedbackCollection,
   interviewTimesCollection,
@@ -84,6 +85,13 @@ import {
   semesterDatesDocument,
   subRequestsCollection,
 } from '../src/lib/data/collections'
+import collectionsList from '../src/lib/data/collectionsList.json'
+
+// The display name (e.g. "Spring 2026") for the current semester, used in seeded content -
+// derived so seed data doesn't go stale/misleading when the semester rolls over.
+const currentSemesterName =
+  collectionsList.find((sem) => sem.id === currentSemester)?.name ??
+  currentSemester
 
 async function createOrUpdateUser(
   uid: string | null,
@@ -1061,7 +1069,7 @@ async function seed() {
   console.log('Seeding 30 mock announcements...')
   for (let i = 0; i < 30; i++) {
     await db.collection('announcements').add({
-      title: `Welcome to gbSTEM Spring 2026! (Update #${i})`,
+      title: `Welcome to gbSTEM ${currentSemesterName}! (Update #${i})`,
       content: `Our semester begins soon. Make sure to verify your schedules and log in. Announcement #${i}.`,
       timestamp: admin.firestore.Timestamp.fromDate(
         new Date(Date.now() - (30 - i) * 24 * 60 * 60 * 1000),
