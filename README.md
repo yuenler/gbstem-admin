@@ -113,79 +113,38 @@ npm run deploy
 
 Open [http://localhost:5173](http://localhost:5173) with your browser to see the result for `npm run dev` or `npm start`. You can start editing any page or component, and when running in development mode, your changes will be reflected in the browser automatically.
 
+## Firestore Schema
+
+Most collections are scoped under a semester document: `semesters/{semesterId}/{collectionType}/{docId}` (e.g. `semesters/Spring26/applications/{uid}`). The semester-scoped types are `applications`, `classFeedback`, `classes`, `decisions`, `instructorFeedback`, `instructorInterviewTimes`, and `registrations`.
+
+[`src/lib/data/collections.ts`](src/lib/data/collections.ts) derives every one of these paths from a single `suffix` constant (the current semester ID, e.g. `'Spring26'`) via a `semesterCollectionPath(semesterId, name)` helper. The exported constant names (`applicationsCollection`, `registrationsCollection`, etc.) stay the same regardless, so call sites throughout the app never construct paths manually.
+
+A handful of collections are **not** semester-scoped and live at the top level: `subRequests`, `interviewTimeRequests`, `instructorClasses`, `confirmations`, `hhids`, `users`, `ids`, `tokens`, `mail`, `announcements`.
+
+The current semester's key dates (`classesStart`, `registrationsDue`, etc.) aren't in Firestore at all — every read site only ever needs the _current_ semester's dates, never a past one, so they're static data in [`semesterDates.json`](src/lib/data/semesterDates.json), re-exported as `semesterDates` from `collections.ts`. `__tests__/collections.test.ts` validates every field is a well-formed `MM/DD/YY` date whose year matches `currentSemester`.
+
+Every semesterized document also carries a `semester` field (e.g. `"Spring26"`), stamped on write via the `withSemester(...)` helper in `collections.ts`. This lets the shared, cross-semester Algolia index for each collection type (one index total, covering every semester) filter results down to a single semester.
+
+[Composite indexes](firestore.indexes.json) and [security rules](firestore.rules) are keyed by **collection ID**, not by full path, so they automatically cover `semesters/{any semesterId}/{type}` — a new semester needs neither of these touched.
+
+Admins can browse a past semester's data via the `?semester=<id>` URL param on the Applications and Registrations pages (see `CollectionFilter.svelte`), validated against [`collectionsList.json`](src/lib/data/collectionsList.json) before being used to build a Firestore path.
+
+> [!NOTE]
+> Before this schema, each collection type was duplicated per semester by name (e.g. `applicationsSpring26`, `registrationsFall25`). Those collections still exist in Firestore as a read-only historical backup — nothing reads or writes them anymore — and should eventually be deleted after a comfortable soak period.
+
 ## Adding a New Semester
 
-To transition the gbSTEM system to a new semester (e.g., from `Spring26` to `Fall26`), you must update the configuration in both the admin and portal codebases and configure the Algolia search extension in Firebase.
+Transitioning gbSTEM to a new semester (e.g., from `Spring26` to `Fall26`) is a small, code-only change: no Firestore console work at all, no index creation, and no Algolia or security rules changes, since those are keyed by collection type rather than per-semester (see [Firestore Schema](#firestore-schema) above).
 
-> [!NOTE]
-> This is tedious and error prone due to a suboptimal Firestore database schema design. A better design would be to have a single collection for each collection type and use a field to denote the semester, but this would require migrating all existing data. This is really worth doing, however, because it will save us from doing this process in the future! Please consider doing this with your favorite AI as a helper, citing this documentation for context.
+1. In **both the admin and portal repos**, update the `suffix` constant at the top of `src/lib/data/collections.ts` (e.g., `const suffix = 'Fall26'`).
+2. In the **admin repo**:
+   - Add `{ "id": "Fall26", "name": "Fall 2026" }` to the **top** of [`collectionsList.json`](src/lib/data/collectionsList.json), so it's selected by default and appears first in the past-semester dropdown.
+   - Review and update course catalog data in [`springCourses.json`](src/lib/data/springCourses.json) or [`fallCourses.json`](src/lib/data/fallCourses.json), then copy the updated file to the portal repository's `src/lib/data/` directory.
+   - Update every field in [`semesterDates.json`](src/lib/data/semesterDates.json) to the new semester's actual dates (`MM/DD/YY`, matching the new suffix's year), then copy the updated file to the portal repository's `src/lib/data/` directory.
+3. Run `npm run lint && npm run test` in both repos to verify the changes (this will fail loudly for errors like a malformed date, incorrect year in `semesterDates.json`, or other format issues).
+4. Deploy both apps.
 
-### 1. Add Firestore Collections
-
-In the [Firebase Console](https://console.firebase.google.com/u/3/project/gbstem-core/firestore/databases/-default-/data/~2Fapplications), click the "Add Collection" button to create new collections for the new semester (e.g., `Fall26`):
-
-1. `applications{Semester}`
-1. `classFeedback{Semester}`
-1. `classes{Semester}`
-1. `decisions{Semester}`
-1. `instructorFeedback{Semester}`
-1. `instructorInterviewTimes{Semester}`
-1. `registrations{Semester}`
-
-Then in the `semesterDates` collection, add a new document with ID = suffix.toLowerCase() (e.g., `fall26`).
-
-### 2. Update the Semester List
-
-In the admin repository, update [collectionsList.json](src/lib/data/collectionsList.json). Add the new semester configuration to the **top** of the array so it is selected by default in the admin dashboard:
-
-```json
-[
-  {
-    "id": "Fall26",
-    "name": "Fall 2026"
-  },
-  ...
-]
-```
-
-Commit this along with the changes for the next step.
-
-### 2. Update Collection Suffixes and Courses
-
-To ensure both applications write to and read from the new semester's Firestore collections, update the suffix variables and course catalogs:
-
-- **Admin Repository:**
-  - Update the `suffix` constant at the top of [`src/lib/data/collections.ts`](src/lib/data/collections.ts) (e.g., `const suffix = 'Fall26'`).
-  - Review and update course catalog data in [springCourses.json](src/lib/data/springCourses.json) or [fallCourses.json](src/lib/data/fallCourses.json) under [`src/lib/data/`](src/lib/data/).
-- **Portal Repository:**
-  - Update the `suffix` constant at the top of portal [`src/lib/data/collections.ts`](https://github.com/gbstem/portal/blob/main/src/lib/data/collections.ts) (e.g., `const suffix = 'Fall26'`).
-  - Copy the updated `springCourses.json` or `fallCourses.json` catalog file directly from the admin repository (`admin/src/lib/data/`) to the portal repository (`portal/src/lib/data/`).
-
-At this point, you should test the full application, then commit these changes and set them live in production. The app will have problems with search filters until you complete the next steps, but those will get fixed pretty quickly without needing to redeploy the app.
-
-### 3. Configure Algolia Search Indexing
-
-gbSTEM uses the free tier of [Algolia Search](https://www.algolia.com/pricing/) for performant admin website text queries. This relies on the [Search Firestore with Algolia](https://extensions.dev/extensions/algolia/firestore-algolia-search) Firebase extension to automatically sync Firestore records.
-
-Because our database uses separate Firestore collections per semester (e.g., `registrationsFall26`), you must create a new Algolia extension instance for the new semester's collections:
-
-1. View existing extension instances on the [Firebase Console Extensions List page](https://console.firebase.google.com/project/gbstem-core/extensions).
-2. Click the **Manage** button on the existing instances to see their configured **Collection Path** values. This will tell you which collections (like `registrationsSpring26` or `applicationsSpring26`) are currently indexed.
-3. Install new instances of the Algolia extension pointing to the corresponding collections of the new semester (e.g., `registrationsFall26`).
-
-> [!WARNING]
-> While the codebase automatically falls back to in-memory local searches with caching if Algolia is unreachable or unconfigured, doing so retrieves all documents in a collection. This can significantly increase Firestore read operations and lead to higher billing charges under our Firebase Blaze plan if the database grows.
-
-### 4. Add Firestore Indices
-
-Within the deployed production admin site, go to each page and test the search box and each of the filters. You'll get errors with URLs that you can use to create the necessary Firestore indices in the Firebase Console, which do require waiting a few minutes but don't require re-deploying the app. For Course filters, you just need to try 1 value. For other filters, try each individual value because some require an index per value. Also try combinations of the filters. The Firestore error will tell you when the index is already building so you don't have to worry about creating duplicate indices.
-
-### 5. Firestore Security Rules
-
-> [!NOTE]
-> Previously, you had to manually edit [firestore.rules](firestore.rules) for every new semester and upload them to the [Firestore console rules page](https://console.firebase.google.com/project/gbstem-core/firestore/databases/-default-/security/rules).
->
-> We now use regular expressions like `(Spring|Fall)\d+` in our rules (e.g. `colId.matches('classes(Spring|Fall)\\d+')`). You only need to manually update and upload the security rules if you use a custom semester ID name format that does not match this regex pattern.
+That's it — the new semester's subcollections (`semesters/Fall26/applications`, etc.) spring into existence automatically on first write.
 
 ## Updating Dependencies
 
@@ -234,7 +193,7 @@ Below is an alphabetical list of the top-level directories and significant confi
 - **`__tests__/`**: Contains all of our Jest unit tests (such as utility tests and form validation schema scenario tests).
 - **`cypress/`**: Contains the Cypress e2e test suite, test configurations, fixtures, and page object/support configurations.
 - **`node_modules/`**: Contains the project's dependencies.
-- **`scripts/`**: Contains development and setup script utilities (such as the database seeding script `seed.ts`).
+- **`scripts/`**: Contains development and setup script utilities: the database seeding script (`seed.ts`), a legacy-schema seeding script for migration rehearsal (`seedLegacy.ts`), and the one-time semester-schema migration script (`migrate-semesters.ts`, see [Firestore Schema](#firestore-schema)).
 - **`src/`**: The core SvelteKit application source code.
 - **`src/lib/`**: Reusable libraries, utility modules, and components:
   - **`src/lib/client/`**: Client-side specific integrations, such as clients for Firestore.
@@ -254,6 +213,7 @@ Below is an alphabetical list of the top-level directories and significant confi
 - **`cypress.config.ts`**: The configuration file for the Cypress e2e testing interface and environmental triggers.
 - **`eslint.config.js`**: ESLint configuration mapping coding rules and checks (replacing the legacy `.eslintrc.cjs`).
 - **`firebase.json`**: Defines local configurations for Firebase emulator environments and project builds.
+- **`firestore.indexes.json`**: Declarative composite index definitions for Cloud Firestore, deployed via `firebase deploy --only firestore:indexes`. Indexes are keyed by collection ID, so they cover every semester's subcollections automatically.
 - **`firestore.rules`**: Firebase security rules defining read/write permissions for the Cloud Firestore database. This is applied by the Firebase emulators for local testing, but needs to be manually pushed to production because it has to be merged with the `curriculum` repo version of this file in production (simple copy-and-paste).
 - **`jest.config.ts`**: The configuration file for our Jest testing environment, specifically tailored to work alongside TypeScript and Svelte.
 - **`jest.setup.ts`**: Initial setup code that runs before our Jest tests, importing tools like `@testing-library/jest-dom` for custom DOM matchers.

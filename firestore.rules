@@ -33,6 +33,62 @@ service cloud.firestore {
     }
 
     //
+    // SEMESTER-SCOPED COLLECTIONS (current schema)
+    //
+    // semesters/{semesterId}/applications/{userId}, .../registrations/{userId}, etc.
+    // Permission logic below is copied verbatim from the legacy per-semester
+    // regex blocks further down, which are kept as a read/rollback path for
+    // the archived *{Semester} collections until cleanup.
+    //
+    match /semesters/{semesterId} {
+      allow read: if isSignedIn(); // parent docs, if we ever materialize them
+
+      match /applications/{userId} {
+        allow read, write: if isUser(userId) || isAdminOrReviewer();
+      }
+
+      match /registrations/{userId} {
+        allow read: if isSignedIn() && belongsToSameUser(userId) || isStaff();
+        allow write: if isOwnerOrAdmin(userId);
+      }
+
+      match /decisions/{userId} {
+        allow read: if isUser(userId);
+        allow read, write: if isAdminOrReviewer();
+      }
+
+      match /classes/{classId} {
+        allow read: if isSignedIn();
+        allow create: if isInstructorOwnerOrAdmin(classId);
+        allow update: if isAdminOrReviewer() || isInstructorOfClass();
+        allow delete: if isAdminOrReviewer();
+      }
+
+      match /instructorInterviewTimes/{interviewId} {
+        allow read, update: if isStaff();
+        allow create, delete: if isAdminOrReviewer();
+      }
+
+      match /classFeedback/{feedbackId} {
+        allow create: if isSignedIn();
+        allow read: if isAdmin();
+      }
+
+      match /instructorFeedback/{feedbackId} {
+        allow create: if isSignedIn();
+        allow read: if isAdmin();
+      }
+    }
+
+    //
+    // LEGACY PER-SEMESTER COLLECTIONS (archive / rollback path)
+    //
+    // Kept readable/writable during the transition so old *{Semester}
+    // collections remain a valid rollback target; delete this whole section
+    // once cleanup happens (see admin/README.md § Adding a New Semester).
+    //
+
+    //
     // APPLICATIONS
     //
     match /{colId}/{userId} {

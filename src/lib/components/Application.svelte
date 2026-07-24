@@ -9,8 +9,11 @@
   import { interviewAttendanceJson } from '$lib/data'
   import {
     applicationsCollection,
-    decisionsCollection,
-    semesterDatesDocument,
+    currentSemester,
+    semesterCollectionPath,
+    semesterDates,
+    semesterIdFromPath,
+    withSemester,
   } from '$lib/data/collections'
   import { alert } from '$lib/stores'
   import { formatDateShort, toLocalISOString } from '$lib/utils'
@@ -33,11 +36,19 @@
   export let id: string | undefined
   export let collection: string = applicationsCollection
 
+  // `collection` may point at a past semester (browsed via CollectionFilter), so decision
+  // writes must target that same semester's `decisions` subcollection, not always the
+  // current one — mirrors semesterIdFromPath(collection) ?? currentSemester in
+  // EditApplicationForm/EditRegistrationForm.
+  const viewedSemester = () => semesterIdFromPath(collection) ?? currentSemester
+  const decisionsCollectionForView = () =>
+    semesterCollectionPath(viewedSemester(), 'decisions')
+
   let loading = true
   let disabled = true
   let showInterviewForm = true
-  let semesterStartDate = ''
-  let semesterEndDate = ''
+  const semesterStartDate = formatDateShort(new Date(semesterDates.classesStart))
+  const semesterEndDate = formatDateShort(new Date(semesterDates.classesEnd))
   let dbValues: Data.Application<'client'>
   const defaultValues: Data.Application<'client'> = {
     personal: {
@@ -185,23 +196,6 @@
         loading = false
       }
     })()
-    ;(async () => {
-      try {
-        const dateSnap = await getDoc(
-          doc(db, 'semesterDates', semesterDatesDocument),
-        )
-        if (dateSnap.exists()) {
-          semesterStartDate = formatDateShort(
-            new Date(dateSnap.data().classesStart),
-          )
-          semesterEndDate = formatDateShort(
-            new Date(dateSnap.data().classesEnd),
-          )
-        }
-      } catch (err) {
-        console.error('Failed to load semester dates:', err)
-      }
-    })()
   }
 
   async function saveNotes() {
@@ -226,29 +220,32 @@
         interviewer,
         attendance,
       } = interview
-      const decisionDocRef = doc(db, decisionsCollection, frozenId)
+      const decisionDocRef = doc(db, decisionsCollectionForView(), frozenId)
       await setDoc(
         decisionDocRef,
-        {
-          conversation,
-          conversationNotes,
-          mockLessonExplanations,
-          mockLessonEngagement,
-          mockLessonPace,
-          mockLessonOverall,
-          mockLessonNotes,
-          teachingPreferences,
-          availabilityNotes,
-          notes,
-          techNotes,
-          lastSemesterNotes,
-          date,
-          interviewer,
-          attendance,
-        },
+        withSemester(
+          {
+            conversation,
+            conversationNotes,
+            mockLessonExplanations,
+            mockLessonEngagement,
+            mockLessonPace,
+            mockLessonOverall,
+            mockLessonNotes,
+            teachingPreferences,
+            availabilityNotes,
+            notes,
+            techNotes,
+            lastSemesterNotes,
+            date,
+            interviewer,
+            attendance,
+          },
+          viewedSemester(),
+        ),
         { merge: true },
       )
-      await updateDoc(doc(db, applicationsCollection, frozenId), {
+      await updateDoc(doc(db, collection, frozenId), {
         'meta.decision': decisionDocRef,
       })
       await invalidate('app:applications')
@@ -268,16 +265,19 @@
     if (frozenId === undefined) return
     loading = true
     try {
-      const decisionDocRef = doc(db, decisionsCollection, frozenId)
+      const decisionDocRef = doc(db, decisionsCollectionForView(), frozenId)
       await setDoc(
         decisionDocRef,
-        {
-          likelyDecision: newDecision,
-          type: decision ?? null,
-        },
+        withSemester(
+          {
+            likelyDecision: newDecision,
+            type: decision ?? null,
+          },
+          viewedSemester(),
+        ),
         { merge: true },
       )
-      await updateDoc(doc(db, applicationsCollection, frozenId), {
+      await updateDoc(doc(db, collection, frozenId), {
         'meta.decision': decisionDocRef,
       })
       await invalidate('app:applications')
@@ -292,27 +292,16 @@
   }
 
   async function handleDecision(newDecision: Data.Decision) {
-    let today = new Date()
-    let weekDeadline = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
-    let interviewDeadline = formatDateShort(weekDeadline)
-
-    try {
-      const dueDate = await getDoc(
-        doc(db, 'semesterDates', semesterDatesDocument),
-      )
-      if (dueDate.exists()) {
-        interviewDeadline = formatDateShort(
-          new Date(
-            Math.min(
-              weekDeadline.getTime(),
-              new Date(dueDate.data().instructorOrientation).getTime(),
-            ),
-          ),
-        )
-      }
-    } catch (err) {
-      console.error('Failed to get semester dates:', err)
-    }
+    const today = new Date()
+    const weekDeadline = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
+    const interviewDeadline = formatDateShort(
+      new Date(
+        Math.min(
+          weekDeadline.getTime(),
+          new Date(semesterDates.instructorOrientation).getTime(),
+        ),
+      ),
+    )
 
     const confirmation = confirm(
       'Are you sure you want to update the decision? An email will be sent to the applicant, and you should not be changing the decision after this.',
@@ -344,27 +333,33 @@
         date,
         likelyDecision,
       } = interview
-      const decisionDocRef = doc(db, decisionsCollection, frozenId)
-      await setDoc(decisionDocRef, {
-        type,
-        likelyDecision,
-        notes,
-        interviewer,
-        attendance,
-        conversation,
-        conversationNotes,
-        lastSemesterNotes,
-        mockLessonEngagement,
-        mockLessonExplanations,
-        mockLessonNotes,
-        mockLessonPace,
-        mockLessonOverall,
-        teachingPreferences,
-        techNotes,
-        availabilityNotes,
-        date,
-      })
-      await updateDoc(doc(db, applicationsCollection, frozenId), {
+      const decisionDocRef = doc(db, decisionsCollectionForView(), frozenId)
+      await setDoc(
+        decisionDocRef,
+        withSemester(
+          {
+            type,
+            likelyDecision,
+            notes,
+            interviewer,
+            attendance,
+            conversation,
+            conversationNotes,
+            lastSemesterNotes,
+            mockLessonEngagement,
+            mockLessonExplanations,
+            mockLessonNotes,
+            mockLessonPace,
+            mockLessonOverall,
+            teachingPreferences,
+            techNotes,
+            availabilityNotes,
+            date,
+          },
+          viewedSemester(),
+        ),
+      )
+      await updateDoc(doc(db, collection, frozenId), {
         'meta.decision': decisionDocRef,
       })
       await invalidate('app:applications')
@@ -653,7 +648,7 @@
       </div>
     </Card>
     <div class="mt-4 flex flex-wrap justify-center gap-4">
-      <Card class="w-full min-w-[300px] flex-1 md:min-w-[450px]">
+      <Card class="w-full min-w-75 flex-1 md:min-w-112.5">
         <h2 class="my-4 text-2xl font-bold">Application Details</h2>
         <EditApplicationForm
           bind:formEl
@@ -668,7 +663,7 @@
         />
       </Card>
       {#if showInterviewForm}
-        <Card class="w-full min-w-[300px] flex-1 md:min-w-[450px]">
+        <Card class="w-full min-w-75 flex-1 md:min-w-112.5">
           <Form class="w-full">
             <div>
               <h2 class="my-4 text-2xl font-bold">

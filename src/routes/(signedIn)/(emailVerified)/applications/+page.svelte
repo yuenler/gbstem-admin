@@ -10,7 +10,11 @@
   import SearchBox from '$lib/components/SearchBox.svelte'
   import StatusFilter from '$lib/components/StatusFilter.svelte'
   import Table from '$lib/components/Table.svelte'
-  import { applicationsCollection } from '$lib/data/collections'
+  import {
+    resolveSemester,
+    semesterCollectionPath,
+    withSemester,
+  } from '$lib/data/collections'
   import { actions, alert } from '$lib/stores'
   import { generateCSV } from '$lib/utils'
   import { format } from 'date-fns'
@@ -153,10 +157,15 @@
           await Promise.all(
             checked.map(async (i) => {
               const id = data.applications[i].id
-              const decisionDocRef = doc(db, 'decisions', id)
-              await setDoc(decisionDocRef, {
-                type: decision,
-              })
+              const decisionDocRef = doc(
+                db,
+                semesterCollectionPath(selectedSemester, 'decisions'),
+                id,
+              )
+              await setDoc(
+                decisionDocRef,
+                withSemester({ type: decision }, selectedSemester),
+              )
               await updateDoc(doc(db, selectedCollection, id), {
                 'meta.decision': decisionDocRef,
               })
@@ -203,8 +212,11 @@
     }
   }
 
-  $: selectedCollection =
-    $page.url.searchParams.get('collection') ?? applicationsCollection
+  $: selectedSemester = resolveSemester($page.url.searchParams.get('semester'))
+  $: selectedCollection = semesterCollectionPath(
+    selectedSemester,
+    'applications',
+  )
 </script>
 
 <svelte:head>
@@ -213,7 +225,7 @@
 
 <div class="flex flex-wrap items-end gap-4">
   <SearchBox basePath="/applications" />
-  <CollectionFilter type="applications" />
+  <CollectionFilter />
   <StatusFilter type="applications" />
   <PerPageControl />
   <Button class="flex h-12 items-center" href={url} download="applications.csv"

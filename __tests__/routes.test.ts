@@ -204,6 +204,7 @@ jest.mock('firebase/firestore', () => ({
 jest.mock('firebase/storage', () => ({ getStorage: jest.fn() }))
 
 // Import routes
+import { currentSemester } from '../src/lib/data/collections'
 import { handle } from '../src/hooks.server'
 import { load as emailVerifiedLayoutLoad } from '../src/routes/(signedIn)/(emailVerified)/+layout.server'
 import { load as applicationsLoad } from '../src/routes/(signedIn)/(emailVerified)/applications/+page.server'
@@ -305,6 +306,24 @@ describe('applications route', () => {
     const res = await applicationsLoad({ url, depends: jest.fn() } as any)
     expect(res).toHaveProperty('applications')
   })
+
+  it('queries the requested past semester when ?semester= is a known id', async () => {
+    const url = new URL('http://localhost/?filter=complete&semester=Fall25')
+    await applicationsLoad({ url, depends: jest.fn() } as any)
+    expect(mockAdminDb.collection).toHaveBeenCalledWith(
+      'semesters/Fall25/applications',
+    )
+  })
+
+  it('falls back to the current semester when ?semester= is unknown', async () => {
+    const url = new URL(
+      'http://localhost/?filter=complete&semester=NotASemester',
+    )
+    await applicationsLoad({ url, depends: jest.fn() } as any)
+    expect(mockAdminDb.collection).toHaveBeenCalledWith(
+      `semesters/${currentSemester}/applications`,
+    )
+  })
 })
 
 describe('classes route', () => {
@@ -354,6 +373,24 @@ describe('registrations route', () => {
     const url = new URL('http://localhost/?query=test')
     const res = await registrationsLoad({ url, depends: jest.fn() } as any)
     expect(res).toHaveProperty('registrations')
+  })
+
+  it('queries the requested past semester when ?semester= is a known id', async () => {
+    const url = new URL('http://localhost/?filter=enrolled&semester=Fall25')
+    await registrationsLoad({ url, depends: jest.fn() } as any)
+    expect(mockAdminDb.collection).toHaveBeenCalledWith(
+      'semesters/Fall25/registrations',
+    )
+  })
+
+  it('falls back to the current semester when ?semester= is unknown', async () => {
+    const url = new URL(
+      'http://localhost/?filter=enrolled&semester=NotASemester',
+    )
+    await registrationsLoad({ url, depends: jest.fn() } as any)
+    expect(mockAdminDb.collection).toHaveBeenCalledWith(
+      `semesters/${currentSemester}/registrations`,
+    )
   })
 })
 

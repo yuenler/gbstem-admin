@@ -5,6 +5,7 @@
   import {
     applicationsCollection,
     interviewTimesCollection,
+    withSemester,
   } from '$lib/data/collections'
   import { alert } from '$lib/stores'
   import { cn, formatDate, formatDateLocal, toLocalISOString } from '$lib/utils'
@@ -169,10 +170,13 @@
     ]
 
     try {
-      await setDoc(doc(db, interviewTimesCollection, interviewSlotToAdd.id), {
-        ...interviewSlotToAdd,
-        date: new Date(interviewSlotToAdd.date),
-      })
+      await setDoc(
+        doc(db, interviewTimesCollection, interviewSlotToAdd.id),
+        withSemester({
+          ...interviewSlotToAdd,
+          date: new Date(interviewSlotToAdd.date),
+        }),
+      )
       if (interviewSlotToAdd.intervieweeId != '') {
         await updateDoc(
           doc(db, applicationsCollection, selectedIntervieweeDocId),
@@ -236,10 +240,13 @@
       return
     }
     try {
-      await setDoc(doc(db, interviewTimesCollection, interview.id), {
-        ...interview,
-        date: new Date(interview.date),
-      })
+      await setDoc(
+        doc(db, interviewTimesCollection, interview.id),
+        withSemester({
+          ...interview,
+          date: new Date(interview.date),
+        }),
+      )
       alert.trigger('success', 'Timeslot updated successfully.')
       allInterviewSlots = await getData()
     } catch (err: any) {

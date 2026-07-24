@@ -1,3 +1,12 @@
+import { currentSemester } from '../../src/lib/data/collections'
+import collectionsList from '../../src/lib/data/collectionsList.json'
+
+// The display name (e.g. "Spring 2026") for the current semester, as shown in the
+// CollectionFilter dropdown - derived from collections.ts/collectionsList.json so these
+// tests don't need editing every time the semester rolls over.
+const currentSemesterName =
+  collectionsList.find((sem) => sem.id === currentSemester)?.name ?? currentSemester
+
 describe('Section D: Instructor Applications Management', () => {
   beforeEach(() => {
     // Ignore transient Firebase emulator connection exceptions
@@ -44,18 +53,18 @@ describe('Section D: Instructor Applications Management', () => {
     cy.get('input[name="collection"]').type('{enter}')
     cy.wait(500)
     cy.get('table').should(($table) => {
-      // Verify no applications from Spring 2026 remain
+      // Verify no applications from the current semester remain
       expect($table).to.not.contain('David Miller')
       expect($table).to.not.contain('Mark Lewis')
     })
 
-    // Switch back to Spring 2026 to see the applications again
-    cy.get('input[name="collection"]').clear().type('Spring 2026')
+    // Switch back to the current semester to see the applications again
+    cy.get('input[name="collection"]').clear().type(currentSemesterName)
     cy.wait(200)
     cy.get('input[name="collection"]').type('{enter}')
     cy.wait(500)
     cy.get('table').should(($table) => {
-      // Ensure applications from Spring 2026 reappear
+      // Ensure applications from the current semester reappear
       expect($table).to.contain('David Miller')
       expect($table).to.contain('Mark Lewis')
     })
@@ -215,6 +224,66 @@ describe('Section D: Instructor Applications Management', () => {
     cy.contains('button', /^Close$/).click({ force: true })
     cy.get('[id^="check-"]').should('not.be.checked')
     cy.contains('button', 'Accept').should('not.exist')
+  })
+
+  it('Test Case 10b: Bulk Decisions Persist', () => {
+    // Select a single applicant by name, scoped to their row, instead of by checkbox index,
+    // so this test doesn't depend on the row ordering assumed by Test Case 10/11.
+    cy.contains('tr', 'Mark Lewis').within(() => {
+      cy.get('input[type="checkbox"]').check({ force: true })
+    })
+
+    cy.contains('button', 'Waitlist 1 applicant').click({ force: true })
+
+    // A permission-denied write (the pre-fix behavior) surfaces as an error toast here
+    // instead of this success toast.
+    cy.waitForNotification('1 applicant waitlisted.')
+
+    cy.contains('tr', 'Mark Lewis').within(() => {
+      cy.get('.text-yellow-300').should('exist')
+    })
+
+    // Reload to confirm the decision was actually persisted server-side (and is readable
+    // back from the correct collection), not just reflected in optimistic local state.
+    cy.reload()
+    cy.contains('tr', 'Mark Lewis').within(() => {
+      cy.get('.text-yellow-300').should('exist')
+    })
+  })
+
+  // Fixture: `scripts/seedLegacy.ts` seeds a "LegacyUndecided {Semester}" applicant into each of
+  // Fall25/Spring26's legacy collections (that script's hardcoded rehearsal semesters,
+  // independent of the app's current semester), migrated by `migrate-semesters.ts` into
+  // `semesters/{Semester}/applications`. Names are unique per semester so this test can assert
+  // the Fall25 applicant does NOT show up after switching back to the current semester.
+  it('Test Case 10c: Deciding On a Past-Semester Applicant Writes To That Semester', () => {
+    // Switch to a past semester via the Collection dropdown, same flow as Test Case 9.
+    cy.get('input[name="collection"]').clear().type('Fall 2025')
+    cy.wait(200)
+    cy.get('input[name="collection"]').type('{enter}')
+    cy.wait(500)
+
+    const pastSemesterApplicantName = 'LegacyUndecided Fall25'
+
+    cy.contains('tr', pastSemesterApplicantName).within(() => {
+      cy.get('input[type="checkbox"]').check({ force: true })
+    })
+    cy.contains('button', 'Waitlist 1 applicant').click({ force: true })
+    cy.waitForNotification('1 applicant waitlisted.')
+
+    cy.contains('tr', pastSemesterApplicantName).within(() => {
+      cy.get('.text-yellow-300').should('exist')
+    })
+
+    // Switch back to the current semester and confirm no application there was touched
+    // (this is the "silent cross-semester overwrite" failure mode described above — it
+    // would only reproduce if the same uid also has a current-semester application, so a
+    // fully faithful fixture needs a shared uid across both semesters).
+    cy.get('input[name="collection"]').clear().type(currentSemesterName)
+    cy.wait(200)
+    cy.get('input[name="collection"]').type('{enter}')
+    cy.wait(500)
+    cy.contains('tr', pastSemesterApplicantName).should('not.exist')
   })
 
   it('Test Case 11: Application Details Modal, Editing Details, and Decision Updates', () => {

@@ -2,39 +2,30 @@
   import Select from './Select.svelte'
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
-  import {
-    registrationsCollection,
-    applicationsCollection,
-  } from '$lib/data/collections'
+  import { currentSemester, resolveSemester } from '$lib/data/collections'
   import collectionsList from '$lib/data/collectionsList.json'
 
-  export let type: 'registrations' | 'applications'
-
-  const defaultCollection =
-    type === 'registrations' ? registrationsCollection : applicationsCollection
-
-  const valueToName: Record<string, string> = {}
-  const nameToValue: Record<string, string> = {}
-  for (const col of collectionsList) {
-    valueToName[`${type}${col.id}`] = col.name
-    nameToValue[col.name] = `${type}${col.id}`
+  const idToName: Record<string, string> = {}
+  const nameToId: Record<string, string> = {}
+  for (const sem of collectionsList) {
+    idToName[sem.id] = sem.name
+    nameToId[sem.name] = sem.id
   }
 
   // lib/data/collectionsList.json should be ordered from the most recent
-  // collection (semester) to the most recent one, so that the default
-  // collection shown in the dropdown is the most recent one.
-  const defaultDisplayName = collectionsList[0]?.name ?? 'ERROR'
+  // semester to the oldest, so that the default semester shown in the
+  // dropdown is the most recent one.
+  const defaultDisplayName =
+    idToName[currentSemester] ?? collectionsList[0]?.name ?? 'ERROR'
 
   let lastUrlDisplayName =
-    valueToName[
-      $page.url.searchParams.get('collection') ?? defaultCollection
-    ] ?? defaultDisplayName
+    idToName[resolveSemester($page.url.searchParams.get('semester'))] ??
+    defaultDisplayName
   let displayName = lastUrlDisplayName
 
   $: {
-    const urlCollection =
-      $page.url.searchParams.get('collection') ?? defaultCollection
-    const urlName = valueToName[urlCollection] ?? defaultDisplayName
+    const urlSemester = resolveSemester($page.url.searchParams.get('semester'))
+    const urlName = idToName[urlSemester] ?? defaultDisplayName
     if (urlName !== lastUrlDisplayName) {
       lastUrlDisplayName = urlName
       displayName = urlName
@@ -42,13 +33,12 @@
   }
 
   function handleChange(newDisplayName: string) {
-    const urlCollection =
-      $page.url.searchParams.get('collection') ?? defaultCollection
-    const targetValue = nameToValue[newDisplayName] ?? defaultCollection
-    if (targetValue === urlCollection) return
+    const urlSemester = resolveSemester($page.url.searchParams.get('semester'))
+    const targetId = nameToId[newDisplayName] ?? currentSemester
+    if (targetId === urlSemester) return
 
     const base = new URLSearchParams($page.url.searchParams)
-    base.set('collection', targetValue)
+    base.set('semester', targetId)
     base.delete('updated') // Reset pagination
     base.delete('page') // Reset page parameter
     goto(`?${base.toString()}`)

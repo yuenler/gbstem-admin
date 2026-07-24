@@ -6,7 +6,12 @@
   import type { FirebaseError } from 'firebase/app'
   import Card from '$lib/components/Card.svelte'
   import { coursesJson, gendersJson, raceJson, reasonsJson } from '$lib/data'
-  import { applicationsCollection } from '$lib/data/collections'
+  import {
+    applicationsCollection,
+    currentSemester,
+    semesterIdFromPath,
+    withSemester,
+  } from '$lib/data/collections'
   import { superForm, defaults } from 'sveltekit-superforms'
   import { zod } from 'sveltekit-superforms/adapters'
   import { applicationSchema } from './schemas'
@@ -109,7 +114,13 @@
             },
           }
           try {
-            await setDoc(doc(db, collection, id), updatedValues)
+            await setDoc(
+              doc(db, collection, id),
+              withSemester(
+                updatedValues,
+                semesterIdFromPath(collection) ?? currentSemester,
+              ),
+            )
             values = updatedValues
             dbValues = cloneDeep(updatedValues)
             disabled = true

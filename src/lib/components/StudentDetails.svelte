@@ -404,7 +404,7 @@
           </div>
           <fieldset class="mt-4 min-w-0 space-y-4">
             <div class="w-full overflow-x-auto">
-              <table class="w-full min-w-[600px] border-collapse text-left">
+              <table class="w-full min-w-150 border-collapse text-left">
                 <thead>
                   <tr>
                     <th class="border-b p-2 whitespace-nowrap">Course</th>
@@ -443,7 +443,7 @@
             </div>
             <h2 class="font-bold">Attendance</h2>
             <div class="w-full overflow-x-auto">
-              <table class="w-full min-w-[500px] border-collapse text-left">
+              <table class="w-full min-w-125 border-collapse text-left">
                 <thead>
                   <tr>
                     <th class="border-b p-2 whitespace-nowrap">Class Number</th>
@@ -497,7 +497,7 @@
         </Button>
       </div>
       <div class="m-5 overflow-auto">
-        <table class="w-full min-w-[600px] border-collapse text-left">
+        <table class="w-full min-w-150 border-collapse text-left">
           <thead>
             <tr>
               <th class="border-b p-2 whitespace-nowrap">Student Name</th>
