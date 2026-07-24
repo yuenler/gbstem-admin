@@ -119,7 +119,9 @@ Most collections are scoped under a semester document: `semesters/{semesterId}/{
 
 [`src/lib/data/collections.ts`](src/lib/data/collections.ts) derives every one of these paths from a single `suffix` constant (the current semester ID, e.g. `'Spring26'`) via a `semesterCollectionPath(semesterId, name)` helper. The exported constant names (`applicationsCollection`, `registrationsCollection`, etc.) stay the same regardless, so call sites throughout the app never construct paths manually.
 
-A handful of collections are **not** semester-scoped and live at the top level: `semesterDates`, `subRequests`, `interviewTimeRequests`, `instructorClasses`, `confirmations`, `hhids`, `users`, `ids`, `tokens`, `mail`, `announcements`.
+A handful of collections are **not** semester-scoped and live at the top level: `subRequests`, `interviewTimeRequests`, `instructorClasses`, `confirmations`, `hhids`, `users`, `ids`, `tokens`, `mail`, `announcements`.
+
+The current semester's key dates (`classesStart`, `registrationsDue`, etc.) aren't in Firestore at all — every read site only ever needs the _current_ semester's dates, never a past one, so they're static data in [`semesterDates.json`](src/lib/data/semesterDates.json), re-exported as `semesterDates` from `collections.ts`. `__tests__/collections.test.ts` validates every field is a well-formed `MM/DD/YY` date whose year matches `currentSemester`.
 
 Every semesterized document also carries a `semester` field (e.g. `"Spring26"`), stamped on write via the `withSemester(...)` helper in `collections.ts`. This lets the shared, cross-semester Algolia index for each collection type (one index total, covering every semester) filter results down to a single semester.
 
@@ -132,13 +134,14 @@ Admins can browse a past semester's data via the `?semester=<id>` URL param on t
 
 ## Adding a New Semester
 
-Transitioning gbSTEM to a new semester (e.g., from `Spring26` to `Fall26`) is a small, code-only change: no Firestore console work, no index creation, and no Algolia or security rules changes, since those are keyed by collection type rather than per-semester (see [Firestore Schema](#firestore-schema) above).
+Transitioning gbSTEM to a new semester (e.g., from `Spring26` to `Fall26`) is a small, code-only change: no Firestore console work at all, no index creation, and no Algolia or security rules changes, since those are keyed by collection type rather than per-semester (see [Firestore Schema](#firestore-schema) above).
 
 1. In **both the admin and portal repos**, update the `suffix` constant at the top of `src/lib/data/collections.ts` (e.g., `const suffix = 'Fall26'`).
 2. In the **admin repo**:
    - Add `{ "id": "Fall26", "name": "Fall 2026" }` to the **top** of [`collectionsList.json`](src/lib/data/collectionsList.json), so it's selected by default and appears first in the past-semester dropdown.
    - Review and update course catalog data in [`springCourses.json`](src/lib/data/springCourses.json) or [`fallCourses.json`](src/lib/data/fallCourses.json), then copy the updated file to the portal repository's `src/lib/data/` directory.
-3. Add the new `semesterDates` document: a document with ID = `suffix.toLowerCase()` (e.g. `fall26`) in the [`semesterDates` collection](https://console.firebase.google.com/project/gbstem-core/firestore/databases/-default-/data/~2FsemesterDates) (data entry, unchanged from before).
+   - Update every field in [`semesterDates.json`](src/lib/data/semesterDates.json) to the new semester's actual dates (`MM/DD/YY`, matching the new suffix's year), then copy the updated file to the portal repository's `src/lib/data/` directory.
+3. Run `npm run lint && npm run test` in both repos to verify the changes (this will fail loudly for errors like a malformed date, incorrect year in `semesterDates.json`, or other format issues).
 4. Deploy both apps.
 
 That's it — the new semester's subcollections (`semesters/Fall26/applications`, etc.) spring into existence automatically on first write.

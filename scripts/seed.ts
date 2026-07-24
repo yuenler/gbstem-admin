@@ -82,7 +82,6 @@ import {
   instructorFeedbackCollection,
   interviewTimesCollection,
   registrationsCollection,
-  semesterDatesDocument,
   subRequestsCollection,
 } from '../src/lib/data/collections'
 import collectionsList from '../src/lib/data/collectionsList.json'
@@ -295,22 +294,9 @@ async function seed() {
   validateToken(demoToken, 'demo-token')
   await db.collection('tokens').doc('demo-token').set(demoToken)
 
-  // Create Semester Dates Document
-  console.log(`Creating semesterDates/${semesterDatesDocument} document...`)
-  await db.collection('semesterDates').doc(semesterDatesDocument).set({
-    classesStart: '2026-03-01T09:00:00Z',
-    classesEnd: '2026-06-30T17:00:00Z',
-    instructorOrientation: '2026-02-20T09:00:00Z',
-    studentOrientation: '2026-02-25T09:00:00Z',
-    newInstructorAppsDue: '2026-02-15T23:59:59Z',
-    registrationsDue: '2026-02-15T23:59:59Z',
-    leadershipAppsDue: '2026-02-15T23:59:59Z',
-    returningInstructorAppsDue: '2026-02-15T23:59:59Z',
-    newInstructorAppsOpen: '2026-01-01T09:00:00Z',
-    returningInstructorAppsOpen: '2026-01-01T09:00:00Z',
-    parentOrientation: '2026-02-22T09:00:00Z',
-    registrationsOpen: '2026-01-01T09:00:00Z',
-  })
+  // Semester dates are no longer a Firestore document - they're static data in
+  // src/lib/data/semesterDates.json (imported as `semesterDates` above), so there's
+  // nothing to seed here.
 
   // Create Mock Classes
   console.log(`Seeding mock classes in "${classesCollection}"...`)

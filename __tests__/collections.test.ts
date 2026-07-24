@@ -9,7 +9,7 @@ import {
   registrationsCollection,
   resolveSemester,
   semesterCollectionPath,
-  semesterDatesDocument,
+  semesterDates,
   semesterIdFromPath,
   subRequestsCollection,
   withSemester,
@@ -46,8 +46,48 @@ describe('collections.ts', () => {
   })
 
   it('leaves non-semesterized collections unchanged', () => {
-    expect(semesterDatesDocument).toBe(currentSemester.toLowerCase())
     expect(subRequestsCollection).toBe('subRequests')
+  })
+
+  // semesterDates.json is hand-edited each semester rollover (no more Firestore document -
+  // see § "Adding a New Semester" in README.md), so it's worth validating its shape here
+  // rather than only discovering a typo/wrong-year mistake at runtime.
+  describe('semesterDates', () => {
+    const expectedYear = currentSemester.match(/\d\d$/)?.[0] as string
+
+    it('has exactly the expected fields', () => {
+      expect(Object.keys(semesterDates).sort()).toEqual(
+        [
+          'classesEnd',
+          'classesStart',
+          'instructorOrientation',
+          'newInstructorAppsDue',
+          'newInstructorAppsOpen',
+          'parentOrientation',
+          'registrationsDue',
+          'registrationsOpen',
+          'returningInstructorAppsDue',
+          'returningInstructorAppsOpen',
+          'studentOrientation',
+        ].sort(),
+      )
+    })
+
+    // Object.entries() on a plain (non-index-signature) object type falls back to a
+    // less-precise overload that types values as `unknown` - cast once here rather than at
+    // every destructured usage below.
+    const semesterDateEntries = Object.entries(semesterDates) as Array<
+      [string, string]
+    >
+
+    it.each(semesterDateEntries)(
+      '%s is a valid MM/DD/YY date whose year matches currentSemester',
+      (_field, value) => {
+        expect(value).toMatch(/^\d{2}\/\d{2}\/\d{2}$/)
+        expect(new Date(value).toString()).not.toBe('Invalid Date')
+        expect(value.slice(-2)).toBe(expectedYear)
+      },
+    )
   })
 
   describe('semesterCollectionPath', () => {

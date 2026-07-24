@@ -1,4 +1,5 @@
 import collectionsList from './collectionsList.json'
+import semesterDatesJson from './semesterDates.json'
 
 const suffix = 'Spring26'
 
@@ -42,7 +43,10 @@ export const registrationsCollection = semesterCollectionPath(
   suffix,
   'registrations',
 )
-export const semesterDatesDocument = suffix.toLowerCase()
+// The current semester's key dates (MM/DD/YY strings), edited by hand alongside `suffix`
+// each semester rollover. No longer a Firestore document - see
+// src/lib/data/semesterDates.json and __tests__/collections.test.ts's format/year validation.
+export const semesterDates = semesterDatesJson
 export const subRequestsCollection = 'subRequests'
 
 // Stamps a `semester` field onto a document being created/overwritten so it

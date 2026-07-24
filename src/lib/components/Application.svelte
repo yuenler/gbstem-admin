@@ -11,7 +11,7 @@
     applicationsCollection,
     currentSemester,
     semesterCollectionPath,
-    semesterDatesDocument,
+    semesterDates,
     semesterIdFromPath,
     withSemester,
   } from '$lib/data/collections'
@@ -47,8 +47,8 @@
   let loading = true
   let disabled = true
   let showInterviewForm = true
-  let semesterStartDate = ''
-  let semesterEndDate = ''
+  const semesterStartDate = formatDateShort(new Date(semesterDates.classesStart))
+  const semesterEndDate = formatDateShort(new Date(semesterDates.classesEnd))
   let dbValues: Data.Application<'client'>
   const defaultValues: Data.Application<'client'> = {
     personal: {
@@ -196,23 +196,6 @@
         loading = false
       }
     })()
-    ;(async () => {
-      try {
-        const dateSnap = await getDoc(
-          doc(db, 'semesterDates', semesterDatesDocument),
-        )
-        if (dateSnap.exists()) {
-          semesterStartDate = formatDateShort(
-            new Date(dateSnap.data().classesStart),
-          )
-          semesterEndDate = formatDateShort(
-            new Date(dateSnap.data().classesEnd),
-          )
-        }
-      } catch (err) {
-        console.error('Failed to load semester dates:', err)
-      }
-    })()
   }
 
   async function saveNotes() {
@@ -309,27 +292,16 @@
   }
 
   async function handleDecision(newDecision: Data.Decision) {
-    let today = new Date()
-    let weekDeadline = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
-    let interviewDeadline = formatDateShort(weekDeadline)
-
-    try {
-      const dueDate = await getDoc(
-        doc(db, 'semesterDates', semesterDatesDocument),
-      )
-      if (dueDate.exists()) {
-        interviewDeadline = formatDateShort(
-          new Date(
-            Math.min(
-              weekDeadline.getTime(),
-              new Date(dueDate.data().instructorOrientation).getTime(),
-            ),
-          ),
-        )
-      }
-    } catch (err) {
-      console.error('Failed to get semester dates:', err)
-    }
+    const today = new Date()
+    const weekDeadline = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
+    const interviewDeadline = formatDateShort(
+      new Date(
+        Math.min(
+          weekDeadline.getTime(),
+          new Date(semesterDates.instructorOrientation).getTime(),
+        ),
+      ),
+    )
 
     const confirmation = confirm(
       'Are you sure you want to update the decision? An email will be sent to the applicant, and you should not be changing the decision after this.',
