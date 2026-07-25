@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from 'svelte/legacy'
+
   import { db } from '$lib/client/firebase'
   import Card from '$lib/components/Card.svelte'
   import { registrationsCollection } from '$lib/data/collections'
@@ -14,13 +16,21 @@
   import Dialog from './Dialog.svelte'
   import EditRegistrationForm from './forms/EditRegistrationForm.svelte'
 
-  export let dialogEl: Dialog
-  export let id: string | undefined
-  export let collection: string = registrationsCollection
+  interface Props {
+    dialogEl?: any
+    id: string | undefined
+    collection?: string
+  }
 
-  let loading = true
-  let disabled = true
-  let dbValues: Data.Registration<'client'>
+  let {
+    dialogEl = $bindable(),
+    id,
+    collection = registrationsCollection,
+  }: Props = $props()
+
+  let loading = $state(true)
+  let disabled = $state(true)
+  let dbValues: Data.Registration<'client'> | undefined = $state()
 
   const defaultValues: Data.Registration<'client'> = {
     personal: {
@@ -71,33 +81,35 @@
     },
   }
 
-  let values: Data.Registration<'client'> = cloneDeep(defaultValues)
+  let values: Data.Registration<'client'> = $state(cloneDeep(defaultValues))
   let decision: Data.Decision | null
-  let formEl: HTMLFormElement
+  let formEl: HTMLFormElement | undefined = $state()
 
-  $: if (id !== undefined) {
-    ;(async () => {
-      loading = true
-      disabled = true
-      values = cloneDeep(defaultValues)
-      try {
-        const registrationSnapshot = await getDoc(doc(db, collection, id))
-        if (registrationSnapshot.exists()) {
-          const data =
-            registrationSnapshot.data() as Data.Registration<'client'>
-          values = cloneDeep(data)
-          dbValues = cloneDeep(data)
-        } else {
-          alert.trigger('error', 'Registration not found.')
+  run(() => {
+    if (id !== undefined) {
+      ;(async () => {
+        loading = true
+        disabled = true
+        values = cloneDeep(defaultValues)
+        try {
+          const registrationSnapshot = await getDoc(doc(db, collection, id))
+          if (registrationSnapshot.exists()) {
+            const data =
+              registrationSnapshot.data() as Data.Registration<'client'>
+            values = cloneDeep(data)
+            dbValues = cloneDeep(data)
+          } else {
+            alert.trigger('error', 'Registration not found.')
+          }
+        } catch (err: any) {
+          console.error('Failed to load registration:', err)
+          alert.trigger('error', 'Failed to load registration.')
+        } finally {
+          loading = false
         }
-      } catch (err: any) {
-        console.error('Failed to load registration:', err)
-        alert.trigger('error', 'Failed to load registration.')
-      } finally {
-        loading = false
-      }
-    })()
-  }
+      })()
+    }
+  })
 
   function handleEdit() {
     disabled = false
@@ -110,40 +122,44 @@
   function handleDeleteChanges() {
     disabled = true
     // Reset to loaded database values
-    values = cloneDeep(dbValues)
+    if (dbValues) values = cloneDeep(dbValues)
   }
 </script>
 
 <Dialog bind:this={dialogEl} size="full" alert>
-  <svelte:fragment slot="title">Registration</svelte:fragment>
-  <div slot="description" class="w-full min-w-0">
-    <Card
-      class="sticky top-2 z-50 flex flex-wrap items-center justify-between gap-3 p-3"
-    >
-      {#if !disabled}
+  {#snippet title()}
+    Registration
+  {/snippet}
+  {#snippet description()}
+    <div class="w-full min-w-0">
+      <Card
+        class="sticky top-2 z-50 flex flex-wrap items-center justify-between gap-3 p-3"
+      >
+        {#if !disabled}
+          <div class="flex flex-wrap gap-2">
+            <Button color="green" on:click={handleSaveChanges}
+              >Save changes</Button
+            >
+            <Button color="red" on:click={handleDeleteChanges}
+              >Delete changes</Button
+            >
+          </div>
+        {/if}
         <div class="flex flex-wrap gap-2">
-          <Button color="green" on:click={handleSaveChanges}
-            >Save changes</Button
-          >
-          <Button color="red" on:click={handleDeleteChanges}
-            >Delete changes</Button
-          >
+          <Button on:click={handleEdit}>Edit</Button>
+          <Button on:click={dialogEl.cancel}>Close</Button>
         </div>
-      {/if}
-      <div class="flex flex-wrap gap-2">
-        <Button on:click={handleEdit}>Edit</Button>
-        <Button on:click={dialogEl.cancel}>Close</Button>
+      </Card>
+      <div class="mt-4 flex justify-center">
+        <EditRegistrationForm
+          bind:formEl
+          bind:disabled
+          bind:values
+          bind:dbValues
+          {id}
+          {collection}
+        />
       </div>
-    </Card>
-    <div class="mt-4 flex justify-center">
-      <EditRegistrationForm
-        bind:formEl
-        bind:disabled
-        bind:values
-        bind:dbValues
-        {id}
-        {collection}
-      />
     </div>
-  </div>
+  {/snippet}
 </Dialog>

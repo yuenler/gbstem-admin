@@ -5,20 +5,24 @@
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
 
-  export let basePath = ''
-  export let placeholder = 'Search'
+  interface Props {
+    basePath?: string
+    placeholder?: string
+  }
+
+  let { basePath = '', placeholder = 'Search' }: Props = $props()
 
   let lastUrlQuery = $page.url.searchParams.get('query') ?? ''
-  let search = lastUrlQuery
-  let searching = false
+  let search = $state(lastUrlQuery)
+  let searching = $state(false)
 
-  $: {
+  $effect(() => {
     const urlQuery = $page.url.searchParams.get('query') ?? ''
     if (urlQuery !== lastUrlQuery) {
       lastUrlQuery = urlQuery
       search = urlQuery
     }
-  }
+  })
 
   async function handleSearch() {
     searching = true

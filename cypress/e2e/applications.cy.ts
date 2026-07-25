@@ -5,7 +5,8 @@ import collectionsList from '../../src/lib/data/collectionsList.json'
 // CollectionFilter dropdown - derived from collections.ts/collectionsList.json so these
 // tests don't need editing every time the semester rolls over.
 const currentSemesterName =
-  collectionsList.find((sem) => sem.id === currentSemester)?.name ?? currentSemester
+  collectionsList.find((sem) => sem.id === currentSemester)?.name ??
+  currentSemester
 
 describe('Section D: Instructor Applications Management', () => {
   beforeEach(() => {

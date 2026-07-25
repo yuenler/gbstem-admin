@@ -7,7 +7,11 @@
   import { invalidateAll } from '$app/navigation'
   import { alert } from '$lib/stores'
 
-  export let data: PageData
+  interface Props {
+    data: PageData
+  }
+
+  let { data }: Props = $props()
 
   async function handleCheckIn() {
     const hhidRef = doc(db, 'hhids', data.applicant.user.hhid)

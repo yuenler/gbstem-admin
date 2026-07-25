@@ -6,24 +6,32 @@
   import { format } from 'date-fns'
   import type { PageData } from './$types'
 
-  export let data: PageData
+  interface Props {
+    data: PageData
+  }
 
-  $: currentPage = data.page ?? 1
-  $: currentLimit = data.limit ?? 25
+  let { data }: Props = $props()
 
-  $: prevHref = (() => {
-    if (currentPage <= 1) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage - 1))
-    return `?${base.toString()}`
-  })()
+  let currentPage = $derived(data.page ?? 1)
+  let currentLimit = $derived(data.limit ?? 25)
 
-  $: nextHref = (() => {
-    if (data.announcements.length < currentLimit) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage + 1))
-    return `?${base.toString()}`
-  })()
+  let prevHref = $derived(
+    (() => {
+      if (currentPage <= 1) return ''
+      const base = new URLSearchParams($page.url.searchParams)
+      base.set('page', String(currentPage - 1))
+      return `?${base.toString()}`
+    })(),
+  )
+
+  let nextHref = $derived(
+    (() => {
+      if (data.announcements.length < currentLimit) return ''
+      const base = new URLSearchParams($page.url.searchParams)
+      base.set('page', String(currentPage + 1))
+      return `?${base.toString()}`
+    })(),
+  )
 </script>
 
 <svelte:head>
@@ -37,12 +45,12 @@
 </div>
 
 <Table>
-  <svelte:fragment slot="head">
+  {#snippet head()}
     <th scope="col" class="px-6 py-3">Date</th>
     <th scope="col" class="px-6 py-3">Title</th>
     <th scope="col" class="px-6 py-3">Content</th>
-  </svelte:fragment>
-  <svelte:fragment slot="body">
+  {/snippet}
+  {#snippet body()}
     {#each data.announcements as announcement}
       <tr class="border-b bg-white hover:bg-gray-50">
         <td class="px-6 py-4 whitespace-nowrap text-gray-400">
@@ -56,7 +64,7 @@
         </td>
       </tr>
     {/each}
-  </svelte:fragment>
+  {/snippet}
 </Table>
 
 {#if data.announcements}

@@ -25,8 +25,13 @@ Nearly every form writes directly to Firestore client-side; only `(signedOut)/si
 
 ```js
 superForm(defaults(initialValues, zod(schema)), {
-  SPA: true, validators: zod(schema), resetForm: false, applyAction: false,
-  async onUpdate({ form }) { /* setDoc(...) then alert.trigger(...) on failure */ }
+  SPA: true,
+  validators: zod(schema),
+  resetForm: false,
+  applyAction: false,
+  async onUpdate({ form }) {
+    /* setDoc(...) then alert.trigger(...) on failure */
+  },
 })
 ```
 

@@ -4,18 +4,22 @@
   import { page } from '$app/stores'
   import { coursesJson } from '$lib/data'
 
-  export let paramName = 'filter'
+  interface Props {
+    paramName?: string
+  }
 
-  let lastUrlFilter = $page.url.searchParams.get(paramName) ?? 'all'
-  let value = lastUrlFilter
+  let { paramName = 'filter' }: Props = $props()
 
-  $: {
+  let lastUrlFilter = ''
+  let value = $state('')
+
+  $effect(() => {
     const urlFilter = $page.url.searchParams.get(paramName) ?? 'all'
     if (urlFilter !== lastUrlFilter) {
       lastUrlFilter = urlFilter
       value = urlFilter
     }
-  }
+  })
 
   function handleChange(newValue: string) {
     const urlFilter = $page.url.searchParams.get(paramName) ?? 'all'
@@ -32,9 +36,11 @@
     goto(`?${base.toString()}`)
   }
 
-  $: if (value) {
-    handleChange(value)
-  }
+  $effect(() => {
+    if (value) {
+      handleChange(value)
+    }
+  })
 
   const options = [
     { name: 'all' },

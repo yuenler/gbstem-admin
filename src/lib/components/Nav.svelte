@@ -12,11 +12,15 @@
   import Button from './Button.svelte'
   import progress from '$lib/client/progress'
 
-  export let user: Data.User.Peek
+  interface Props {
+    user: Data.User.Peek
+  }
 
-  let shadow = false
-  let open = false
-  let disabled = false
+  let { user }: Props = $props()
+
+  let shadow = $state(false)
+  let open = $state(false)
+  let disabled = $state(false)
   onMount(() => {
     updateShadow()
     return navigating.subscribe((navigating) => {
@@ -25,8 +29,8 @@
       }
     })
   })
-  $: pathname = $page.url.pathname
-  const pages = [
+  let pathname = $derived($page.url.pathname)
+  let pages = $derived([
     ...(user.role === 'admin' ? [{ name: 'Tokens', href: '/tokens' }] : []),
     {
       name: 'Dashboard',
@@ -68,13 +72,13 @@
       name: 'Sub Requests Log',
       href: '/sub-requests',
     },
-  ]
+  ])
   function updateShadow() {
     shadow = window.scrollY !== 0
   }
 </script>
 
-<svelte:window on:scroll={updateShadow} />
+<svelte:window onscroll={updateShadow} />
 <nav
   class={cn(
     'px-4 md:px-6 lg:px-8 fixed left-0 top-0 z-40 flex h-20 w-full items-center justify-between border-b bg-white transition-all gap-2 md:gap-4 lg:gap-6',
@@ -140,7 +144,7 @@
       type="button"
       aria-label={open ? 'Close menu' : 'Open menu'}
       aria-expanded={open}
-      on:click={() => {
+      onclick={() => {
         open = !open
       }}
     >

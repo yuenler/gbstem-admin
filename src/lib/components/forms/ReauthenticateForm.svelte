@@ -10,6 +10,11 @@
     reauthenticateWithCredential,
   } from 'firebase/auth'
   import { createEventDispatcher } from 'svelte'
+  interface Props {
+    children?: import('svelte').Snippet
+  }
+
+  let { children }: Props = $props()
 
   const dispatch = createEventDispatcher<{
     reauthenticate: boolean
@@ -69,6 +74,6 @@
       </Field>
     </div>
 
-    <slot />
+    {@render children?.()}
   </fieldset>
 </form>

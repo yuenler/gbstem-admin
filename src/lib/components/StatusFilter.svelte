@@ -3,22 +3,24 @@
   import { goto } from '$app/navigation'
   import { page } from '$app/stores'
 
-  export let type: 'students' | 'registrations' | 'applications'
+  interface Props {
+    type: 'students' | 'registrations' | 'applications'
+  }
 
-  $: defaultFilter = type === 'registrations' ? 'submitted' : 'all'
+  let { type }: Props = $props()
 
-  let lastUrlFilter =
-    $page.url.searchParams.get('filter') ??
-    (type === 'registrations' ? 'submitted' : 'all')
-  let value = lastUrlFilter
+  let defaultFilter = $derived(type === 'registrations' ? 'submitted' : 'all')
 
-  $: {
+  let lastUrlFilter = ''
+  let value = $state('')
+
+  $effect(() => {
     const urlFilter = $page.url.searchParams.get('filter') ?? defaultFilter
     if (urlFilter !== lastUrlFilter) {
       lastUrlFilter = urlFilter
       value = urlFilter
     }
-  }
+  })
 
   function handleChange(newValue: string) {
     const urlFilter = $page.url.searchParams.get('filter') ?? defaultFilter
@@ -35,9 +37,11 @@
     goto(`?${base.toString()}`)
   }
 
-  $: if (value) {
-    handleChange(value)
-  }
+  $effect(() => {
+    if (value) {
+      handleChange(value)
+    }
+  })
 
   const optionsMap = {
     students: [{ name: 'all' }, { name: 'submitted' }, { name: 'enrolled' }],
@@ -64,8 +68,8 @@
     applications: 'Decision',
   }
 
-  $: options = optionsMap[type]
-  $: label = labelMap[type]
+  let options = $derived(optionsMap[type])
+  let label = $derived(labelMap[type])
 </script>
 
 <Select class="mt-0 w-64" bind:value {label} {options} required />

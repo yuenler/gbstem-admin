@@ -11,26 +11,34 @@
   import { formatDate, generateCSV } from '$lib/utils'
   import type { PageData } from './$types'
 
-  export let data: PageData
+  interface Props {
+    data: PageData
+  }
 
-  let dialogEl: Dialog[] = []
+  let { data }: Props = $props()
 
-  $: currentPage = data.page ?? 1
-  $: currentLimit = data.limit ?? 25
+  let dialogEl: Dialog[] = $state([])
 
-  $: prevHref = (() => {
-    if (currentPage <= 1) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage - 1))
-    return `?${base.toString()}`
-  })()
+  let currentPage = $derived(data.page ?? 1)
+  let currentLimit = $derived(data.limit ?? 25)
 
-  $: nextHref = (() => {
-    if (data.subRequests.length < currentLimit) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage + 1))
-    return `?${base.toString()}`
-  })()
+  let prevHref = $derived(
+    (() => {
+      if (currentPage <= 1) return ''
+      const base = new URLSearchParams($page.url.searchParams)
+      base.set('page', String(currentPage - 1))
+      return `?${base.toString()}`
+    })(),
+  )
+
+  let nextHref = $derived(
+    (() => {
+      if (data.subRequests.length < currentLimit) return ''
+      const base = new URLSearchParams($page.url.searchParams)
+      base.set('page', String(currentPage + 1))
+      return `?${base.toString()}`
+    })(),
+  )
 
   const csvHeaders = [
     'id',
@@ -43,22 +51,24 @@
     'subInstructorEmail',
     'notes',
   ]
-  $: csvWithHeaders = generateCSV(
-    csvHeaders,
-    data.subRequests.map((item) => [
-      item.id,
-      item.course,
-      item.classNumber,
-      item.originalInstructorEmail,
-      item.dateOfClass ? item.dateOfClass.toISOString() : '',
-      item.subRequestStatus,
-      item.subInstructorFirstName,
-      item.subInstructorEmail,
-      item.notes || '',
-    ]),
+  let csvWithHeaders = $derived(
+    generateCSV(
+      csvHeaders,
+      data.subRequests.map((item) => [
+        item.id,
+        item.course,
+        item.classNumber,
+        item.originalInstructorEmail,
+        item.dateOfClass ? item.dateOfClass.toISOString() : '',
+        item.subRequestStatus,
+        item.subInstructorFirstName,
+        item.subInstructorEmail,
+        item.notes || '',
+      ]),
+    ),
   )
-  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-  $: url = URL.createObjectURL(blob)
+  let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
+  let url = $derived(URL.createObjectURL(blob))
 </script>
 
 <svelte:head>
@@ -76,28 +86,30 @@
 
 <div>
   <Table>
-    <svelte:fragment slot="head">
+    {#snippet head()}
       <th scope="col" class="px-6 py-3">Class</th>
       <th scope="col" class="px-6 py-3">Original Instructor Email</th>
       <th scope="col" class="px-6 py-3">Date Of Class</th>
       <th scope="col" class="px-6 py-3">Request Status</th>
       <th scope="col" class="px-6 py-3">Substitute Instructor</th>
       <th scope="col" class="px-6 py-3">Substitute Instructor Email</th>
-    </svelte:fragment>
-    <svelte:fragment slot="body">
+    {/snippet}
+    {#snippet body()}
       {#each data.subRequests as subRequest, i}
         <Dialog bind:this={dialogEl[i]}>
-          <svelte:fragment slot="title">
+          {#snippet title()}
             <div class="flex items-center justify-between">
               Sub Request Notes
               <Button color="red" on:click={dialogEl[i].cancel}>Close</Button>
             </div>
-          </svelte:fragment>
-          <Card slot="description">{subRequest.notes}</Card>
+          {/snippet}
+          {#snippet description()}
+            <Card>{subRequest.notes}</Card>
+          {/snippet}
         </Dialog>
         <tr
           class={`${subRequest.subRequestStatus === SubRequestStatus.NoSubstituteNeeded ? 'bg-green-100' : subRequest.subRequestStatus === SubRequestStatus.SubstituteFeedbackNeeded ? 'bg-yellow-100' : subRequest.subRequestStatus === SubRequestStatus.SubstituteFound ? 'bg-blue-100' : 'bg-red-100'} border-b border-white hover:bg-white hover:cursor-pointer`}
-          on:click={(e) => {
+          onclick={(e) => {
             e.stopPropagation()
             if (dialogEl[i]) {
               dialogEl[i].open()
@@ -124,7 +136,7 @@
           </td>
         </tr>
       {/each}
-    </svelte:fragment>
+    {/snippet}
   </Table>
 </div>
 

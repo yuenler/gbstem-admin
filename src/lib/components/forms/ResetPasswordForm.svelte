@@ -8,11 +8,11 @@
   import Link from '$lib/components/Link.svelte'
   import Button from '../Button.svelte'
 
-  let disabled = false
-  let showValidation = false
-  let values = {
+  let disabled = $state(false)
+  let showValidation = $state(false)
+  let values = $state({
     email: '',
-  }
+  })
   async function handleSubmit(e: CustomEvent<SubmitData>) {
     if (e.detail.error === null) {
       showValidation = false

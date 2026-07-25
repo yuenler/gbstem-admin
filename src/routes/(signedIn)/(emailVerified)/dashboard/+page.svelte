@@ -46,13 +46,13 @@
     class: Data.Class
   }
 
-  let classesToday: ClassToday[] = []
+  let classesToday: ClassToday[] = $state([])
 
-  let loading = true
-  let uncompletedRegistrationsEmails: string[] = []
-  let uncompletedApplicationsEmails: string[] = []
+  let loading = $state(true)
+  let uncompletedRegistrationsEmails: string[] = $state([])
+  let uncompletedApplicationsEmails: string[] = $state([])
 
-  let data: DashboardData = {
+  let data: DashboardData = $state({
     applications: {
       total: 0,
       submitted: 0,
@@ -64,7 +64,7 @@
     users: {
       total: 0,
     },
-  }
+  })
 
   let queryTimeout: any
 

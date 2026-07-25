@@ -17,7 +17,11 @@
   import FormSelect from '../FormSelect.svelte'
   import FormCheckbox from '../FormCheckbox.svelte'
 
-  export let dialogEl: Dialog
+  interface Props {
+    dialogEl?: any
+  }
+
+  let { dialogEl }: Props = $props()
 
   const schema = tokenSchema
 

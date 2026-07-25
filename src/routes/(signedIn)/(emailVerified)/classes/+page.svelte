@@ -11,31 +11,39 @@
   import { copyEmails, generateCSV } from '$lib/utils'
   import type { PageData } from './$types'
 
-  export let data: PageData
+  interface Props {
+    data: PageData
+  }
+
+  let { data }: Props = $props()
   let showValidation = false
   let currentUser: Data.User.Store
   let scheduled = false
   let loading = true
-  let selectedClassId: string | undefined = undefined
+  let selectedClassId: string | undefined = $state(undefined)
   let checked: Array<number> = []
-  let dialogEl: Dialog
+  let dialogEl: Dialog | undefined = $state()
 
-  $: currentPage = data.page ?? 1
-  $: currentLimit = data.limit ?? 25
+  let currentPage = $derived(data.page ?? 1)
+  let currentLimit = $derived(data.limit ?? 25)
 
-  $: prevHref = (() => {
-    if (currentPage <= 1) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage - 1))
-    return `?${base.toString()}`
-  })()
+  let prevHref = $derived(
+    (() => {
+      if (currentPage <= 1) return ''
+      const base = new URLSearchParams($page.url.searchParams)
+      base.set('page', String(currentPage - 1))
+      return `?${base.toString()}`
+    })(),
+  )
 
-  $: nextHref = (() => {
-    if (data.classes && data.classes.length < currentLimit) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage + 1))
-    return `?${base.toString()}`
-  })()
+  let nextHref = $derived(
+    (() => {
+      if (data.classes && data.classes.length < currentLimit) return ''
+      const base = new URLSearchParams($page.url.searchParams)
+      base.set('page', String(currentPage + 1))
+      return `?${base.toString()}`
+    })(),
+  )
 
   const csvHeaders = [
     'id',
@@ -49,40 +57,42 @@
     'meeting link',
     'class times',
   ]
-  $: rows = data.classes.map((classes) => {
-    const {
-      id,
-      name,
-      email,
-      courses,
-      students,
-      classStatuses,
-      meetingLink,
-      classTimes,
-    } = classes
-    return [
-      id,
-      name,
-      email,
-      courses,
-      students.join(', '),
-      classStatuses.filter(
-        (status) => status === ClassStatus.EverythingComplete,
-      ).length,
-      classStatuses.filter(
-        (status) => status === ClassStatus.FeedbackIncomplete,
-      ).length,
-      classStatuses.filter((status) => status === ClassStatus.ClassNotHeld)
-        .length,
-      meetingLink,
-      classTimes.map((value) => value.toString()).join(', '),
-    ]
-  })
+  let rows = $derived(
+    data.classes.map((classes) => {
+      const {
+        id,
+        name,
+        email,
+        courses,
+        students,
+        classStatuses,
+        meetingLink,
+        classTimes,
+      } = classes
+      return [
+        id,
+        name,
+        email,
+        courses,
+        students.join(', '),
+        classStatuses.filter(
+          (status) => status === ClassStatus.EverythingComplete,
+        ).length,
+        classStatuses.filter(
+          (status) => status === ClassStatus.FeedbackIncomplete,
+        ).length,
+        classStatuses.filter((status) => status === ClassStatus.ClassNotHeld)
+          .length,
+        meetingLink,
+        classTimes.map((value) => value.toString()).join(', '),
+      ]
+    }),
+  )
 
-  $: csvWithHeaders = generateCSV(csvHeaders, rows)
+  let csvWithHeaders = $derived(generateCSV(csvHeaders, rows))
 
-  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-  $: url = URL.createObjectURL(blob)
+  let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
+  let url = $derived(URL.createObjectURL(blob))
 
   function handleCheckAll(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
@@ -143,7 +153,7 @@
 
 {#await data then feedback}
   <Table>
-    <svelte:fragment slot="head">
+    {#snippet head()}
       <th scope="col" class="px-6 py-3">Instructor Name</th>
       <th scope="col" class="px-6 py-3">Instructor Email</th>
       <th scope="col" class="px-6 py-3">Course</th>
@@ -152,14 +162,14 @@
       <th scope="col" class="px-6 py-3">Number of students</th>
       <th scope="col" class="px-6 py-3">Classes Missed</th>
       <th scope="col" class="px-6 py-3">Classes Missing Feedback</th>
-    </svelte:fragment>
-    <svelte:fragment slot="body">
+    {/snippet}
+    {#snippet body()}
       {#each feedback.classes as value, i}
         <tr
           class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
-          on:click={() => {
+          onclick={() => {
             selectedClassId = value.id
-            dialogEl.open()
+            dialogEl?.open()
           }}
         >
           <td class="px-6 py-4">
@@ -192,7 +202,7 @@
           </td>
         </tr>
       {/each}
-    </svelte:fragment>
+    {/snippet}
   </Table>
   {#if !data.query && feedback.classes}
     <div class="mt-4 flex justify-end gap-2">

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from 'svelte/legacy'
+
   import { doc, setDoc } from 'firebase/firestore'
   import { db } from '$lib/client/firebase'
   import { alert } from '$lib/stores'
@@ -14,10 +16,19 @@
   import FormNativeSelect from '../FormNativeSelect.svelte'
   import FormCheckbox from '../FormCheckbox.svelte'
 
-  export let id: string | undefined
-  export let values: ClassData
-  export let disabled = true
-  export let formEl: HTMLFormElement | undefined = undefined
+  interface Props {
+    id: string | undefined
+    values: ClassData
+    disabled?: boolean
+    formEl?: HTMLFormElement | undefined
+  }
+
+  let {
+    id,
+    values = $bindable(),
+    disabled = $bindable(true),
+    formEl = $bindable(undefined),
+  }: Props = $props()
 
   const schema = classSchema
 
@@ -69,17 +80,19 @@
   const { form, enhance, submitting } = formResult
 
   // React to parent values changing (e.g. initial load or cancel changes)
-  $: if (values) {
-    $form.course = values.course || ''
-    $form.gradeRecommendation = values.gradeRecommendation || ''
-    $form.classCap = values.classCap || 0
-    $form.meetingLink = values.meetingLink || ''
-    $form.classDay1 = values.classDay1 || ''
-    $form.classTime1 = values.classTime1 || ''
-    $form.classDay2 = values.classDay2 || ''
-    $form.classTime2 = values.classTime2 || ''
-    $form.online = values.online !== undefined ? values.online : true
-  }
+  run(() => {
+    if (values) {
+      $form.course = values.course || ''
+      $form.gradeRecommendation = values.gradeRecommendation || ''
+      $form.classCap = values.classCap || 0
+      $form.meetingLink = values.meetingLink || ''
+      $form.classDay1 = values.classDay1 || ''
+      $form.classTime1 = values.classTime1 || ''
+      $form.classDay2 = values.classDay2 || ''
+      $form.classTime2 = values.classTime2 || ''
+      $form.online = values.online !== undefined ? values.online : true
+    }
+  })
 </script>
 
 <form bind:this={formEl} use:enhance class="w-full max-w-4xl">

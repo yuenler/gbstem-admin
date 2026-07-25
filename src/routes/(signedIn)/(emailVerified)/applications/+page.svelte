@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { run, createBubbler, stopPropagation } from 'svelte/legacy'
+
+  const bubble = createBubbler()
   import { invalidate } from '$app/navigation'
   import { page } from '$app/stores'
   import { db } from '$lib/client/firebase'
@@ -21,10 +24,14 @@
   import { doc, setDoc, updateDoc } from 'firebase/firestore'
   import type { PageData } from './$types'
 
-  export let data: PageData
-  let dialogEl: Dialog
-  let current: number | undefined
-  let checked: Array<number> = []
+  interface Props {
+    data: PageData
+  }
+
+  let { data }: Props = $props()
+  let dialogEl: Dialog | undefined = $state()
+  let current: number | undefined = $state()
+  let checked: Array<number> = $state([])
 
   const csvHeaders = [
     'ID',
@@ -42,79 +49,6 @@
     'Taught Before',
     'In-person',
   ]
-  $: rows = data.applications.map(
-    (application: PageData['applications'][number]) => {
-      const {
-        id,
-        values: {
-          personal: { firstName, lastName, email },
-          academic: { school, graduationYear },
-          program: { courses, timeSlots, inPerson },
-          essay: { taughtBefore },
-          meta: { submitted, decision },
-        },
-      } = application
-
-      return [
-        id,
-        submitted ? 'Submitted' : 'Not Submitted',
-        decision?.type ?? 'Undecided',
-        decision?.likelyDecision ?? 'Undecided',
-        decision?.notes ?? '',
-        firstName,
-        lastName,
-        email,
-        school,
-        graduationYear,
-        courses.join(';'),
-        timeSlots,
-        taughtBefore ? 'Yes' : 'No',
-        inPerson ? 'Yes' : 'No',
-      ]
-    },
-  )
-
-  $: csvWithHeaders = generateCSV(csvHeaders, rows)
-
-  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-  $: url = URL.createObjectURL(blob)
-
-  $: if (checked.length > 0) {
-    actions.set([
-      createDecisionAction('accepted'),
-      createDecisionAction('waitlisted'),
-      createDecisionAction('rejected'),
-      createDecisionAction('interview'),
-      createDecisionAction('substitute'),
-    ])
-  } else {
-    actions.set(null)
-  }
-  $: if ($actions === null) {
-    checked = []
-  }
-  $: application =
-    data.applications.length === 0
-      ? undefined
-      : current === undefined
-        ? undefined
-        : data.applications[current]
-  $: currentPage = data.page ?? 1
-  $: currentLimit = data.limit ?? 25
-
-  $: prevHref = (() => {
-    if (currentPage <= 1) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage - 1))
-    return `?${base.toString()}`
-  })()
-
-  $: nextHref = (() => {
-    if (data.applications.length < currentLimit) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage + 1))
-    return `?${base.toString()}`
-  })()
 
   function createDecisionAction(decision: Data.Decision) {
     let name: 'Accept' | 'Waitlist' | 'Reject' | 'Interview' | 'Substitute'
@@ -212,10 +146,88 @@
     }
   }
 
-  $: selectedSemester = resolveSemester($page.url.searchParams.get('semester'))
-  $: selectedCollection = semesterCollectionPath(
-    selectedSemester,
-    'applications',
+  let rows = $derived(
+    data.applications.map((application: PageData['applications'][number]) => {
+      const {
+        id,
+        values: {
+          personal: { firstName, lastName, email },
+          academic: { school, graduationYear },
+          program: { courses, timeSlots, inPerson },
+          essay: { taughtBefore },
+          meta: { submitted, decision },
+        },
+      } = application
+
+      return [
+        id,
+        submitted ? 'Submitted' : 'Not Submitted',
+        decision?.type ?? 'Undecided',
+        decision?.likelyDecision ?? 'Undecided',
+        decision?.notes ?? '',
+        firstName,
+        lastName,
+        email,
+        school,
+        graduationYear,
+        courses.join(';'),
+        timeSlots,
+        taughtBefore ? 'Yes' : 'No',
+        inPerson ? 'Yes' : 'No',
+      ]
+    }),
+  )
+  let csvWithHeaders = $derived(generateCSV(csvHeaders, rows))
+  let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
+  let url = $derived(URL.createObjectURL(blob))
+  run(() => {
+    if ($actions === null) {
+      checked = []
+    }
+  })
+  run(() => {
+    if (checked.length > 0) {
+      actions.set([
+        createDecisionAction('accepted'),
+        createDecisionAction('waitlisted'),
+        createDecisionAction('rejected'),
+        createDecisionAction('interview'),
+        createDecisionAction('substitute'),
+      ])
+    } else {
+      actions.set(null)
+    }
+  })
+  let application = $derived(
+    data.applications.length === 0
+      ? undefined
+      : current === undefined
+        ? undefined
+        : data.applications[current],
+  )
+  let currentPage = $derived(data.page ?? 1)
+  let currentLimit = $derived(data.limit ?? 25)
+  let prevHref = $derived(
+    (() => {
+      if (currentPage <= 1) return ''
+      const base = new URLSearchParams($page.url.searchParams)
+      base.set('page', String(currentPage - 1))
+      return `?${base.toString()}`
+    })(),
+  )
+  let nextHref = $derived(
+    (() => {
+      if (data.applications.length < currentLimit) return ''
+      const base = new URLSearchParams($page.url.searchParams)
+      base.set('page', String(currentPage + 1))
+      return `?${base.toString()}`
+    })(),
+  )
+  let selectedSemester = $derived(
+    resolveSemester($page.url.searchParams.get('semester')),
+  )
+  let selectedCollection = $derived(
+    semesterCollectionPath(selectedSemester, 'applications'),
   )
 </script>
 
@@ -234,7 +246,7 @@
 </div>
 
 <Table>
-  <svelte:fragment slot="head">
+  {#snippet head()}
     <th scope="col" class="p-4">
       <div class="flex items-center">
         <input
@@ -243,7 +255,7 @@
           type="checkbox"
           checked={checked.length === data.applications.length &&
             checked.length > 0}
-          on:input={handleCheckAll}
+          oninput={handleCheckAll}
         />
         <label for="check-all" class="sr-only">checkbox</label>
       </div>
@@ -260,14 +272,14 @@
     <th scope="col" class="px-6 py-3">Courses</th>
     <th scope="col" class="px-6 py-3">Timeslots</th>
     <th scope="col" class="px-6 py-3">Taught before</th>
-  </svelte:fragment>
-  <svelte:fragment slot="body">
+  {/snippet}
+  {#snippet body()}
     {#each data.applications as application, i}
       <tr
         class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
-        on:click={() => {
+        onclick={() => {
           current = i
-          dialogEl.open()
+          dialogEl?.open()
         }}
       >
         <td class="w-4 p-4">
@@ -277,8 +289,8 @@
               class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
               type="checkbox"
               checked={checked.includes(i)}
-              on:input={(e) => handleCheck(e, i)}
-              on:click|stopPropagation
+              oninput={(e) => handleCheck(e, i)}
+              onclick={stopPropagation(bubble('click'))}
             />
             <label for="check-all" class="sr-only">checkbox</label>
           </div>
@@ -478,7 +490,7 @@
         </td>
       </tr>
     {/each}
-  </svelte:fragment>
+  {/snippet}
 </Table>
 
 {#if !data.query && data.applications}

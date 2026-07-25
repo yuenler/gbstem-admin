@@ -5,7 +5,7 @@
   import { currentSemester, resolveSemester } from '$lib/data/collections'
   import collectionsList from '$lib/data/collectionsList.json'
 
-  const idToName: Record<string, string> = {}
+  const idToName: Record<string, string> = $state({})
   const nameToId: Record<string, string> = {}
   for (const sem of collectionsList) {
     idToName[sem.id] = sem.name
@@ -21,16 +21,16 @@
   let lastUrlDisplayName =
     idToName[resolveSemester($page.url.searchParams.get('semester'))] ??
     defaultDisplayName
-  let displayName = lastUrlDisplayName
+  let displayName = $state(lastUrlDisplayName)
 
-  $: {
+  $effect(() => {
     const urlSemester = resolveSemester($page.url.searchParams.get('semester'))
     const urlName = idToName[urlSemester] ?? defaultDisplayName
     if (urlName !== lastUrlDisplayName) {
       lastUrlDisplayName = urlName
       displayName = urlName
     }
-  }
+  })
 
   function handleChange(newDisplayName: string) {
     const urlSemester = resolveSemester($page.url.searchParams.get('semester'))
@@ -44,9 +44,11 @@
     goto(`?${base.toString()}`)
   }
 
-  $: if (displayName) {
-    handleChange(displayName)
-  }
+  $effect(() => {
+    if (displayName) {
+      handleChange(displayName)
+    }
+  })
 
   const options = collectionsList.map((col) => ({ name: col.name }))
 </script>

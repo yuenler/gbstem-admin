@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from 'svelte/legacy'
+
   import { db, user } from '$lib/client/firebase'
   import Form from '$lib/components/Form.svelte'
   import Input from '$lib/components/Input.svelte'
@@ -25,19 +27,22 @@
   import Loading from '../Loading.svelte'
   import Select from '../Select.svelte'
 
-  let className = ''
-  export { className as class }
+  interface Props {
+    class?: string
+  }
 
-  let editSlot = ''
-  let intervieweeNames: { name: string }[] = []
-  let intervieweeOptions: Data.Application<'client'>[]
-  let interviewee: string
-  let onlyIncludeMyInterviews = true
-  let onlyShowFutureSlots = true
+  let { class: className = '' }: Props = $props()
+
+  let editSlot = $state('')
+  let intervieweeNames: { name: string }[] = $state([])
+  let intervieweeOptions: Data.Application<'client'>[] = $state([])
+  let interviewee: string = $state('')
+  let onlyIncludeMyInterviews = $state(true)
+  let onlyShowFutureSlots = $state(true)
   let showValidation = false
-  let allInterviewSlots: Data.InterviewSlot[] = []
-  let interviewSlotRequests: Data.SlotRequest[]
-  let interviewSlotToAdd: Data.InterviewSlot = {
+  let allInterviewSlots: Data.InterviewSlot[] = $state([])
+  let interviewSlotRequests: Data.SlotRequest[] = $state([])
+  let interviewSlotToAdd: Data.InterviewSlot = $state({
     date: '',
     id: '',
     interviewerName: '',
@@ -48,9 +53,9 @@
     interviewerEmail: '',
     meetingLink: '',
     interviewSlotStatus: 'available',
-  }
-  let currentUser: Data.User.Store
-  let loading = true
+  })
+  let currentUser: Data.User.Store | undefined = $state()
+  let loading = $state(true)
 
   async function getData() {
     const interviewSlots: Data.InterviewSlot[] = []
@@ -111,26 +116,28 @@
     return { names, options }
   }
 
-  let selectedIntervieweeDocId = ''
-  $: if (interviewee) {
-    const selectedInterviewee = intervieweeOptions.find(
-      (option) =>
-        `${option.personal.firstName} ${option.personal.lastName}` ===
-        interviewee,
-    )
-    if (selectedInterviewee) {
-      const {
-        personal: { email, firstName, lastName },
-        meta: { uid },
-      } = selectedInterviewee
-      selectedIntervieweeDocId = (selectedInterviewee as any).docId || ''
-      interviewSlotToAdd.intervieweeId = uid
-      interviewSlotToAdd.intervieweeEmail = email
-      interviewSlotToAdd.intervieweeFirstName = firstName
-      interviewSlotToAdd.intervieweeLastName = lastName
-      interviewSlotToAdd.interviewSlotStatus = 'pending'
+  let selectedIntervieweeDocId = $state('')
+  run(() => {
+    if (interviewee) {
+      const selectedInterviewee = intervieweeOptions.find(
+        (option) =>
+          `${option.personal.firstName} ${option.personal.lastName}` ===
+          interviewee,
+      )
+      if (selectedInterviewee) {
+        const {
+          personal: { email, firstName, lastName },
+          meta: { uid },
+        } = selectedInterviewee
+        selectedIntervieweeDocId = (selectedInterviewee as any).docId || ''
+        interviewSlotToAdd.intervieweeId = uid
+        interviewSlotToAdd.intervieweeEmail = email
+        interviewSlotToAdd.intervieweeFirstName = firstName
+        interviewSlotToAdd.intervieweeLastName = lastName
+        interviewSlotToAdd.interviewSlotStatus = 'pending'
+      }
     }
-  }
+  })
 
   onMount(() => {
     return user.subscribe(async (user) => {
@@ -159,7 +166,7 @@
       }
     }
     const id = `${new Date(interviewSlotToAdd.date).getTime()}${
-      currentUser.object.uid
+      currentUser?.object?.uid
     }`
     interviewSlotToAdd.id = id
     allInterviewSlots = [
@@ -230,8 +237,8 @@
 
   async function updateTime(interview: Data.InterviewSlot) {
     if (
-      interview.interviewerEmail !== currentUser.object.email &&
-      currentUser.profile.role !== 'admin'
+      interview.interviewerEmail !== currentUser?.object?.email &&
+      currentUser?.profile?.role !== 'admin'
     ) {
       alert.trigger(
         'error',
@@ -257,8 +264,8 @@
 
   const deleteTime = async (interview: Data.InterviewSlot) => {
     if (
-      interview.interviewerEmail !== currentUser.object.email &&
-      currentUser.profile.role !== 'admin'
+      interview.interviewerEmail !== currentUser?.object?.email &&
+      currentUser?.profile?.role !== 'admin'
     ) {
       alert.trigger(
         'error',
@@ -377,7 +384,7 @@
 
           {#each value as interview}
             {#if editSlot === interview.id}
-              {#if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser.object.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
+              {#if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser?.object?.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
                 <Card>
                   <Form
                     class={cn(showValidation && 'show-validation', className)}
@@ -421,7 +428,7 @@
                   </Form>
                 </Card>
               {/if}
-            {:else if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser.object.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
+            {:else if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser?.object?.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
               <Card>
                 <div class="my-1">
                   <b>Interviewer:</b>
@@ -451,7 +458,7 @@
                   </div>
                 {/if}
 
-                {#if (interview.interviewSlotStatus === 'available' || interview.interviewSlotStatus === 'pending') && (interview.interviewerEmail === currentUser.object.email || currentUser.profile.role === 'admin')}
+                {#if (interview.interviewSlotStatus === 'available' || interview.interviewSlotStatus === 'pending') && (interview.interviewerEmail === currentUser?.object?.email || currentUser?.profile?.role === 'admin')}
                   <div>
                     <Button
                       color="blue"

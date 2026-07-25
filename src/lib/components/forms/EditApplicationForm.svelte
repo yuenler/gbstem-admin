@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from 'svelte/legacy'
+
   import { doc, setDoc } from 'firebase/firestore'
   import { db } from '$lib/client/firebase'
   import { alert } from '$lib/stores'
@@ -21,15 +23,29 @@
   import FormCheckbox from '../FormCheckbox.svelte'
   import FormTextarea from '../FormTextarea.svelte'
 
-  export let id: string | undefined
-  export let values: Data.Application<'client'>
-  export let dbValues: Data.Application<'client'>
-  export let disabled = true
-  export let loading = false
-  export let formEl: HTMLFormElement | undefined = undefined
-  export let collection: string = applicationsCollection
-  export let semesterStartDate = ''
-  export let semesterEndDate = ''
+  interface Props {
+    id: string | undefined
+    values: Data.Application<'client'>
+    dbValues?: Data.Application<'client'> | undefined
+    disabled?: boolean
+    loading?: boolean
+    formEl?: HTMLFormElement | undefined
+    collection?: string
+    semesterStartDate?: string
+    semesterEndDate?: string
+  }
+
+  let {
+    id,
+    values = $bindable(),
+    dbValues = $bindable(),
+    disabled = $bindable(true),
+    loading = $bindable(false),
+    formEl = $bindable(undefined),
+    collection = applicationsCollection,
+    semesterStartDate = '',
+    semesterEndDate = '',
+  }: Props = $props()
 
   const defaultValues: Data.Application<'client'> = {
     personal: {
@@ -140,53 +156,55 @@
   const { form, enhance, submitting } = formResult
 
   // React to parent values changing (e.g. loaded data or cancel changes)
-  $: if (values) {
-    $form.personal = {
-      phoneNumber: values.personal?.phoneNumber || '',
-      dateOfBirth: values.personal?.dateOfBirth || '',
-      gender: values.personal?.gender || '',
-      race: values.personal?.race || [],
+  run(() => {
+    if (values) {
+      $form.personal = {
+        phoneNumber: values.personal?.phoneNumber || '',
+        dateOfBirth: values.personal?.dateOfBirth || '',
+        gender: values.personal?.gender || '',
+        race: values.personal?.race || [],
+      }
+      $form.academic = {
+        school: values.academic?.school || '',
+        graduationYear:
+          values.academic?.graduationYear || new Date().getFullYear(),
+      }
+      $form.program = {
+        courses: values.program?.courses || [],
+        preferences: values.program?.preferences || '',
+        timeSlots: values.program?.timeSlots || '',
+        notAvailable: values.program?.notAvailable || '',
+        inPerson:
+          values.program?.inPerson !== undefined
+            ? values.program.inPerson
+            : false,
+        reason: values.program?.reason || '',
+      }
+      $form.essay = {
+        taughtBefore:
+          values.essay?.taughtBefore !== undefined
+            ? values.essay.taughtBefore
+            : false,
+        academicBackground: values.essay?.academicBackground || '',
+        teachingScenario: values.essay?.teachingScenario || '',
+        why: values.essay?.why || '',
+      }
+      $form.agreements = {
+        entireProgram:
+          values.agreements?.entireProgram !== undefined
+            ? values.agreements.entireProgram
+            : false,
+        timeCommitment:
+          values.agreements?.timeCommitment !== undefined
+            ? values.agreements.timeCommitment
+            : false,
+        submitting:
+          values.agreements?.submitting !== undefined
+            ? values.agreements.submitting
+            : false,
+      }
     }
-    $form.academic = {
-      school: values.academic?.school || '',
-      graduationYear:
-        values.academic?.graduationYear || new Date().getFullYear(),
-    }
-    $form.program = {
-      courses: values.program?.courses || [],
-      preferences: values.program?.preferences || '',
-      timeSlots: values.program?.timeSlots || '',
-      notAvailable: values.program?.notAvailable || '',
-      inPerson:
-        values.program?.inPerson !== undefined
-          ? values.program.inPerson
-          : false,
-      reason: values.program?.reason || '',
-    }
-    $form.essay = {
-      taughtBefore:
-        values.essay?.taughtBefore !== undefined
-          ? values.essay.taughtBefore
-          : false,
-      academicBackground: values.essay?.academicBackground || '',
-      teachingScenario: values.essay?.teachingScenario || '',
-      why: values.essay?.why || '',
-    }
-    $form.agreements = {
-      entireProgram:
-        values.agreements?.entireProgram !== undefined
-          ? values.agreements.entireProgram
-          : false,
-      timeCommitment:
-        values.agreements?.timeCommitment !== undefined
-          ? values.agreements.timeCommitment
-          : false,
-      submitting:
-        values.agreements?.submitting !== undefined
-          ? values.agreements.submitting
-          : false,
-    }
-  }
+  })
 </script>
 
 <form bind:this={formEl} use:enhance class="w-full">

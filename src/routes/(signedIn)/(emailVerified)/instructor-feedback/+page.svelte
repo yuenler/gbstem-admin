@@ -10,9 +10,13 @@
   import { generateCSV } from '$lib/utils'
   import type { PageData } from './$types'
 
-  export let data: PageData
-  let dialogEl: Dialog
-  let selectedFeedbackId: string | undefined = undefined
+  interface Props {
+    data: PageData
+  }
+
+  let { data }: Props = $props()
+  let dialogEl: Dialog | undefined = $state()
+  let selectedFeedbackId: string | undefined = $state(undefined)
 
   function getAttendancePercent(value: boolean[]) {
     if (!value || value.length === 0) return '0%'
@@ -23,22 +27,26 @@
     return `${Math.round((attended / total) * 100)}%`
   }
 
-  $: currentPage = data.page ?? 1
-  $: currentLimit = data.limit ?? 25
+  let currentPage = $derived(data.page ?? 1)
+  let currentLimit = $derived(data.limit ?? 25)
 
-  $: prevHref = (() => {
-    if (currentPage <= 1) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage - 1))
-    return `?${base.toString()}`
-  })()
+  let prevHref = $derived(
+    (() => {
+      if (currentPage <= 1) return ''
+      const base = new URLSearchParams($page.url.searchParams)
+      base.set('page', String(currentPage - 1))
+      return `?${base.toString()}`
+    })(),
+  )
 
-  $: nextHref = (() => {
-    if (data.feedback.length < currentLimit) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage + 1))
-    return `?${base.toString()}`
-  })()
+  let nextHref = $derived(
+    (() => {
+      if (data.feedback.length < currentLimit) return ''
+      const base = new URLSearchParams($page.url.searchParams)
+      base.set('page', String(currentPage + 1))
+      return `?${base.toString()}`
+    })(),
+  )
 
   const csvHeaders = [
     'id',
@@ -48,19 +56,21 @@
     'date',
     'feedback',
   ]
-  $: csvWithHeaders = generateCSV(
-    csvHeaders,
-    data.feedback.map((item) => [
-      item.id,
-      item.instructorName,
-      item.courseName,
-      item.classNumber,
-      item.date,
-      item.feedback || '',
-    ]),
+  let csvWithHeaders = $derived(
+    generateCSV(
+      csvHeaders,
+      data.feedback.map((item) => [
+        item.id,
+        item.instructorName,
+        item.courseName,
+        item.classNumber,
+        item.date,
+        item.feedback || '',
+      ]),
+    ),
   )
-  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-  $: url = URL.createObjectURL(blob)
+  let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
+  let url = $derived(URL.createObjectURL(blob))
 </script>
 
 <svelte:head>
@@ -81,21 +91,21 @@
 </div>
 
 <Table>
-  <svelte:fragment slot="head">
+  {#snippet head()}
     <th scope="col" class="px-6 py-3">Instructor Name</th>
     <th scope="col" class="px-6 py-3">Course</th>
     <th scope="col" class="px-6 py-3">Class Number</th>
     <th scope="col" class="px-6 py-3">Date</th>
     <th scope="col" class="px-6 py-3">Attendance Percent</th>
     <th scope="col" class="px-6 py-3">Feedback</th>
-  </svelte:fragment>
-  <svelte:fragment slot="body">
+  {/snippet}
+  {#snippet body()}
     {#each data.feedback as value}
       <tr
         class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
-        on:click={() => {
+        onclick={() => {
           selectedFeedbackId = value.id
-          dialogEl.open()
+          dialogEl?.open()
         }}
       >
         <td class="px-6 py-4">
@@ -114,7 +124,7 @@
         </td>
       </tr>
     {/each}
-  </svelte:fragment>
+  {/snippet}
 </Table>
 
 {#if !data.query && data.feedback}

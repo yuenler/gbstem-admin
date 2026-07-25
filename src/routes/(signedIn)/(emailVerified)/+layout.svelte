@@ -1,6 +1,11 @@
 <script lang="ts">
   import { user } from '$lib/client/firebase'
   import { onMount } from 'svelte'
+  interface Props {
+    children?: import('svelte').Snippet
+  }
+
+  let { children }: Props = $props()
 
   onMount(() =>
     user.subscribe((user) => {
@@ -17,4 +22,4 @@
   )
 </script>
 
-<slot />
+{@render children?.()}

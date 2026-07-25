@@ -4,17 +4,7 @@
   import Select from './Select.svelte'
 
   let previousUrlLimit = String($page.url.searchParams.get('limit') ?? '25')
-  let limitValue = previousUrlLimit
-
-  $: {
-    const urlLimit = String($page.url.searchParams.get('limit') ?? '25')
-    if (urlLimit !== previousUrlLimit) {
-      previousUrlLimit = urlLimit
-      limitValue = urlLimit
-    } else if (limitValue !== urlLimit) {
-      handleLimitChange(limitValue)
-    }
-  }
+  let limitValue = $state(previousUrlLimit)
 
   function handleLimitChange(newLimit: string) {
     const urlLimit = String($page.url.searchParams.get('limit') ?? '25')
@@ -32,6 +22,15 @@
     { name: '100' },
     { name: '200' },
   ]
+  $effect(() => {
+    const urlLimit = String($page.url.searchParams.get('limit') ?? '25')
+    if (urlLimit !== previousUrlLimit) {
+      previousUrlLimit = urlLimit
+      limitValue = urlLimit
+    } else if (limitValue !== urlLimit) {
+      handleLimitChange(limitValue)
+    }
+  })
 </script>
 
 <Select

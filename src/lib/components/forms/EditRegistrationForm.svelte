@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from 'svelte/legacy'
+
   import { doc, setDoc } from 'firebase/firestore'
   import { db } from '$lib/client/firebase'
   import { alert } from '$lib/stores'
@@ -31,12 +33,23 @@
   import FormCheckbox from '../FormCheckbox.svelte'
   import FormTextarea from '../FormTextarea.svelte'
 
-  export let id: string | undefined
-  export let values: Data.Registration<'client'>
-  export let dbValues: Data.Registration<'client'>
-  export let disabled = true
-  export let formEl: HTMLFormElement | undefined = undefined
-  export let collection: string = registrationsCollection
+  interface Props {
+    id: string | undefined
+    values: Data.Registration<'client'>
+    dbValues?: Data.Registration<'client'> | undefined
+    disabled?: boolean
+    formEl?: HTMLFormElement | undefined
+    collection?: string
+  }
+
+  let {
+    id,
+    values = $bindable(),
+    dbValues = $bindable(),
+    disabled = $bindable(true),
+    formEl = $bindable(undefined),
+    collection = registrationsCollection,
+  }: Props = $props()
 
   const defaultValues: Data.Registration<'client'> = {
     personal: {
@@ -153,63 +166,65 @@
   const { form, enhance, submitting } = formResult
 
   // React to parent values changing (e.g. loaded data or cancel changes)
-  $: if (values) {
-    $form.personal = {
-      studentFirstName: values.personal?.studentFirstName || '',
-      studentLastName: values.personal?.studentLastName || '',
-      parentFirstName: values.personal?.parentFirstName || '',
-      parentLastName: values.personal?.parentLastName || '',
-      email: values.personal?.email || '',
-      secondaryEmail: values.personal?.secondaryEmail || '',
-      phoneNumber: values.personal?.phoneNumber || '',
-      dateOfBirth: values.personal?.dateOfBirth || '',
-      gender: values.personal?.gender || '',
-      race: values.personal?.race || [],
-      frlp: values.personal?.frlp || '',
-      parentEducation: values.personal?.parentEducation || '',
+  run(() => {
+    if (values) {
+      $form.personal = {
+        studentFirstName: values.personal?.studentFirstName || '',
+        studentLastName: values.personal?.studentLastName || '',
+        parentFirstName: values.personal?.parentFirstName || '',
+        parentLastName: values.personal?.parentLastName || '',
+        email: values.personal?.email || '',
+        secondaryEmail: values.personal?.secondaryEmail || '',
+        phoneNumber: values.personal?.phoneNumber || '',
+        dateOfBirth: values.personal?.dateOfBirth || '',
+        gender: values.personal?.gender || '',
+        race: values.personal?.race || [],
+        frlp: values.personal?.frlp || '',
+        parentEducation: values.personal?.parentEducation || '',
+      }
+      $form.academic = {
+        school: values.academic?.school || '',
+        grade: values.academic?.grade || '',
+      }
+      $form.program = {
+        csCourse: values.program?.csCourse || '',
+        mathCourse: values.program?.mathCourse || '',
+        engineeringCourse: values.program?.engineeringCourse || '',
+        scienceCourse: values.program?.scienceCourse || '',
+        inPerson:
+          values.program?.inPerson !== undefined
+            ? values.program.inPerson
+            : false,
+        reason: values.program?.reason || '',
+      }
+      $form.inPerson = {
+        allergies: values.inPerson?.allergies || '',
+        parentPickup: values.inPerson?.parentPickup || '',
+      }
+      $form.agreements = {
+        mediaRelease:
+          values.agreements?.mediaRelease !== undefined
+            ? values.agreements.mediaRelease
+            : false,
+        bypassAgeLimits:
+          values.agreements?.bypassAgeLimits !== undefined
+            ? values.agreements.bypassAgeLimits
+            : false,
+        entireProgram:
+          values.agreements?.entireProgram !== undefined
+            ? values.agreements.entireProgram
+            : false,
+        timeCommitment:
+          values.agreements?.timeCommitment !== undefined
+            ? values.agreements.timeCommitment
+            : false,
+        submitting:
+          values.agreements?.submitting !== undefined
+            ? values.agreements.submitting
+            : false,
+      }
     }
-    $form.academic = {
-      school: values.academic?.school || '',
-      grade: values.academic?.grade || '',
-    }
-    $form.program = {
-      csCourse: values.program?.csCourse || '',
-      mathCourse: values.program?.mathCourse || '',
-      engineeringCourse: values.program?.engineeringCourse || '',
-      scienceCourse: values.program?.scienceCourse || '',
-      inPerson:
-        values.program?.inPerson !== undefined
-          ? values.program.inPerson
-          : false,
-      reason: values.program?.reason || '',
-    }
-    $form.inPerson = {
-      allergies: values.inPerson?.allergies || '',
-      parentPickup: values.inPerson?.parentPickup || '',
-    }
-    $form.agreements = {
-      mediaRelease:
-        values.agreements?.mediaRelease !== undefined
-          ? values.agreements.mediaRelease
-          : false,
-      bypassAgeLimits:
-        values.agreements?.bypassAgeLimits !== undefined
-          ? values.agreements.bypassAgeLimits
-          : false,
-      entireProgram:
-        values.agreements?.entireProgram !== undefined
-          ? values.agreements.entireProgram
-          : false,
-      timeCommitment:
-        values.agreements?.timeCommitment !== undefined
-          ? values.agreements.timeCommitment
-          : false,
-      submitting:
-        values.agreements?.submitting !== undefined
-          ? values.agreements.submitting
-          : false,
-    }
-  }
+  })
 </script>
 
 <form bind:this={formEl} use:enhance class="w-full max-w-2xl">

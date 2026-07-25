@@ -5,7 +5,7 @@
   import CreateTokenForm from './forms/CreateTokenForm.svelte'
 
   const dispatch = createEventDispatcher()
-  let dialogEl: Dialog
+  let dialogEl: any = $state()
 
   function handleExit() {
     dispatch('exit', true)
@@ -19,8 +19,12 @@
   on:cancel={handleExit}
   on:close={handleExit}
 >
-  <svelte:fragment slot="title">Token</svelte:fragment>
-  <div slot="description">
-    <CreateTokenForm {dialogEl} />
-  </div>
+  {#snippet title()}
+    Token
+  {/snippet}
+  {#snippet description()}
+    <div>
+      <CreateTokenForm {dialogEl} />
+    </div>
+  {/snippet}
 </Dialog>
