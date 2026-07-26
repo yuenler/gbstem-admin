@@ -107,7 +107,14 @@
   let csvWithHeaders = $derived(generateCSV(csvHeaders, rows))
 
   let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
-  let url = $derived(URL.createObjectURL(blob))
+  // Revoke the previous object URL whenever blob changes (and on
+  // unmount) - otherwise every filter/search/page change here leaks one.
+  let url = $state('')
+  $effect(() => {
+    const objectUrl = URL.createObjectURL(blob)
+    url = objectUrl
+    return () => URL.revokeObjectURL(objectUrl)
+  })
 
   let schools = $derived(
     data.registrations
@@ -120,7 +127,12 @@
   let schoolsBlob = $derived(
     new Blob([uniqueSchools.join('\n')], { type: 'text/csv' }),
   )
-  let schoolsUrl = $derived(URL.createObjectURL(schoolsBlob))
+  let schoolsUrl = $state('')
+  $effect(() => {
+    const objectUrl = URL.createObjectURL(schoolsBlob)
+    schoolsUrl = objectUrl
+    return () => URL.revokeObjectURL(objectUrl)
+  })
 
   let registration = $derived(
     data.registrations.length === 0

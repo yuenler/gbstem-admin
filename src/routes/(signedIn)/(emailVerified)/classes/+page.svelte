@@ -92,7 +92,14 @@
   let csvWithHeaders = $derived(generateCSV(csvHeaders, rows))
 
   let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
-  let url = $derived(URL.createObjectURL(blob))
+  // Revoke the previous object URL whenever blob changes (and on
+  // unmount) - otherwise every filter/search/page change here leaks one.
+  let url = $state('')
+  $effect(() => {
+    const objectUrl = URL.createObjectURL(blob)
+    url = objectUrl
+    return () => URL.revokeObjectURL(objectUrl)
+  })
 
   function handleCheckAll(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
