@@ -519,7 +519,7 @@
                 <span>Likely No</span></Button
               >
               <Button
-                color={'gray'}
+                color="gray"
                 class="flex items-center gap-1"
                 onclick={() => handleLikelyDecision(null)}
               >

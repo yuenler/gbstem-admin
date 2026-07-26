@@ -301,7 +301,7 @@
                       class="mt-2 flex items-center justify-between rounded-lg bg-blue-100 p-4"
                     >
                       <p>{formatDateLocal(request.date)}</p>
-                      <p>{request.firstName}{' '}{request.lastName}</p>
+                      <p>{request.firstName} {request.lastName}</p>
                       <p>{request.email}</p>
                     </div>
                   {:else if request.date > new Date(new Date().setDate(new Date().getDate() - 30))}
@@ -309,7 +309,7 @@
                       class="mt-2 flex items-center justify-between rounded-lg bg-red-100 p-4"
                     >
                       <p>{formatDateLocal(request.date)}</p>
-                      <p>{request.firstName}{' '}{request.lastName}</p>
+                      <p>{request.firstName} {request.lastName}</p>
                       <p>{request.email}</p>
                     </div>
                   {/if}
