@@ -1,7 +1,7 @@
 <script lang="ts">
   import Select from './Select.svelte'
   import { goto } from '$app/navigation'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import { coursesJson } from '$lib/data'
 
   interface Props {
@@ -14,7 +14,7 @@
   let value = $state('')
 
   $effect(() => {
-    const urlFilter = $page.url.searchParams.get(paramName) ?? 'all'
+    const urlFilter = page.url.searchParams.get(paramName) ?? 'all'
     if (urlFilter !== lastUrlFilter) {
       lastUrlFilter = urlFilter
       value = urlFilter
@@ -22,10 +22,10 @@
   })
 
   function handleChange(newValue: string) {
-    const urlFilter = $page.url.searchParams.get(paramName) ?? 'all'
+    const urlFilter = page.url.searchParams.get(paramName) ?? 'all'
     if (newValue === urlFilter) return
 
-    const base = new URLSearchParams($page.url.searchParams)
+    const base = new URLSearchParams(page.url.searchParams)
     if (newValue === 'all' || !newValue) {
       base.delete(paramName)
     } else {

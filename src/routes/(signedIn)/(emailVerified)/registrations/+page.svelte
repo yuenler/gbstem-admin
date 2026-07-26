@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from '$app/environment'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import { db } from '$lib/client/firebase'
   import Button from '$lib/components/Button.svelte'
   import CollectionFilter from '$lib/components/CollectionFilter.svelte'
@@ -41,7 +41,7 @@
   let checked: Array<number> = $state([])
   let selectedCollection = $derived(
     semesterCollectionPath(
-      resolveSemester($page.url.searchParams.get('semester')),
+      resolveSemester(page.url.searchParams.get('semester')),
       'registrations',
     ),
   )
@@ -135,7 +135,7 @@
   let prevHref = $derived(
     (() => {
       if (currentPage <= 1) return ''
-      const base = new URLSearchParams($page.url.searchParams)
+      const base = new URLSearchParams(page.url.searchParams)
       base.set('page', String(currentPage - 1))
       return `?${base.toString()}`
     })(),
@@ -144,7 +144,7 @@
   let nextHref = $derived(
     (() => {
       if (data.registrations.length < currentLimit) return ''
-      const base = new URLSearchParams($page.url.searchParams)
+      const base = new URLSearchParams(page.url.searchParams)
       base.set('page', String(currentPage + 1))
       return `?${base.toString()}`
     })(),

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { invalidate } from '$app/navigation'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import { db } from '$lib/client/firebase'
   import Application from '$lib/components/Application.svelte'
   import Button from '$lib/components/Button.svelte'
@@ -212,7 +212,7 @@
   let prevHref = $derived(
     (() => {
       if (currentPage <= 1) return ''
-      const base = new URLSearchParams($page.url.searchParams)
+      const base = new URLSearchParams(page.url.searchParams)
       base.set('page', String(currentPage - 1))
       return `?${base.toString()}`
     })(),
@@ -220,13 +220,13 @@
   let nextHref = $derived(
     (() => {
       if (data.applications.length < currentLimit) return ''
-      const base = new URLSearchParams($page.url.searchParams)
+      const base = new URLSearchParams(page.url.searchParams)
       base.set('page', String(currentPage + 1))
       return `?${base.toString()}`
     })(),
   )
   let selectedSemester = $derived(
-    resolveSemester($page.url.searchParams.get('semester')),
+    resolveSemester(page.url.searchParams.get('semester')),
   )
   let selectedCollection = $derived(
     semesterCollectionPath(selectedSemester, 'applications'),

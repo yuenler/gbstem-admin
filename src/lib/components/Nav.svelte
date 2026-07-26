@@ -1,10 +1,9 @@
 <script lang="ts">
   import ProfileMenu from './ProfileMenu.svelte'
   import { cn } from '$lib/utils'
-  import { page } from '$app/stores'
+  import { page, navigating } from '$app/state'
   import { onMount } from 'svelte'
   import Brand from './Brand.svelte'
-  import { navigating } from '$app/stores'
   import { fade } from 'svelte/transition'
   import AnnouncementsBell from './AnnouncementsBell.svelte'
   import { cubicInOut } from 'svelte/easing'
@@ -23,13 +22,13 @@
   let disabled = $state(false)
   onMount(() => {
     updateShadow()
-    return navigating.subscribe((navigating) => {
-      if (navigating) {
-        open = false
-      }
-    })
   })
-  let pathname = $derived($page.url.pathname)
+  $effect(() => {
+    if (navigating.to) {
+      open = false
+    }
+  })
+  let pathname = $derived(page.url.pathname)
   let pages = $derived([
     ...(user.role === 'admin' ? [{ name: 'Tokens', href: '/tokens' }] : []),
     {

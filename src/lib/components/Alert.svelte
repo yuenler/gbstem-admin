@@ -1,7 +1,7 @@
 <script lang="ts">
   import { alert } from '$lib/stores'
   import { cn } from '$lib/utils'
-  import { navigating } from '$app/stores'
+  import { navigating } from '$app/state'
   import { fade } from 'svelte/transition'
   import { onDestroy, onMount } from 'svelte'
   import { browser } from '$app/environment'
@@ -40,7 +40,7 @@
     }
   }
   $effect(() => {
-    if (browser && $navigating) {
+    if (browser && navigating.to) {
       if (visible) {
         close()
       }

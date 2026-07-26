@@ -3,7 +3,7 @@
   import Button from './Button.svelte'
   import Form from './Form.svelte'
   import { goto } from '$app/navigation'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
 
   interface Props {
     basePath?: string
@@ -12,12 +12,12 @@
 
   let { basePath = '', placeholder = 'Search' }: Props = $props()
 
-  let lastUrlQuery = $page.url.searchParams.get('query') ?? ''
+  let lastUrlQuery = page.url.searchParams.get('query') ?? ''
   let search = $state(lastUrlQuery)
   let searching = $state(false)
 
   $effect(() => {
-    const urlQuery = $page.url.searchParams.get('query') ?? ''
+    const urlQuery = page.url.searchParams.get('query') ?? ''
     if (urlQuery !== lastUrlQuery) {
       lastUrlQuery = urlQuery
       search = urlQuery
@@ -26,7 +26,7 @@
 
   async function handleSearch() {
     searching = true
-    const base = new URLSearchParams($page.url.searchParams)
+    const base = new URLSearchParams(page.url.searchParams)
     if (search === '') {
       base.delete('query')
       base.delete('updated')
@@ -45,7 +45,7 @@
   async function handleClear() {
     searching = true
     search = ''
-    const base = new URLSearchParams($page.url.searchParams)
+    const base = new URLSearchParams(page.url.searchParams)
     base.delete('query')
     base.delete('updated')
     goto(`${basePath}?${base.toString()}`).finally(() => {

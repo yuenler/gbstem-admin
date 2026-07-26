@@ -9,7 +9,7 @@
   import Token from '$lib/components/Token.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
   import { goto, invalidate } from '$app/navigation'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import type { FirebaseError } from 'firebase/app'
   import { writeToClipboard } from '$lib/utils'
 
@@ -31,7 +31,7 @@
   let prevHref = $derived(
     (() => {
       if (currentPage <= 1) return ''
-      const base = new URLSearchParams($page.url.searchParams)
+      const base = new URLSearchParams(page.url.searchParams)
       base.set('page', String(currentPage - 1))
       return `?${base.toString()}`
     })(),
@@ -40,7 +40,7 @@
   let nextHref = $derived(
     (() => {
       if (data.tokens.length < currentLimit) return ''
-      const base = new URLSearchParams($page.url.searchParams)
+      const base = new URLSearchParams(page.url.searchParams)
       base.set('page', String(currentPage + 1))
       return `?${base.toString()}`
     })(),
@@ -104,7 +104,7 @@
     values: Data.Token<'pojo'>
   }) {
     try {
-      await writeToClipboard(`${$page.url.host}/signup?token=${token.id}`)
+      await writeToClipboard(`${page.url.host}/signup?token=${token.id}`)
       alert.trigger('success', 'Token copied.')
     } catch {
       alert.trigger('error', 'Failed to copy token.')

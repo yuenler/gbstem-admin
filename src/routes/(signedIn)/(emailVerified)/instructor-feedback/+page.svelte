@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import Button from '$lib/components/Button.svelte'
   import ClassFeedbackDetails from '$lib/components/ClassFeedbackDetails.svelte'
   import CourseFilter from '$lib/components/CourseFilter.svelte'
@@ -33,7 +33,7 @@
   let prevHref = $derived(
     (() => {
       if (currentPage <= 1) return ''
-      const base = new URLSearchParams($page.url.searchParams)
+      const base = new URLSearchParams(page.url.searchParams)
       base.set('page', String(currentPage - 1))
       return `?${base.toString()}`
     })(),
@@ -42,7 +42,7 @@
   let nextHref = $derived(
     (() => {
       if (data.feedback.length < currentLimit) return ''
-      const base = new URLSearchParams($page.url.searchParams)
+      const base = new URLSearchParams(page.url.searchParams)
       base.set('page', String(currentPage + 1))
       return `?${base.toString()}`
     })(),

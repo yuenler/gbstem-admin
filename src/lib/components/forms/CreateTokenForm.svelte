@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import { addDoc, collection } from 'firebase/firestore'
   import { db } from '$lib/client/firebase'
   import Button from '../Button.svelte'
@@ -47,7 +47,7 @@
           await invalidate('app:applications')
           try {
             await writeToClipboard(
-              `${$page.url.host}/signup?token=${snapshot.id}`,
+              `${page.url.host}/signup?token=${snapshot.id}`,
             )
           } catch {
             // ignore clipboard errors

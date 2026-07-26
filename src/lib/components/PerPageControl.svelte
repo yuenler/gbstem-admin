@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import { goto } from '$app/navigation'
   import Select from './Select.svelte'
 
-  let previousUrlLimit = String($page.url.searchParams.get('limit') ?? '25')
+  let previousUrlLimit = String(page.url.searchParams.get('limit') ?? '25')
   let limitValue = $state(previousUrlLimit)
 
   function handleLimitChange(newLimit: string) {
-    const urlLimit = String($page.url.searchParams.get('limit') ?? '25')
+    const urlLimit = String(page.url.searchParams.get('limit') ?? '25')
     if (newLimit === urlLimit) return
 
-    const base = new URLSearchParams($page.url.searchParams)
+    const base = new URLSearchParams(page.url.searchParams)
     base.set('limit', newLimit)
     base.set('page', '1') // Reset to page 1
     goto(`?${base.toString()}`)
@@ -23,7 +23,7 @@
     { name: '200' },
   ]
   $effect(() => {
-    const urlLimit = String($page.url.searchParams.get('limit') ?? '25')
+    const urlLimit = String(page.url.searchParams.get('limit') ?? '25')
     if (urlLimit !== previousUrlLimit) {
       previousUrlLimit = urlLimit
       limitValue = urlLimit

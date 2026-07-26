@@ -1,7 +1,7 @@
 <script lang="ts">
   import Select from './Select.svelte'
   import { goto } from '$app/navigation'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import { currentSemester, resolveSemester } from '$lib/data/collections'
   import collectionsList from '$lib/data/collectionsList.json'
 
@@ -19,12 +19,12 @@
     idToName[currentSemester] ?? collectionsList[0]?.name ?? 'ERROR'
 
   let lastUrlDisplayName =
-    idToName[resolveSemester($page.url.searchParams.get('semester'))] ??
+    idToName[resolveSemester(page.url.searchParams.get('semester'))] ??
     defaultDisplayName
   let displayName = $state(lastUrlDisplayName)
 
   $effect(() => {
-    const urlSemester = resolveSemester($page.url.searchParams.get('semester'))
+    const urlSemester = resolveSemester(page.url.searchParams.get('semester'))
     const urlName = idToName[urlSemester] ?? defaultDisplayName
     if (urlName !== lastUrlDisplayName) {
       lastUrlDisplayName = urlName
@@ -33,11 +33,11 @@
   })
 
   function handleChange(newDisplayName: string) {
-    const urlSemester = resolveSemester($page.url.searchParams.get('semester'))
+    const urlSemester = resolveSemester(page.url.searchParams.get('semester'))
     const targetId = nameToId[newDisplayName] ?? currentSemester
     if (targetId === urlSemester) return
 
-    const base = new URLSearchParams($page.url.searchParams)
+    const base = new URLSearchParams(page.url.searchParams)
     base.set('semester', targetId)
     base.delete('updated') // Reset pagination
     base.delete('page') // Reset page parameter
