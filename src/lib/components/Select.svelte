@@ -37,6 +37,7 @@
     required?: boolean
     placeholder?: string | undefined
     options?: Array<SelectOptionJson>
+    onchange?: (value: string) => void
     [key: string]: any
   }
 
@@ -50,6 +51,7 @@
     required = false,
     placeholder = undefined,
     options: optionsJson = [],
+    onchange,
     ...rest
   }: Props = $props()
 
@@ -88,6 +90,7 @@
     }
     selectedOptionIndex = 0
     value = (e.target as HTMLInputElement).value
+    onchange?.(value)
   }
   function handleKeyDown(e: KeyboardEvent) {
     switch (e.code) {
@@ -98,12 +101,14 @@
         e.preventDefault()
         open = false
         value = filteredOptions[selectedOptionIndex]
+        onchange?.(value)
         break
       case 'Tab':
         if (open) {
           e.preventDefault()
           open = false
           value = filteredOptions[selectedOptionIndex]
+          onchange?.(value)
         }
         break
       case 'ArrowUp':
@@ -247,6 +252,7 @@
             onclick={() => {
               value = filteredOptions[0]
               open = false
+              onchange?.(value)
             }}
           >
             {filteredOptions[0]}
@@ -262,6 +268,7 @@
               onclick={() => {
                 value = name
                 open = false
+                onchange?.(value)
               }}
               onmouseenter={() => {
                 selectedOptionIndex = index

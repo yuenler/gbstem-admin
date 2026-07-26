@@ -11,20 +11,10 @@
 
   let defaultFilter = $derived(type === 'registrations' ? 'submitted' : 'all')
 
-  let lastUrlFilter = ''
-  let value = $state('')
-
-  $effect(() => {
-    const urlFilter = page.url.searchParams.get('filter') ?? defaultFilter
-    if (urlFilter !== lastUrlFilter) {
-      lastUrlFilter = urlFilter
-      value = urlFilter
-    }
-  })
+  let value = $derived(page.url.searchParams.get('filter') ?? defaultFilter)
 
   function handleChange(newValue: string) {
-    const urlFilter = page.url.searchParams.get('filter') ?? defaultFilter
-    if (newValue === urlFilter) return
+    if (newValue === value) return
 
     const base = new URLSearchParams(page.url.searchParams)
     if (newValue === defaultFilter || !newValue) {
@@ -36,12 +26,6 @@
     base.delete('page') // Reset page parameter
     goto(`?${base.toString()}`)
   }
-
-  $effect(() => {
-    if (value) {
-      handleChange(value)
-    }
-  })
 
   const optionsMap = {
     students: [{ name: 'all' }, { name: 'submitted' }, { name: 'enrolled' }],
@@ -72,4 +56,11 @@
   let label = $derived(labelMap[type])
 </script>
 
-<Select class="mt-0 w-64" bind:value {label} {options} required />
+<Select
+  class="mt-0 w-64"
+  {value}
+  onchange={handleChange}
+  {label}
+  {options}
+  required
+/>

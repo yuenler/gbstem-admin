@@ -10,20 +10,10 @@
 
   let { paramName = 'filter' }: Props = $props()
 
-  let lastUrlFilter = ''
-  let value = $state('')
-
-  $effect(() => {
-    const urlFilter = page.url.searchParams.get(paramName) ?? 'all'
-    if (urlFilter !== lastUrlFilter) {
-      lastUrlFilter = urlFilter
-      value = urlFilter
-    }
-  })
+  let value = $derived(page.url.searchParams.get(paramName) ?? 'all')
 
   function handleChange(newValue: string) {
-    const urlFilter = page.url.searchParams.get(paramName) ?? 'all'
-    if (newValue === urlFilter) return
+    if (newValue === value) return
 
     const base = new URLSearchParams(page.url.searchParams)
     if (newValue === 'all' || !newValue) {
@@ -36,16 +26,17 @@
     goto(`?${base.toString()}`)
   }
 
-  $effect(() => {
-    if (value) {
-      handleChange(value)
-    }
-  })
-
   const options = [
     { name: 'all' },
     ...coursesJson.map((course) => ({ name: course.name })),
   ]
 </script>
 
-<Select class="mt-0 w-64" bind:value label="Course" {options} required />
+<Select
+  class="mt-0 w-64"
+  {value}
+  onchange={handleChange}
+  label="Course"
+  {options}
+  required
+/>

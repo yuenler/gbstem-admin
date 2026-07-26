@@ -18,19 +18,10 @@
   const defaultDisplayName =
     idToName[currentSemester] ?? collectionsList[0]?.name ?? 'ERROR'
 
-  let lastUrlDisplayName =
+  let displayName = $derived(
     idToName[resolveSemester(page.url.searchParams.get('semester'))] ??
-    defaultDisplayName
-  let displayName = $state(lastUrlDisplayName)
-
-  $effect(() => {
-    const urlSemester = resolveSemester(page.url.searchParams.get('semester'))
-    const urlName = idToName[urlSemester] ?? defaultDisplayName
-    if (urlName !== lastUrlDisplayName) {
-      lastUrlDisplayName = urlName
-      displayName = urlName
-    }
-  })
+      defaultDisplayName,
+  )
 
   function handleChange(newDisplayName: string) {
     const urlSemester = resolveSemester(page.url.searchParams.get('semester'))
@@ -44,18 +35,13 @@
     goto(`?${base.toString()}`)
   }
 
-  $effect(() => {
-    if (displayName) {
-      handleChange(displayName)
-    }
-  })
-
   const options = collectionsList.map((col) => ({ name: col.name }))
 </script>
 
 <Select
   class="mt-0 w-64"
-  bind:value={displayName}
+  value={displayName}
+  onchange={handleChange}
   label="Collection"
   {options}
   required
