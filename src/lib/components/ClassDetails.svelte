@@ -59,9 +59,6 @@
 
   let formEl: HTMLFormElement | undefined = $state()
 
-  // Handle id changes without causing infinite loops
-  let previousId: string | undefined = undefined
-
   async function loadClassData(classId: string) {
     studentList = []
     loading = true
@@ -166,11 +163,8 @@
     }
   }
   $effect(() => {
-    if (id !== previousId) {
-      previousId = id
-      if (id !== undefined) {
-        loadClassData(id)
-      }
+    if (id !== undefined) {
+      loadClassData(id)
     }
   })
 </script>
