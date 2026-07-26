@@ -65,7 +65,7 @@
         your email through the profile.
       </p>
       <DialogActions>
-        <Button on:click={() => dialogEl?.cancel()}>Close</Button>
+        <Button onclick={() => dialogEl?.cancel()}>Close</Button>
       </DialogActions>
     </div>
   {/snippet}

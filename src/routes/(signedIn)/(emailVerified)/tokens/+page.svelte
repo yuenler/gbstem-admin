@@ -157,7 +157,7 @@
       <Button
         class="flex h-10 w-10 items-center justify-center p-0"
         color="blue"
-        on:click={handleCreate}
+        onclick={handleCreate}
         disabled={disabled.create}
       >
         <svg

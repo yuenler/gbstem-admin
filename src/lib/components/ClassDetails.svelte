@@ -186,20 +186,20 @@
       >
         {#if !disabled}
           <div class="flex flex-wrap gap-2">
-            <Button color="green" on:click={handleSaveChanges}
+            <Button color="green" onclick={handleSaveChanges}
               >Save changes</Button
             >
-            <Button color="red" on:click={handleDeleteChanges}
+            <Button color="red" onclick={handleDeleteChanges}
               >Cancel changes</Button
             >
           </div>
         {/if}
         <div class="flex flex-wrap gap-2">
-          <Button color="green" on:click={handleEdit}>Edit</Button>
-          <Button color="red" on:click={dialogEl.cancel}>Close</Button>
+          <Button color="green" onclick={handleEdit}>Edit</Button>
+          <Button color="red" onclick={() => dialogEl?.cancel()}>Close</Button>
           <Button
             color="blue"
-            on:click={() =>
+            onclick={() =>
               sendClassReminder({
                 studentList: studentList,
                 instructorName: values.instructorFirstName,
@@ -211,7 +211,7 @@
           >
           <Button
             color="blue"
-            on:click={() =>
+            onclick={() =>
               sendClassReminder({
                 instructorName: values.instructorFirstName,
                 instructorEmail: values.instructorEmail,
@@ -231,7 +231,7 @@
           <div class="mb-4 flex items-center justify-between">
             <h2 class="font-bold">Class List</h2>
             <Button
-              on:click={() =>
+              onclick={() =>
                 copyEmails(
                   studentList.flatMap((student) => [
                     student.email,

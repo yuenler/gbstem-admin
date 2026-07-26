@@ -337,7 +337,7 @@
                 <Button
                   color="red"
                   class="h-fit"
-                  on:click={() => {
+                  onclick={() => {
                     handleClear()
                   }}
                   ><svg
@@ -362,7 +362,7 @@
                 >
               </div>
               <div class="right-2 items-center">
-                <Button color="blue" class="my-4 px-2 py-1" on:click={addTime}
+                <Button color="blue" class="my-4 px-2 py-1" onclick={addTime}
                   >Confirm Timeslot</Button
                 >
               </div>
@@ -407,7 +407,7 @@
                           <Button
                             color="blue"
                             class="my-4 px-2 py-1"
-                            on:click={() => {
+                            onclick={() => {
                               updateTime(interview)
                               editSlot = ''
                             }}>Save</Button
@@ -417,7 +417,7 @@
                           <Button
                             color="blue"
                             class="my-4 px-2 py-1"
-                            on:click={() => {
+                            onclick={() => {
                               deleteTime(interview)
                               editSlot = ''
                             }}>Delete</Button
@@ -463,7 +463,7 @@
                     <Button
                       color="blue"
                       class="my-4 px-2 py-1"
-                      on:click={() => (editSlot = interview.id)}>Edit</Button
+                      onclick={() => (editSlot = interview.id)}>Edit</Button
                     >
                   </div>
                 {/if}

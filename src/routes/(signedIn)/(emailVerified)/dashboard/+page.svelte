@@ -297,10 +297,10 @@
           </li>
           <li>{data.applications.enrolled} students enrolled.</li>
         </ol>
-        <Button on:click={() => copyEmails(uncompletedRegistrationsEmails)}
+        <Button onclick={() => copyEmails(uncompletedRegistrationsEmails)}
           >Copy Emails for Uncompleted Registrations</Button
         >
-        <Button on:click={() => copyEmails(uncompletedApplicationsEmails)}
+        <Button onclick={() => copyEmails(uncompletedApplicationsEmails)}
           >Copy Emails for Uncompleted Applications</Button
         >
       </Card>
@@ -345,7 +345,7 @@
                 <div class="sm:col-span-4">
                   <Button
                     color="gray"
-                    on:click={() =>
+                    onclick={() =>
                       sendClassReminder({
                         instructorName: classToday.class.instructorFirstName,
                         instructorEmail: classToday.class.instructorEmail,

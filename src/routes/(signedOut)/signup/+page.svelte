@@ -122,8 +122,7 @@
           {#if form?.error}{form.error}{/if}
         </p>
         <DialogActions>
-          <Button color="gray" on:click={() => dialogEl?.cancel()}>Close</Button
-          >
+          <Button color="gray" onclick={() => dialogEl?.cancel()}>Close</Button>
         </DialogActions>
       </div>
     {/snippet}

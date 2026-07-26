@@ -456,7 +456,7 @@
                   ? 'green'
                   : 'gray'}
                 class="flex items-center gap-1"
-                on:click={() => handleLikelyDecision('likely yes')}
+                onclick={() => handleLikelyDecision('likely yes')}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -479,7 +479,7 @@
                   ? 'yellow'
                   : 'gray'}
                 class="flex items-center gap-1"
-                on:click={() => handleLikelyDecision('likely waitlist')}
+                onclick={() => handleLikelyDecision('likely waitlist')}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -502,7 +502,7 @@
                   ? 'red'
                   : 'gray'}
                 class="flex items-center gap-1"
-                on:click={() => handleLikelyDecision('likely no')}
+                onclick={() => handleLikelyDecision('likely no')}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -521,7 +521,7 @@
               <Button
                 color={'gray'}
                 class="flex items-center gap-1"
-                on:click={() => handleLikelyDecision(null)}
+                onclick={() => handleLikelyDecision(null)}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -543,7 +543,7 @@
                   ? 'blue'
                   : 'gray'}
                 class="flex items-center gap-1"
-                on:click={() => handleDecision('interview')}
+                onclick={() => handleDecision('interview')}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -562,7 +562,7 @@
                   ? 'green'
                   : 'gray'}
                 class="flex items-center gap-1"
-                on:click={() => handleDecision('accepted')}
+                onclick={() => handleDecision('accepted')}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -584,7 +584,7 @@
                   ? 'purple'
                   : 'gray'}
                 class="flex items-center gap-1"
-                on:click={() => handleDecision('substitute')}
+                onclick={() => handleDecision('substitute')}
                 ><svg
                   class="h-5 w-5 text-purple-300"
                   aria-hidden="true"
@@ -608,7 +608,7 @@
                   ? 'yellow'
                   : 'gray'}
                 class="flex items-center gap-1"
-                on:click={() => handleDecision('waitlisted')}
+                onclick={() => handleDecision('waitlisted')}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -631,7 +631,7 @@
                   ? 'red'
                   : 'gray'}
                 class="flex items-center gap-1"
-                on:click={() => handleDecision('rejected')}
+                onclick={() => handleDecision('rejected')}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -648,10 +648,10 @@
                 <span>Reject</span></Button
               >
             {:else}
-              <Button color="green" on:click={handleSaveChanges}
+              <Button color="green" onclick={handleSaveChanges}
                 >Save changes</Button
               >
-              <Button color="red" on:click={handleDeleteChanges}
+              <Button color="red" onclick={handleDeleteChanges}
                 >Cancel changes</Button
               >
             {/if}
@@ -659,15 +659,15 @@
           <div class="flex flex-wrap items-center gap-2">
             <Button
               color="green"
-              on:click={() => (showInterviewForm = !showInterviewForm)}
+              onclick={() => (showInterviewForm = !showInterviewForm)}
               >{showInterviewForm
                 ? 'Close Interview Form'
                 : 'Show Interview Form'}</Button
             >
             {#if disabled && !showInterviewForm}
-              <Button on:click={handleEdit}>Edit</Button>
+              <Button onclick={handleEdit}>Edit</Button>
             {/if}
-            <Button on:click={dialogEl.cancel}>Close</Button>
+            <Button onclick={() => dialogEl?.cancel()}>Close</Button>
           </div>
         </div>
       </Card>
@@ -977,10 +977,10 @@
                   submit it!
                 </div>
                 <div class="flex justify-start gap-4">
-                  <Button color="green" on:click={saveNotes}>Save Notes</Button>
+                  <Button color="green" onclick={saveNotes}>Save Notes</Button>
                   <Button
                     color="red"
-                    on:click={() => (showInterviewForm = false)}
+                    onclick={() => (showInterviewForm = false)}
                     >Close Interview Form</Button
                   >
                 </div>

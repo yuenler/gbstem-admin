@@ -137,17 +137,17 @@
       >
         {#if !disabled}
           <div class="flex flex-wrap gap-2">
-            <Button color="green" on:click={handleSaveChanges}
+            <Button color="green" onclick={handleSaveChanges}
               >Save changes</Button
             >
-            <Button color="red" on:click={handleDeleteChanges}
+            <Button color="red" onclick={handleDeleteChanges}
               >Delete changes</Button
             >
           </div>
         {/if}
         <div class="flex flex-wrap gap-2">
-          <Button on:click={handleEdit}>Edit</Button>
-          <Button on:click={dialogEl.cancel}>Close</Button>
+          <Button onclick={handleEdit}>Edit</Button>
+          <Button onclick={() => dialogEl?.cancel()}>Close</Button>
         </div>
       </Card>
       <div class="mt-4 flex justify-center">

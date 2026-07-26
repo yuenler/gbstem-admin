@@ -123,7 +123,7 @@
     download="classes.csv">Download</Button
   >
   <Button
-    on:click={() =>
+    onclick={() =>
       copyEmails(data.classes.map((instructor) => instructor.email))}
     class="flex h-12 items-center gap-1"
   >

@@ -100,7 +100,9 @@
           {#snippet title()}
             <div class="flex items-center justify-between">
               Sub Request Notes
-              <Button color="red" on:click={dialogEl[i].cancel}>Close</Button>
+              <Button color="red" onclick={() => dialogEl[i]?.cancel()}
+                >Close</Button
+              >
             </div>
           {/snippet}
           {#snippet description()}

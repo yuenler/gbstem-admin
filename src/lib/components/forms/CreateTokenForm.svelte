@@ -111,7 +111,7 @@
       </div>
     </div>
     <DialogActions>
-      <Button type="button" on:click={dialogEl.cancel}>Cancel</Button>
+      <Button type="button" onclick={() => dialogEl?.cancel()}>Cancel</Button>
       <Button type="submit" color="blue" disabled={$delayed}>Create</Button>
     </DialogActions>
   </fieldset>

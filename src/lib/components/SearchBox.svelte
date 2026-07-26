@@ -67,7 +67,7 @@
     <div class="absolute top-0 right-2 flex h-12 items-center">
       <Button
         class="px-2 py-1 uppercase"
-        on:click={handleClear}
+        onclick={handleClear}
         disabled={searching}
       >
         Clear

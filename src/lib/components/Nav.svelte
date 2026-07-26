@@ -117,7 +117,7 @@
           <Button
             class="rounded-sm px-3 py-1 whitespace-nowrap"
             color={action.color}
-            on:click={() => {
+            onclick={() => {
               progress.start()
               disabled = true
               action.callback().finally(() => {
@@ -130,7 +130,7 @@
           </Button>
         {/each}
       </fieldset>
-      <Button on:click={() => ($actions = null)}>Close</Button>
+      <Button onclick={() => ($actions = null)}>Close</Button>
     </div>
   {/if}
 

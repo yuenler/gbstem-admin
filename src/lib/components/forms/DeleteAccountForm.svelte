@@ -105,7 +105,9 @@
             </div>
           </div>
           <DialogActions>
-            <Button type="button" on:click={dialogEl.cancel}>Cancel</Button>
+            <Button type="button" onclick={() => dialogEl?.cancel()}
+              >Cancel</Button
+            >
             <Button color="red" type="submit" disabled={$delayed}>Delete</Button
             >
           </DialogActions>

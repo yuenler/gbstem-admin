@@ -1,7 +1,4 @@
 <script lang="ts">
-  import { createBubbler, stopPropagation } from 'svelte/legacy'
-
-  const bubble = createBubbler()
   import { browser } from '$app/environment'
   import { page } from '$app/stores'
   import { db } from '$lib/client/firebase'
@@ -258,7 +255,7 @@
               type="checkbox"
               checked={checked.includes(i)}
               oninput={(e) => handleCheck(e, i)}
-              onclick={stopPropagation(bubble('click'))}
+              onclick={(e) => e.stopPropagation()}
             />
             <label for={`check-${i}`} class="sr-only">checkbox</label>
           </div>

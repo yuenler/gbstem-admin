@@ -94,7 +94,7 @@
     </div>
     <div>
       {#if !data.applicant.hhid.checkedIn}
-        <Button on:click={handleCheckIn}>Check In</Button>
+        <Button onclick={handleCheckIn}>Check In</Button>
       {/if}
     </div>
     <div class="mt-8 space-y-8">
@@ -106,7 +106,7 @@
           {#each Object.keys(data.applicant.hhid.food[date]) as meal}
             <div>
               <Button
-                on:click={() =>
+                onclick={() =>
                   handleMeal(date, meal, data.applicant.hhid.food[date][meal])}
                 >{meal}: {data.applicant.hhid.food[date][meal]
                   ? 'already eaten'

@@ -79,7 +79,7 @@
       <div>
         Feedback for {values.instructorName}'s {values.courseName} Class #{values.classNumber}
       </div>
-      <Button color="red" on:click={dialogEl.cancel}>Close</Button>
+      <Button color="red" onclick={() => dialogEl?.cancel()}>Close</Button>
     </div>
   {/snippet}
   {#snippet description()}

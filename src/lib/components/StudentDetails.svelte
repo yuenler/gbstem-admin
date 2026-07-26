@@ -375,7 +375,7 @@
       <div>Student Attendance and Information</div>
       <Button
         color="red"
-        on:click={() => {
+        onclick={() => {
           loading = true
           currentStudentId = ''
           dialogEl.cancel()
@@ -396,7 +396,7 @@
               <h2 class="font-bold">Class {i + 1} Information</h2>
               <Button
                 color="blue"
-                on:click={() =>
+                onclick={() =>
                   sendClassReminder({
                     studentList: [studentData],
                     studentName: studentData.name,
@@ -495,7 +495,7 @@
         <div class="mb-4 flex items-center justify-between">
           <h2 class="font-bold">Student Information</h2>
           <Button
-            on:click={() =>
+            onclick={() =>
               copyEmails([studentData.email, studentData.secondaryEmail])}
             class="flex items-center gap-1"
           >
@@ -553,7 +553,7 @@
           </div>
           <Button
             color="green"
-            on:click={() => addClass(selectedClassId)}
+            onclick={() => addClass(selectedClassId)}
             class="mt-4">Add Class</Button
           >
           <div class="lg:w-1/2">
@@ -565,7 +565,7 @@
           </div>
           <Button
             color="red"
-            on:click={() => dropClass(selectedDropClassId)}
+            onclick={() => dropClass(selectedDropClassId)}
             class="mt-4">Drop Class</Button
           >
         {:else}
@@ -614,7 +614,7 @@
             </div>
             <div class="mb-4">
               {#if !checkedIn}
-                <Button color="green" on:click={handleCheckIn}>Check In</Button>
+                <Button color="green" onclick={handleCheckIn}>Check In</Button>
               {/if}
             </div>
             <div class="space-y-4">
@@ -627,7 +627,7 @@
                       {#each Object.keys(food[date]) as meal}
                         <Button
                           color={food[date][meal] ? 'gray' : 'blue'}
-                          on:click={() =>
+                          onclick={() =>
                             handleMeal(date, meal, food[date][meal])}
                         >
                           {meal}: {food[date][meal]
