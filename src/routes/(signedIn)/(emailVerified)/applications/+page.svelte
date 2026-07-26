@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy'
-
   import { invalidate } from '$app/navigation'
   import { page } from '$app/stores'
   import { db } from '$lib/client/firebase'
@@ -179,12 +177,17 @@
   let csvWithHeaders = $derived(generateCSV(csvHeaders, rows))
   let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
   let url = $derived(URL.createObjectURL(blob))
-  run(() => {
+  // The Nav "Close" button clears the shared actions bar directly
+  // ($actions = null); mirror that back into our local selection so the
+  // checkboxes clear too. This converges in one step (checked -> [] ->
+  // the effect below sees length 0 -> actions.set(null), already null)
+  // rather than looping, since the two effects track disjoint state.
+  $effect(() => {
     if ($actions === null) {
       checked = []
     }
   })
-  run(() => {
+  $effect(() => {
     if (checked.length > 0) {
       actions.set([
         createDecisionAction('accepted'),

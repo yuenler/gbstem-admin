@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy'
-
   import Table from '$lib/components/Table.svelte'
   import { format } from 'date-fns'
   import type { PageData } from './$types'
@@ -47,7 +45,7 @@
       return `?${base.toString()}`
     })(),
   )
-  run(() => {
+  $effect(() => {
     if (checked.length > 0) {
       actions.set([
         {

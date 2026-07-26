@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy'
-
   import { doc, setDoc } from 'firebase/firestore'
   import { db } from '$lib/client/firebase'
   import { alert } from '$lib/stores'
@@ -47,57 +45,55 @@
     semesterEndDate = '',
   }: Props = $props()
 
-  const defaultValues: Data.Application<'client'> = {
-    personal: {
-      email: '',
-      firstName: '',
-      lastName: '',
-      gender: '',
-      race: [],
-      phoneNumber: '',
-      dateOfBirth: '',
-    },
-    academic: {
-      school: '',
-      graduationYear: '',
-    },
-    program: {
-      courses: [],
-      preferences: '',
-      timeSlots: '',
-      notAvailable: '',
-      inPerson: false,
-      numClasses: '',
-      reason: '',
-    },
-    essay: {
-      taughtBefore: false,
-      academicBackground: '',
-      teachingScenario: '',
-      why: '',
-    },
-    agreements: {
-      entireProgram: false,
-      timeCommitment: false,
-      submitting: false,
-    },
-    meta: {
-      id: '',
-      uid: '',
-      decision: null,
-      submitted: false,
-      interview: false,
-    },
-    timestamps: {
-      created: null as any,
-      updated: null as any,
-    },
-  }
-
   const schema = applicationSchema
 
+  function toFormValues(v: Data.Application<'client'>) {
+    return {
+      personal: {
+        phoneNumber: v.personal?.phoneNumber || '',
+        dateOfBirth: v.personal?.dateOfBirth || '',
+        gender: v.personal?.gender || '',
+        race: v.personal?.race || [],
+      },
+      academic: {
+        school: v.academic?.school || '',
+        graduationYear: v.academic?.graduationYear || new Date().getFullYear(),
+      },
+      program: {
+        courses: v.program?.courses || [],
+        preferences: v.program?.preferences || '',
+        timeSlots: v.program?.timeSlots || '',
+        notAvailable: v.program?.notAvailable || '',
+        inPerson:
+          v.program?.inPerson !== undefined ? v.program.inPerson : false,
+        reason: v.program?.reason || '',
+      },
+      essay: {
+        taughtBefore:
+          v.essay?.taughtBefore !== undefined ? v.essay.taughtBefore : false,
+        academicBackground: v.essay?.academicBackground || '',
+        teachingScenario: v.essay?.teachingScenario || '',
+        why: v.essay?.why || '',
+      },
+      agreements: {
+        entireProgram:
+          v.agreements?.entireProgram !== undefined
+            ? v.agreements.entireProgram
+            : false,
+        timeCommitment:
+          v.agreements?.timeCommitment !== undefined
+            ? v.agreements.timeCommitment
+            : false,
+        submitting:
+          v.agreements?.submitting !== undefined
+            ? v.agreements.submitting
+            : false,
+      },
+    }
+  }
+
   const formResult = superForm(
-    defaults(cloneDeep(defaultValues) as any, zod(schema as any) as any) as any,
+    defaults(toFormValues(values) as any, zod(schema as any) as any) as any,
     {
       SPA: true,
       validators: zod(schema as any) as any,
@@ -156,54 +152,8 @@
   const { form, enhance, submitting } = formResult
 
   // React to parent values changing (e.g. loaded data or cancel changes)
-  run(() => {
-    if (values) {
-      $form.personal = {
-        phoneNumber: values.personal?.phoneNumber || '',
-        dateOfBirth: values.personal?.dateOfBirth || '',
-        gender: values.personal?.gender || '',
-        race: values.personal?.race || [],
-      }
-      $form.academic = {
-        school: values.academic?.school || '',
-        graduationYear:
-          values.academic?.graduationYear || new Date().getFullYear(),
-      }
-      $form.program = {
-        courses: values.program?.courses || [],
-        preferences: values.program?.preferences || '',
-        timeSlots: values.program?.timeSlots || '',
-        notAvailable: values.program?.notAvailable || '',
-        inPerson:
-          values.program?.inPerson !== undefined
-            ? values.program.inPerson
-            : false,
-        reason: values.program?.reason || '',
-      }
-      $form.essay = {
-        taughtBefore:
-          values.essay?.taughtBefore !== undefined
-            ? values.essay.taughtBefore
-            : false,
-        academicBackground: values.essay?.academicBackground || '',
-        teachingScenario: values.essay?.teachingScenario || '',
-        why: values.essay?.why || '',
-      }
-      $form.agreements = {
-        entireProgram:
-          values.agreements?.entireProgram !== undefined
-            ? values.agreements.entireProgram
-            : false,
-        timeCommitment:
-          values.agreements?.timeCommitment !== undefined
-            ? values.agreements.timeCommitment
-            : false,
-        submitting:
-          values.agreements?.submitting !== undefined
-            ? values.agreements.submitting
-            : false,
-      }
-    }
+  $effect(() => {
+    form.set(toFormValues(values))
   })
 </script>
 
