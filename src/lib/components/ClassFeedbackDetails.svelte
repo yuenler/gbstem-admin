@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy'
-
   import {
     type Timestamp,
     doc,
@@ -48,27 +46,32 @@
     students: [],
   })
 
-  run(() => {
-    if (id !== undefined) {
-      ;(async () => {
-        loading = true
-        disabled = true
-        try {
-          const snapshot = await getDoc(
-            doc(db, instructorFeedbackCollection, id),
-          )
-          if (snapshot.exists()) {
-            values = snapshot.data() as ClientInstructorFeedback
-          } else {
-            alert.trigger('error', 'Feedback not found.')
-          }
-        } catch (err: any) {
-          console.error('Failed to load feedback:', err)
-          alert.trigger('error', 'Failed to load feedback.')
-        } finally {
-          loading = false
+  $effect(() => {
+    const currentId = id
+    if (currentId === undefined) return
+    let cancelled = false
+    ;(async () => {
+      loading = true
+      disabled = true
+      try {
+        const snapshot = await getDoc(
+          doc(db, instructorFeedbackCollection, currentId),
+        )
+        if (cancelled) return
+        if (snapshot.exists()) {
+          values = snapshot.data() as ClientInstructorFeedback
+        } else {
+          alert.trigger('error', 'Feedback not found.')
         }
-      })()
+      } catch (err: any) {
+        console.error('Failed to load feedback:', err)
+        alert.trigger('error', 'Failed to load feedback.')
+      } finally {
+        if (!cancelled) loading = false
+      }
+    })()
+    return () => {
+      cancelled = true
     }
   })
 </script>

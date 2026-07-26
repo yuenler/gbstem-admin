@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy'
-
   import { db } from '$lib/client/firebase'
   import Card from '$lib/components/Card.svelte'
   import { registrationsCollection } from '$lib/data/collections'
@@ -85,29 +83,36 @@
   let decision: Data.Decision | null
   let formEl: HTMLFormElement | undefined = $state()
 
-  run(() => {
-    if (id !== undefined) {
-      ;(async () => {
-        loading = true
-        disabled = true
-        values = cloneDeep(defaultValues)
-        try {
-          const registrationSnapshot = await getDoc(doc(db, collection, id))
-          if (registrationSnapshot.exists()) {
-            const data =
-              registrationSnapshot.data() as Data.Registration<'client'>
-            values = cloneDeep(data)
-            dbValues = cloneDeep(data)
-          } else {
-            alert.trigger('error', 'Registration not found.')
-          }
-        } catch (err: any) {
-          console.error('Failed to load registration:', err)
-          alert.trigger('error', 'Failed to load registration.')
-        } finally {
-          loading = false
+  $effect(() => {
+    const currentId = id
+    if (currentId === undefined) return
+    let cancelled = false
+    ;(async () => {
+      loading = true
+      disabled = true
+      values = cloneDeep(defaultValues)
+      try {
+        const registrationSnapshot = await getDoc(
+          doc(db, collection, currentId),
+        )
+        if (cancelled) return
+        if (registrationSnapshot.exists()) {
+          const data =
+            registrationSnapshot.data() as Data.Registration<'client'>
+          values = cloneDeep(data)
+          dbValues = cloneDeep(data)
+        } else {
+          alert.trigger('error', 'Registration not found.')
         }
-      })()
+      } catch (err: any) {
+        console.error('Failed to load registration:', err)
+        alert.trigger('error', 'Failed to load registration.')
+      } finally {
+        if (!cancelled) loading = false
+      }
+    })()
+    return () => {
+      cancelled = true
     }
   })
 

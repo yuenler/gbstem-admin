@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy'
-
   import { invalidate } from '$app/navigation'
   import { db } from '$lib/client/firebase'
   import Card from '$lib/components/Card.svelte'
@@ -134,82 +132,87 @@
   let decision: Data.Decision | null | undefined = $state()
   let formEl: HTMLFormElement | undefined = $state()
 
-  run(() => {
-    if (id !== undefined) {
-      ;(async () => {
-        loading = true
-        disabled = true
-        values = cloneDeep(defaultValues)
-        try {
-          const applicationSnapshot = await getDoc(doc(db, collection, id))
-          if (applicationSnapshot.exists()) {
-            const data =
-              applicationSnapshot.data() as Data.Application<'client'>
-            values = cloneDeep(data)
-            dbValues = cloneDeep(data)
+  $effect(() => {
+    const currentId = id
+    if (currentId === undefined) return
+    let cancelled = false
+    ;(async () => {
+      loading = true
+      disabled = true
+      values = cloneDeep(defaultValues)
+      try {
+        const applicationSnapshot = await getDoc(doc(db, collection, currentId))
+        if (cancelled) return
+        if (applicationSnapshot.exists()) {
+          const data = applicationSnapshot.data() as Data.Application<'client'>
+          values = cloneDeep(data)
+          dbValues = cloneDeep(data)
 
-            // Data populated in form child component
-            if (data.meta.decision) {
-              const decisionSnapshot = await getDoc(data.meta.decision)
-              if (decisionSnapshot.exists()) {
-                const dData = decisionSnapshot.data() as Data.Interview
-                const {
-                  type,
-                  likelyDecision,
-                  notes,
-                  interviewer,
-                  attendance,
-                  conversation,
-                  conversationNotes,
-                  lastSemesterNotes,
-                  mockLessonEngagement,
-                  mockLessonExplanations,
-                  mockLessonNotes,
-                  techNotes,
-                  mockLessonPace,
-                  mockLessonOverall,
-                  teachingPreferences,
-                  availabilityNotes,
-                  date,
-                } = dData
-                decision = type ?? null
-                interview.type = type ?? ''
-                interview.likelyDecision = likelyDecision ?? null
-                interview.notes = notes ?? ''
-                interview.interviewer = interviewer ?? ''
-                interview.attendance = attendance ?? ''
-                interview.conversation = conversation ?? 0
-                interview.conversationNotes = conversationNotes ?? ''
-                interview.lastSemesterNotes = lastSemesterNotes ?? ''
-                interview.mockLessonExplanations = mockLessonExplanations ?? 0
-                interview.mockLessonNotes = mockLessonNotes ?? ''
-                interview.techNotes = techNotes ?? ''
-                interview.mockLessonPace = mockLessonPace ?? 0
-                interview.mockLessonOverall = mockLessonOverall ?? 0
-                interview.teachingPreferences = teachingPreferences ?? ''
-                interview.mockLessonEngagement = mockLessonEngagement ?? 0
-                interview.availabilityNotes = availabilityNotes ?? ''
-                interview.date = toLocalISOString(new Date(date)) ?? ''
-              } else {
-                decision = null
-                interview.likelyDecision = null
-                interview = cloneDeep(defaultInterview)
-              }
+          // Data populated in form child component
+          if (data.meta.decision) {
+            const decisionSnapshot = await getDoc(data.meta.decision)
+            if (cancelled) return
+            if (decisionSnapshot.exists()) {
+              const dData = decisionSnapshot.data() as Data.Interview
+              const {
+                type,
+                likelyDecision,
+                notes,
+                interviewer,
+                attendance,
+                conversation,
+                conversationNotes,
+                lastSemesterNotes,
+                mockLessonEngagement,
+                mockLessonExplanations,
+                mockLessonNotes,
+                techNotes,
+                mockLessonPace,
+                mockLessonOverall,
+                teachingPreferences,
+                availabilityNotes,
+                date,
+              } = dData
+              decision = type ?? null
+              interview.type = type ?? ''
+              interview.likelyDecision = likelyDecision ?? null
+              interview.notes = notes ?? ''
+              interview.interviewer = interviewer ?? ''
+              interview.attendance = attendance ?? ''
+              interview.conversation = conversation ?? 0
+              interview.conversationNotes = conversationNotes ?? ''
+              interview.lastSemesterNotes = lastSemesterNotes ?? ''
+              interview.mockLessonExplanations = mockLessonExplanations ?? 0
+              interview.mockLessonNotes = mockLessonNotes ?? ''
+              interview.techNotes = techNotes ?? ''
+              interview.mockLessonPace = mockLessonPace ?? 0
+              interview.mockLessonOverall = mockLessonOverall ?? 0
+              interview.teachingPreferences = teachingPreferences ?? ''
+              interview.mockLessonEngagement = mockLessonEngagement ?? 0
+              interview.availabilityNotes = availabilityNotes ?? ''
+              interview.date = toLocalISOString(new Date(date)) ?? ''
             } else {
               decision = null
               interview.likelyDecision = null
               interview = cloneDeep(defaultInterview)
             }
           } else {
-            alert.trigger('error', 'Application not found.')
+            decision = null
+            interview.likelyDecision = null
+            interview = cloneDeep(defaultInterview)
           }
-        } catch (err: any) {
-          console.error('Failed to load application:', err)
-          alert.trigger('error', 'Failed to load application.')
-        } finally {
-          loading = false
+        } else {
+          alert.trigger('error', 'Application not found.')
         }
-      })()
+      } catch (err: any) {
+        console.error('Failed to load application:', err)
+        alert.trigger('error', 'Failed to load application.')
+      } finally {
+        if (!cancelled) loading = false
+      }
+    })()
+    return () => {
+      cancelled = true
     }
   })
 

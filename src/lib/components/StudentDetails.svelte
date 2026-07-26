@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy'
-
   import { db } from '$lib/client/firebase'
   import Card from '$lib/components/Card.svelte'
   import Select from '$lib/components/Select.svelte'
@@ -59,7 +57,9 @@
   let dropClassesOptions: { name: string }[] = $state([])
   let selectedClass = $state('')
   let selectedDropClass = $state('')
-  let currentStudentId = $state('')
+  // Bumped when the dialog is closed so reopening the same student still
+  // reloads fresh data - the effect below tracks this alongside `id`.
+  let reloadTrigger = $state(0)
   let nameToUid: Record<string, string> = $state({})
 
   let selectedClassId = $derived.by(() => {
@@ -224,21 +224,21 @@
     }
   }
 
-  // // Watch for id changes and reload
-  run(() => {
-    if (id && id !== currentStudentId) {
-      currentStudentId = id
-      ;(async () => {
-        loading = true
-        try {
-          await loadStudentClasses(id)
-        } catch (err) {
-          console.error('Student classes load error:', err)
-        } finally {
-          loading = false
-        }
-      })()
-    }
+  // Watch for id changes (or a forced reload after close) and reload
+  $effect(() => {
+    const currentId = id
+    void reloadTrigger
+    if (!currentId) return
+    ;(async () => {
+      loading = true
+      try {
+        await loadStudentClasses(currentId)
+      } catch (err) {
+        console.error('Student classes load error:', err)
+      } finally {
+        loading = false
+      }
+    })()
   })
 
   // Add class
@@ -370,7 +370,7 @@
         color="red"
         onclick={() => {
           loading = true
-          currentStudentId = ''
+          reloadTrigger++
           dialogEl.cancel()
         }}
       >

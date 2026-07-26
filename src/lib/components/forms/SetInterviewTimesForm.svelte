@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run } from 'svelte/legacy'
-
   import { db, user } from '$lib/client/firebase'
   import Form from '$lib/components/Form.svelte'
   import Input from '$lib/components/Input.svelte'
@@ -117,7 +115,7 @@
   }
 
   let selectedIntervieweeDocId = $state('')
-  run(() => {
+  $effect(() => {
     if (interviewee) {
       const selectedInterviewee = intervieweeOptions.find(
         (option) =>
