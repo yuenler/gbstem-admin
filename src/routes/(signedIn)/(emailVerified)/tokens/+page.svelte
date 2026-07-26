@@ -272,7 +272,7 @@
 
 {#if create}
   <Token
-    on:exit={() => {
+    onExit={() => {
       create = false
     }}
   />

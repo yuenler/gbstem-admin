@@ -1,14 +1,18 @@
 <script lang="ts">
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
-  import { createEventDispatcher } from 'svelte'
   import CreateTokenForm from './forms/CreateTokenForm.svelte'
 
-  const dispatch = createEventDispatcher()
+  interface Props {
+    onExit?: () => void
+  }
+
+  let { onExit }: Props = $props()
+
   let dialogEl: any = $state()
 
   function handleExit() {
-    dispatch('exit', true)
+    onExit?.()
   }
 </script>
 
@@ -16,8 +20,8 @@
   bind:this={dialogEl}
   alert
   initial
-  on:cancel={handleExit}
-  on:close={handleExit}
+  onCancel={handleExit}
+  onClose={handleExit}
 >
   {#snippet title()}
     Token

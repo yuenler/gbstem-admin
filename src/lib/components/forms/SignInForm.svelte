@@ -17,8 +17,8 @@
     password: '',
   })
 
-  async function handleSubmit(e: CustomEvent<SubmitData>) {
-    if (e.detail.error === null) {
+  async function handleSubmit(data: SubmitData) {
+    if (data.error === null) {
       showValidation = false
       disabled = true
       try {
@@ -53,14 +53,14 @@
       }
     } else {
       showValidation = true
-      alert.trigger('error', e.detail.error)
+      alert.trigger('error', data.error)
     }
   }
 </script>
 
 <Form
   class={cn('max-w-lg', showValidation && 'show-validation')}
-  on:submit={handleSubmit}
+  onSubmit={handleSubmit}
 >
   <fieldset class="space-y-4" {disabled}>
     <Brand />

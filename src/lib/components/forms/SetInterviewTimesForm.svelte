@@ -386,7 +386,7 @@
                 <Card>
                   <Form
                     class={cn(showValidation && 'show-validation', className)}
-                    on:submit={() => updateTime(interview)}
+                    onSubmit={() => updateTime(interview)}
                   >
                     <div style="padding:1rem;">
                       <div><b>Interviewer: </b>{interview.interviewerName}</div>
