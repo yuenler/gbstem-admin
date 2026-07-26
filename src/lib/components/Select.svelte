@@ -20,6 +20,7 @@
   import { clickOutside, cn } from '$lib/utils'
   import { debounce, kebabCase, uniqueId } from 'lodash-es'
   import { fade } from 'svelte/transition'
+  import { untrack } from 'svelte'
 
   type SelectOption = string
   type SelectOptionJson = {
@@ -68,12 +69,15 @@
     }
   }, 150)
 
-  // Handle open state changes without causing infinite loops
-  let previousOpenState = false
-
-  // Handle value validation separately to prevent loops
+  // Guards the effect below against re-validating on every remount before
+  // a freshly-mounted field's real value (from async parent data) settles -
+  // not an infinite-loop guard, but a genuine fix: without it, a fresh
+  // instance briefly sees its placeholder empty value, calls
+  // setCustomValidity with an error, and native constraint validation then
+  // blocks form submission even after the real value arrives, because
+  // nothing else ever clears that message. See git history for the Cypress
+  // failure this was caught by.
   let previousValue = value
-
   filterOptionsBy(value)
 
   function handleInput(
@@ -126,28 +130,32 @@
     open = true
   }
   let options = $derived(optionsJson.map((item) => item.name))
+
+  // Tracks only `open` - the register/validate branches read `value` and
+  // `options` but shouldn't re-run just because those change while the
+  // dropdown state itself hasn't, so those reads are untracked.
   $effect(() => {
-    if (open !== previousOpenState) {
-      previousOpenState = open
-      if (open) {
-        registerOpenSelect(id, (newValue) => {
-          if (newValue !== open) {
-            open = newValue
-          }
-        })
-      } else {
-        // validate value before close
+    if (open) {
+      registerOpenSelect(id, (newValue) => {
+        if (newValue !== open) {
+          open = newValue
+        }
+      })
+    } else {
+      untrack(() => {
         if (!options.includes(value)) {
           value = ''
         }
-      }
+      })
     }
   })
+
   $effect(() => {
     if (options) {
       filterOptionsBy(value)
     }
   })
+
   $effect(() => {
     if (value !== previousValue) {
       previousValue = value
@@ -155,12 +163,10 @@
       if (self) {
         if (value === '' && required) {
           self.setCustomValidity('Please fill required fields.')
+        } else if (options.includes(value)) {
+          self.setCustomValidity('')
         } else {
-          if (options.includes(value)) {
-            self.setCustomValidity('')
-          } else {
-            self.setCustomValidity('Please select valid options.')
-          }
+          self.setCustomValidity('Please select valid options.')
         }
       }
     }
