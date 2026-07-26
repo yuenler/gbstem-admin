@@ -58,11 +58,24 @@
   let classesOptions: { name: string }[] = $state([])
   let dropClassesOptions: { name: string }[] = $state([])
   let selectedClass = $state('')
-  let selectedClassId = $state('')
   let selectedDropClass = $state('')
-  let selectedDropClassId = $state('')
   let currentStudentId = $state('')
   let nameToUid: Record<string, string> = $state({})
+
+  let selectedClassId = $derived.by(() => {
+    const selectedClassOption = classesOptions.find(
+      (opt) => opt.name === selectedClass,
+    )
+    return selectedClassOption ? nameToUid[selectedClassOption.name] : ''
+  })
+  let selectedDropClassId = $derived.by(() => {
+    const selectedDropClassOption = dropClassesOptions.find(
+      (opt) => opt.name === selectedDropClass,
+    )
+    return selectedDropClassOption
+      ? nameToUid[selectedDropClassOption.name]
+      : ''
+  })
 
   let checkInLoading = $state(true)
   let confirmed = $state(false)
@@ -80,8 +93,6 @@
 
     selectedClass = ''
     selectedDropClass = ''
-    selectedClassId = ''
-    selectedDropClassId = ''
 
     try {
       // Start fetching everything in parallel to optimize load times and prevent timeout
@@ -230,22 +241,6 @@
     }
   })
 
-  // Update selected class IDs
-  run(() => {
-    const selectedClassOption = classesOptions.find(
-      (opt) => opt.name === selectedClass,
-    )
-    selectedClassId = selectedClassOption
-      ? nameToUid[selectedClassOption.name]
-      : ''
-    const selectedDropClassOption = dropClassesOptions.find(
-      (opt) => opt.name === selectedDropClass,
-    )
-    selectedDropClassId = selectedDropClassOption
-      ? nameToUid[selectedDropClassOption.name]
-      : ''
-  })
-
   // Add class
   async function addClass(classId: string) {
     if (!studentID || !classId) {
@@ -265,7 +260,6 @@
       await updateDoc(registrationDocRef, { classes: arrayUnion(classId) })
       alert.trigger('success', 'Enrolled in class successfully!')
       selectedClass = ''
-      selectedClassId = ''
       await tick()
       await loadStudentClasses(studentID)
       const payload: EnrollRequestBody = {
@@ -304,7 +298,6 @@
       await updateDoc(registrationDocRef, { classes: arrayRemove(classId) })
       alert.trigger('success', 'Dropped class successfully!')
       selectedDropClass = ''
-      selectedDropClassId = ''
       await tick()
       await loadStudentClasses(studentID)
     } catch (error) {
