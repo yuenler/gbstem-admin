@@ -15,13 +15,13 @@
   import EditRegistrationForm from './forms/EditRegistrationForm.svelte'
 
   interface Props {
-    dialogEl?: any
+    open?: boolean
     id: string | undefined
     collection?: string
   }
 
   let {
-    dialogEl = $bindable(),
+    open = $bindable(false),
     id,
     collection = registrationsCollection,
   }: Props = $props()
@@ -131,7 +131,7 @@
   }
 </script>
 
-<Dialog bind:this={dialogEl} size="full" alert>
+<Dialog bind:open size="full" alert>
   {#snippet title()}
     Registration
   {/snippet}
@@ -152,7 +152,7 @@
         {/if}
         <div class="flex flex-wrap gap-2">
           <Button onclick={handleEdit}>Edit</Button>
-          <Button onclick={() => dialogEl?.cancel()}>Close</Button>
+          <Button onclick={() => (open = false)}>Close</Button>
         </div>
       </Card>
       <div class="mt-4 flex justify-center">

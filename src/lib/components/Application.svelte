@@ -33,13 +33,13 @@
   import EditApplicationForm from './forms/EditApplicationForm.svelte'
 
   interface Props {
-    dialogEl?: any
+    open?: boolean
     id: string | undefined
     collection?: string
   }
 
   let {
-    dialogEl = $bindable(),
+    open = $bindable(false),
     id,
     collection = applicationsCollection,
   }: Props = $props()
@@ -437,7 +437,7 @@
   }
 </script>
 
-<Dialog bind:this={dialogEl} size="full" alert>
+<Dialog bind:open size="full" alert>
   {#snippet title()}
     Application
   {/snippet}
@@ -670,7 +670,7 @@
             {#if disabled && !showInterviewForm}
               <Button onclick={handleEdit}>Edit</Button>
             {/if}
-            <Button onclick={() => dialogEl?.cancel()}>Close</Button>
+            <Button onclick={() => (open = false)}>Close</Button>
           </div>
         </div>
       </Card>

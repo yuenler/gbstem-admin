@@ -3,7 +3,6 @@
   import Button from '$lib/components/Button.svelte'
   import ClassFeedbackDetails from '$lib/components/ClassFeedbackDetails.svelte'
   import CourseFilter from '$lib/components/CourseFilter.svelte'
-  import Dialog from '$lib/components/Dialog.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
   import SearchBox from '$lib/components/SearchBox.svelte'
   import Table from '$lib/components/Table.svelte'
@@ -15,7 +14,7 @@
   }
 
   let { data }: Props = $props()
-  let dialogEl: Dialog | undefined = $state()
+  let showFeedbackDialog = $state(false)
   let selectedFeedbackId: string | undefined = $state(undefined)
 
   function getAttendancePercent(value: boolean[]) {
@@ -84,7 +83,7 @@
   <title>Class Feedback</title>
 </svelte:head>
 
-<ClassFeedbackDetails bind:dialogEl id={selectedFeedbackId} />
+<ClassFeedbackDetails bind:open={showFeedbackDialog} id={selectedFeedbackId} />
 
 <div class="mb-4 flex flex-wrap items-end gap-4">
   <SearchBox basePath="/instructor-feedback" />
@@ -112,7 +111,7 @@
         class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
         onclick={() => {
           selectedFeedbackId = value.id
-          dialogEl?.open()
+          showFeedbackDialog = true
         }}
       >
         <td class="px-6 py-4">

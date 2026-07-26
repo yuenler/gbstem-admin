@@ -3,7 +3,6 @@
   import Button from '$lib/components/Button.svelte'
   import ClassDetails from '$lib/components/ClassDetails.svelte'
   import CourseFilter from '$lib/components/CourseFilter.svelte'
-  import Dialog from '$lib/components/Dialog.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
   import SearchBox from '$lib/components/SearchBox.svelte'
   import Table from '$lib/components/Table.svelte'
@@ -22,7 +21,7 @@
   let loading = true
   let selectedClassId: string | undefined = $state(undefined)
   let checked: Array<number> = []
-  let dialogEl: Dialog | undefined = $state()
+  let showClassDetailsDialog = $state(false)
 
   let currentPage = $derived(data.page ?? 1)
   let currentLimit = $derived(data.limit ?? 25)
@@ -117,7 +116,7 @@
   <title>Classes</title>
 </svelte:head>
 
-<ClassDetails bind:dialogEl id={selectedClassId} />
+<ClassDetails bind:open={showClassDetailsDialog} id={selectedClassId} />
 
 <div class="flex flex-wrap items-end gap-4">
   <SearchBox basePath="/classes" />
@@ -176,7 +175,7 @@
           class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
           onclick={() => {
             selectedClassId = value.id
-            dialogEl?.open()
+            showClassDetailsDialog = true
           }}
         >
           <td class="px-6 py-4">

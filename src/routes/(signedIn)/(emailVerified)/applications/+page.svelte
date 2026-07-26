@@ -5,7 +5,6 @@
   import Application from '$lib/components/Application.svelte'
   import Button from '$lib/components/Button.svelte'
   import CollectionFilter from '$lib/components/CollectionFilter.svelte'
-  import type Dialog from '$lib/components/Dialog.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
   import SearchBox from '$lib/components/SearchBox.svelte'
   import StatusFilter from '$lib/components/StatusFilter.svelte'
@@ -26,7 +25,7 @@
   }
 
   let { data }: Props = $props()
-  let dialogEl: Dialog | undefined = $state()
+  let showApplicationDialog = $state(false)
   let current: number | undefined = $state()
   let checked: Array<number> = $state([])
 
@@ -288,7 +287,7 @@
         class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
         onclick={() => {
           current = i
-          dialogEl?.open()
+          showApplicationDialog = true
         }}
       >
         <td class="w-4 p-4">
@@ -514,7 +513,7 @@
 {/if}
 
 <Application
-  bind:dialogEl
+  bind:open={showApplicationDialog}
   id={application?.id}
   collection={selectedCollection}
 />

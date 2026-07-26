@@ -15,11 +15,11 @@
   import { instructorFeedbackCollection } from '$lib/data/collections'
 
   interface Props {
-    dialogEl?: any
+    open?: boolean
     id: string | undefined
   }
 
-  let { dialogEl = $bindable(), id }: Props = $props()
+  let { open = $bindable(false), id }: Props = $props()
 
   let loading = $state(true)
   let disabled = $state(true)
@@ -76,13 +76,13 @@
   })
 </script>
 
-<Dialog bind:this={dialogEl} size="full" alert>
+<Dialog bind:open size="full" alert>
   {#snippet title()}
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
         Feedback for {values.instructorName}'s {values.courseName} Class #{values.classNumber}
       </div>
-      <Button color="red" onclick={() => dialogEl?.cancel()}>Close</Button>
+      <Button color="red" onclick={() => (open = false)}>Close</Button>
     </div>
   {/snippet}
   {#snippet description()}

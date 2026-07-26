@@ -17,7 +17,7 @@
 
   let { data, form }: Props = $props()
 
-  let dialogEl: Dialog | undefined = $state()
+  let showErrorDialog = $state(true)
 
   let disabled = $state(false)
   let values = $state({
@@ -112,7 +112,7 @@
 </form>
 
 {#if form?.error}
-  <Dialog bind:this={dialogEl} initial alert>
+  <Dialog bind:open={showErrorDialog} alert>
     {#snippet title()}
       Error
     {/snippet}
@@ -122,7 +122,9 @@
           {#if form?.error}{form.error}{/if}
         </p>
         <DialogActions>
-          <Button color="gray" onclick={() => dialogEl?.cancel()}>Close</Button>
+          <Button color="gray" onclick={() => (showErrorDialog = false)}
+            >Close</Button
+          >
         </DialogActions>
       </div>
     {/snippet}

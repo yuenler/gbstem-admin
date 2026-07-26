@@ -24,11 +24,11 @@
   import EditClassForm from './forms/EditClassForm.svelte'
 
   interface Props {
-    dialogEl?: any
+    open?: boolean
     id: string | undefined
   }
 
-  let { dialogEl = $bindable(), id }: Props = $props()
+  let { open = $bindable(false), id }: Props = $props()
 
   let loading = true
   let disabled = $state(true)
@@ -169,7 +169,7 @@
   })
 </script>
 
-<Dialog bind:this={dialogEl} size="full" alert>
+<Dialog bind:open size="full" alert>
   {#snippet title()}
     Class Details
   {/snippet}
@@ -190,7 +190,7 @@
         {/if}
         <div class="flex flex-wrap gap-2">
           <Button color="green" onclick={handleEdit}>Edit</Button>
-          <Button color="red" onclick={() => dialogEl?.cancel()}>Close</Button>
+          <Button color="red" onclick={() => (open = false)}>Close</Button>
           <Button
             color="blue"
             onclick={() =>

@@ -17,7 +17,16 @@
 
   let { data }: Props = $props()
 
-  let dialogEl: Dialog[] = $state([])
+  // Sized to match data.subRequests so bind:open={openStates[i]} never binds
+  // to undefined (Svelte forbids that when the prop has a fallback value).
+  // Runs pre-DOM-update so a growing subRequests list (e.g. via
+  // PerPageControl) is backfilled before the {#each} below re-renders.
+  let openStates: boolean[] = $state([])
+  $effect.pre(() => {
+    for (let i = openStates.length; i < data.subRequests.length; i++) {
+      openStates[i] = false
+    }
+  })
 
   let currentPage = $derived(data.page ?? 1)
   let currentLimit = $derived(data.limit ?? 25)
@@ -103,11 +112,11 @@
     {/snippet}
     {#snippet body()}
       {#each data.subRequests as subRequest, i (subRequest.id)}
-        <Dialog bind:this={dialogEl[i]}>
+        <Dialog bind:open={openStates[i]}>
           {#snippet title()}
             <div class="flex items-center justify-between">
               Sub Request Notes
-              <Button color="red" onclick={() => dialogEl[i]?.cancel()}
+              <Button color="red" onclick={() => (openStates[i] = false)}
                 >Close</Button
               >
             </div>
@@ -120,9 +129,7 @@
           class={`${subRequest.subRequestStatus === SubRequestStatus.NoSubstituteNeeded ? 'bg-green-100' : subRequest.subRequestStatus === SubRequestStatus.SubstituteFeedbackNeeded ? 'bg-yellow-100' : subRequest.subRequestStatus === SubRequestStatus.SubstituteFound ? 'bg-blue-100' : 'bg-red-100'} border-b border-white hover:bg-white hover:cursor-pointer`}
           onclick={(e) => {
             e.stopPropagation()
-            if (dialogEl[i]) {
-              dialogEl[i].open()
-            }
+            openStates[i] = true
           }}
         >
           <td class="px-6 py-4">

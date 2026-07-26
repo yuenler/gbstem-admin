@@ -9,26 +9,18 @@
 
   let { onExit }: Props = $props()
 
-  let dialogEl: any = $state()
-
   function handleExit() {
     onExit?.()
   }
 </script>
 
-<Dialog
-  bind:this={dialogEl}
-  alert
-  initial
-  onCancel={handleExit}
-  onClose={handleExit}
->
+<Dialog open={true} alert onCancel={handleExit}>
   {#snippet title()}
     Token
   {/snippet}
   {#snippet description()}
     <div>
-      <CreateTokenForm {dialogEl} />
+      <CreateTokenForm onExit={handleExit} />
     </div>
   {/snippet}
 </Dialog>

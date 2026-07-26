@@ -3,7 +3,6 @@
   import { addDoc, collection } from 'firebase/firestore'
   import { db } from '$lib/client/firebase'
   import Button from '../Button.svelte'
-  import type Dialog from '../Dialog.svelte'
   import { alert } from '$lib/stores'
   import type { FirebaseError } from 'firebase/app'
   import { invalidate } from '$app/navigation'
@@ -18,10 +17,10 @@
   import FormCheckbox from '../FormCheckbox.svelte'
 
   interface Props {
-    dialogEl?: any
+    onExit?: () => void
   }
 
-  let { dialogEl }: Props = $props()
+  let { onExit }: Props = $props()
 
   const schema = tokenSchema
 
@@ -54,7 +53,7 @@
           }
           await invalidate('app:tokens')
           alert.trigger('success', 'Changes were saved successfully.')
-          dialogEl.close()
+          onExit?.()
         } catch (err: any) {
           console.error('Token creation error:', err)
           alert.trigger('error', err.code || err.message, true)
@@ -111,7 +110,7 @@
       </div>
     </div>
     <DialogActions>
-      <Button type="button" onclick={() => dialogEl?.cancel()}>Cancel</Button>
+      <Button type="button" onclick={() => onExit?.()}>Cancel</Button>
       <Button type="submit" color="blue" disabled={$delayed}>Create</Button>
     </DialogActions>
   </fieldset>

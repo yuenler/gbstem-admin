@@ -4,7 +4,6 @@
   import { db } from '$lib/client/firebase'
   import Button from '$lib/components/Button.svelte'
   import CollectionFilter from '$lib/components/CollectionFilter.svelte'
-  import type Dialog from '$lib/components/Dialog.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
   import Registration from '$lib/components/Registration.svelte'
   import SearchBox from '$lib/components/SearchBox.svelte'
@@ -36,7 +35,7 @@
   }
 
   let { data }: Props = $props()
-  let dialogEl: Dialog | undefined = $state()
+  let showRegistrationDialog = $state(false)
   let current: number | undefined = $state()
   let checked: Array<number> = $state([])
   let selectedCollection = $derived(
@@ -318,7 +317,7 @@
         onclick={(e) => {
           if ((e.target as HTMLElement).tagName === 'INPUT') return
           current = i
-          dialogEl?.open()
+          showRegistrationDialog = true
         }}
       >
         <td class="w-4 p-4">
@@ -405,7 +404,7 @@
 </div>
 
 <Registration
-  bind:dialogEl
+  bind:open={showRegistrationDialog}
   id={registration?.id}
   collection={selectedCollection}
 />

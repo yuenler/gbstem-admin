@@ -18,7 +18,7 @@
     password: z.string().min(1, 'Password is required'),
   })
 
-  let dialogEl: any = $state()
+  let showDeleteDialog = $state(false)
 
   const formResult = superForm(
     defaults({ password: '' }, zod(schema as any) as any) as any,
@@ -63,14 +63,19 @@
   <div class="mt-2">
     <button
       type="button"
-      onclick={() => dialogEl.open()}
+      onclick={() => (showDeleteDialog = true)}
       class="rounded-md bg-red-100 px-4 py-2 text-red-900 shadow-xs transition-colors duration-300 hover:bg-red-200 disabled:bg-red-200 disabled:text-red-700"
       >Delete account</button
     >
   </div>
 </div>
 
-<Dialog bind:this={dialogEl} onCancel={handleCancel} disabled={$delayed} alert>
+<Dialog
+  bind:open={showDeleteDialog}
+  onCancel={handleCancel}
+  disabled={$delayed}
+  alert
+>
   {#snippet title()}
     Delete account
   {/snippet}
@@ -105,8 +110,12 @@
             </div>
           </div>
           <DialogActions>
-            <Button type="button" onclick={() => dialogEl?.cancel()}
-              >Cancel</Button
+            <Button
+              type="button"
+              onclick={() => {
+                handleCancel()
+                showDeleteDialog = false
+              }}>Cancel</Button
             >
             <Button color="red" type="submit" disabled={$delayed}>Delete</Button
             >

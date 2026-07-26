@@ -4,7 +4,6 @@
   import { db } from '$lib/client/firebase'
   import Button from '$lib/components/Button.svelte'
   import CourseFilter from '$lib/components/CourseFilter.svelte'
-  import type Dialog from '$lib/components/Dialog.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
   import SearchBox from '$lib/components/SearchBox.svelte'
   import StatusFilter from '$lib/components/StatusFilter.svelte'
@@ -31,7 +30,7 @@
   }
 
   let { data }: Props = $props()
-  let dialogEl: Dialog | undefined = $state()
+  let showStudentDialog = $state(false)
   let current: number | undefined = $state()
   let clickedRegistration: any = $derived(
     data.registrations.length === 0
@@ -251,7 +250,7 @@
         onclick={(e) => {
           e.stopPropagation()
           current = i
-          dialogEl?.open()
+          showStudentDialog = true
         }}
       >
         <td class="w-4 p-4">
@@ -301,7 +300,7 @@
   {/snippet}
 </Table>
 
-<StudentDetails bind:dialogEl id={clickedRegistration?.id} />
+<StudentDetails bind:open={showStudentDialog} id={clickedRegistration?.id} />
 
 {#if !data.query && data.registrations}
   <div class="mt-4 flex justify-end gap-2">

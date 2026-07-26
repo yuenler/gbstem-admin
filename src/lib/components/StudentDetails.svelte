@@ -34,11 +34,11 @@
   import Dialog from './Dialog.svelte'
 
   interface Props {
-    dialogEl?: any
+    open?: boolean
     id: string | undefined
   }
 
-  let { dialogEl = $bindable(), id }: Props = $props()
+  let { open = $bindable(false), id }: Props = $props()
 
   let studentID = ''
   let loading = $state(true)
@@ -362,7 +362,7 @@
   }
 </script>
 
-<Dialog bind:this={dialogEl} size="full" alert>
+<Dialog bind:open size="full" alert>
   {#snippet title()}
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>Student Attendance and Information</div>
@@ -371,7 +371,7 @@
         onclick={() => {
           loading = true
           reloadTrigger++
-          dialogEl.cancel()
+          open = false
         }}
       >
         Close
