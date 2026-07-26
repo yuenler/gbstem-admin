@@ -42,6 +42,7 @@
   }
 
   type ClassToday = {
+    id: string
     classNumber: number
     class: Data.Class
   }
@@ -191,7 +192,11 @@
                   meetingTime.toLocaleDateString()
               ) {
                 const classSession = doc.data() as Data.Class
-                todayClasses.push({ class: classSession, classNumber: i })
+                todayClasses.push({
+                  id: doc.id,
+                  class: classSession,
+                  classNumber: i,
+                })
               }
             }
           }
@@ -326,7 +331,7 @@
             <span class="col-span-2 text-right">Time</span>
           </div>
           <ul class="list-none space-y-2">
-            {#each classesToday as classToday}
+            {#each classesToday as classToday (classToday.id + '-' + classToday.classNumber)}
               {@const status =
                 classToday.class.classStatuses[classToday.classNumber]}
               <li

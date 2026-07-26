@@ -99,11 +99,11 @@
     </div>
     <div class="mt-8 space-y-8">
       {#if data.applicant.hhid.checkedIn}
-        {#each Object.keys(data.applicant.hhid.food).sort() as date}
+        {#each Object.keys(data.applicant.hhid.food).sort() as date (date)}
           <div class="font-bold">
             {date}
           </div>
-          {#each Object.keys(data.applicant.hhid.food[date]) as meal}
+          {#each Object.keys(data.applicant.hhid.food[date]) as meal (meal)}
             <div>
               <Button
                 onclick={() =>

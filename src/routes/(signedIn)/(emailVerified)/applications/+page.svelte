@@ -273,7 +273,7 @@
     <th scope="col" class="px-6 py-3">Taught before</th>
   {/snippet}
   {#snippet body()}
-    {#each data.applications as application, i}
+    {#each data.applications as application, i (application.id)}
       <tr
         class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
         onclick={() => {

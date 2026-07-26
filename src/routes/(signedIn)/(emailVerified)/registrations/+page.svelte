@@ -300,7 +300,7 @@
     <!-- <th scope="col" class="px-6 py-3">Taught before</th> -->
   {/snippet}
   {#snippet body()}
-    {#each data.registrations as registration, i}
+    {#each data.registrations as registration, i (registration.id)}
       <tr
         class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
         onclick={(e) => {

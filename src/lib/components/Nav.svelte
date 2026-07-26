@@ -93,7 +93,7 @@
     <div
       class="no-scrollbar hidden min-w-0 flex-1 items-center justify-start gap-0.5 overflow-x-auto px-2 py-1 sm:flex md:gap-1 lg:justify-center lg:gap-1.5 xl:gap-2"
     >
-      {#each pages as page}
+      {#each pages as page (page.href)}
         <a
           class={cn(
             'rounded-md px-1.5 py-1 text-[11px] md:px-2 md:py-1 md:text-xs lg:px-2.5 lg:py-1.5 lg:text-[13px] xl:text-[14px] transition-colors text-center leading-tight flex items-center justify-center min-h-10 max-w-25 shrink-0',
@@ -113,7 +113,7 @@
       class="hidden min-w-0 flex-1 items-center justify-between gap-3 overflow-x-auto sm:flex"
     >
       <fieldset class="flex items-center gap-3" {disabled}>
-        {#each $actions as action}
+        {#each $actions as action, i (i)}
           <Button
             class="rounded-sm px-3 py-1 whitespace-nowrap"
             color={action.color}
@@ -191,7 +191,7 @@
     }}
   >
     {#if user.emailVerified}
-      {#each pages as page}
+      {#each pages as page (page.href)}
         <a
           class={cn(
             'rounded-md px-3 py-2 transition-colors',

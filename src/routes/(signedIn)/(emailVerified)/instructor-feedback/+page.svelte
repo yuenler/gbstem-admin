@@ -100,7 +100,7 @@
     <th scope="col" class="px-6 py-3">Feedback</th>
   {/snippet}
   {#snippet body()}
-    {#each data.feedback as value}
+    {#each data.feedback as value (value.id)}
       <tr
         class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
         onclick={() => {

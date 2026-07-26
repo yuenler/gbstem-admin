@@ -95,7 +95,7 @@
       <th scope="col" class="px-6 py-3">Substitute Instructor Email</th>
     {/snippet}
     {#snippet body()}
-      {#each data.subRequests as subRequest, i}
+      {#each data.subRequests as subRequest, i (subRequest.id)}
         <Dialog bind:this={dialogEl[i]}>
           {#snippet title()}
             <div class="flex items-center justify-between">

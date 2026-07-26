@@ -37,9 +37,6 @@ export default tseslint.config(
       // fix is Phase 8b of the Svelte 5 migration (swap to svelte/reactivity
       // only where stored in $state and mutated), then re-enable.
       'svelte/prefer-svelte-reactivity': 'off',
-      // 55 unkeyed {#each} blocks across admin+portal - Phase 8c of the
-      // Svelte 5 migration adds keys, then re-enables this.
-      'svelte/require-each-key': 'off',
       // Mostly false positives against $bindable prop writes (e.g.
       // EditApplicationForm/EditRegistrationForm's dbValues/loading), which
       // the Phase 2c form-seeding rewrite addresses; plus one unrelated

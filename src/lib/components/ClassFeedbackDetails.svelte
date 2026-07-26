@@ -144,7 +144,7 @@
                 </tr>
               </thead>
               <tbody>
-                {#each Object.keys(values.attendanceList) as attendance, i}
+                {#each Object.keys(values.attendanceList) as attendance, i (attendance)}
                   <tr style="border-bottom: 1px solid #ccc;">
                     <td style="padding: 8px;">{attendance}</td>
                     <td style="padding: 8px;"

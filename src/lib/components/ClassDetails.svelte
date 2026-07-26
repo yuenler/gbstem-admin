@@ -297,7 +297,7 @@
                 </tr>
               </thead>
               <tbody>
-                {#each studentList as student}
+                {#each studentList as student (student.email)}
                   <tr
                     style="border-bottom: 1px solid #ccc;"
                     class="whitespace-nowrap"
@@ -324,7 +324,7 @@
                 <strong>Schedule</strong>
               </div>
               {#if values.meetingTimes}
-                {#each values.meetingTimes as meetingTime, i}
+                {#each values.meetingTimes as meetingTime, i (i)}
                   {#if values.classStatuses[i] === ClassStatus.EverythingComplete}
                     <div class="mb-2 rounded-lg bg-green-100 p-4">
                       <div class="flex items-center justify-between">

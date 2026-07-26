@@ -178,7 +178,7 @@
     </th>
   {/snippet}
   {#snippet body()}
-    {#each data.tokens as token, i}
+    {#each data.tokens as token, i (token.id)}
       <tr class="border-b bg-white">
         <td class="w-4 p-4">
           <div class="flex items-center">

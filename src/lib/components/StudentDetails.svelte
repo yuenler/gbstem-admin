@@ -388,7 +388,7 @@
   {#snippet description()}
     <div class="w-full min-w-0">
       <div class="mt-4 justify-center">
-        {#each classes as value, i}
+        {#each classes as value, i (value.id)}
           <Card>
             <div
               class="flex flex-wrap items-start justify-between gap-3 sm:items-center"
@@ -466,7 +466,7 @@
                       <th class="border-b p-2 whitespace-nowrap">Feedback</th>
                     </tr>
                   </thead>
-                  {#each attendance as att}
+                  {#each attendance as att (att.id)}
                     {#if att.courseName === value.course && att.id.includes(value.id) && Object.keys(att.attendanceList).includes(studentData.name)}
                       <tbody>
                         <tr class="border-b">
@@ -620,11 +620,11 @@
             <div class="space-y-4">
               {#if checkedIn}
                 <div class="border-b pb-1 font-bold">Meal Status</div>
-                {#each Object.keys(food).sort() as date}
+                {#each Object.keys(food).sort() as date (date)}
                   <div class="rounded-md bg-gray-50 p-3">
                     <div class="mb-2 font-semibold text-gray-700">{date}</div>
                     <div class="flex flex-wrap gap-2">
-                      {#each Object.keys(food[date]) as meal}
+                      {#each Object.keys(food[date]) as meal (meal)}
                         <Button
                           color={food[date][meal] ? 'gray' : 'blue'}
                           onclick={() =>

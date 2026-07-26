@@ -106,7 +106,7 @@
           bind:value={$form.course}
         >
           <option value="" disabled>Select a course</option>
-          {#each coursesJson as course}
+          {#each coursesJson as course (course.name)}
             <option value={course.name}>{course.name}</option>
           {/each}
         </FormNativeSelect>
@@ -163,7 +163,7 @@
             bind:value={$form.classDay1}
           >
             <option value="" disabled>Select a day</option>
-            {#each daysOfWeekJson as day}
+            {#each daysOfWeekJson as day (day.name)}
               <option value={day.name}>{day.name}</option>
             {/each}
           </FormNativeSelect>
@@ -191,7 +191,7 @@
               bind:value={$form.classDay2}
             >
               <option value="" disabled>Select a day</option>
-              {#each daysOfWeekJson as day}
+              {#each daysOfWeekJson as day (day.name)}
                 <option value={day.name}>{day.name}</option>
               {/each}
             </FormNativeSelect>

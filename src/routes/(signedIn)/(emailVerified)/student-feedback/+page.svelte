@@ -87,7 +87,7 @@
     <th scope="col" class="px-6 py-3">Rating</th>
   {/snippet}
   {#snippet body()}
-    {#each data.feedback as value}
+    {#each data.feedback as value (value.id)}
       <tr class="border-b bg-white hover:cursor-pointer hover:bg-gray-50">
         <td class="px-6 py-4"> {value.studentName} </td>
         <td class="px-6 py-4">

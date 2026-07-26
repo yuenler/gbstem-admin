@@ -332,7 +332,7 @@
           >Race / ethnicity (check all that apply)</span
         >
         <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {#each raceJson as race}
+          {#each raceJson as race (race.name)}
             <div class="flex items-center">
               <input
                 type="checkbox"

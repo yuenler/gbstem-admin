@@ -260,7 +260,7 @@
           >Race / ethnicity (check all that apply)</span
         >
         <div class="grid grid-cols-2 gap-2">
-          {#each raceJson as race}
+          {#each raceJson as race (race.name)}
             <div class="flex items-center">
               <input
                 type="checkbox"
@@ -312,7 +312,7 @@
           all that apply. Course descriptions are on our website.</span
         >
         <div class="mt-2 grid grid-cols-2 gap-2">
-          {#each coursesJson as course}
+          {#each coursesJson as course (course.name)}
             <div class="flex items-center">
               <input
                 type="checkbox"

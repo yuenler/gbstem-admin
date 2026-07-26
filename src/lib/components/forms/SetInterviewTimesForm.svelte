@@ -294,7 +294,7 @@
           <div class="right-2 items-center">
             <Card class="mb-4">
               <h2 class="font-bold">Interview Time Requests</h2>
-              {#each interviewRequests as request}
+              {#each interviewRequests as request (request.id)}
                 {#if intervieweeOptions.find((option) => option.meta.uid === request.id)?.meta.interview === false}
                   {#if request.date > new Date()}
                     <div
@@ -382,7 +382,7 @@
             </div>
           </div>
 
-          {#each value as interview}
+          {#each value as interview (interview.id)}
             {#if editSlot === interview.id}
               {#if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser?.object?.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
                 <Card>
