@@ -25,19 +25,22 @@
   import Loading from '../Loading.svelte'
   import Select from '../Select.svelte'
 
-  let className = ''
-  export { className as class }
+  interface Props {
+    class?: string
+  }
 
-  let editSlot = ''
-  let intervieweeNames: { name: string }[] = []
-  let intervieweeOptions: Data.Application<'client'>[]
-  let interviewee: string
-  let onlyIncludeMyInterviews = true
-  let onlyShowFutureSlots = true
+  let { class: className = '' }: Props = $props()
+
+  let editSlot = $state('')
+  let intervieweeNames: { name: string }[] = $state([])
+  let intervieweeOptions: Data.Application<'client'>[] = $state([])
+  let interviewee: string = $state('')
+  let onlyIncludeMyInterviews = $state(true)
+  let onlyShowFutureSlots = $state(true)
   let showValidation = false
-  let allInterviewSlots: Data.InterviewSlot[] = []
-  let interviewSlotRequests: Data.SlotRequest[]
-  let interviewSlotToAdd: Data.InterviewSlot = {
+  let allInterviewSlots: Data.InterviewSlot[] = $state([])
+  let interviewSlotRequests: Data.SlotRequest[] = $state([])
+  let interviewSlotToAdd: Data.InterviewSlot = $state({
     date: '',
     id: '',
     interviewerName: '',
@@ -48,9 +51,9 @@
     interviewerEmail: '',
     meetingLink: '',
     interviewSlotStatus: 'available',
-  }
-  let currentUser: Data.User.Store
-  let loading = true
+  })
+  let currentUser: Data.User.Store | undefined = $state()
+  let loading = $state(true)
 
   async function getData() {
     const interviewSlots: Data.InterviewSlot[] = []
@@ -111,26 +114,28 @@
     return { names, options }
   }
 
-  let selectedIntervieweeDocId = ''
-  $: if (interviewee) {
-    const selectedInterviewee = intervieweeOptions.find(
-      (option) =>
-        `${option.personal.firstName} ${option.personal.lastName}` ===
-        interviewee,
-    )
-    if (selectedInterviewee) {
-      const {
-        personal: { email, firstName, lastName },
-        meta: { uid },
-      } = selectedInterviewee
-      selectedIntervieweeDocId = (selectedInterviewee as any).docId || ''
-      interviewSlotToAdd.intervieweeId = uid
-      interviewSlotToAdd.intervieweeEmail = email
-      interviewSlotToAdd.intervieweeFirstName = firstName
-      interviewSlotToAdd.intervieweeLastName = lastName
-      interviewSlotToAdd.interviewSlotStatus = 'pending'
+  let selectedIntervieweeDocId = $state('')
+  $effect(() => {
+    if (interviewee) {
+      const selectedInterviewee = intervieweeOptions.find(
+        (option) =>
+          `${option.personal.firstName} ${option.personal.lastName}` ===
+          interviewee,
+      )
+      if (selectedInterviewee) {
+        const {
+          personal: { email, firstName, lastName },
+          meta: { uid },
+        } = selectedInterviewee
+        selectedIntervieweeDocId = (selectedInterviewee as any).docId || ''
+        interviewSlotToAdd.intervieweeId = uid
+        interviewSlotToAdd.intervieweeEmail = email
+        interviewSlotToAdd.intervieweeFirstName = firstName
+        interviewSlotToAdd.intervieweeLastName = lastName
+        interviewSlotToAdd.interviewSlotStatus = 'pending'
+      }
     }
-  }
+  })
 
   onMount(() => {
     return user.subscribe(async (user) => {
@@ -159,7 +164,7 @@
       }
     }
     const id = `${new Date(interviewSlotToAdd.date).getTime()}${
-      currentUser.object.uid
+      currentUser?.object?.uid
     }`
     interviewSlotToAdd.id = id
     allInterviewSlots = [
@@ -230,8 +235,8 @@
 
   async function updateTime(interview: Data.InterviewSlot) {
     if (
-      interview.interviewerEmail !== currentUser.object.email &&
-      currentUser.profile.role !== 'admin'
+      interview.interviewerEmail !== currentUser?.object?.email &&
+      currentUser?.profile?.role !== 'admin'
     ) {
       alert.trigger(
         'error',
@@ -257,8 +262,8 @@
 
   const deleteTime = async (interview: Data.InterviewSlot) => {
     if (
-      interview.interviewerEmail !== currentUser.object.email &&
-      currentUser.profile.role !== 'admin'
+      interview.interviewerEmail !== currentUser?.object?.email &&
+      currentUser?.profile?.role !== 'admin'
     ) {
       alert.trigger(
         'error',
@@ -287,14 +292,14 @@
           <div class="right-2 items-center">
             <Card class="mb-4">
               <h2 class="font-bold">Interview Time Requests</h2>
-              {#each interviewRequests as request}
+              {#each interviewRequests as request (request.id)}
                 {#if intervieweeOptions.find((option) => option.meta.uid === request.id)?.meta.interview === false}
                   {#if request.date > new Date()}
                     <div
                       class="mt-2 flex items-center justify-between rounded-lg bg-blue-100 p-4"
                     >
                       <p>{formatDateLocal(request.date)}</p>
-                      <p>{request.firstName}{' '}{request.lastName}</p>
+                      <p>{request.firstName} {request.lastName}</p>
                       <p>{request.email}</p>
                     </div>
                   {:else if request.date > new Date(new Date().setDate(new Date().getDate() - 30))}
@@ -302,7 +307,7 @@
                       class="mt-2 flex items-center justify-between rounded-lg bg-red-100 p-4"
                     >
                       <p>{formatDateLocal(request.date)}</p>
-                      <p>{request.firstName}{' '}{request.lastName}</p>
+                      <p>{request.firstName} {request.lastName}</p>
                       <p>{request.email}</p>
                     </div>
                   {/if}
@@ -330,7 +335,7 @@
                 <Button
                   color="red"
                   class="h-fit"
-                  on:click={() => {
+                  onclick={() => {
                     handleClear()
                   }}
                   ><svg
@@ -355,7 +360,7 @@
                 >
               </div>
               <div class="right-2 items-center">
-                <Button color="blue" class="my-4 px-2 py-1" on:click={addTime}
+                <Button color="blue" class="my-4 px-2 py-1" onclick={addTime}
                   >Confirm Timeslot</Button
                 >
               </div>
@@ -375,13 +380,13 @@
             </div>
           </div>
 
-          {#each value as interview}
+          {#each value as interview (interview.id)}
             {#if editSlot === interview.id}
-              {#if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser.object.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
+              {#if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser?.object?.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
                 <Card>
                   <Form
                     class={cn(showValidation && 'show-validation', className)}
-                    on:submit={() => updateTime(interview)}
+                    onSubmit={() => updateTime(interview)}
                   >
                     <div style="padding:1rem;">
                       <div><b>Interviewer: </b>{interview.interviewerName}</div>
@@ -400,7 +405,7 @@
                           <Button
                             color="blue"
                             class="my-4 px-2 py-1"
-                            on:click={() => {
+                            onclick={() => {
                               updateTime(interview)
                               editSlot = ''
                             }}>Save</Button
@@ -410,7 +415,7 @@
                           <Button
                             color="blue"
                             class="my-4 px-2 py-1"
-                            on:click={() => {
+                            onclick={() => {
                               deleteTime(interview)
                               editSlot = ''
                             }}>Delete</Button
@@ -421,7 +426,7 @@
                   </Form>
                 </Card>
               {/if}
-            {:else if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser.object.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
+            {:else if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser?.object?.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
               <Card>
                 <div class="my-1">
                   <b>Interviewer:</b>
@@ -451,12 +456,12 @@
                   </div>
                 {/if}
 
-                {#if (interview.interviewSlotStatus === 'available' || interview.interviewSlotStatus === 'pending') && (interview.interviewerEmail === currentUser.object.email || currentUser.profile.role === 'admin')}
+                {#if (interview.interviewSlotStatus === 'available' || interview.interviewSlotStatus === 'pending') && (interview.interviewerEmail === currentUser?.object?.email || currentUser?.profile?.role === 'admin')}
                   <div>
                     <Button
                       color="blue"
                       class="my-4 px-2 py-1"
-                      on:click={() => (editSlot = interview.id)}>Edit</Button
+                      onclick={() => (editSlot = interview.id)}>Edit</Button
                     >
                   </div>
                 {/if}

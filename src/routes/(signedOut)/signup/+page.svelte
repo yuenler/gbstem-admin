@@ -10,19 +10,23 @@
   import Loading from '$lib/components/Loading.svelte'
   import type { ActionData, PageData } from './$types'
 
-  export let data: PageData
-  export let form: ActionData
+  interface Props {
+    data: PageData
+    form: ActionData
+  }
 
-  let dialogEl: Dialog
+  let { data, form }: Props = $props()
 
-  let disabled = false
-  let values = {
+  let showErrorDialog = $state(true)
+
+  let disabled = $state(false)
+  let values = $state({
     email: '',
     firstName: '',
     lastName: '',
     password: '',
     confirmPassword: '',
-  }
+  })
 </script>
 
 <svelte:head>
@@ -108,15 +112,21 @@
 </form>
 
 {#if form?.error}
-  <Dialog bind:this={dialogEl} initial alert>
-    <svelte:fragment slot="title">Error</svelte:fragment>
-    <div slot="description">
-      <p>
-        {#if form?.error}{form.error}{/if}
-      </p>
-      <DialogActions>
-        <Button color="gray" on:click={dialogEl.cancel}>Close</Button>
-      </DialogActions>
-    </div>
+  <Dialog bind:open={showErrorDialog} alert>
+    {#snippet title()}
+      Error
+    {/snippet}
+    {#snippet description()}
+      <div>
+        <p>
+          {#if form?.error}{form.error}{/if}
+        </p>
+        <DialogActions>
+          <Button color="gray" onclick={() => (showErrorDialog = false)}
+            >Close</Button
+          >
+        </DialogActions>
+      </div>
+    {/snippet}
   </Dialog>
 {/if}

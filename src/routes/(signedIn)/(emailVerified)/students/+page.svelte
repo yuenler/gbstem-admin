@@ -1,10 +1,9 @@
 <script lang="ts">
   import { browser } from '$app/environment'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import { db } from '$lib/client/firebase'
   import Button from '$lib/components/Button.svelte'
   import CourseFilter from '$lib/components/CourseFilter.svelte'
-  import type Dialog from '$lib/components/Dialog.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
   import SearchBox from '$lib/components/SearchBox.svelte'
   import StatusFilter from '$lib/components/StatusFilter.svelte'
@@ -26,11 +25,21 @@
   import { kebabCase } from 'lodash-es'
   import type { PageData } from './$types'
 
-  export let data: PageData
-  let dialogEl: Dialog
-  let current: number | undefined
-  let clickedRegistration: any
-  let checked: Array<number> = []
+  interface Props {
+    data: PageData
+  }
+
+  let { data }: Props = $props()
+  let showStudentDialog = $state(false)
+  let current: number | undefined = $state()
+  let clickedRegistration: any = $derived(
+    data.registrations.length === 0
+      ? undefined
+      : current === undefined
+        ? undefined
+        : data.registrations[current],
+  )
+  let checked: Array<number> = $state([])
 
   const csvHeaders = [
     'id',
@@ -46,65 +55,76 @@
     'scienceCourse',
     'In-person',
   ]
-  $: rows = data.registrations.map((registration) => {
-    const {
-      id,
-      values: {
-        personal: { studentFirstName, studentLastName, email, secondaryEmail },
-        academic: { school, grade },
-        program: {
-          csCourse,
-          engineeringCourse,
-          mathCourse,
-          scienceCourse,
-          inPerson,
+  let rows = $derived(
+    data.registrations.map((registration) => {
+      const {
+        id,
+        values: {
+          personal: {
+            studentFirstName,
+            studentLastName,
+            email,
+            secondaryEmail,
+          },
+          academic: { school, grade },
+          program: {
+            csCourse,
+            engineeringCourse,
+            mathCourse,
+            scienceCourse,
+            inPerson,
+          },
         },
-      },
-    } = registration
-    return [
-      id,
-      studentFirstName,
-      studentLastName,
-      email,
-      secondaryEmail,
-      school,
-      grade,
-      csCourse,
-      engineeringCourse,
-      kebabCase(mathCourse),
-      scienceCourse,
-      inPerson ? 'Yes' : 'No',
-    ]
+      } = registration
+      return [
+        id,
+        studentFirstName,
+        studentLastName,
+        email,
+        secondaryEmail,
+        school,
+        grade,
+        csCourse,
+        engineeringCourse,
+        kebabCase(mathCourse),
+        scienceCourse,
+        inPerson ? 'Yes' : 'No',
+      ]
+    }),
+  )
+
+  let csvWithHeaders = $derived(generateCSV(csvHeaders, rows))
+
+  let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
+  // Revoke the previous object URL whenever blob changes (and on
+  // unmount) - otherwise every filter/search/page change here leaks one.
+  let url = $state('')
+  $effect(() => {
+    const objectUrl = URL.createObjectURL(blob)
+    url = objectUrl
+    return () => URL.revokeObjectURL(objectUrl)
   })
 
-  $: csvWithHeaders = generateCSV(csvHeaders, rows)
+  let currentPage = $derived(data.page ?? 1)
+  let currentLimit = $derived(data.limit ?? 25)
 
-  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-  $: url = URL.createObjectURL(blob)
+  let prevHref = $derived(
+    (() => {
+      if (currentPage <= 1) return ''
+      const base = new URLSearchParams(page.url.searchParams)
+      base.set('page', String(currentPage - 1))
+      return `?${base.toString()}`
+    })(),
+  )
 
-  $: clickedRegistration =
-    data.registrations.length === 0
-      ? undefined
-      : current === undefined
-        ? undefined
-        : data.registrations[current]
-
-  $: currentPage = data.page ?? 1
-  $: currentLimit = data.limit ?? 25
-
-  $: prevHref = (() => {
-    if (currentPage <= 1) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage - 1))
-    return `?${base.toString()}`
-  })()
-
-  $: nextHref = (() => {
-    if (data.registrations.length < currentLimit) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage + 1))
-    return `?${base.toString()}`
-  })()
+  let nextHref = $derived(
+    (() => {
+      if (data.registrations.length < currentLimit) return ''
+      const base = new URLSearchParams(page.url.searchParams)
+      base.set('page', String(currentPage + 1))
+      return `?${base.toString()}`
+    })(),
+  )
 
   function handleCheck(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
@@ -202,7 +222,7 @@
 </div>
 
 <Table>
-  <svelte:fragment slot="head">
+  {#snippet head()}
     <th scope="col" class="p-4">
       <div class="flex items-center">
         <input
@@ -211,7 +231,7 @@
           type="checkbox"
           checked={checked.length === data.registrations.length &&
             checked.length > 0}
-          on:input={handleCheckAll}
+          oninput={handleCheckAll}
         />
         <label for="check-all" class="sr-only">checkbox</label>
       </div>
@@ -222,15 +242,15 @@
     <th scope="col" class="px-6 py-3">School</th>
     <th scope="col" class="px-6 py-3">Grade</th>
     <th scope="col" class="px-6 py-3">Parent Name</th>
-  </svelte:fragment>
-  <svelte:fragment slot="body">
-    {#each data.registrations as registration, i}
+  {/snippet}
+  {#snippet body()}
+    {#each data.registrations as registration, i (registration.id)}
       <tr
         class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
-        on:click={(e) => {
+        onclick={(e) => {
           e.stopPropagation()
           current = i
-          dialogEl.open()
+          showStudentDialog = true
         }}
       >
         <td class="w-4 p-4">
@@ -240,8 +260,8 @@
               class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
               type="checkbox"
               checked={checked.includes(i)}
-              on:input={(e) => handleCheck(e, i)}
-              on:click|stopPropagation
+              oninput={(e) => handleCheck(e, i)}
+              onclick={(e) => e.stopPropagation()}
             />
             <label for={`check-${i}`} class="sr-only">checkbox</label>
           </div>
@@ -277,10 +297,10 @@
         </td>
       </tr>
     {/each}
-  </svelte:fragment>
+  {/snippet}
 </Table>
 
-<StudentDetails bind:dialogEl id={clickedRegistration?.id} />
+<StudentDetails bind:open={showStudentDialog} id={clickedRegistration?.id} />
 
 {#if !data.query && data.registrations}
   <div class="mt-4 flex justify-end gap-2">

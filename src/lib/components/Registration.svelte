@@ -14,13 +14,21 @@
   import Dialog from './Dialog.svelte'
   import EditRegistrationForm from './forms/EditRegistrationForm.svelte'
 
-  export let dialogEl: Dialog
-  export let id: string | undefined
-  export let collection: string = registrationsCollection
+  interface Props {
+    open?: boolean
+    id: string | undefined
+    collection?: string
+  }
 
-  let loading = true
-  let disabled = true
-  let dbValues: Data.Registration<'client'>
+  let {
+    open = $bindable(false),
+    id,
+    collection = registrationsCollection,
+  }: Props = $props()
+
+  let loading = $state(true)
+  let disabled = $state(true)
+  let dbValues: Data.Registration<'client'> | undefined = $state()
 
   const defaultValues: Data.Registration<'client'> = {
     personal: {
@@ -71,17 +79,23 @@
     },
   }
 
-  let values: Data.Registration<'client'> = cloneDeep(defaultValues)
+  let values: Data.Registration<'client'> = $state(cloneDeep(defaultValues))
   let decision: Data.Decision | null
-  let formEl: HTMLFormElement
+  let formEl: HTMLFormElement | undefined = $state()
 
-  $: if (id !== undefined) {
+  $effect(() => {
+    const currentId = id
+    if (!open || currentId === undefined) return
+    let cancelled = false
     ;(async () => {
       loading = true
       disabled = true
       values = cloneDeep(defaultValues)
       try {
-        const registrationSnapshot = await getDoc(doc(db, collection, id))
+        const registrationSnapshot = await getDoc(
+          doc(db, collection, currentId),
+        )
+        if (cancelled) return
         if (registrationSnapshot.exists()) {
           const data =
             registrationSnapshot.data() as Data.Registration<'client'>
@@ -94,10 +108,13 @@
         console.error('Failed to load registration:', err)
         alert.trigger('error', 'Failed to load registration.')
       } finally {
-        loading = false
+        if (!cancelled) loading = false
       }
     })()
-  }
+    return () => {
+      cancelled = true
+    }
+  })
 
   function handleEdit() {
     disabled = false
@@ -110,40 +127,44 @@
   function handleDeleteChanges() {
     disabled = true
     // Reset to loaded database values
-    values = cloneDeep(dbValues)
+    if (dbValues) values = cloneDeep(dbValues)
   }
 </script>
 
-<Dialog bind:this={dialogEl} size="full" alert>
-  <svelte:fragment slot="title">Registration</svelte:fragment>
-  <div slot="description" class="w-full min-w-0">
-    <Card
-      class="sticky top-2 z-50 flex flex-wrap items-center justify-between gap-3 p-3"
-    >
-      {#if !disabled}
+<Dialog bind:open size="full" alert>
+  {#snippet title()}
+    Registration
+  {/snippet}
+  {#snippet description()}
+    <div class="w-full min-w-0">
+      <Card
+        class="sticky top-2 z-50 flex flex-wrap items-center justify-between gap-3 p-3"
+      >
+        {#if !disabled}
+          <div class="flex flex-wrap gap-2">
+            <Button color="green" onclick={handleSaveChanges}
+              >Save changes</Button
+            >
+            <Button color="red" onclick={handleDeleteChanges}
+              >Delete changes</Button
+            >
+          </div>
+        {/if}
         <div class="flex flex-wrap gap-2">
-          <Button color="green" on:click={handleSaveChanges}
-            >Save changes</Button
-          >
-          <Button color="red" on:click={handleDeleteChanges}
-            >Delete changes</Button
-          >
+          <Button onclick={handleEdit}>Edit</Button>
+          <Button onclick={() => (open = false)}>Close</Button>
         </div>
-      {/if}
-      <div class="flex flex-wrap gap-2">
-        <Button on:click={handleEdit}>Edit</Button>
-        <Button on:click={dialogEl.cancel}>Close</Button>
+      </Card>
+      <div class="mt-4 flex justify-center">
+        <EditRegistrationForm
+          bind:formEl
+          bind:disabled
+          bind:values
+          bind:dbValues
+          {id}
+          {collection}
+        />
       </div>
-    </Card>
-    <div class="mt-4 flex justify-center">
-      <EditRegistrationForm
-        bind:formEl
-        bind:disabled
-        bind:values
-        bind:dbValues
-        {id}
-        {collection}
-      />
     </div>
-  </div>
+  {/snippet}
 </Dialog>

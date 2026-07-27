@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import Button from '$lib/components/Button.svelte'
   import CourseFilter from '$lib/components/CourseFilter.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
@@ -8,24 +8,32 @@
   import { generateCSV } from '$lib/utils'
   import type { PageData } from './$types'
 
-  export let data: PageData
+  interface Props {
+    data: PageData
+  }
 
-  $: currentPage = data.page ?? 1
-  $: currentLimit = data.limit ?? 25
+  let { data }: Props = $props()
 
-  $: prevHref = (() => {
-    if (currentPage <= 1) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage - 1))
-    return `?${base.toString()}`
-  })()
+  let currentPage = $derived(data.page ?? 1)
+  let currentLimit = $derived(data.limit ?? 25)
 
-  $: nextHref = (() => {
-    if (data.feedback.length < currentLimit) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage + 1))
-    return `?${base.toString()}`
-  })()
+  let prevHref = $derived(
+    (() => {
+      if (currentPage <= 1) return ''
+      const base = new URLSearchParams(page.url.searchParams)
+      base.set('page', String(currentPage - 1))
+      return `?${base.toString()}`
+    })(),
+  )
+
+  let nextHref = $derived(
+    (() => {
+      if (data.feedback.length < currentLimit) return ''
+      const base = new URLSearchParams(page.url.searchParams)
+      base.set('page', String(currentPage + 1))
+      return `?${base.toString()}`
+    })(),
+  )
 
   const csvHeaders = [
     'id',
@@ -36,20 +44,29 @@
     'feedback',
     'rating',
   ]
-  $: csvWithHeaders = generateCSV(
-    csvHeaders,
-    data.feedback.map((item) => [
-      item.id,
-      item.studentName,
-      item.course,
-      item.instructorName,
-      item.date,
-      item.feedback || '',
-      item.rating,
-    ]),
+  let csvWithHeaders = $derived(
+    generateCSV(
+      csvHeaders,
+      data.feedback.map((item) => [
+        item.id,
+        item.studentName,
+        item.course,
+        item.instructorName,
+        item.date,
+        item.feedback || '',
+        item.rating,
+      ]),
+    ),
   )
-  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-  $: url = URL.createObjectURL(blob)
+  let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
+  // Revoke the previous object URL whenever blob changes (and on
+  // unmount) - otherwise every filter/search/page change here leaks one.
+  let url = $state('')
+  $effect(() => {
+    const objectUrl = URL.createObjectURL(blob)
+    url = objectUrl
+    return () => URL.revokeObjectURL(objectUrl)
+  })
 </script>
 
 <svelte:head>
@@ -68,16 +85,16 @@
 </div>
 
 <Table>
-  <svelte:fragment slot="head">
+  {#snippet head()}
     <th scope="col" class="px-6 py-3">Student Name</th>
     <th scope="col" class="px-6 py-3">Course</th>
     <th scope="col" class="px-6 py-3">Instructor Name</th>
     <th scope="col" class="px-6 py-3">Date</th>
     <th scope="col" class="px-6 py-3">Feedback</th>
     <th scope="col" class="px-6 py-3">Rating</th>
-  </svelte:fragment>
-  <svelte:fragment slot="body">
-    {#each data.feedback as value}
+  {/snippet}
+  {#snippet body()}
+    {#each data.feedback as value (value.id)}
       <tr class="border-b bg-white hover:cursor-pointer hover:bg-gray-50">
         <td class="px-6 py-4"> {value.studentName} </td>
         <td class="px-6 py-4">
@@ -95,7 +112,7 @@
         </td>
       </tr>
     {/each}
-  </svelte:fragment>
+  {/snippet}
 </Table>
 
 {#if !data.query && data.feedback}

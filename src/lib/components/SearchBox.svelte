@@ -3,26 +3,38 @@
   import Button from './Button.svelte'
   import Form from './Form.svelte'
   import { goto } from '$app/navigation'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
 
-  export let basePath = ''
-  export let placeholder = 'Search'
+  interface Props {
+    basePath?: string
+    placeholder?: string
+  }
 
-  let lastUrlQuery = $page.url.searchParams.get('query') ?? ''
-  let search = lastUrlQuery
-  let searching = false
+  let { basePath = '', placeholder = 'Search' }: Props = $props()
 
-  $: {
-    const urlQuery = $page.url.searchParams.get('query') ?? ''
+  // Unlike the URL-filter family (CourseFilter/StatusFilter/etc.), `search`
+  // can't become a plain $derived of the URL: unlike those, this field is
+  // edited-then-submitted, not committed on every keystroke, so it needs
+  // its own mutable local state independent of the URL between submits.
+  // The guard is load-bearing, not a hack: without it, this effect would
+  // reset `search` to the URL's last-submitted query on every unrelated
+  // navigation (e.g. changing a different filter on the same page),
+  // discarding whatever the user is mid-typing.
+  let lastUrlQuery = page.url.searchParams.get('query') ?? ''
+  let search = $state(lastUrlQuery)
+  let searching = $state(false)
+
+  $effect(() => {
+    const urlQuery = page.url.searchParams.get('query') ?? ''
     if (urlQuery !== lastUrlQuery) {
       lastUrlQuery = urlQuery
       search = urlQuery
     }
-  }
+  })
 
   async function handleSearch() {
     searching = true
-    const base = new URLSearchParams($page.url.searchParams)
+    const base = new URLSearchParams(page.url.searchParams)
     if (search === '') {
       base.delete('query')
       base.delete('updated')
@@ -41,7 +53,7 @@
   async function handleClear() {
     searching = true
     search = ''
-    const base = new URLSearchParams($page.url.searchParams)
+    const base = new URLSearchParams(page.url.searchParams)
     base.delete('query')
     base.delete('updated')
     goto(`${basePath}?${base.toString()}`).finally(() => {
@@ -50,7 +62,7 @@
   }
 </script>
 
-<Form class="flex w-96 shrink-0 gap-4" on:submit={handleSearch}>
+<Form class="flex w-96 shrink-0 gap-4" onSubmit={handleSearch}>
   <div class="relative grow">
     <Input
       class={{
@@ -63,7 +75,7 @@
     <div class="absolute top-0 right-2 flex h-12 items-center">
       <Button
         class="px-2 py-1 uppercase"
-        on:click={handleClear}
+        onclick={handleClear}
         disabled={searching}
       >
         Clear

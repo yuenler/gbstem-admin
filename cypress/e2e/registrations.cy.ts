@@ -216,9 +216,22 @@ describe('Section G: Pre-Registrations Directory', () => {
     cy.contains('td', 'Charlie Brown').click()
     cy.get('[role="dialog"]').should('exist')
 
+    // Verify parent education select field displays the seeded choice
+    cy.get('input[name="personal.parentEducation"]').should(
+      'have.value',
+      "Bachelor's degree",
+    )
+
     // Click Edit on the sticky header
     cy.contains('button', 'Edit').click()
     cy.contains('button', 'Save changes').should('be.visible')
+
+    // Verify parent education select field validity is clean
+    cy.get('input[name="personal.parentEducation"]').then(($el) => {
+      const input = $el[0] as HTMLInputElement
+      expect(input.validationMessage).to.equal('')
+      expect(input.checkValidity()).to.equal(true)
+    })
 
     // Change student grade from 4 to 5
     cy.get('input[name="student-grade"]')
@@ -229,6 +242,12 @@ describe('Section G: Pre-Registrations Directory', () => {
     // Click Save changes
     cy.contains('button', 'Save changes').scrollIntoView().click()
     cy.waitForNotification('Changes were saved successfully.')
+
+    // Verify parent education remains intact after save
+    cy.get('input[name="personal.parentEducation"]').should(
+      'have.value',
+      "Bachelor's degree",
+    )
 
     // Close dialog
     cy.contains('button', 'Close').click()

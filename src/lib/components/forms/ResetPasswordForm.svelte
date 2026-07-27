@@ -8,13 +8,13 @@
   import Link from '$lib/components/Link.svelte'
   import Button from '../Button.svelte'
 
-  let disabled = false
-  let showValidation = false
-  let values = {
+  let disabled = $state(false)
+  let showValidation = $state(false)
+  let values = $state({
     email: '',
-  }
-  async function handleSubmit(e: CustomEvent<SubmitData>) {
-    if (e.detail.error === null) {
+  })
+  async function handleSubmit(data: SubmitData) {
+    if (data.error === null) {
       showValidation = false
       disabled = true
       const payload: ActionRequestBody = {
@@ -49,14 +49,14 @@
       }
     } else {
       showValidation = true
-      alert.trigger('error', e.detail.error)
+      alert.trigger('error', data.error)
     }
   }
 </script>
 
 <Form
   class={cn('max-w-lg', showValidation && 'show-validation')}
-  on:submit={handleSubmit}
+  onSubmit={handleSubmit}
 >
   <fieldset class="space-y-4" {disabled}>
     <Brand />

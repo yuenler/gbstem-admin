@@ -26,6 +26,13 @@
   } from 'firebase/firestore'
   import { fade } from 'svelte/transition'
   import { onDestroy } from 'svelte'
+  import type { PageData } from './$types'
+
+  interface Props {
+    data: PageData
+  }
+
+  let { data: pageData }: Props = $props()
 
   type DashboardData = {
     applications: {
@@ -42,17 +49,18 @@
   }
 
   type ClassToday = {
+    id: string
     classNumber: number
     class: Data.Class
   }
 
-  let classesToday: ClassToday[] = []
+  let classesToday: ClassToday[] = $state([])
 
-  let loading = true
-  let uncompletedRegistrationsEmails: string[] = []
-  let uncompletedApplicationsEmails: string[] = []
+  let loading = $state(true)
+  let uncompletedRegistrationsEmails: string[] = $state([])
+  let uncompletedApplicationsEmails: string[] = $state([])
 
-  let data: DashboardData = {
+  let dashboardData: DashboardData = $state({
     applications: {
       total: 0,
       submitted: 0,
@@ -64,7 +72,10 @@
     users: {
       total: 0,
     },
-  }
+  })
+
+  let userRole = $derived($user?.profile?.role || pageData?.user?.role)
+  let isReviewer = $derived(userRole === 'reviewer')
 
   let queryTimeout: any
 
@@ -90,10 +101,9 @@
   async function loadDashboardData() {
     loading = true
     try {
+      const currentRole = $user?.profile?.role || pageData?.user?.role
+      const reviewer = currentRole === 'reviewer'
       const applicationsColl = collection(db, applicationsCollection)
-      const usersColl = collection(db, 'users')
-      const registrationsColl = collection(db, registrationsCollection)
-      const classesColl = collection(db, classesCollection)
 
       const timeoutPromise = new Promise<never>((_, reject) => {
         queryTimeout = window.setTimeout(() => {
@@ -101,103 +111,168 @@
         }, 10000)
       })
 
-      const fetchPromise = Promise.all([
-        getDocs(query(registrationsColl, where('meta.submitted', '==', false))),
-        getDocs(query(applicationsColl, where('meta.submitted', '==', false))),
-        Promise.all([
-          getCountFromServer(applicationsColl),
-          getCountFromServer(
-            query(applicationsColl, where('meta.submitted', '==', true)),
+      if (reviewer) {
+        const fetchPromise = Promise.all([
+          getDocs(
+            query(applicationsColl, where('meta.submitted', '==', false)),
           ),
-          getCountFromServer(
-            query(applicationsColl, where('meta.decision', '!=', null)),
-          ),
-          getCountFromServer(usersColl),
-          getCountFromServer(
-            query(registrationsColl, where('meta.submitted', '==', true)),
-          ),
-          getCountFromServer(registrationsColl),
-          getCountFromServer(
-            query(registrationsColl, where('enrolled', '==', true)),
-          ),
-        ]),
-        getDocs(query(classesColl)),
-      ])
+          Promise.all([
+            getCountFromServer(applicationsColl),
+            getCountFromServer(
+              query(applicationsColl, where('meta.submitted', '==', true)),
+            ),
+            getCountFromServer(
+              query(applicationsColl, where('meta.decision', '!=', null)),
+            ),
+          ]),
+        ])
 
-      const [
-        uncompletedRegistrationsSnapshot,
-        uncompletedApplicationsSnapshot,
-        counts,
-        classesSnapshot,
-      ] = await Promise.race([fetchPromise, timeoutPromise])
+        const [uncompletedApplicationsSnapshot, counts] = await Promise.race([
+          fetchPromise,
+          timeoutPromise,
+        ])
 
-      // Process uncompleted registration emails
-      const regEmails: string[] = []
-      uncompletedRegistrationsSnapshot.forEach((doc) => {
-        const email = doc.data().personal?.email
-        if (email) {
-          regEmails.push(email)
+        const appEmails: string[] = []
+        uncompletedApplicationsSnapshot.forEach((doc) => {
+          const email = doc.data().personal?.email
+          if (email) {
+            appEmails.push(email)
+          }
+        })
+        uncompletedApplicationsEmails = appEmails
+        uncompletedRegistrationsEmails = []
+
+        const [
+          totalApplicationsSnapshot,
+          submittedApplicationsSnapshot,
+          decidedApplicationsSnapshot,
+        ] = counts
+
+        dashboardData = {
+          applications: {
+            total: totalApplicationsSnapshot.data().count,
+            submitted: submittedApplicationsSnapshot.data().count,
+            decided: decidedApplicationsSnapshot.data().count,
+            registered: 0,
+            totalRegistrationsStarted: 0,
+            enrolled: 0,
+          },
+          users: {
+            total: 0,
+          },
         }
-      })
-      uncompletedRegistrationsEmails = regEmails
+        classesToday = []
+      } else {
+        const usersColl = collection(db, 'users')
+        const registrationsColl = collection(db, registrationsCollection)
+        const classesColl = collection(db, classesCollection)
 
-      // Process uncompleted application emails
-      const appEmails: string[] = []
-      uncompletedApplicationsSnapshot.forEach((doc) => {
-        const email = doc.data().personal?.email
-        if (email) {
-          appEmails.push(email)
+        const fetchPromise = Promise.all([
+          getDocs(
+            query(registrationsColl, where('meta.submitted', '==', false)),
+          ),
+          getDocs(
+            query(applicationsColl, where('meta.submitted', '==', false)),
+          ),
+          Promise.all([
+            getCountFromServer(applicationsColl),
+            getCountFromServer(
+              query(applicationsColl, where('meta.submitted', '==', true)),
+            ),
+            getCountFromServer(
+              query(applicationsColl, where('meta.decision', '!=', null)),
+            ),
+            getCountFromServer(usersColl),
+            getCountFromServer(
+              query(registrationsColl, where('meta.submitted', '==', true)),
+            ),
+            getCountFromServer(registrationsColl),
+            getCountFromServer(
+              query(registrationsColl, where('enrolled', '==', true)),
+            ),
+          ]),
+          getDocs(query(classesColl)),
+        ])
+
+        const [
+          uncompletedRegistrationsSnapshot,
+          uncompletedApplicationsSnapshot,
+          counts,
+          classesSnapshot,
+        ] = await Promise.race([fetchPromise, timeoutPromise])
+
+        // Process uncompleted registration emails
+        const regEmails: string[] = []
+        uncompletedRegistrationsSnapshot.forEach((doc) => {
+          const email = doc.data().personal?.email
+          if (email) {
+            regEmails.push(email)
+          }
+        })
+        uncompletedRegistrationsEmails = regEmails
+
+        // Process uncompleted application emails
+        const appEmails: string[] = []
+        uncompletedApplicationsSnapshot.forEach((doc) => {
+          const email = doc.data().personal?.email
+          if (email) {
+            appEmails.push(email)
+          }
+        })
+        uncompletedApplicationsEmails = appEmails
+
+        // Process counts
+        const [
+          totalApplicationsSnapshot,
+          submittedApplicationsSnapshot,
+          decidedApplicationsSnapshot,
+          totalUsersSnapshot,
+          submittedRegistrationsSnapshot,
+          totalRegistrationsSnapshot,
+          enrolledRegistrationsSnapshot,
+        ] = counts
+
+        dashboardData = {
+          applications: {
+            total: totalApplicationsSnapshot.data().count,
+            submitted: submittedApplicationsSnapshot.data().count,
+            decided: decidedApplicationsSnapshot.data().count,
+            registered: submittedRegistrationsSnapshot.data().count,
+            totalRegistrationsStarted: totalRegistrationsSnapshot.data().count,
+            enrolled: enrolledRegistrationsSnapshot.data().count,
+          },
+          users: {
+            total: totalUsersSnapshot.data().count,
+          },
         }
-      })
-      uncompletedApplicationsEmails = appEmails
 
-      // Process counts
-      const [
-        totalApplicationsSnapshot,
-        submittedApplicationsSnapshot,
-        decidedApplicationsSnapshot,
-        totalUsersSnapshot,
-        submittedRegistrationsSnapshot,
-        totalRegistrationsSnapshot,
-        enrolledRegistrationsSnapshot,
-      ] = counts
-
-      data = {
-        applications: {
-          total: totalApplicationsSnapshot.data().count,
-          submitted: submittedApplicationsSnapshot.data().count,
-          decided: decidedApplicationsSnapshot.data().count,
-          registered: submittedRegistrationsSnapshot.data().count,
-          totalRegistrationsStarted: totalRegistrationsSnapshot.data().count,
-          enrolled: enrolledRegistrationsSnapshot.data().count,
-        },
-        users: {
-          total: totalUsersSnapshot.data().count,
-        },
-      }
-
-      // Process classes today
-      const todayClasses: ClassToday[] = []
-      classesSnapshot.forEach((doc) => {
-        const meetingTimes: Timestamp[] = doc.data().meetingTimes
-        if (meetingTimes !== undefined && Array.isArray(meetingTimes)) {
-          for (let i = 0; i < meetingTimes.length; i++) {
-            const rawTime = meetingTimes[i]
-            if (rawTime) {
-              const meetingTime = timestampToDate(rawTime)
-              if (
-                meetingTime &&
-                new Date().toLocaleDateString() ===
-                  meetingTime.toLocaleDateString()
-              ) {
-                const classSession = doc.data() as Data.Class
-                todayClasses.push({ class: classSession, classNumber: i })
+        // Process classes today
+        const todayClasses: ClassToday[] = []
+        classesSnapshot.forEach((doc) => {
+          const meetingTimes: Timestamp[] = doc.data().meetingTimes
+          if (meetingTimes !== undefined && Array.isArray(meetingTimes)) {
+            for (let i = 0; i < meetingTimes.length; i++) {
+              const rawTime = meetingTimes[i]
+              if (rawTime) {
+                const meetingTime = timestampToDate(rawTime)
+                if (
+                  meetingTime &&
+                  new Date().toLocaleDateString() ===
+                    meetingTime.toLocaleDateString()
+                ) {
+                  const classSession = doc.data() as Data.Class
+                  todayClasses.push({
+                    id: doc.id,
+                    class: classSession,
+                    classNumber: i,
+                  })
+                }
               }
             }
           }
-        }
-      })
-      classesToday = todayClasses
+        })
+        classesToday = todayClasses
+      }
     } catch (err: any) {
       console.error('Error loading dashboard data:', err)
       alert.trigger(
@@ -287,95 +362,110 @@
         <h2 class="text-xl font-bold">Applications</h2>
         <ol class="space-y-1">
           <li>
-            {data.applications.total} total instructor applications created.
+            {dashboardData.applications.total} total instructor applications created.
           </li>
-          <li>{data.applications.submitted} instructor apps submitted.</li>
-          <li>{data.applications.decided} instructor apps decided.</li>
-          <li>{data.applications.registered} students pre-registered.</li>
           <li>
-            {data.applications.totalRegistrationsStarted} pre-registrations started.
+            {dashboardData.applications.submitted} instructor apps submitted.
           </li>
-          <li>{data.applications.enrolled} students enrolled.</li>
+          <li>
+            {dashboardData.applications.decided} instructor apps decided.
+          </li>
+          {#if !isReviewer}
+            <li>
+              {dashboardData.applications.registered} students pre-registered.
+            </li>
+            <li>
+              {dashboardData.applications.totalRegistrationsStarted} pre-registrations
+              started.
+            </li>
+            <li>
+              {dashboardData.applications.enrolled} students enrolled.
+            </li>
+          {/if}
         </ol>
-        <Button on:click={() => copyEmails(uncompletedRegistrationsEmails)}
-          >Copy Emails for Uncompleted Registrations</Button
-        >
-        <Button on:click={() => copyEmails(uncompletedApplicationsEmails)}
+        {#if !isReviewer}
+          <Button onclick={() => copyEmails(uncompletedRegistrationsEmails)}
+            >Copy Emails for Uncompleted Registrations</Button
+          >
+        {/if}
+        <Button onclick={() => copyEmails(uncompletedApplicationsEmails)}
           >Copy Emails for Uncompleted Applications</Button
         >
       </Card>
-      <Card class="space-y-2">
-        <h2 class="text-xl font-bold">Users</h2>
-        <ol class="space-y-1">
-          <li>{data.users.total} total.</li>
-        </ol>
-      </Card>
-      <Card class="space-y-2">
-        <h2 class="text-xl font-bold">Classes Today</h2>
-        {#if classesToday.length === 0}
-          <p class="p-2 text-sm text-gray-500 italic">
-            No classes scheduled for today.
-          </p>
-        {:else}
-          <div
-            class="hidden grid-cols-12 gap-4 border-b border-gray-200 px-4 py-2 text-sm font-semibold text-gray-500 sm:grid"
-          >
-            <span class="col-span-3">Course</span>
-            <span class="col-span-3">Instructor</span>
-            <span class="col-span-4">Action</span>
-            <span class="col-span-2 text-right">Time</span>
-          </div>
-          <ul class="list-none space-y-2">
-            {#each classesToday as classToday}
-              {@const status =
-                classToday.class.classStatuses[classToday.classNumber]}
-              <li
-                class="grid grid-cols-1 items-center gap-4 rounded-lg p-4 sm:grid-cols-12 {getClassStatusBg(
-                  status,
-                )}"
-              >
-                <p class="font-semibold sm:col-span-3 sm:font-normal">
-                  {classToday.class.course}
-                </p>
-                <p class="sm:col-span-3">
-                  {classToday.class.instructorFirstName +
-                    ' ' +
-                    classToday.class.instructorLastName}
-                </p>
-                <div class="sm:col-span-4">
-                  <Button
-                    color="gray"
-                    on:click={() =>
-                      sendClassReminder({
-                        instructorName: classToday.class.instructorFirstName,
-                        instructorEmail: classToday.class.instructorEmail,
-                        otherInstructorEmails:
-                          classToday.class.otherInstructorEmails,
-                        className: classToday.class.course,
-                        nextMeetingTime: formatDate(
-                          timestampToDate(
-                            classToday.class.meetingTimes[
-                              classToday.classNumber
-                            ],
+      {#if !isReviewer}
+        <Card class="space-y-2">
+          <h2 class="text-xl font-bold">Users</h2>
+          <ol class="space-y-1">
+            <li>{dashboardData.users.total} total.</li>
+          </ol>
+        </Card>
+        <Card class="space-y-2">
+          <h2 class="text-xl font-bold">Classes Today</h2>
+          {#if classesToday.length === 0}
+            <p class="p-2 text-sm text-gray-500 italic">
+              No classes scheduled for today.
+            </p>
+          {:else}
+            <div
+              class="hidden grid-cols-12 gap-4 border-b border-gray-200 px-4 py-2 text-sm font-semibold text-gray-500 sm:grid"
+            >
+              <span class="col-span-3">Course</span>
+              <span class="col-span-3">Instructor</span>
+              <span class="col-span-4">Action</span>
+              <span class="col-span-2 text-right">Time</span>
+            </div>
+            <ul class="list-none space-y-2">
+              {#each classesToday as classToday (classToday.id + '-' + classToday.classNumber)}
+                {@const status =
+                  classToday.class.classStatuses[classToday.classNumber]}
+                <li
+                  class="grid grid-cols-1 items-center gap-4 rounded-lg p-4 sm:grid-cols-12 {getClassStatusBg(
+                    status,
+                  )}"
+                >
+                  <p class="font-semibold sm:col-span-3 sm:font-normal">
+                    {classToday.class.course}
+                  </p>
+                  <p class="sm:col-span-3">
+                    {classToday.class.instructorFirstName +
+                      ' ' +
+                      classToday.class.instructorLastName}
+                  </p>
+                  <div class="sm:col-span-4">
+                    <Button
+                      color="gray"
+                      onclick={() =>
+                        sendClassReminder({
+                          instructorName: classToday.class.instructorFirstName,
+                          instructorEmail: classToday.class.instructorEmail,
+                          otherInstructorEmails:
+                            classToday.class.otherInstructorEmails,
+                          className: classToday.class.course,
+                          nextMeetingTime: formatDate(
+                            timestampToDate(
+                              classToday.class.meetingTimes[
+                                classToday.classNumber
+                              ],
+                            ),
                           ),
-                        ),
-                      })}
-                  >
-                    Send Instructor Reminder
-                  </Button>
-                </div>
-                <p class="sm:col-span-2 sm:text-right">
-                  {formatDate(
-                    timestampToDate(
-                      classToday.class.meetingTimes[classToday.classNumber],
-                    ),
-                  )}
-                </p>
-              </li>
-            {/each}
-          </ul>
-        {/if}
-      </Card>
+                        })}
+                    >
+                      Send Instructor Reminder
+                    </Button>
+                  </div>
+                  <p class="sm:col-span-2 sm:text-right">
+                    {formatDate(
+                      timestampToDate(
+                        classToday.class.meetingTimes[classToday.classNumber],
+                      ),
+                    )}
+                  </p>
+                </li>
+              {/each}
+            </ul>
+          {/if}
+        </Card>
+      {/if}
     </div>
   {/if}
 </div>

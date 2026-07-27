@@ -7,7 +7,11 @@
   import { invalidateAll } from '$app/navigation'
   import { alert } from '$lib/stores'
 
-  export let data: PageData
+  interface Props {
+    data: PageData
+  }
+
+  let { data }: Props = $props()
 
   async function handleCheckIn() {
     const hhidRef = doc(db, 'hhids', data.applicant.user.hhid)
@@ -90,19 +94,19 @@
     </div>
     <div>
       {#if !data.applicant.hhid.checkedIn}
-        <Button on:click={handleCheckIn}>Check In</Button>
+        <Button onclick={handleCheckIn}>Check In</Button>
       {/if}
     </div>
     <div class="mt-8 space-y-8">
       {#if data.applicant.hhid.checkedIn}
-        {#each Object.keys(data.applicant.hhid.food).sort() as date}
+        {#each Object.keys(data.applicant.hhid.food).sort() as date (date)}
           <div class="font-bold">
             {date}
           </div>
-          {#each Object.keys(data.applicant.hhid.food[date]) as meal}
+          {#each Object.keys(data.applicant.hhid.food[date]) as meal (meal)}
             <div>
               <Button
-                on:click={() =>
+                onclick={() =>
                   handleMeal(date, meal, data.applicant.hhid.food[date][meal])}
                 >{meal}: {data.applicant.hhid.food[date][meal]
                   ? 'already eaten'

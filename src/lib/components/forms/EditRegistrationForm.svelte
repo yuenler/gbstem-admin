@@ -31,69 +31,90 @@
   import FormCheckbox from '../FormCheckbox.svelte'
   import FormTextarea from '../FormTextarea.svelte'
 
-  export let id: string | undefined
-  export let values: Data.Registration<'client'>
-  export let dbValues: Data.Registration<'client'>
-  export let disabled = true
-  export let formEl: HTMLFormElement | undefined = undefined
-  export let collection: string = registrationsCollection
-
-  const defaultValues: Data.Registration<'client'> = {
-    personal: {
-      email: '',
-      studentFirstName: '',
-      studentLastName: '',
-      parentFirstName: '',
-      parentLastName: '',
-      gender: '',
-      race: [],
-      phoneNumber: '',
-      dateOfBirth: '',
-      frlp: '',
-      parentEducation: '',
-      secondaryEmail: '',
-    },
-    academic: {
-      school: '',
-      grade: '',
-    },
-    program: {
-      csCourse: '',
-      engineeringCourse: '',
-      mathCourse: '',
-      scienceCourse: '',
-      inPerson: false,
-      reason: '',
-    },
-    inPerson: {
-      allergies: '',
-      parentPickup: '',
-    },
-    agreements: {
-      mediaRelease: false,
-      bypassAgeLimits: false,
-      entireProgram: false,
-      timeCommitment: false,
-      submitting: false,
-    },
-    meta: {
-      id: '',
-      uid: '',
-      submitted: false,
-    },
-    timestamps: {
-      created: null as any,
-      updated: null as any,
-    },
+  interface Props {
+    id: string | undefined
+    values: Data.Registration<'client'>
+    dbValues?: Data.Registration<'client'> | undefined
+    disabled?: boolean
+    formEl?: HTMLFormElement | undefined
+    collection?: string
   }
+
+  let {
+    id,
+    values = $bindable(),
+    dbValues = $bindable(),
+    disabled = $bindable(true),
+    formEl = $bindable(undefined),
+    collection = registrationsCollection,
+  }: Props = $props()
 
   const schema = registrationSchema
 
+  function toFormValues(v: Data.Registration<'client'>) {
+    return {
+      personal: {
+        studentFirstName: v.personal?.studentFirstName || '',
+        studentLastName: v.personal?.studentLastName || '',
+        parentFirstName: v.personal?.parentFirstName || '',
+        parentLastName: v.personal?.parentLastName || '',
+        email: v.personal?.email || '',
+        secondaryEmail: v.personal?.secondaryEmail || '',
+        phoneNumber: v.personal?.phoneNumber || '',
+        dateOfBirth: v.personal?.dateOfBirth || '',
+        gender: v.personal?.gender || '',
+        race: v.personal?.race || [],
+        frlp: v.personal?.frlp || '',
+        parentEducation: v.personal?.parentEducation || '',
+      },
+      academic: {
+        school: v.academic?.school || '',
+        grade: v.academic?.grade || '',
+      },
+      program: {
+        csCourse: v.program?.csCourse || '',
+        mathCourse: v.program?.mathCourse || '',
+        engineeringCourse: v.program?.engineeringCourse || '',
+        scienceCourse: v.program?.scienceCourse || '',
+        inPerson:
+          v.program?.inPerson !== undefined ? v.program.inPerson : false,
+        reason: v.program?.reason || '',
+      },
+      inPerson: {
+        allergies: v.inPerson?.allergies || '',
+        parentPickup: v.inPerson?.parentPickup || '',
+      },
+      agreements: {
+        mediaRelease:
+          v.agreements?.mediaRelease !== undefined
+            ? v.agreements.mediaRelease
+            : false,
+        bypassAgeLimits:
+          v.agreements?.bypassAgeLimits !== undefined
+            ? v.agreements.bypassAgeLimits
+            : false,
+        entireProgram:
+          v.agreements?.entireProgram !== undefined
+            ? v.agreements.entireProgram
+            : false,
+        timeCommitment:
+          v.agreements?.timeCommitment !== undefined
+            ? v.agreements.timeCommitment
+            : false,
+        submitting:
+          v.agreements?.submitting !== undefined
+            ? v.agreements.submitting
+            : false,
+      },
+    }
+  }
+
   const formResult = superForm(
-    defaults(cloneDeep(defaultValues) as any, zod(schema as any) as any) as any,
+    defaults(toFormValues(values) as any, zod(schema as any) as any) as any,
     {
       SPA: true,
       validators: zod(schema as any) as any,
+      resetForm: false,
       dataType: 'json',
       async onUpdate({ form: formVal }) {
         if (!formVal.valid) return
@@ -153,63 +174,9 @@
   const { form, enhance, submitting } = formResult
 
   // React to parent values changing (e.g. loaded data or cancel changes)
-  $: if (values) {
-    $form.personal = {
-      studentFirstName: values.personal?.studentFirstName || '',
-      studentLastName: values.personal?.studentLastName || '',
-      parentFirstName: values.personal?.parentFirstName || '',
-      parentLastName: values.personal?.parentLastName || '',
-      email: values.personal?.email || '',
-      secondaryEmail: values.personal?.secondaryEmail || '',
-      phoneNumber: values.personal?.phoneNumber || '',
-      dateOfBirth: values.personal?.dateOfBirth || '',
-      gender: values.personal?.gender || '',
-      race: values.personal?.race || [],
-      frlp: values.personal?.frlp || '',
-      parentEducation: values.personal?.parentEducation || '',
-    }
-    $form.academic = {
-      school: values.academic?.school || '',
-      grade: values.academic?.grade || '',
-    }
-    $form.program = {
-      csCourse: values.program?.csCourse || '',
-      mathCourse: values.program?.mathCourse || '',
-      engineeringCourse: values.program?.engineeringCourse || '',
-      scienceCourse: values.program?.scienceCourse || '',
-      inPerson:
-        values.program?.inPerson !== undefined
-          ? values.program.inPerson
-          : false,
-      reason: values.program?.reason || '',
-    }
-    $form.inPerson = {
-      allergies: values.inPerson?.allergies || '',
-      parentPickup: values.inPerson?.parentPickup || '',
-    }
-    $form.agreements = {
-      mediaRelease:
-        values.agreements?.mediaRelease !== undefined
-          ? values.agreements.mediaRelease
-          : false,
-      bypassAgeLimits:
-        values.agreements?.bypassAgeLimits !== undefined
-          ? values.agreements.bypassAgeLimits
-          : false,
-      entireProgram:
-        values.agreements?.entireProgram !== undefined
-          ? values.agreements.entireProgram
-          : false,
-      timeCommitment:
-        values.agreements?.timeCommitment !== undefined
-          ? values.agreements.timeCommitment
-          : false,
-      submitting:
-        values.agreements?.submitting !== undefined
-          ? values.agreements.submitting
-          : false,
-    }
-  }
+  $effect(() => {
+    form.set(toFormValues(values))
+  })
 </script>
 
 <form bind:this={formEl} use:enhance class="w-full max-w-2xl">
@@ -317,7 +284,7 @@
           >Race / ethnicity (check all that apply)</span
         >
         <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {#each raceJson as race}
+          {#each raceJson as race (race.name)}
             <div class="flex items-center">
               <input
                 type="checkbox"

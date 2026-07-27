@@ -1,10 +1,9 @@
 <script lang="ts">
   import { browser } from '$app/environment'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import { db } from '$lib/client/firebase'
   import Button from '$lib/components/Button.svelte'
   import CollectionFilter from '$lib/components/CollectionFilter.svelte'
-  import type Dialog from '$lib/components/Dialog.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
   import Registration from '$lib/components/Registration.svelte'
   import SearchBox from '$lib/components/SearchBox.svelte'
@@ -31,13 +30,19 @@
   import { kebabCase } from 'lodash-es'
   import type { PageData } from './$types'
 
-  export let data: PageData
-  let dialogEl: Dialog
-  let current: number | undefined
-  let checked: Array<number> = []
-  $: selectedCollection = semesterCollectionPath(
-    resolveSemester($page.url.searchParams.get('semester')),
-    'registrations',
+  interface Props {
+    data: PageData
+  }
+
+  let { data }: Props = $props()
+  let showRegistrationDialog = $state(false)
+  let current: number | undefined = $state()
+  let checked: Array<number> = $state([])
+  let selectedCollection = $derived(
+    semesterCollectionPath(
+      resolveSemester(page.url.searchParams.get('semester')),
+      'registrations',
+    ),
   )
 
   const csvHeaders = [
@@ -56,88 +61,105 @@
     'scienceCourse',
     'In-person',
   ]
-  $: rows = data.registrations.map((registration) => {
-    const {
-      id,
-      values: {
-        personal: {
-          studentFirstName,
-          studentLastName,
-          parentFirstName,
-          parentLastName,
-          email,
-          secondaryEmail,
+  let rows = $derived(
+    data.registrations.map((registration) => {
+      const {
+        id,
+        values: {
+          personal: {
+            studentFirstName,
+            studentLastName,
+            parentFirstName,
+            parentLastName,
+            email,
+            secondaryEmail,
+          },
+          academic: { school, grade },
+          program: {
+            csCourse,
+            engineeringCourse,
+            mathCourse,
+            scienceCourse,
+            inPerson,
+          },
         },
-        academic: { school, grade },
-        program: {
-          csCourse,
-          engineeringCourse,
-          mathCourse,
-          scienceCourse,
-          inPerson,
-        },
-      },
-    } = registration
-    return [
-      id,
-      normalizeCapitals(studentFirstName),
-      normalizeCapitals(studentLastName),
-      normalizeCapitals(parentFirstName),
-      normalizeCapitals(parentLastName),
-      email,
-      secondaryEmail,
-      school,
-      grade,
-      (csCourse ?? '').toLowerCase().replace(/ /g, '-'),
-      (engineeringCourse ?? '').toLowerCase().replace(/ /g, '-'),
-      kebabCase(mathCourse ?? ''),
-      (scienceCourse ?? '').toLowerCase().replace(/ /g, '-'),
-      inPerson ? 'Yes' : 'No',
-    ]
+      } = registration
+      return [
+        id,
+        normalizeCapitals(studentFirstName),
+        normalizeCapitals(studentLastName),
+        normalizeCapitals(parentFirstName),
+        normalizeCapitals(parentLastName),
+        email,
+        secondaryEmail,
+        school,
+        grade,
+        (csCourse ?? '').toLowerCase().replace(/ /g, '-'),
+        (engineeringCourse ?? '').toLowerCase().replace(/ /g, '-'),
+        kebabCase(mathCourse ?? ''),
+        (scienceCourse ?? '').toLowerCase().replace(/ /g, '-'),
+        inPerson ? 'Yes' : 'No',
+      ]
+    }),
+  )
+
+  let csvWithHeaders = $derived(generateCSV(csvHeaders, rows))
+
+  let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
+  // Revoke the previous object URL whenever blob changes (and on
+  // unmount) - otherwise every filter/search/page change here leaks one.
+  let url = $state('')
+  $effect(() => {
+    const objectUrl = URL.createObjectURL(blob)
+    url = objectUrl
+    return () => URL.revokeObjectURL(objectUrl)
   })
 
-  $: csvWithHeaders = generateCSV(csvHeaders, rows)
-
-  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-  $: url = URL.createObjectURL(blob)
-
-  const schools: string[] = data.registrations
-    .map((registration) =>
-      registration.values.academic.school.trim().toLocaleLowerCase(),
-    )
-    .sort()
-  let uniqueSchools: string[] = []
-  schools.map((school: string) => {
-    if (!uniqueSchools.includes(school)) {
-      uniqueSchools.push(school)
-    }
+  let schools = $derived(
+    data.registrations
+      .map((registration) =>
+        registration.values.academic.school.trim().toLocaleLowerCase(),
+      )
+      .sort(),
+  )
+  let uniqueSchools = $derived(Array.from(new Set(schools)))
+  let schoolsBlob = $derived(
+    new Blob([uniqueSchools.join('\n')], { type: 'text/csv' }),
+  )
+  let schoolsUrl = $state('')
+  $effect(() => {
+    const objectUrl = URL.createObjectURL(schoolsBlob)
+    schoolsUrl = objectUrl
+    return () => URL.revokeObjectURL(objectUrl)
   })
 
-  const schoolsBlob = new Blob([uniqueSchools.join('\n')], { type: 'text/csv' })
-  const schoolsUrl = URL.createObjectURL(schoolsBlob)
-
-  $: registration =
+  let registration = $derived(
     data.registrations.length === 0
       ? undefined
       : current === undefined
         ? undefined
-        : data.registrations[current]
-  $: currentPage = data.page ?? 1
-  $: currentLimit = data.limit ?? 25
+        : data.registrations[current],
+  )
+  let currentPage = $derived(data.page ?? 1)
+  let currentLimit = $derived(data.limit ?? 25)
 
-  $: prevHref = (() => {
-    if (currentPage <= 1) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage - 1))
-    return `?${base.toString()}`
-  })()
+  let prevHref = $derived(
+    (() => {
+      if (currentPage <= 1) return ''
+      const base = new URLSearchParams(page.url.searchParams)
+      base.set('page', String(currentPage - 1))
+      return `?${base.toString()}`
+    })(),
+  )
 
-  $: nextHref = (() => {
-    if (data.registrations.length < currentLimit) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage + 1))
-    return `?${base.toString()}`
-  })()
+  let nextHref = $derived(
+    (() => {
+      if (data.registrations.length < currentLimit) return ''
+      const base = new URLSearchParams(page.url.searchParams)
+      base.set('page', String(currentPage + 1))
+      return `?${base.toString()}`
+    })(),
+  )
 
   function handleCheck(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
@@ -263,7 +285,7 @@
 </div>
 
 <Table>
-  <svelte:fragment slot="head">
+  {#snippet head()}
     <th scope="col" class="p-4">
       <div class="flex items-center">
         <input
@@ -272,7 +294,7 @@
           type="checkbox"
           checked={checked.length === data.registrations.length &&
             checked.length > 0}
-          on:input={handleCheckAll}
+          oninput={handleCheckAll}
         />
         <label for="check-all" class="sr-only">checkbox</label>
       </div>
@@ -287,15 +309,15 @@
     <th scope="col" class="px-6 py-3">Bypass Age Limits?</th>
     <th scope="col" class="px-6 py-3">Course Enrollment</th>
     <!-- <th scope="col" class="px-6 py-3">Taught before</th> -->
-  </svelte:fragment>
-  <svelte:fragment slot="body">
-    {#each data.registrations as registration, i}
+  {/snippet}
+  {#snippet body()}
+    {#each data.registrations as registration, i (registration.id)}
       <tr
         class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
-        on:click={(e) => {
+        onclick={(e) => {
           if ((e.target as HTMLElement).tagName === 'INPUT') return
           current = i
-          dialogEl.open()
+          showRegistrationDialog = true
         }}
       >
         <td class="w-4 p-4">
@@ -305,7 +327,7 @@
               class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
               type="checkbox"
               checked={checked.includes(i)}
-              on:input={(e) => handleCheck(e, i)}
+              oninput={(e) => handleCheck(e, i)}
             />
             <label for="check-all" class="sr-only">checkbox</label>
           </div>
@@ -354,7 +376,7 @@
             class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
             type="checkbox"
             checked={registration.values.agreements.bypassAgeLimits}
-            on:change={() => bypassAgeLimits(registration.id)}
+            onchange={() => bypassAgeLimits(registration.id)}
           />
         </td>
         {#await getCourses(registration.id) then courses}
@@ -362,7 +384,7 @@
         {/await}
       </tr>
     {/each}
-  </svelte:fragment>
+  {/snippet}
 </Table>
 
 <div class="mt-4 flex w-full justify-between">
@@ -382,7 +404,7 @@
 </div>
 
 <Registration
-  bind:dialogEl
+  bind:open={showRegistrationDialog}
   id={registration?.id}
   collection={selectedCollection}
 />

@@ -127,7 +127,7 @@ async function seedSemester(semesterId: string) {
       race: ['White'],
       phoneNumber: '555-0100',
       frlp: 'No',
-      parentEducation: "Bachelor's Degree",
+      parentEducation: "Bachelor's degree",
     },
     academic: { school: 'Legacy Elementary', grade: '3' },
     program: {

@@ -4,17 +4,29 @@
   type ButtonColor = 'red' | 'blue' | 'gray' | 'green' | 'yellow' | 'purple'
   type ButtonType = 'button' | 'submit' | 'reset'
 
-  let className = ''
-  export { className as class }
-  export let color: ButtonColor = 'gray'
-  export let type: ButtonType = 'button'
-  export let href: string | undefined = undefined
+  interface Props {
+    class?: string
+    color?: ButtonColor
+    type?: ButtonType
+    href?: string | undefined
+    children?: import('svelte').Snippet
+    [key: string]: any
+  }
+
+  let {
+    class: className = '',
+    color = 'gray',
+    type = 'button',
+    href = undefined,
+    children,
+    ...rest
+  }: Props = $props()
 </script>
 
 <svelte:element
   this={href ? 'a' : 'button'}
   class={cn(
-    'rounded-md shadow-xs transition-colors duration-300 px-4 py-2',
+    'rounded-md px-4 py-2 shadow-xs transition-colors duration-300',
     color === 'red' &&
       'bg-red-100 text-red-900 hover:bg-red-200 disabled:bg-red-200 disabled:text-red-700',
     color === 'blue' &&
@@ -32,16 +44,7 @@
   {href}
   type={href ? undefined : type}
   role={href ? 'button' : undefined}
-  on:click
-  on:change
-  on:keydown
-  on:keyup
-  on:touchstart
-  on:touchend
-  on:touchcancel
-  on:mouseenter
-  on:mouseleave
-  {...$$restProps}
+  {...rest}
 >
-  <slot />
+  {@render children?.()}
 </svelte:element>

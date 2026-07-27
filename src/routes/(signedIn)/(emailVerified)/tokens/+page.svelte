@@ -5,66 +5,77 @@
   import Button from '$lib/components/Button.svelte'
   import { deleteDoc, doc } from 'firebase/firestore'
   import { db } from '$lib/client/firebase'
-  import { actions, alert } from '$lib/stores'
+  import { alert } from '$lib/stores'
+  import { actionsState } from '$lib/stores.svelte'
   import Token from '$lib/components/Token.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
   import { goto, invalidate } from '$app/navigation'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import type { FirebaseError } from 'firebase/app'
   import { writeToClipboard } from '$lib/utils'
 
-  export let data: PageData
+  interface Props {
+    data: PageData
+  }
 
-  let create = false
+  let { data }: Props = $props()
+
+  let create = $state(false)
   let disabled = {
     create: false,
   }
-  let checked: Array<number> = []
+  let checked: Array<number> = $state([])
 
-  $: currentPage = data.page ?? 1
-  $: currentLimit = data.limit ?? 25
+  let currentPage = $derived(data.page ?? 1)
+  let currentLimit = $derived(data.limit ?? 25)
 
-  $: prevHref = (() => {
-    if (currentPage <= 1) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage - 1))
-    return `?${base.toString()}`
-  })()
+  let prevHref = $derived(
+    (() => {
+      if (currentPage <= 1) return ''
+      const base = new URLSearchParams(page.url.searchParams)
+      base.set('page', String(currentPage - 1))
+      return `?${base.toString()}`
+    })(),
+  )
 
-  $: nextHref = (() => {
-    if (data.tokens.length < currentLimit) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage + 1))
-    return `?${base.toString()}`
-  })()
-  $: if (checked.length > 0) {
-    actions.set([
-      {
-        name: `Delete ${checked.length} ${
-          checked.length > 1 ? 'tokens' : 'token'
-        }`,
-        color: 'red',
-        callback: async () => {
-          try {
-            await Promise.all(
-              checked.map((i) => {
-                const token = data.tokens[i]
-                return deleteDoc(doc(db, 'tokens', token.id))
-              }),
-            )
-            await invalidate('app:tokens')
-            checked = []
-            alert.trigger('success', 'Token deleted.')
-          } catch (err: any) {
-            console.error('Failed to delete tokens:', err)
-            throw err
-          }
+  let nextHref = $derived(
+    (() => {
+      if (data.tokens.length < currentLimit) return ''
+      const base = new URLSearchParams(page.url.searchParams)
+      base.set('page', String(currentPage + 1))
+      return `?${base.toString()}`
+    })(),
+  )
+  $effect(() => {
+    if (checked.length > 0) {
+      actionsState.current = [
+        {
+          name: `Delete ${checked.length} ${
+            checked.length > 1 ? 'tokens' : 'token'
+          }`,
+          color: 'red',
+          callback: async () => {
+            try {
+              await Promise.all(
+                checked.map((i) => {
+                  const token = data.tokens[i]
+                  return deleteDoc(doc(db, 'tokens', token.id))
+                }),
+              )
+              await invalidate('app:tokens')
+              checked = []
+              alert.trigger('success', 'Token deleted.')
+            } catch (err: any) {
+              console.error('Failed to delete tokens:', err)
+              throw err
+            }
+          },
         },
-      },
-    ])
-  } else {
-    actions.set(null)
-  }
+      ]
+    } else {
+      actionsState.current = null
+    }
+  })
   function handleCheck(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
     i: number,
@@ -94,7 +105,7 @@
     values: Data.Token<'pojo'>
   }) {
     try {
-      await writeToClipboard(`${$page.url.host}/signup?token=${token.id}`)
+      await writeToClipboard(`${page.url.host}/signup?token=${token.id}`)
       alert.trigger('success', 'Token copied.')
     } catch {
       alert.trigger('error', 'Failed to copy token.')
@@ -123,7 +134,7 @@
 </div>
 
 <Table>
-  <svelte:fragment slot="head">
+  {#snippet head()}
     <th scope="col" class="p-4">
       <div class="flex items-center">
         <input
@@ -131,7 +142,7 @@
           class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
           type="checkbox"
           checked={checked.length === data.tokens.length && checked.length > 0}
-          on:input={handleCheckAll}
+          oninput={handleCheckAll}
         />
         <label for="check-all" class="sr-only">checkbox</label>
       </div>
@@ -145,7 +156,7 @@
       <Button
         class="flex h-10 w-10 items-center justify-center p-0"
         color="blue"
-        on:click={handleCreate}
+        onclick={handleCreate}
         disabled={disabled.create}
       >
         <svg
@@ -164,9 +175,9 @@
         </svg>
       </Button>
     </th>
-  </svelte:fragment>
-  <svelte:fragment slot="body">
-    {#each data.tokens as token, i}
+  {/snippet}
+  {#snippet body()}
+    {#each data.tokens as token, i (token.id)}
       <tr class="border-b bg-white">
         <td class="w-4 p-4">
           <div class="flex items-center">
@@ -175,7 +186,7 @@
               class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-400 checked:border-gray-600 checked:bg-gray-600 focus:border-gray-600 focus:ring-1 focus:ring-gray-600 focus:ring-offset-1 focus:outline-hidden disabled:cursor-default disabled:checked:border-gray-400 disabled:checked:bg-gray-400"
               type="checkbox"
               checked={checked.includes(i)}
-              on:input={(e) => handleCheck(e, i)}
+              oninput={(e) => handleCheck(e, i)}
             />
             <label for="check-all" class="sr-only">checkbox</label>
           </div>
@@ -232,21 +243,21 @@
           <button
             class="text-gray-700 transition-colors duration-300 hover:text-gray-500"
             type="button"
-            on:click={() => handleCopyAction(token)}
+            onclick={() => handleCopyAction(token)}
           >
             Copy
           </button>
           <button
             class="text-red-700 transition-colors duration-300 hover:text-red-500"
             type="button"
-            on:click={() => handleDeleteAction(token)}
+            onclick={() => handleDeleteAction(token)}
           >
             Delete
           </button>
         </td>
       </tr>
     {/each}
-  </svelte:fragment>
+  {/snippet}
 </Table>
 
 {#if data.tokens}
@@ -262,7 +273,7 @@
 
 {#if create}
   <Token
-    on:exit={() => {
+    onExit={() => {
       create = false
     }}
   />

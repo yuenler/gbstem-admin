@@ -1,30 +1,22 @@
 <script lang="ts">
   import Select from './Select.svelte'
   import { goto } from '$app/navigation'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
 
-  export let type: 'students' | 'registrations' | 'applications'
-
-  $: defaultFilter = type === 'registrations' ? 'submitted' : 'all'
-
-  let lastUrlFilter =
-    $page.url.searchParams.get('filter') ??
-    (type === 'registrations' ? 'submitted' : 'all')
-  let value = lastUrlFilter
-
-  $: {
-    const urlFilter = $page.url.searchParams.get('filter') ?? defaultFilter
-    if (urlFilter !== lastUrlFilter) {
-      lastUrlFilter = urlFilter
-      value = urlFilter
-    }
+  interface Props {
+    type: 'students' | 'registrations' | 'applications'
   }
 
-  function handleChange(newValue: string) {
-    const urlFilter = $page.url.searchParams.get('filter') ?? defaultFilter
-    if (newValue === urlFilter) return
+  let { type }: Props = $props()
 
-    const base = new URLSearchParams($page.url.searchParams)
+  let defaultFilter = $derived(type === 'registrations' ? 'submitted' : 'all')
+
+  let value = $derived(page.url.searchParams.get('filter') ?? defaultFilter)
+
+  function handleChange(newValue: string) {
+    if (newValue === value) return
+
+    const base = new URLSearchParams(page.url.searchParams)
     if (newValue === defaultFilter || !newValue) {
       base.delete('filter')
     } else {
@@ -33,10 +25,6 @@
     base.delete('updated') // Reset pagination
     base.delete('page') // Reset page parameter
     goto(`?${base.toString()}`)
-  }
-
-  $: if (value) {
-    handleChange(value)
   }
 
   const optionsMap = {
@@ -64,8 +52,15 @@
     applications: 'Decision',
   }
 
-  $: options = optionsMap[type]
-  $: label = labelMap[type]
+  let options = $derived(optionsMap[type])
+  let label = $derived(labelMap[type])
 </script>
 
-<Select class="mt-0 w-64" bind:value {label} {options} required />
+<Select
+  class="mt-0 w-64"
+  {value}
+  onchange={handleChange}
+  {label}
+  {options}
+  required
+/>

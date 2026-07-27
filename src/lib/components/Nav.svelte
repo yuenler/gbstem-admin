@@ -1,32 +1,35 @@
 <script lang="ts">
   import ProfileMenu from './ProfileMenu.svelte'
   import { cn } from '$lib/utils'
-  import { page } from '$app/stores'
+  import { page, navigating } from '$app/state'
   import { onMount } from 'svelte'
   import Brand from './Brand.svelte'
-  import { navigating } from '$app/stores'
   import { fade } from 'svelte/transition'
   import AnnouncementsBell from './AnnouncementsBell.svelte'
   import { cubicInOut } from 'svelte/easing'
-  import { actions } from '$lib/stores'
+  import { actionsState } from '$lib/stores.svelte'
   import Button from './Button.svelte'
   import progress from '$lib/client/progress'
 
-  export let user: Data.User.Peek
+  interface Props {
+    user: Data.User.Peek
+  }
 
-  let shadow = false
-  let open = false
-  let disabled = false
+  let { user }: Props = $props()
+
+  let shadow = $state(false)
+  let open = $state(false)
+  let disabled = $state(false)
   onMount(() => {
     updateShadow()
-    return navigating.subscribe((navigating) => {
-      if (navigating) {
-        open = false
-      }
-    })
   })
-  $: pathname = $page.url.pathname
-  const pages = [
+  $effect(() => {
+    if (navigating.to) {
+      open = false
+    }
+  })
+  let pathname = $derived(page.url.pathname)
+  let pages = $derived([
     ...(user.role === 'admin' ? [{ name: 'Tokens', href: '/tokens' }] : []),
     {
       name: 'Dashboard',
@@ -68,16 +71,16 @@
       name: 'Sub Requests Log',
       href: '/sub-requests',
     },
-  ]
+  ])
   function updateShadow() {
     shadow = window.scrollY !== 0
   }
 </script>
 
-<svelte:window on:scroll={updateShadow} />
+<svelte:window onscroll={updateShadow} />
 <nav
   class={cn(
-    'px-4 md:px-6 lg:px-8 fixed left-0 top-0 z-40 flex h-20 w-full items-center justify-between border-b bg-white transition-all gap-2 md:gap-4 lg:gap-6',
+    'fixed top-0 left-0 z-40 flex h-20 w-full items-center justify-between gap-2 border-b bg-white px-4 transition-all md:gap-4 md:px-6 lg:gap-6 lg:px-8',
     shadow && !open ? 'shadow-b border-gray-200' : 'border-white',
   )}
 >
@@ -85,14 +88,14 @@
   <Brand />
 
   <!-- Middle Pages Links (visible on sm and larger, scales down spacing/text size) -->
-  {#if user.emailVerified && $actions === null}
+  {#if user.emailVerified && actionsState.current === null}
     <div
       class="no-scrollbar hidden min-w-0 flex-1 items-center justify-start gap-0.5 overflow-x-auto px-2 py-1 sm:flex md:gap-1 lg:justify-center lg:gap-1.5 xl:gap-2"
     >
-      {#each pages as page}
+      {#each pages as page (page.href)}
         <a
           class={cn(
-            'rounded-md px-1.5 py-1 text-[11px] md:px-2 md:py-1 md:text-xs lg:px-2.5 lg:py-1.5 lg:text-[13px] xl:text-[14px] transition-colors text-center leading-tight flex items-center justify-center min-h-10 max-w-25 shrink-0',
+            'flex min-h-10 max-w-25 shrink-0 items-center justify-center rounded-md px-1.5 py-1 text-center text-[11px] leading-tight transition-colors md:px-2 md:py-1 md:text-xs lg:px-2.5 lg:py-1.5 lg:text-[13px] xl:text-[14px]',
             pathname === page.href ? 'bg-gray-200' : 'hover:bg-gray-100',
           )}
           href={page.href}
@@ -104,16 +107,16 @@
   {/if}
 
   <!-- Middle Active Actions (visible on sm and larger, takes up remaining middle space) -->
-  {#if user.emailVerified && $actions !== null}
+  {#if user.emailVerified && actionsState.current !== null}
     <div
       class="hidden min-w-0 flex-1 items-center justify-between gap-3 overflow-x-auto sm:flex"
     >
       <fieldset class="flex items-center gap-3" {disabled}>
-        {#each $actions as action}
+        {#each actionsState.current as action, i (i)}
           <Button
             class="rounded-sm px-3 py-1 whitespace-nowrap"
             color={action.color}
-            on:click={() => {
+            onclick={() => {
               progress.start()
               disabled = true
               action.callback().finally(() => {
@@ -126,13 +129,13 @@
           </Button>
         {/each}
       </fieldset>
-      <Button on:click={() => ($actions = null)}>Close</Button>
+      <Button onclick={() => (actionsState.current = null)}>Close</Button>
     </div>
   {/if}
 
   <!-- Right Profile and Mobile Menu button -->
   <div class="flex shrink-0 items-center gap-1 sm:gap-3 md:gap-4">
-    {#if $actions === null}
+    {#if actionsState.current === null}
       <ProfileMenu class="hidden sm:block" />
     {/if}
     <button
@@ -140,7 +143,7 @@
       type="button"
       aria-label={open ? 'Close menu' : 'Open menu'}
       aria-expanded={open}
-      on:click={() => {
+      onclick={() => {
         open = !open
       }}
     >
@@ -187,7 +190,7 @@
     }}
   >
     {#if user.emailVerified}
-      {#each pages as page}
+      {#each pages as page (page.href)}
         <a
           class={cn(
             'rounded-md px-3 py-2 transition-colors',

@@ -1,29 +1,37 @@
 <script lang="ts">
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import Button from '$lib/components/Button.svelte'
   import Table from '$lib/components/Table.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
   import { format } from 'date-fns'
   import type { PageData } from './$types'
 
-  export let data: PageData
+  interface Props {
+    data: PageData
+  }
 
-  $: currentPage = data.page ?? 1
-  $: currentLimit = data.limit ?? 25
+  let { data }: Props = $props()
 
-  $: prevHref = (() => {
-    if (currentPage <= 1) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage - 1))
-    return `?${base.toString()}`
-  })()
+  let currentPage = $derived(data.page ?? 1)
+  let currentLimit = $derived(data.limit ?? 25)
 
-  $: nextHref = (() => {
-    if (data.announcements.length < currentLimit) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage + 1))
-    return `?${base.toString()}`
-  })()
+  let prevHref = $derived(
+    (() => {
+      if (currentPage <= 1) return ''
+      const base = new URLSearchParams(page.url.searchParams)
+      base.set('page', String(currentPage - 1))
+      return `?${base.toString()}`
+    })(),
+  )
+
+  let nextHref = $derived(
+    (() => {
+      if (data.announcements.length < currentLimit) return ''
+      const base = new URLSearchParams(page.url.searchParams)
+      base.set('page', String(currentPage + 1))
+      return `?${base.toString()}`
+    })(),
+  )
 </script>
 
 <svelte:head>
@@ -37,13 +45,13 @@
 </div>
 
 <Table>
-  <svelte:fragment slot="head">
+  {#snippet head()}
     <th scope="col" class="px-6 py-3">Date</th>
     <th scope="col" class="px-6 py-3">Title</th>
     <th scope="col" class="px-6 py-3">Content</th>
-  </svelte:fragment>
-  <svelte:fragment slot="body">
-    {#each data.announcements as announcement}
+  {/snippet}
+  {#snippet body()}
+    {#each data.announcements as announcement (announcement.timestamp.getTime() + announcement.title)}
       <tr class="border-b bg-white hover:bg-gray-50">
         <td class="px-6 py-4 whitespace-nowrap text-gray-400">
           {format(announcement.timestamp, 'yyyy.MM.dd')}
@@ -56,7 +64,7 @@
         </td>
       </tr>
     {/each}
-  </svelte:fragment>
+  {/snippet}
 </Table>
 
 {#if data.announcements}

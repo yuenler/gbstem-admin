@@ -1,27 +1,21 @@
 <script lang="ts">
   import Select from './Select.svelte'
   import { goto } from '$app/navigation'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import { coursesJson } from '$lib/data'
 
-  export let paramName = 'filter'
-
-  let lastUrlFilter = $page.url.searchParams.get(paramName) ?? 'all'
-  let value = lastUrlFilter
-
-  $: {
-    const urlFilter = $page.url.searchParams.get(paramName) ?? 'all'
-    if (urlFilter !== lastUrlFilter) {
-      lastUrlFilter = urlFilter
-      value = urlFilter
-    }
+  interface Props {
+    paramName?: string
   }
 
-  function handleChange(newValue: string) {
-    const urlFilter = $page.url.searchParams.get(paramName) ?? 'all'
-    if (newValue === urlFilter) return
+  let { paramName = 'filter' }: Props = $props()
 
-    const base = new URLSearchParams($page.url.searchParams)
+  let value = $derived(page.url.searchParams.get(paramName) ?? 'all')
+
+  function handleChange(newValue: string) {
+    if (newValue === value) return
+
+    const base = new URLSearchParams(page.url.searchParams)
     if (newValue === 'all' || !newValue) {
       base.delete(paramName)
     } else {
@@ -32,14 +26,17 @@
     goto(`?${base.toString()}`)
   }
 
-  $: if (value) {
-    handleChange(value)
-  }
-
   const options = [
     { name: 'all' },
     ...coursesJson.map((course) => ({ name: course.name })),
   ]
 </script>
 
-<Select class="mt-0 w-64" bind:value label="Course" {options} required />
+<Select
+  class="mt-0 w-64"
+  {value}
+  onchange={handleChange}
+  label="Course"
+  {options}
+  required
+/>

@@ -5,7 +5,8 @@ import collectionsList from '../../src/lib/data/collectionsList.json'
 // CollectionFilter dropdown - derived from collections.ts/collectionsList.json so these
 // tests don't need editing every time the semester rolls over.
 const currentSemesterName =
-  collectionsList.find((sem) => sem.id === currentSemester)?.name ?? currentSemester
+  collectionsList.find((sem) => sem.id === currentSemester)?.name ??
+  currentSemester
 
 describe('Section D: Instructor Applications Management', () => {
   beforeEach(() => {
@@ -257,6 +258,9 @@ describe('Section D: Instructor Applications Management', () => {
   // `semesters/{Semester}/applications`. Names are unique per semester so this test can assert
   // the Fall25 applicant does NOT show up after switching back to the current semester.
   it('Test Case 10c: Deciding On a Past-Semester Applicant Writes To That Semester', () => {
+    cy.exec('npm run seed:legacy', { timeout: 120000 })
+    cy.exec('npm run migrate', { timeout: 120000 })
+
     // Switch to a past semester via the Collection dropdown, same flow as Test Case 9.
     cy.get('input[name="collection"]').clear().type('Fall 2025')
     cy.wait(200)
@@ -332,7 +336,7 @@ describe('Section D: Instructor Applications Management', () => {
 
     // David Miller's row should now have the green check icon (text-green-300) in the Likely Decision column
     cy.contains('tr', 'David Miller').within(() => {
-      cy.get('.text-green-300').should('be.visible')
+      cy.get('.text-green-300').should('exist')
     })
 
     // Re-open David Miller

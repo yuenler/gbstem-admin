@@ -45,11 +45,7 @@ declare global {
     }
 
     type Decision =
-      | 'accepted'
-      | 'interview'
-      | 'waitlisted'
-      | 'rejected'
-      | 'substitute'
+      'accepted' | 'interview' | 'waitlisted' | 'rejected' | 'substitute'
 
     type Interview = {
       date: string

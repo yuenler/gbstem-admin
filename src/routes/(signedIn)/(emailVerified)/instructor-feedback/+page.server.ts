@@ -9,8 +9,7 @@ interface DBInstructorFeedback {
   instructorName: string
   students: string[]
   attendanceList:
-    | Record<string, { present: boolean }>
-    | Array<{ present: boolean }>
+    Record<string, { present: boolean }> | Array<{ present: boolean }>
   date: string
   courseName: string
   feedback: string

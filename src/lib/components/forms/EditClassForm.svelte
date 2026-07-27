@@ -14,28 +14,38 @@
   import FormNativeSelect from '../FormNativeSelect.svelte'
   import FormCheckbox from '../FormCheckbox.svelte'
 
-  export let id: string | undefined
-  export let values: ClassData
-  export let disabled = true
-  export let formEl: HTMLFormElement | undefined = undefined
+  interface Props {
+    id: string | undefined
+    values: ClassData
+    disabled?: boolean
+    formEl?: HTMLFormElement | undefined
+  }
+
+  let {
+    id,
+    values = $bindable(),
+    disabled = $bindable(true),
+    formEl = $bindable(undefined),
+  }: Props = $props()
 
   const schema = classSchema
 
+  function toFormValues(v: ClassData) {
+    return {
+      course: v.course || '',
+      gradeRecommendation: v.gradeRecommendation || '',
+      classCap: v.classCap || 0,
+      meetingLink: v.meetingLink || '',
+      classDay1: v.classDay1 || '',
+      classTime1: v.classTime1 || '',
+      classDay2: v.classDay2 || '',
+      classTime2: v.classTime2 || '',
+      online: v.online !== undefined ? v.online : true,
+    }
+  }
+
   const formResult = superForm(
-    defaults(
-      {
-        course: '',
-        gradeRecommendation: '',
-        classCap: 0,
-        meetingLink: '',
-        classDay1: '',
-        classTime1: '',
-        classDay2: '',
-        classTime2: '',
-        online: true,
-      },
-      zod(schema as any) as any,
-    ) as any,
+    defaults(toFormValues(values), zod(schema as any) as any) as any,
     {
       SPA: true,
       validators: zod(schema as any) as any,
@@ -69,17 +79,9 @@
   const { form, enhance, submitting } = formResult
 
   // React to parent values changing (e.g. initial load or cancel changes)
-  $: if (values) {
-    $form.course = values.course || ''
-    $form.gradeRecommendation = values.gradeRecommendation || ''
-    $form.classCap = values.classCap || 0
-    $form.meetingLink = values.meetingLink || ''
-    $form.classDay1 = values.classDay1 || ''
-    $form.classTime1 = values.classTime1 || ''
-    $form.classDay2 = values.classDay2 || ''
-    $form.classTime2 = values.classTime2 || ''
-    $form.online = values.online !== undefined ? values.online : true
-  }
+  $effect(() => {
+    form.set(toFormValues(values))
+  })
 </script>
 
 <form bind:this={formEl} use:enhance class="w-full max-w-4xl">
@@ -93,7 +95,7 @@
           bind:value={$form.course}
         >
           <option value="" disabled>Select a course</option>
-          {#each coursesJson as course}
+          {#each coursesJson as course (course.name)}
             <option value={course.name}>{course.name}</option>
           {/each}
         </FormNativeSelect>
@@ -150,7 +152,7 @@
             bind:value={$form.classDay1}
           >
             <option value="" disabled>Select a day</option>
-            {#each daysOfWeekJson as day}
+            {#each daysOfWeekJson as day (day.name)}
               <option value={day.name}>{day.name}</option>
             {/each}
           </FormNativeSelect>
@@ -178,7 +180,7 @@
               bind:value={$form.classDay2}
             >
               <option value="" disabled>Select a day</option>
-              {#each daysOfWeekJson as day}
+              {#each daysOfWeekJson as day (day.name)}
                 <option value={day.name}>{day.name}</option>
               {/each}
             </FormNativeSelect>

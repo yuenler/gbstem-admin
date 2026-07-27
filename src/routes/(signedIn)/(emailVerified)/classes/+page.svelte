@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import Button from '$lib/components/Button.svelte'
   import ClassDetails from '$lib/components/ClassDetails.svelte'
   import CourseFilter from '$lib/components/CourseFilter.svelte'
-  import Dialog from '$lib/components/Dialog.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
   import SearchBox from '$lib/components/SearchBox.svelte'
   import Table from '$lib/components/Table.svelte'
@@ -11,31 +10,39 @@
   import { copyEmails, generateCSV } from '$lib/utils'
   import type { PageData } from './$types'
 
-  export let data: PageData
+  interface Props {
+    data: PageData
+  }
+
+  let { data }: Props = $props()
   let showValidation = false
   let currentUser: Data.User.Store
   let scheduled = false
   let loading = true
-  let selectedClassId: string | undefined = undefined
+  let selectedClassId: string | undefined = $state(undefined)
   let checked: Array<number> = []
-  let dialogEl: Dialog
+  let showClassDetailsDialog = $state(false)
 
-  $: currentPage = data.page ?? 1
-  $: currentLimit = data.limit ?? 25
+  let currentPage = $derived(data.page ?? 1)
+  let currentLimit = $derived(data.limit ?? 25)
 
-  $: prevHref = (() => {
-    if (currentPage <= 1) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage - 1))
-    return `?${base.toString()}`
-  })()
+  let prevHref = $derived(
+    (() => {
+      if (currentPage <= 1) return ''
+      const base = new URLSearchParams(page.url.searchParams)
+      base.set('page', String(currentPage - 1))
+      return `?${base.toString()}`
+    })(),
+  )
 
-  $: nextHref = (() => {
-    if (data.classes && data.classes.length < currentLimit) return ''
-    const base = new URLSearchParams($page.url.searchParams)
-    base.set('page', String(currentPage + 1))
-    return `?${base.toString()}`
-  })()
+  let nextHref = $derived(
+    (() => {
+      if (data.classes && data.classes.length < currentLimit) return ''
+      const base = new URLSearchParams(page.url.searchParams)
+      base.set('page', String(currentPage + 1))
+      return `?${base.toString()}`
+    })(),
+  )
 
   const csvHeaders = [
     'id',
@@ -49,40 +56,49 @@
     'meeting link',
     'class times',
   ]
-  $: rows = data.classes.map((classes) => {
-    const {
-      id,
-      name,
-      email,
-      courses,
-      students,
-      classStatuses,
-      meetingLink,
-      classTimes,
-    } = classes
-    return [
-      id,
-      name,
-      email,
-      courses,
-      students.join(', '),
-      classStatuses.filter(
-        (status) => status === ClassStatus.EverythingComplete,
-      ).length,
-      classStatuses.filter(
-        (status) => status === ClassStatus.FeedbackIncomplete,
-      ).length,
-      classStatuses.filter((status) => status === ClassStatus.ClassNotHeld)
-        .length,
-      meetingLink,
-      classTimes.map((value) => value.toString()).join(', '),
-    ]
+  let rows = $derived(
+    data.classes.map((classes) => {
+      const {
+        id,
+        name,
+        email,
+        courses,
+        students,
+        classStatuses,
+        meetingLink,
+        classTimes,
+      } = classes
+      return [
+        id,
+        name,
+        email,
+        courses,
+        students.join(', '),
+        classStatuses.filter(
+          (status) => status === ClassStatus.EverythingComplete,
+        ).length,
+        classStatuses.filter(
+          (status) => status === ClassStatus.FeedbackIncomplete,
+        ).length,
+        classStatuses.filter((status) => status === ClassStatus.ClassNotHeld)
+          .length,
+        meetingLink,
+        classTimes.map((value) => value.toString()).join(', '),
+      ]
+    }),
+  )
+
+  let csvWithHeaders = $derived(generateCSV(csvHeaders, rows))
+
+  let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
+  // Revoke the previous object URL whenever blob changes (and on
+  // unmount) - otherwise every filter/search/page change here leaks one.
+  let url = $state('')
+  $effect(() => {
+    const objectUrl = URL.createObjectURL(blob)
+    url = objectUrl
+    return () => URL.revokeObjectURL(objectUrl)
   })
-
-  $: csvWithHeaders = generateCSV(csvHeaders, rows)
-
-  $: blob = new Blob([csvWithHeaders], { type: 'text/csv' })
-  $: url = URL.createObjectURL(blob)
 
   function handleCheckAll(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
@@ -100,7 +116,7 @@
   <title>Classes</title>
 </svelte:head>
 
-<ClassDetails bind:dialogEl id={selectedClassId} />
+<ClassDetails bind:open={showClassDetailsDialog} id={selectedClassId} />
 
 <div class="flex flex-wrap items-end gap-4">
   <SearchBox basePath="/classes" />
@@ -113,7 +129,7 @@
     download="classes.csv">Download</Button
   >
   <Button
-    on:click={() =>
+    onclick={() =>
       copyEmails(data.classes.map((instructor) => instructor.email))}
     class="flex h-12 items-center gap-1"
   >
@@ -143,7 +159,7 @@
 
 {#await data then feedback}
   <Table>
-    <svelte:fragment slot="head">
+    {#snippet head()}
       <th scope="col" class="px-6 py-3">Instructor Name</th>
       <th scope="col" class="px-6 py-3">Instructor Email</th>
       <th scope="col" class="px-6 py-3">Course</th>
@@ -152,14 +168,14 @@
       <th scope="col" class="px-6 py-3">Number of students</th>
       <th scope="col" class="px-6 py-3">Classes Missed</th>
       <th scope="col" class="px-6 py-3">Classes Missing Feedback</th>
-    </svelte:fragment>
-    <svelte:fragment slot="body">
-      {#each feedback.classes as value, i}
+    {/snippet}
+    {#snippet body()}
+      {#each feedback.classes as value, i (value.id)}
         <tr
           class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
-          on:click={() => {
+          onclick={() => {
             selectedClassId = value.id
-            dialogEl.open()
+            showClassDetailsDialog = true
           }}
         >
           <td class="px-6 py-4">
@@ -192,7 +208,7 @@
           </td>
         </tr>
       {/each}
-    </svelte:fragment>
+    {/snippet}
   </Table>
   {#if !data.query && feedback.classes}
     <div class="mt-4 flex justify-end gap-2">

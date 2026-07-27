@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import { addDoc, collection } from 'firebase/firestore'
   import { db } from '$lib/client/firebase'
   import Button from '../Button.svelte'
-  import type Dialog from '../Dialog.svelte'
   import { alert } from '$lib/stores'
   import type { FirebaseError } from 'firebase/app'
   import { invalidate } from '$app/navigation'
@@ -17,7 +16,11 @@
   import FormSelect from '../FormSelect.svelte'
   import FormCheckbox from '../FormCheckbox.svelte'
 
-  export let dialogEl: Dialog
+  interface Props {
+    onExit?: () => void
+  }
+
+  let { onExit }: Props = $props()
 
   const schema = tokenSchema
 
@@ -43,14 +46,14 @@
           await invalidate('app:applications')
           try {
             await writeToClipboard(
-              `${$page.url.host}/signup?token=${snapshot.id}`,
+              `${page.url.host}/signup?token=${snapshot.id}`,
             )
           } catch {
             // ignore clipboard errors
           }
           await invalidate('app:tokens')
           alert.trigger('success', 'Changes were saved successfully.')
-          dialogEl.close()
+          onExit?.()
         } catch (err: any) {
           console.error('Token creation error:', err)
           alert.trigger('error', err.code || err.message, true)
@@ -107,7 +110,7 @@
       </div>
     </div>
     <DialogActions>
-      <Button type="button" on:click={dialogEl.cancel}>Cancel</Button>
+      <Button type="button" onclick={() => onExit?.()}>Cancel</Button>
       <Button type="submit" color="blue" disabled={$delayed}>Create</Button>
     </DialogActions>
   </fieldset>

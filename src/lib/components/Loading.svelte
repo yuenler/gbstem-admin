@@ -2,13 +2,16 @@
   import { cn } from '$lib/utils'
   import { fade } from 'svelte/transition'
 
-  let className = ''
-  export { className as class }
+  interface Props {
+    class?: string
+  }
+
+  let { class: className = '' }: Props = $props()
 </script>
 
 <div
   class={cn(
-    'bg-gray-200 flex items-center justify-center rounded-lg opacity-60',
+    'flex items-center justify-center rounded-lg bg-gray-200 opacity-60',
     className,
   )}
   transition:fade

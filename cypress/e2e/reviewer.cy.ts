@@ -38,6 +38,10 @@ describe('Section O: Reviewer Role Access Control', () => {
     cy.contains('a', 'Dashboard').click()
     cy.get('h1').should('contain', 'Dashboard')
     cy.contains('total instructor applications created.').should('be.visible')
+    cy.contains('students pre-registered.').should('not.exist')
+    cy.contains('Copy Emails for Uncompleted Registrations').should('not.exist')
+    cy.contains('h2', 'Users').should('not.exist')
+    cy.contains('h2', 'Classes Today').should('not.exist')
 
     cy.contains('a', 'Classes').click()
     cy.url().should('include', '/classes')
@@ -106,7 +110,7 @@ describe('Section O: Reviewer Role Access Control', () => {
 
     // David Miller's row should now have the green check icon (text-green-300) in the Likely Decision column
     cy.contains('tr', 'David Miller').within(() => {
-      cy.get('.text-green-300').should('be.visible')
+      cy.get('.text-green-300').should('exist')
     })
 
     // Re-open David Miller

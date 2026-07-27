@@ -21,70 +21,83 @@
   import FormCheckbox from '../FormCheckbox.svelte'
   import FormTextarea from '../FormTextarea.svelte'
 
-  export let id: string | undefined
-  export let values: Data.Application<'client'>
-  export let dbValues: Data.Application<'client'>
-  export let disabled = true
-  export let loading = false
-  export let formEl: HTMLFormElement | undefined = undefined
-  export let collection: string = applicationsCollection
-  export let semesterStartDate = ''
-  export let semesterEndDate = ''
-
-  const defaultValues: Data.Application<'client'> = {
-    personal: {
-      email: '',
-      firstName: '',
-      lastName: '',
-      gender: '',
-      race: [],
-      phoneNumber: '',
-      dateOfBirth: '',
-    },
-    academic: {
-      school: '',
-      graduationYear: '',
-    },
-    program: {
-      courses: [],
-      preferences: '',
-      timeSlots: '',
-      notAvailable: '',
-      inPerson: false,
-      numClasses: '',
-      reason: '',
-    },
-    essay: {
-      taughtBefore: false,
-      academicBackground: '',
-      teachingScenario: '',
-      why: '',
-    },
-    agreements: {
-      entireProgram: false,
-      timeCommitment: false,
-      submitting: false,
-    },
-    meta: {
-      id: '',
-      uid: '',
-      decision: null,
-      submitted: false,
-      interview: false,
-    },
-    timestamps: {
-      created: null as any,
-      updated: null as any,
-    },
+  interface Props {
+    id: string | undefined
+    values: Data.Application<'client'>
+    dbValues?: Data.Application<'client'> | undefined
+    disabled?: boolean
+    loading?: boolean
+    formEl?: HTMLFormElement | undefined
+    collection?: string
+    semesterStartDate?: string
+    semesterEndDate?: string
   }
+
+  let {
+    id,
+    values = $bindable(),
+    dbValues = $bindable(),
+    disabled = $bindable(true),
+    loading = $bindable(false),
+    formEl = $bindable(undefined),
+    collection = applicationsCollection,
+    semesterStartDate = '',
+    semesterEndDate = '',
+  }: Props = $props()
 
   const schema = applicationSchema
 
+  function toFormValues(v: Data.Application<'client'>) {
+    return {
+      personal: {
+        phoneNumber: v.personal?.phoneNumber || '',
+        dateOfBirth: v.personal?.dateOfBirth || '',
+        gender: v.personal?.gender || '',
+        race: v.personal?.race || [],
+      },
+      academic: {
+        school: v.academic?.school || '',
+        graduationYear: v.academic?.graduationYear || new Date().getFullYear(),
+      },
+      program: {
+        courses: v.program?.courses || [],
+        preferences: v.program?.preferences || '',
+        timeSlots: v.program?.timeSlots || '',
+        notAvailable: v.program?.notAvailable || '',
+        inPerson:
+          v.program?.inPerson !== undefined ? v.program.inPerson : false,
+        reason: v.program?.reason || '',
+      },
+      essay: {
+        taughtBefore:
+          v.essay?.taughtBefore !== undefined ? v.essay.taughtBefore : false,
+        academicBackground: v.essay?.academicBackground || '',
+        teachingScenario: v.essay?.teachingScenario || '',
+        why: v.essay?.why || '',
+      },
+      agreements: {
+        entireProgram:
+          v.agreements?.entireProgram !== undefined
+            ? v.agreements.entireProgram
+            : false,
+        timeCommitment:
+          v.agreements?.timeCommitment !== undefined
+            ? v.agreements.timeCommitment
+            : false,
+        submitting:
+          v.agreements?.submitting !== undefined
+            ? v.agreements.submitting
+            : false,
+      },
+    }
+  }
+
   const formResult = superForm(
-    defaults(cloneDeep(defaultValues) as any, zod(schema as any) as any) as any,
+    defaults(toFormValues(values) as any, zod(schema as any) as any) as any,
     {
       SPA: true,
       validators: zod(schema as any) as any,
+      resetForm: false,
       dataType: 'json',
       async onUpdate({ form: formVal }) {
         if (!formVal.valid) return
@@ -140,53 +153,9 @@
   const { form, enhance, submitting } = formResult
 
   // React to parent values changing (e.g. loaded data or cancel changes)
-  $: if (values) {
-    $form.personal = {
-      phoneNumber: values.personal?.phoneNumber || '',
-      dateOfBirth: values.personal?.dateOfBirth || '',
-      gender: values.personal?.gender || '',
-      race: values.personal?.race || [],
-    }
-    $form.academic = {
-      school: values.academic?.school || '',
-      graduationYear:
-        values.academic?.graduationYear || new Date().getFullYear(),
-    }
-    $form.program = {
-      courses: values.program?.courses || [],
-      preferences: values.program?.preferences || '',
-      timeSlots: values.program?.timeSlots || '',
-      notAvailable: values.program?.notAvailable || '',
-      inPerson:
-        values.program?.inPerson !== undefined
-          ? values.program.inPerson
-          : false,
-      reason: values.program?.reason || '',
-    }
-    $form.essay = {
-      taughtBefore:
-        values.essay?.taughtBefore !== undefined
-          ? values.essay.taughtBefore
-          : false,
-      academicBackground: values.essay?.academicBackground || '',
-      teachingScenario: values.essay?.teachingScenario || '',
-      why: values.essay?.why || '',
-    }
-    $form.agreements = {
-      entireProgram:
-        values.agreements?.entireProgram !== undefined
-          ? values.agreements.entireProgram
-          : false,
-      timeCommitment:
-        values.agreements?.timeCommitment !== undefined
-          ? values.agreements.timeCommitment
-          : false,
-      submitting:
-        values.agreements?.submitting !== undefined
-          ? values.agreements.submitting
-          : false,
-    }
-  }
+  $effect(() => {
+    form.set(toFormValues(values))
+  })
 </script>
 
 <form bind:this={formEl} use:enhance class="w-full">
@@ -242,7 +211,7 @@
           >Race / ethnicity (check all that apply)</span
         >
         <div class="grid grid-cols-2 gap-2">
-          {#each raceJson as race}
+          {#each raceJson as race (race.name)}
             <div class="flex items-center">
               <input
                 type="checkbox"
@@ -294,7 +263,7 @@
           all that apply. Course descriptions are on our website.</span
         >
         <div class="mt-2 grid grid-cols-2 gap-2">
-          {#each coursesJson as course}
+          {#each coursesJson as course (course.name)}
             <div class="flex items-center">
               <input
                 type="checkbox"

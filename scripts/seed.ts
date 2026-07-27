@@ -369,7 +369,7 @@ async function seed() {
       race: ['White'],
       phoneNumber: '555-0199',
       frlp: 'No',
-      parentEducation: "Bachelor's Degree",
+      parentEducation: "Bachelor's degree",
     },
     academic: {
       school: 'Pinecrest Elementary',
@@ -423,7 +423,7 @@ async function seed() {
       race: ['White'],
       phoneNumber: '555-0199',
       frlp: 'No',
-      parentEducation: "Bachelor's Degree",
+      parentEducation: "Bachelor's degree",
     },
     academic: {
       school: 'Pinecrest Elementary',
@@ -476,7 +476,7 @@ async function seed() {
       race: ['Asian'],
       phoneNumber: '555-1111',
       frlp: 'No',
-      parentEducation: "Bachelor's Degree",
+      parentEducation: "Bachelor's degree",
     },
     academic: {
       school: 'Pinecrest Elementary',
@@ -631,7 +631,7 @@ async function seed() {
         race: ['White'],
         phoneNumber: `555-${String(i).padStart(4, '0')}`,
         frlp: i % 3 === 0 ? 'Yes' : 'No',
-        parentEducation: "Bachelor's Degree",
+        parentEducation: "Bachelor's degree",
       },
       academic: {
         school: schools[i % schools.length],

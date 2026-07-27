@@ -1,15 +1,19 @@
 <script lang="ts">
   import { cn } from '$lib/utils'
 
-  let className = ''
-  export { className as class }
+  interface Props {
+    class?: string
+    children?: import('svelte').Snippet
+  }
+
+  let { class: className = '', children }: Props = $props()
 </script>
 
 <div
   class={cn(
-    'w-full rounded-md border border-gray-200 p-4 md:p-6 shadow-sm bg-white',
+    'w-full rounded-md border border-gray-200 bg-white p-4 shadow-sm md:p-6',
     className,
   )}
 >
-  <slot />
+  {@render children?.()}
 </div>
