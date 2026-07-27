@@ -163,7 +163,7 @@
     }
   }
   $effect(() => {
-    if (id !== undefined) {
+    if (open && id !== undefined) {
       loadClassData(id)
     }
   })

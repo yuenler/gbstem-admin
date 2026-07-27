@@ -85,7 +85,7 @@
 
   $effect(() => {
     const currentId = id
-    if (currentId === undefined) return
+    if (!open || currentId === undefined) return
     let cancelled = false
     ;(async () => {
       loading = true
