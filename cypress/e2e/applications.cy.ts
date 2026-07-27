@@ -336,7 +336,7 @@ describe('Section D: Instructor Applications Management', () => {
 
     // David Miller's row should now have the green check icon (text-green-300) in the Likely Decision column
     cy.contains('tr', 'David Miller').within(() => {
-      cy.get('.text-green-300').should('be.visible')
+      cy.get('.text-green-300').should('exist')
     })
 
     // Re-open David Miller

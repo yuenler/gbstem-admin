@@ -57,7 +57,7 @@
     </div>
     <svg
       class={cn(
-        'h-6 w-6 transition-transform shrink-0 ml-3',
+        'ml-3 h-6 w-6 shrink-0 transition-transform',
         openState && 'rotate-180',
       )}
       xmlns="http://www.w3.org/2000/svg"

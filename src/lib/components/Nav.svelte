@@ -80,7 +80,7 @@
 <svelte:window onscroll={updateShadow} />
 <nav
   class={cn(
-    'px-4 md:px-6 lg:px-8 fixed left-0 top-0 z-40 flex h-20 w-full items-center justify-between border-b bg-white transition-all gap-2 md:gap-4 lg:gap-6',
+    'fixed top-0 left-0 z-40 flex h-20 w-full items-center justify-between gap-2 border-b bg-white px-4 transition-all md:gap-4 md:px-6 lg:gap-6 lg:px-8',
     shadow && !open ? 'shadow-b border-gray-200' : 'border-white',
   )}
 >
@@ -95,7 +95,7 @@
       {#each pages as page (page.href)}
         <a
           class={cn(
-            'rounded-md px-1.5 py-1 text-[11px] md:px-2 md:py-1 md:text-xs lg:px-2.5 lg:py-1.5 lg:text-[13px] xl:text-[14px] transition-colors text-center leading-tight flex items-center justify-center min-h-10 max-w-25 shrink-0',
+            'flex min-h-10 max-w-25 shrink-0 items-center justify-center rounded-md px-1.5 py-1 text-center text-[11px] leading-tight transition-colors md:px-2 md:py-1 md:text-xs lg:px-2.5 lg:py-1.5 lg:text-[13px] xl:text-[14px]',
             pathname === page.href ? 'bg-gray-200' : 'hover:bg-gray-100',
           )}
           href={page.href}

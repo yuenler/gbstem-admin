@@ -217,8 +217,10 @@ describe('Section G: Pre-Registrations Directory', () => {
     cy.get('[role="dialog"]').should('exist')
 
     // Verify parent education select field displays the seeded choice
-    cy.get('input[name="personal.parentEducation"]')
-      .should('have.value', "Bachelor's degree")
+    cy.get('input[name="personal.parentEducation"]').should(
+      'have.value',
+      "Bachelor's degree",
+    )
 
     // Click Edit on the sticky header
     cy.contains('button', 'Edit').click()
@@ -242,8 +244,10 @@ describe('Section G: Pre-Registrations Directory', () => {
     cy.waitForNotification('Changes were saved successfully.')
 
     // Verify parent education remains intact after save
-    cy.get('input[name="personal.parentEducation"]')
-      .should('have.value', "Bachelor's degree")
+    cy.get('input[name="personal.parentEducation"]').should(
+      'have.value',
+      "Bachelor's degree",
+    )
 
     // Close dialog
     cy.contains('button', 'Close').click()

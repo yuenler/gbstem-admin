@@ -400,10 +400,7 @@
       } else {
         const payload: DecisionRequestBody = {
           decision: newDecision as
-            | 'rejected'
-            | 'waitlisted'
-            | 'substitute'
-            | 'accepted',
+            'rejected' | 'waitlisted' | 'substitute' | 'accepted',
           email: values.personal.email,
           name: values.personal.firstName,
         }
