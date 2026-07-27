@@ -174,6 +174,9 @@
           getDocs(
             query(applicationsColl, where('meta.submitted', '==', false)),
           ),
+          getDocs(
+            query(registrationsColl, where('meta.submitted', '==', true)),
+          ),
           Promise.all([
             getCountFromServer(applicationsColl),
             getCountFromServer(
@@ -183,9 +186,6 @@
               query(applicationsColl, where('meta.decision', '!=', null)),
             ),
             getCountFromServer(usersColl),
-            getCountFromServer(
-              query(registrationsColl, where('meta.submitted', '==', true)),
-            ),
             getCountFromServer(registrationsColl),
             getCountFromServer(
               query(registrationsColl, where('enrolled', '==', true)),
@@ -197,29 +197,45 @@
         const [
           uncompletedRegistrationsSnapshot,
           uncompletedApplicationsSnapshot,
+          submittedRegistrationsSnapshot,
           counts,
           classesSnapshot,
         ] = await Promise.race([fetchPromise, timeoutPromise])
 
-        // Process uncompleted registration emails
-        const regEmails: string[] = []
+        // Process submitted registration emails for filtering
+        const submittedRegEmails = new Set<string>()
+        submittedRegistrationsSnapshot.forEach((doc) => {
+          const email = doc.data().personal?.email
+          if (email && typeof email === 'string') {
+            submittedRegEmails.add(email.trim().toLowerCase())
+          }
+        })
+
+        // Process uncompleted registration emails (exclude users with an already submitted registration)
+        const regEmailsSet = new Set<string>()
         uncompletedRegistrationsSnapshot.forEach((doc) => {
           const email = doc.data().personal?.email
-          if (email) {
-            regEmails.push(email)
+          if (email && typeof email === 'string') {
+            const clean = email.trim()
+            if (clean && !submittedRegEmails.has(clean.toLowerCase())) {
+              regEmailsSet.add(clean)
+            }
           }
         })
-        uncompletedRegistrationsEmails = regEmails
+        uncompletedRegistrationsEmails = Array.from(regEmailsSet)
 
         // Process uncompleted application emails
-        const appEmails: string[] = []
+        const appEmailsSet = new Set<string>()
         uncompletedApplicationsSnapshot.forEach((doc) => {
           const email = doc.data().personal?.email
-          if (email) {
-            appEmails.push(email)
+          if (email && typeof email === 'string') {
+            const clean = email.trim()
+            if (clean) {
+              appEmailsSet.add(clean)
+            }
           }
         })
-        uncompletedApplicationsEmails = appEmails
+        uncompletedApplicationsEmails = Array.from(appEmailsSet)
 
         // Process counts
         const [
@@ -227,7 +243,6 @@
           submittedApplicationsSnapshot,
           decidedApplicationsSnapshot,
           totalUsersSnapshot,
-          submittedRegistrationsSnapshot,
           totalRegistrationsSnapshot,
           enrolledRegistrationsSnapshot,
         ] = counts
@@ -237,7 +252,7 @@
             total: totalApplicationsSnapshot.data().count,
             submitted: submittedApplicationsSnapshot.data().count,
             decided: decidedApplicationsSnapshot.data().count,
-            registered: submittedRegistrationsSnapshot.data().count,
+            registered: submittedRegistrationsSnapshot.size,
             totalRegistrationsStarted: totalRegistrationsSnapshot.data().count,
             enrolled: enrolledRegistrationsSnapshot.data().count,
           },
