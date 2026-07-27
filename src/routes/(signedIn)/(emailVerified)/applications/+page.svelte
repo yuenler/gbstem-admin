@@ -186,10 +186,20 @@
   })
   // The Nav "Close" button clears the shared actions bar directly
   // (actionsState.current = null); mirror that back into our local
-  // selection so the checkboxes clear too. This converges in one step
-  // (checked -> [] -> the effect below sees length 0 ->
-  // actionsState.current = null, already null) rather than looping, since
-  // the two effects track disjoint state.
+  // selection so the checkboxes clear too.
+  //
+  // These two effects are a deliberate cycle, not disjoint: this one reads
+  // actionsState.current and writes `checked`; the one below reads `checked`
+  // and writes actionsState.current. It terminates because the second hop is
+  // always a no-op write - Nav sets current = null, we clear `checked`, the
+  // effect below sees length 0 and assigns null over null, and $state skips
+  // equal writes so nothing re-fires. Selecting a row settles the same way:
+  // the effect below writes a fresh actions array, this one sees a non-null
+  // current and writes nothing.
+  //
+  // Careful: that guarantee rests on the "already null" equality. If the
+  // else-branch below is ever changed to assign a fresh empty array (or any
+  // new object) instead of null, the two effects will ping-pong forever.
   $effect(() => {
     if (actionsState.current === null) {
       checked = []
