@@ -14,7 +14,8 @@
     semesterCollectionPath,
     withSemester,
   } from '$lib/data/collections'
-  import { actions, alert } from '$lib/stores'
+  import { alert } from '$lib/stores'
+  import { actionsState } from '$lib/stores.svelte'
   import { generateCSV } from '$lib/utils'
   import { format } from 'date-fns'
   import { doc, setDoc, updateDoc } from 'firebase/firestore'
@@ -184,26 +185,27 @@
     return () => URL.revokeObjectURL(objectUrl)
   })
   // The Nav "Close" button clears the shared actions bar directly
-  // ($actions = null); mirror that back into our local selection so the
-  // checkboxes clear too. This converges in one step (checked -> [] ->
-  // the effect below sees length 0 -> actions.set(null), already null)
-  // rather than looping, since the two effects track disjoint state.
+  // (actionsState.current = null); mirror that back into our local
+  // selection so the checkboxes clear too. This converges in one step
+  // (checked -> [] -> the effect below sees length 0 ->
+  // actionsState.current = null, already null) rather than looping, since
+  // the two effects track disjoint state.
   $effect(() => {
-    if ($actions === null) {
+    if (actionsState.current === null) {
       checked = []
     }
   })
   $effect(() => {
     if (checked.length > 0) {
-      actions.set([
+      actionsState.current = [
         createDecisionAction('accepted'),
         createDecisionAction('waitlisted'),
         createDecisionAction('rejected'),
         createDecisionAction('interview'),
         createDecisionAction('substitute'),
-      ])
+      ]
     } else {
-      actions.set(null)
+      actionsState.current = null
     }
   })
   let application = $derived(

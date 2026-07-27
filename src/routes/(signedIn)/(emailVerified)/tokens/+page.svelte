@@ -5,7 +5,8 @@
   import Button from '$lib/components/Button.svelte'
   import { deleteDoc, doc } from 'firebase/firestore'
   import { db } from '$lib/client/firebase'
-  import { actions, alert } from '$lib/stores'
+  import { alert } from '$lib/stores'
+  import { actionsState } from '$lib/stores.svelte'
   import Token from '$lib/components/Token.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
   import { goto, invalidate } from '$app/navigation'
@@ -47,7 +48,7 @@
   )
   $effect(() => {
     if (checked.length > 0) {
-      actions.set([
+      actionsState.current = [
         {
           name: `Delete ${checked.length} ${
             checked.length > 1 ? 'tokens' : 'token'
@@ -70,9 +71,9 @@
             }
           },
         },
-      ])
+      ]
     } else {
-      actions.set(null)
+      actionsState.current = null
     }
   })
   function handleCheck(

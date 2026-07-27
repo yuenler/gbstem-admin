@@ -7,7 +7,7 @@
   import { fade } from 'svelte/transition'
   import AnnouncementsBell from './AnnouncementsBell.svelte'
   import { cubicInOut } from 'svelte/easing'
-  import { actions } from '$lib/stores'
+  import { actionsState } from '$lib/stores.svelte'
   import Button from './Button.svelte'
   import progress from '$lib/client/progress'
 
@@ -88,7 +88,7 @@
   <Brand />
 
   <!-- Middle Pages Links (visible on sm and larger, scales down spacing/text size) -->
-  {#if user.emailVerified && $actions === null}
+  {#if user.emailVerified && actionsState.current === null}
     <div
       class="no-scrollbar hidden min-w-0 flex-1 items-center justify-start gap-0.5 overflow-x-auto px-2 py-1 sm:flex md:gap-1 lg:justify-center lg:gap-1.5 xl:gap-2"
     >
@@ -107,12 +107,12 @@
   {/if}
 
   <!-- Middle Active Actions (visible on sm and larger, takes up remaining middle space) -->
-  {#if user.emailVerified && $actions !== null}
+  {#if user.emailVerified && actionsState.current !== null}
     <div
       class="hidden min-w-0 flex-1 items-center justify-between gap-3 overflow-x-auto sm:flex"
     >
       <fieldset class="flex items-center gap-3" {disabled}>
-        {#each $actions as action, i (i)}
+        {#each actionsState.current as action, i (i)}
           <Button
             class="rounded-sm px-3 py-1 whitespace-nowrap"
             color={action.color}
@@ -129,13 +129,13 @@
           </Button>
         {/each}
       </fieldset>
-      <Button onclick={() => ($actions = null)}>Close</Button>
+      <Button onclick={() => (actionsState.current = null)}>Close</Button>
     </div>
   {/if}
 
   <!-- Right Profile and Mobile Menu button -->
   <div class="flex shrink-0 items-center gap-1 sm:gap-3 md:gap-4">
-    {#if $actions === null}
+    {#if actionsState.current === null}
       <ProfileMenu class="hidden sm:block" />
     {/if}
     <button
