@@ -93,6 +93,7 @@ declare global {
     type SlotRequest = {
       date: Date
       id: string
+      uid: string
       firstName: string
       lastName: string
       email: string
