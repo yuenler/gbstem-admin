@@ -257,7 +257,10 @@
         return
       }
       await updateDoc(classDocRef, { students: arrayUnion(studentID) })
-      await updateDoc(registrationDocRef, { classes: arrayUnion(classId) })
+      await updateDoc(registrationDocRef, {
+        classes: arrayUnion(classId),
+        enrolled: true,
+      })
       alert.trigger('success', 'Enrolled in class successfully!')
       selectedClass = ''
       await tick()
@@ -296,6 +299,11 @@
       const registrationDocRef = doc(db, registrationsCollection, studentID)
       await updateDoc(classDocRef, { students: arrayRemove(studentID) })
       await updateDoc(registrationDocRef, { classes: arrayRemove(classId) })
+      const regSnap = await getDoc(registrationDocRef)
+      const remainingClasses = (regSnap.data()?.classes || []) as string[]
+      await updateDoc(registrationDocRef, {
+        enrolled: remainingClasses.length > 0,
+      })
       alert.trigger('success', 'Dropped class successfully!')
       selectedDropClass = ''
       await tick()

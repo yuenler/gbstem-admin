@@ -110,27 +110,37 @@
   function checkStatuses() {
     if (id === undefined) return
     const { meetingTimes, classStatuses, feedbackCompleted } = values
+    let changed = false
+    const newStatuses = [...classStatuses]
     for (let i = 0; i < meetingTimes.length; i++) {
+      let targetStatus = newStatuses[i]
       if (
         new Date().getTime() > new Date(meetingTimes[i]).getTime() &&
-        classStatuses[i] !== ClassStatus.EverythingComplete &&
-        classStatuses[i] !== ClassStatus.FeedbackIncomplete
+        newStatuses[i] !== ClassStatus.EverythingComplete &&
+        newStatuses[i] !== ClassStatus.FeedbackIncomplete
       ) {
-        classStatuses[i] = feedbackCompleted[i]
+        targetStatus = feedbackCompleted[i]
           ? ClassStatus.EverythingComplete
           : ClassStatus.ClassNotHeld
       } else if (isClassUpcoming(new Date(meetingTimes[i]))) {
-        classStatuses[i] = ClassStatus.ClassUpcomingSoon
+        targetStatus = ClassStatus.ClassUpcomingSoon
       } else if (
-        classStatuses[i] === ClassStatus.FeedbackIncomplete &&
+        newStatuses[i] === ClassStatus.FeedbackIncomplete &&
         feedbackCompleted[i]
       ) {
-        classStatuses[i] = ClassStatus.EverythingComplete
+        targetStatus = ClassStatus.EverythingComplete
+      }
+      if (targetStatus !== newStatuses[i]) {
+        newStatuses[i] = targetStatus
+        changed = true
       }
     }
-    updateDoc(doc(db, classesCollection, id), {
-      classStatuses: classStatuses,
-    })
+    if (changed) {
+      values.classStatuses = newStatuses
+      updateDoc(doc(db, classesCollection, id), {
+        classStatuses: newStatuses,
+      }).catch((err) => console.warn('Failed to update classStatuses:', err))
+    }
   }
 
   const getStudentList = async (studentUids: string[]) => {

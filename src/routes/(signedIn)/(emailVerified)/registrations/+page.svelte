@@ -23,9 +23,7 @@
     doc,
     getDoc,
     getDocs,
-    query,
     updateDoc,
-    where,
   } from 'firebase/firestore'
   import { kebabCase } from 'lodash-es'
   import type { PageData } from './$types'
@@ -234,35 +232,29 @@
     return interestedClasses
   }
 
+  let studentCoursesMapPromise = $derived.by(() => {
+    if (!browser) return Promise.resolve(new Map<string, string[]>())
+    return getDocs(collection(db, classesCollection)).then((snapshot) => {
+      const map = new Map<string, string[]>()
+      for (const docSnap of snapshot.docs) {
+        const data = docSnap.data()
+        const course = data.course
+        const students: string[] = data.students || []
+        for (const studentId of students) {
+          if (!map.has(studentId)) map.set(studentId, [])
+          map.get(studentId)!.push(course)
+        }
+      }
+      return map
+    })
+  })
+
   async function getCourses(id: string) {
     if (!browser) return 'Loading...'
     try {
-      let enrolled = true
-      const q = query(
-        collection(db, classesCollection),
-        where('students', 'array-contains', id),
-      )
-      const snapshot = await getDocs(q)
-      const courses = snapshot.docs.map((doc) => doc.data().course)
-      if (courses.length === 0) {
-        enrolled = false
-      }
-
-      const reg = data.registrations.find((r) => r.id === id)
-      const currentEnrolled = (reg?.values as any)?.enrolled
-      if (currentEnrolled !== enrolled) {
-        const registrationDocRef = doc(db, registrationsCollection, id)
-        await updateDoc(registrationDocRef, { enrolled: enrolled }).catch(
-          (err) => {
-            console.warn(
-              `Failed to update enrolled status for registration ${id}:`,
-              err,
-            )
-          },
-        )
-      }
-
-      return enrolled ? courses : 'NO CLASS ENROLLMENT FOUND'
+      const studentCoursesMap = await studentCoursesMapPromise
+      const courses = studentCoursesMap.get(id) || []
+      return courses.length > 0 ? courses : 'NO CLASS ENROLLMENT FOUND'
     } catch (err: any) {
       console.error(`Error fetching courses for student ${id}:`, err)
       return 'ERROR LOADING ENROLLMENT'
