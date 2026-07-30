@@ -33,6 +33,7 @@
   import Card from '../Card.svelte'
   import Loading from '../Loading.svelte'
   import Select from '../Select.svelte'
+  import { getInterviewSlotDefaults } from './schemas'
 
   interface Props {
     class?: string
@@ -49,18 +50,9 @@
   let showValidation = false
   let allInterviewSlots: Data.InterviewSlot[] = $state([])
   let interviewSlotRequests: Data.SlotRequest[] = $state([])
-  let interviewSlotToAdd: Data.InterviewSlot = $state({
-    date: '',
-    id: '',
-    interviewerName: '',
-    intervieweeFirstName: '',
-    intervieweeLastName: '',
-    intervieweeEmail: '',
-    intervieweeId: '',
-    interviewerEmail: '',
-    meetingLink: '',
-    interviewSlotStatus: 'available',
-  })
+  let interviewSlotToAdd: Data.InterviewSlot = $state(
+    getInterviewSlotDefaults(),
+  )
   let currentUser: Data.User.Store | undefined = $state()
   let loading = $state(true)
   let loadError = $state<string | null>(null)

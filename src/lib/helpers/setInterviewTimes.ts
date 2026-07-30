@@ -1,5 +1,6 @@
-import type {} from '../../data.d.ts'
+import { getInterviewSlotDefaults } from '$lib/components/forms/schemas'
 import { formatDateLocal, toLocalISOString } from '$lib/utils'
+import type {} from '../../data.d.ts'
 import type { AssignInterviewRequestBody } from '../../routes/api/assignInterview/+server'
 
 /**
@@ -111,18 +112,7 @@ export function resetInterviewSlotToAdd(
   interviewerName: string = '',
   interviewerEmail: string = '',
 ): Data.InterviewSlot {
-  return {
-    date: '',
-    id: '',
-    interviewerName,
-    intervieweeFirstName: '',
-    intervieweeLastName: '',
-    intervieweeEmail: '',
-    intervieweeId: '',
-    interviewerEmail,
-    meetingLink: '',
-    interviewSlotStatus: 'available',
-  }
+  return getInterviewSlotDefaults(interviewerName, interviewerEmail)
 }
 
 /**
