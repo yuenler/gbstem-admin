@@ -1,24 +1,18 @@
 <script lang="ts">
-  import { db } from '$lib/client/firebase'
   import Card from '$lib/components/Card.svelte'
-  import {
-    classesCollection,
-    registrationsCollection,
-  } from '$lib/data/collections'
   import sendClassReminder from '$lib/data/helpers/sendClassReminders'
   import type ClassData from '$lib/data/types/ClassData'
   import { ClassStatus } from '$lib/data/types/ClassStatus'
   import type Student from '$lib/data/types/Student'
+  import { classService } from '$lib/services/classService'
   import { alert } from '$lib/stores'
   import {
     copyEmails,
     formatDate,
     getNearestFutureClass,
     isClassUpcoming,
-    normalizeCapitals,
     timestampToDate,
   } from '$lib/utils'
-  import { doc, getDoc, updateDoc } from 'firebase/firestore'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
   import EditClassForm from './forms/EditClassForm.svelte'
@@ -65,15 +59,9 @@
     disabled = true
 
     try {
-      const snapshot = await getDoc(doc(db, classesCollection, classId))
-      if (snapshot.exists()) {
-        const data = snapshot.data() as ClassData
-
+      const data = await classService.fetchClassData(classId)
+      if (data) {
         values = { ...data }
-        values.meetingTimes = data.meetingTimes
-          .map((t) => timestampToDate(t))
-          .sort((a: Date, b: Date) => a.getTime() - b.getTime())
-
         const studentUids = data.students
         if (studentUids) {
           getStudentList(studentUids)
@@ -137,35 +125,15 @@
     }
     if (changed) {
       values.classStatuses = newStatuses
-      updateDoc(doc(db, classesCollection, id), {
-        classStatuses: newStatuses,
-      }).catch((err) => console.warn('Failed to update classStatuses:', err))
+      classService
+        .updateClassStatuses(id, newStatuses)
+        .catch((err) => console.warn('Failed to update classStatuses:', err))
     }
   }
 
   const getStudentList = async (studentUids: string[]) => {
     try {
-      const docs = await Promise.all(
-        studentUids.map((studentUid) =>
-          getDoc(doc(db, registrationsCollection, studentUid)),
-        ),
-      )
-      const list: Student[] = []
-      docs.forEach((studentDoc) => {
-        if (studentDoc.exists()) {
-          const data = studentDoc.data()
-          if (data) {
-            list.push({
-              name: `${normalizeCapitals(data.personal.studentFirstName + ' ' + data.personal.studentLastName)}`,
-              email: data.personal.email,
-              secondaryEmail: data.personal.secondaryEmail,
-              phone: data.personal.phoneNumber,
-              grade: data.academic.grade,
-              school: data.academic.school,
-            })
-          }
-        }
-      })
+      const list = await classService.fetchStudentList(studentUids)
       studentList = list
     } catch (err) {
       console.error('Failed to load student list:', err)

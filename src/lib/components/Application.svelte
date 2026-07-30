@@ -1,33 +1,21 @@
 <script lang="ts">
   import { invalidate } from '$app/navigation'
-  import { db } from '$lib/client/firebase'
   import Card from '$lib/components/Card.svelte'
   import Form from '$lib/components/Form.svelte'
   import Input from '$lib/components/Input.svelte'
   import Select from '$lib/components/Select.svelte'
   import Textarea from '$lib/components/Textarea.svelte'
   import { interviewAttendanceJson } from '$lib/data'
+  import { applicationsCollection, semesterDates } from '$lib/data/collections'
   import {
-    applicationsCollection,
-    semesterDates,
-    withSemester,
-  } from '$lib/data/collections'
-  import {
-    buildDecisionApiPayload,
-    buildFullDecisionPayload,
-    buildLikelyDecisionPayload,
-    buildNotesPayload,
-    buildScheduleInterviewPayload,
-    calculateInterviewDeadline,
     createDefaultApplicationValues,
     createDefaultInterviewValues,
-    normalizeInterviewData,
     resolveDecisionsCollectionPath,
     resolveViewedSemester,
   } from '$lib/helpers/application'
+  import { applicationService } from '$lib/services/applicationService'
   import { alert } from '$lib/stores'
   import { formatDateShort } from '$lib/utils'
-  import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
   import { cloneDeep } from 'lodash-es'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
@@ -76,42 +64,22 @@
     ;(async () => {
       loading = true
       disabled = true
-      values = cloneDeep(defaultValues)
       try {
-        const applicationSnapshot = await getDoc(doc(db, collection, currentId))
+        const res = await applicationService.loadApplicationDetails(
+          collection,
+          currentId,
+          defaultValues,
+        )
         if (cancelled) return
-        if (applicationSnapshot.exists()) {
-          const data = applicationSnapshot.data() as Data.Application<'client'>
-          values = cloneDeep(data)
-          dbValues = cloneDeep(data)
-
-          // Data populated in form child component
-          if (data.meta.decision) {
-            const decisionSnapshot = await getDoc(data.meta.decision)
-            if (cancelled) return
-            if (decisionSnapshot.exists()) {
-              const normalized = normalizeInterviewData(
-                decisionSnapshot.data() as Data.Interview,
-              )
-              decision = normalized.decision
-              interview = normalized.interview
-            } else {
-              decision = null
-              interview = {
-                ...cloneDeep(defaultInterview),
-                likelyDecision: null,
-              }
-            }
-          } else {
-            decision = null
-            interview = { ...cloneDeep(defaultInterview), likelyDecision: null }
-          }
-        } else {
-          alert.trigger('error', 'Application not found.')
-        }
+        values = cloneDeep(res.values)
+        dbValues = cloneDeep(res.values)
+        decision = res.decision
+        interview = res.interview
       } catch (err: any) {
-        console.error('Failed to load application:', err)
-        alert.trigger('error', 'Failed to load application.')
+        if (!cancelled) {
+          console.error('Failed to load application:', err)
+          alert.trigger('error', err.message || 'Failed to load application.')
+        }
       } finally {
         if (!cancelled) loading = false
       }
@@ -126,15 +94,12 @@
     if (frozenId === undefined) return
     loading = true
     try {
-      const decisionDocRef = doc(db, decisionsCollectionForView(), frozenId)
-      await setDoc(
-        decisionDocRef,
-        withSemester(buildNotesPayload(interview), viewedSemester()),
-        { merge: true },
+      await applicationService.saveNotes(
+        collection,
+        frozenId,
+        interview,
+        viewedSemester(),
       )
-      await updateDoc(doc(db, collection, frozenId), {
-        'meta.decision': decisionDocRef,
-      })
       await invalidate('app:applications')
       alert.trigger('success', 'Notes updated successfully.')
     } catch (err: any) {
@@ -152,18 +117,14 @@
     if (frozenId === undefined) return
     loading = true
     try {
-      const decisionDocRef = doc(db, decisionsCollectionForView(), frozenId)
-      await setDoc(
-        decisionDocRef,
-        withSemester(
-          buildLikelyDecisionPayload(newDecision, decision),
-          viewedSemester(),
-        ),
-        { merge: true },
+      await applicationService.saveLikelyDecision(
+        collection,
+        frozenId,
+        newDecision,
+        decision ?? null,
+        interview,
+        viewedSemester(),
       )
-      await updateDoc(doc(db, collection, frozenId), {
-        'meta.decision': decisionDocRef,
-      })
       await invalidate('app:applications')
       alert.trigger('success', 'Decision updated successfully.')
       interview.likelyDecision = newDecision
@@ -176,11 +137,6 @@
   }
 
   async function handleDecision(newDecision: Data.Decision) {
-    const interviewDeadline = calculateInterviewDeadline(
-      new Date(),
-      semesterDates.instructorOrientation,
-    )
-
     const confirmation = confirm(
       'Are you sure you want to update the decision? An email will be sent to the applicant, and you should not be changing the decision after this.',
     )
@@ -191,46 +147,19 @@
     if (frozenId === undefined) return
     loading = true
     try {
-      interview.type = newDecision
-      const decisionDocRef = doc(db, decisionsCollectionForView(), frozenId)
-      await setDoc(
-        decisionDocRef,
-        withSemester(buildFullDecisionPayload(interview), viewedSemester()),
+      await applicationService.submitOfficialDecision(
+        collection,
+        frozenId,
+        newDecision,
+        interview,
+        values.personal.email,
+        values.personal.firstName,
+        semesterDates.instructorOrientation,
+        viewedSemester(),
       )
-      await updateDoc(doc(db, collection, frozenId), {
-        'meta.decision': decisionDocRef,
-      })
       await invalidate('app:applications')
       alert.trigger('success', 'Decision updated successfully.')
       decision = newDecision
-
-      if (newDecision === 'interview') {
-        const payload = buildScheduleInterviewPayload(
-          values.personal.email,
-          values.personal.firstName,
-          interviewDeadline,
-        )
-        await fetch('/api/scheduleInterview', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        })
-      } else {
-        const payload = buildDecisionApiPayload(
-          newDecision,
-          values.personal.email,
-          values.personal.firstName,
-        )
-        await fetch('/api/decision', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        })
-      }
     } catch (err: any) {
       alert.trigger('error', 'Something went wrong. Please try again.')
       console.error('Decision update error:', err)

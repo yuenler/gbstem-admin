@@ -1,21 +1,11 @@
 <script lang="ts">
-  import { db } from '$lib/client/firebase'
   import Card from '$lib/components/Card.svelte'
   import Select from '$lib/components/Select.svelte'
-  import {
-    classesCollection,
-    instructorFeedbackCollection,
-    registrationsCollection,
-  } from '$lib/data/collections'
   import sendClassReminder from '$lib/data/helpers/sendClassReminders'
   import type ClassData from '$lib/data/types/ClassData'
   import type Student from '$lib/data/types/Student'
-  import {
-    buildEnrollApiPayload,
-    formatClassName,
-    parseAttendanceRecords,
-    parseStudentProfileData,
-  } from '$lib/helpers/studentDetails'
+  import { formatClassName } from '$lib/helpers/studentDetails'
+  import { studentService } from '$lib/services/studentService'
   import { alert } from '$lib/stores'
   import {
     copyEmails,
@@ -23,17 +13,6 @@
     getNearestFutureClass,
   } from '$lib/utils'
   import { format } from 'date-fns'
-  import {
-    arrayRemove,
-    arrayUnion,
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    query,
-    setDoc,
-    updateDoc,
-  } from 'firebase/firestore'
   import { tick } from 'svelte'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
@@ -57,29 +36,23 @@
     parentName: '',
   })
   let attendance: ClientInstructorFeedback[] = $state([])
-  let classes: ClassData[] = $state([])
-  let classesOptions: { name: string }[] = $state([])
-  let dropClassesOptions: { name: string }[] = $state([])
-  let selectedClass = $state('')
+  let enrolledClasses: ClassData[] = $state([])
+  let unenrolledClasses: ClassData[] = $state([])
+  let selectedAddClass = $state('')
   let selectedDropClass = $state('')
   // Bumped when the dialog is closed so reopening the same student still
   // reloads fresh data - the effect below tracks this alongside `id`.
   let reloadTrigger = $state(0)
-  let nameToUid: Record<string, string> = $state({})
 
-  let selectedClassId = $derived.by(() => {
-    const selectedClassOption = classesOptions.find(
-      (opt) => opt.name === selectedClass,
+  let selectedAddClassData = $derived.by(() => {
+    return unenrolledClasses.find(
+      (opt) => formatClassName(opt) === selectedAddClass,
     )
-    return selectedClassOption ? nameToUid[selectedClassOption.name] : ''
   })
-  let selectedDropClassId = $derived.by(() => {
-    const selectedDropClassOption = dropClassesOptions.find(
-      (opt) => opt.name === selectedDropClass,
+  let selectedDropClassData = $derived.by(() => {
+    return enrolledClasses.find(
+      (opt) => formatClassName(opt) === selectedDropClass,
     )
-    return selectedDropClassOption
-      ? nameToUid[selectedDropClassOption.name]
-      : ''
   })
 
   let checkInLoading = $state(true)
@@ -91,114 +64,25 @@
   // Load student classes and info
   async function loadStudentClasses(studentId: string) {
     checkInLoading = true
-    classes = []
-    classesOptions = []
-    dropClassesOptions = []
+    enrolledClasses = []
+    unenrolledClasses = []
     attendance = []
-
-    selectedClass = ''
+    selectedAddClass = ''
     selectedDropClass = ''
 
     try {
-      // Start fetching everything in parallel to optimize load times and prevent timeout
-      const studentDocRef = doc(db, registrationsCollection, studentId)
-      const studentPromise = getDoc(studentDocRef)
-      const hhidPromise = getDoc(doc(db, 'hhids', studentId)).catch((err) => {
-        console.warn(
-          'Failed to fetch hhid details (possible permission issue):',
-          err,
-        )
-        return null
-      })
-      const classesPromise = getDocs(query(collection(db, classesCollection)))
-      const attendancePromise = getDocs(
-        query(collection(db, instructorFeedbackCollection)),
-      ).catch((err) => {
-        console.warn(
-          'Failed to fetch feedback details (possible permission issue):',
-          err,
-        )
-        return null
-      })
-
-      // Wait for the primary student data first
-      const studentDoc = await studentPromise
-      let confirmedPromise = null
-
-      if (studentDoc.exists()) {
-        const data = studentDoc.data()
-        if (data) {
-          studentData = parseStudentProfileData(data)
-          studentID = studentDoc.id
-
-          if (data.meta?.uid) {
-            confirmedPromise = getDoc(
-              doc(db, 'confirmations', data.meta.uid),
-            ).catch((err) => {
-              console.warn(
-                'Failed to fetch confirmation details (possible permission issue):',
-                err,
-              )
-              return null
-            })
-          }
-        }
+      const details = await studentService.fetchStudentFullDetails(studentId)
+      if (details.studentData) {
+        studentData = details.studentData
       }
-
-      // Wait for all other parallel promises
-      const [confirmedDoc, hhidDoc, classesSnap, attendanceSnap] =
-        await Promise.all([
-          confirmedPromise || Promise.resolve(null),
-          hhidPromise,
-          classesPromise,
-          attendancePromise,
-        ])
-
-      // Process check-in and confirmation details
-      confirmed = false
-      checkedIn = false
-      checkedInAt = null
-      food = {}
-
-      if (confirmedDoc && confirmedDoc.exists()) {
-        confirmed = confirmedDoc.exists()
-      }
-
-      if (hhidDoc && hhidDoc.exists()) {
-        const hhidData = hhidDoc.data()
-        if (hhidData) {
-          checkedIn = hhidData.checkedIn
-          checkedInAt = hhidData.checkedInAt?.toDate
-            ? hhidData.checkedInAt.toDate()
-            : hhidData.checkedInAt
-          food = hhidData.food || {}
-        }
-      }
-
-      // Process classes
-      classes = []
-      classesOptions = []
-      dropClassesOptions = []
-      if (classesSnap) {
-        classesSnap.forEach((doc) => {
-          const data = doc.data() as ClassData
-          if (data) {
-            data.id = doc.id
-            const name = formatClassName(data)
-            nameToUid[name] = data.id
-            classesOptions.push({ name })
-            if (data.students.includes(studentId)) {
-              classes.push(data)
-              dropClassesOptions.push({ name })
-            }
-          }
-        })
-      }
-
-      // Process attendance
-      attendance = attendanceSnap
-        ? parseAttendanceRecords(attendanceSnap.docs)
-        : []
+      studentID = details.studentID
+      confirmed = details.confirmed
+      checkedIn = details.checkedIn
+      checkedInAt = details.checkedInAt
+      food = details.food
+      enrolledClasses = details.enrolledClasses
+      unenrolledClasses = details.unenrolledClasses
+      attendance = details.attendance
     } finally {
       checkInLoading = false
     }
@@ -222,35 +106,17 @@
   })
 
   // Add class
-  async function addClass(classId: string) {
-    if (!studentID || !classId) {
+  async function addClass(selectedClass: ClassData | undefined) {
+    if (!studentID || !selectedClass?.id) {
       alert.trigger('error', 'Student ID or class is missing.')
       return
     }
     try {
-      const classDocRef = doc(db, classesCollection, classId)
-      const registrationDocRef = doc(db, registrationsCollection, studentID)
-      const classDocSnap = await getDoc(classDocRef)
-      const classSelected = classDocSnap.data() as ClassData
-      if (!classSelected) {
-        alert.trigger('error', 'Class not found.')
-        return
-      }
-      await updateDoc(classDocRef, { students: arrayUnion(studentID) })
-      await updateDoc(registrationDocRef, {
-        classes: arrayUnion(classId),
-        enrolled: true,
-      })
+      await studentService.enrollStudent(studentData, selectedClass, studentID)
       alert.trigger('success', 'Enrolled in class successfully!')
-      selectedClass = ''
+      selectedAddClass = ''
       await tick()
       await loadStudentClasses(studentID)
-      const payload = buildEnrollApiPayload(studentData, classSelected)
-      await fetch('/api/enroll', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
     } catch (error) {
       console.error('Class addition error:', error)
       alert.trigger('error', 'Failed to add class.')
@@ -258,21 +124,13 @@
   }
 
   // Drop class
-  async function dropClass(classId: string) {
-    if (!studentID || !classId) {
+  async function dropClass(selectedClass: ClassData | undefined) {
+    if (!studentID || !selectedClass?.id) {
       alert.trigger('error', 'Student ID or class is missing.')
       return
     }
     try {
-      const classDocRef = doc(db, classesCollection, classId)
-      const registrationDocRef = doc(db, registrationsCollection, studentID)
-      await updateDoc(classDocRef, { students: arrayRemove(studentID) })
-      await updateDoc(registrationDocRef, { classes: arrayRemove(classId) })
-      const regSnap = await getDoc(registrationDocRef)
-      const remainingClasses = (regSnap.data()?.classes || []) as string[]
-      await updateDoc(registrationDocRef, {
-        enrolled: remainingClasses.length > 0,
-      })
+      await studentService.dropStudentFromClass(selectedClass.id, studentID)
       alert.trigger('success', 'Dropped class successfully!')
       selectedDropClass = ''
       await tick()
@@ -285,30 +143,9 @@
 
   async function handleCheckIn() {
     if (!studentID) return
-    const hhidRef = doc(db, 'hhids', studentID)
     const now = new Date()
     try {
-      await setDoc(
-        hhidRef,
-        {
-          checkedIn: true,
-          checkedInAt: now,
-          food: {
-            '2023-10-20': {
-              dinner: false,
-            },
-            '2023-10-21': {
-              breakfast: false,
-              lunch: false,
-              dinner: false,
-            },
-            '2023-10-22': {
-              breakfast: false,
-            },
-          },
-        },
-        { merge: true },
-      )
+      await studentService.checkInStudent(studentID, now)
       checkedIn = true
       checkedInAt = now
       food = {
@@ -325,11 +162,8 @@
 
   async function handleMeal(date: string, meal: string, state: boolean) {
     if (!studentID) return
-    const hhidRef = doc(db, 'hhids', studentID)
     try {
-      await updateDoc(hhidRef, {
-        [`food.${date}.${meal}`]: !state,
-      })
+      await studentService.updateStudentMeal(studentID, date, meal, !state)
       food[date][meal] = !state
       food = { ...food }
     } catch (error) {
@@ -358,7 +192,7 @@
   {#snippet description()}
     <div class="w-full min-w-0">
       <div class="mt-4 justify-center">
-        {#each classes as value, i (value.id)}
+        {#each enrolledClasses as value, i (value.id)}
           <Card>
             <div
               class="flex flex-wrap items-start justify-between gap-3 sm:items-center"
@@ -516,26 +350,34 @@
         {#if !loading}
           <div class="lg:w-1/2">
             <Select
-              bind:value={selectedClass}
-              options={classesOptions}
+              bind:value={selectedAddClass}
+              options={unenrolledClasses.map((c) => {
+                return {
+                  name: formatClassName(c),
+                }
+              })}
               label="Select a class"
             />
           </div>
           <Button
             color="green"
-            onclick={() => addClass(selectedClassId)}
+            onclick={() => addClass(selectedAddClassData)}
             class="mt-4">Add Class</Button
           >
           <div class="lg:w-1/2">
             <Select
               bind:value={selectedDropClass}
-              options={dropClassesOptions}
+              options={enrolledClasses.map((c) => {
+                return {
+                  name: formatClassName(c),
+                }
+              })}
               label="Select a class"
             />
           </div>
           <Button
             color="red"
-            onclick={() => dropClass(selectedDropClassId)}
+            onclick={() => dropClass(selectedDropClassData)}
             class="mt-4">Drop Class</Button
           >
         {:else}

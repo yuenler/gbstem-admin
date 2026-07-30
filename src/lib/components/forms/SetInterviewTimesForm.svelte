@@ -2,32 +2,15 @@
   import { db, user } from '$lib/client/firebase'
   import Form from '$lib/components/Form.svelte'
   import Input from '$lib/components/Input.svelte'
+  import { interviewTimesCollection, withSemester } from '$lib/data/collections'
   import {
-    applicationsCollection,
-    interviewTimesCollection,
-    withSemester,
-  } from '$lib/data/collections'
-  import {
-    buildAssignInterviewApiPayload,
     canUserModifySlot,
-    filterEligibleInterviewees,
-    generateInterviewSlotId,
-    parseInterviewSlotDoc,
-    parseSlotRequestDoc,
     resetInterviewSlotToAdd,
-    sortSlotRequestsByDate,
   } from '$lib/helpers/setInterviewTimes'
+  import { interviewService } from '$lib/services/interviewService'
   import { alert } from '$lib/stores'
   import { cn, formatDate, formatDateLocal } from '$lib/utils'
-  import {
-    collection,
-    deleteDoc,
-    doc,
-    getDocs,
-    query,
-    setDoc,
-    updateDoc,
-  } from 'firebase/firestore'
+  import { deleteDoc, doc, setDoc } from 'firebase/firestore'
   import { onMount } from 'svelte'
   import Button from '../Button.svelte'
   import Card from '../Card.svelte'
@@ -58,35 +41,15 @@
   let loadError = $state<string | null>(null)
 
   async function getData() {
-    const interviewSlots: Data.InterviewSlot[] = []
-    const q = query(collection(db, interviewTimesCollection))
-    const querySnapshot = await getDocs(q)
-    querySnapshot.forEach((doc) => {
-      const slot = parseInterviewSlotDoc(doc.id, doc.data())
-      if (slot) {
-        interviewSlots.push(slot)
-      }
-    })
-    return interviewSlots
+    return interviewService.fetchInterviewSlots()
   }
 
   async function getTimeRequests() {
-    const slotRequests: Data.SlotRequest[] = []
-    const q = query(collection(db, 'interviewTimeRequests'))
-    const querySnapshot = await getDocs(q)
-    querySnapshot.forEach((doc) => {
-      const request = parseSlotRequestDoc(doc.id, doc.data())
-      if (request) {
-        slotRequests.push(request)
-      }
-    })
-    return sortSlotRequestsByDate(slotRequests)
+    return interviewService.fetchSlotRequests()
   }
 
   async function getInterviewees() {
-    const q = query(collection(db, applicationsCollection))
-    const querySnapshot = await getDocs(q)
-    return filterEligibleInterviewees(querySnapshot.docs)
+    return interviewService.fetchEligibleInterviewees()
   }
 
   let selectedIntervieweeDocId = $state('')
@@ -145,41 +108,15 @@
         return
       }
     }
-    const id = generateInterviewSlotId(
-      interviewSlotToAdd.date,
-      currentUser?.object?.uid,
-    )
-    interviewSlotToAdd.id = id
-    allInterviewSlots = [
-      ...allInterviewSlots,
-      {
-        ...interviewSlotToAdd,
-      },
-    ]
 
     try {
-      await setDoc(
-        doc(db, interviewTimesCollection, interviewSlotToAdd.id),
-        withSemester({
-          ...interviewSlotToAdd,
-          date: new Date(interviewSlotToAdd.date),
-        }),
+      const addedSlot = await interviewService.createOrAssignInterviewSlot(
+        interviewSlotToAdd,
+        selectedIntervieweeDocId,
+        currentUser?.object?.uid,
       )
+      allInterviewSlots = [...allInterviewSlots, addedSlot]
       if (interviewSlotToAdd.intervieweeId != '') {
-        await updateDoc(
-          doc(db, applicationsCollection, selectedIntervieweeDocId),
-          {
-            'meta.interview': true,
-          },
-        )
-        const payload = buildAssignInterviewApiPayload(interviewSlotToAdd)
-        await fetch('/api/assignInterview', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        })
         alert.trigger('success', 'Interviewee assigned and email sent.')
       } else {
         alert.trigger('success', 'Timeslot added successfully.')
@@ -188,6 +125,7 @@
       console.error('Add timeslot error:', err)
       alert.trigger('error', 'Failed to add timeslot.')
     }
+
     interviewSlotToAdd = resetInterviewSlotToAdd(
       currentUser?.object?.displayName ?? '',
       currentUser?.object?.email ?? '',
