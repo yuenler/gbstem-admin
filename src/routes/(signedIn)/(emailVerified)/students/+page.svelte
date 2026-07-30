@@ -129,34 +129,6 @@
       checked = []
     }
   }
-  function getInterestedClasses(registration: any) {
-    let interestedClasses = ''
-    if (registration) {
-      interestedClasses += registration.values.program.csCourse.includes(
-        'I am not interested',
-      )
-        ? ''
-        : registration.values.program.csCourse + ', '
-      interestedClasses +=
-        registration.values.program.engineeringCourse.includes(
-          'I am not interested',
-        )
-          ? ''
-          : registration.values.program.engineeringCourse + ', '
-      interestedClasses += registration.values.program.mathCourse.includes(
-        'I am not interested',
-      )
-        ? ''
-        : registration.values.program.mathCourse + ', '
-      interestedClasses += registration.values.program.scienceCourse.includes(
-        'I am not interested',
-      )
-        ? ''
-        : registration.values.program.scienceCourse
-    }
-    return interestedClasses
-  }
-
   let studentCoursesMapPromise = $derived.by(() => {
     if (!browser) return Promise.resolve(new Map<string, string[]>())
     return studentService.fetchStudentCoursesMap()

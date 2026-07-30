@@ -10,7 +10,6 @@
   import {
     createDefaultApplicationValues,
     createDefaultInterviewValues,
-    resolveDecisionsCollectionPath,
     resolveViewedSemester,
   } from '$lib/helpers/application'
   import { applicationService } from '$lib/services/applicationService'
@@ -38,8 +37,6 @@
   // current one — mirrors semesterIdFromPath(collection) ?? currentSemester in
   // EditApplicationForm/EditRegistrationForm.
   const viewedSemester = () => resolveViewedSemester(collection)
-  const decisionsCollectionForView = () =>
-    resolveDecisionsCollectionPath(viewedSemester())
 
   let loading = $state(true)
   let disabled = $state(true)
@@ -68,7 +65,6 @@
         const res = await applicationService.loadApplicationDetails(
           collection,
           currentId,
-          defaultValues,
         )
         if (cancelled) return
         values = cloneDeep(res.values)
@@ -122,7 +118,6 @@
         frozenId,
         newDecision,
         decision ?? null,
-        interview,
         viewedSemester(),
       )
       await invalidate('app:applications')

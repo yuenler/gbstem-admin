@@ -3,7 +3,6 @@
   import { db } from '$lib/client/firebase'
   import { alert } from '$lib/stores'
   import { invalidate } from '$app/navigation'
-  import type { FirebaseError } from 'firebase/app'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
   import { classesCollection, withSemester } from '$lib/data/collections'
   import type ClassData from '$lib/data/types/ClassData'

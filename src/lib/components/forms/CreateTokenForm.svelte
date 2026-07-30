@@ -4,7 +4,6 @@
   import { db } from '$lib/client/firebase'
   import Button from '../Button.svelte'
   import { alert } from '$lib/stores'
-  import type { FirebaseError } from 'firebase/app'
   import { invalidate } from '$app/navigation'
   import DialogActions from '../DialogActions.svelte'
   import { addHours } from 'date-fns'

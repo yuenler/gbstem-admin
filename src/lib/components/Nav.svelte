@@ -5,7 +5,6 @@
   import { onMount } from 'svelte'
   import Brand from './Brand.svelte'
   import { fade } from 'svelte/transition'
-  import AnnouncementsBell from './AnnouncementsBell.svelte'
   import { cubicInOut } from 'svelte/easing'
   import { actionsState } from '$lib/stores.svelte'
   import Button from './Button.svelte'

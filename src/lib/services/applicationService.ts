@@ -39,7 +39,6 @@ export const applicationService = {
   async loadApplicationDetails(
     appCollection: string,
     appId: string,
-    defaultValues: Data.Application<'client'>,
   ): Promise<ApplicationLoadResult> {
     const appDocRef = doc(db, appCollection, appId)
     const appSnap = await getDoc(appDocRef)
@@ -100,7 +99,6 @@ export const applicationService = {
     appId: string,
     newLikelyDecision: 'likely yes' | 'likely no' | 'likely waitlist' | null,
     currentDecision: Data.Decision | null,
-    interview: Data.Interview,
     viewedSemester?: string,
   ): Promise<void> {
     const decColl = getDecisionsCollection(viewedSemester)

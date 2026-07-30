@@ -6,7 +6,6 @@ import {
 import { formatDateShort, toLocalISOString } from '$lib/utils'
 import type { Timestamp } from 'firebase/firestore'
 import { serverTimestamp } from 'firebase/firestore'
-import { cloneDeep } from 'lodash-es'
 import type { DecisionRequestBody } from '../../routes/api/decision/+server'
 import type { ScheduleInterviewRequestBody } from '../../routes/api/scheduleInterview/+server'
 

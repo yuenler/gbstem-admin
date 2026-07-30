@@ -33,7 +33,6 @@ import { getAuth, type Auth } from 'firebase-admin/auth'
 import {
   CollectionReference,
   DocumentReference,
-  DocumentSnapshot,
   getFirestore,
   Query,
   type Firestore,

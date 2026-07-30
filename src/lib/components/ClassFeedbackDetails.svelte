@@ -14,8 +14,6 @@
 
   let { open = $bindable(false), id }: Props = $props()
 
-  let disabled = $state(true)
-
   interface ClientInstructorFeedback {
     courseName: string
     instructorName: string
@@ -43,7 +41,6 @@
     if (currentId === undefined) return
     let cancelled = false
     ;(async () => {
-      disabled = true
       try {
         const snapshot = await getDoc(
           doc(db, instructorFeedbackCollection, currentId),
@@ -136,7 +133,7 @@
                 </tr>
               </thead>
               <tbody>
-                {#each Object.keys(values.attendanceList) as attendance, i (attendance)}
+                {#each Object.keys(values.attendanceList) as attendance (attendance)}
                   <tr style="border-bottom: 1px solid #ccc;">
                     <td style="padding: 8px;">{attendance}</td>
                     <td style="padding: 8px;"

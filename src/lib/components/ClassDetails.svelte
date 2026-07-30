@@ -24,7 +24,6 @@
 
   let { open = $bindable(false), id }: Props = $props()
 
-  let loading = true
   let disabled = $state(true)
 
   let studentList: Student[] = $state([])
@@ -55,7 +54,6 @@
 
   async function loadClassData(classId: string) {
     studentList = []
-    loading = true
     disabled = true
 
     try {
@@ -73,8 +71,6 @@
     } catch (error) {
       console.error('Class data load error:', error)
       alert.trigger('error', 'Failed to load class data.')
-    } finally {
-      loading = false
     }
   }
 

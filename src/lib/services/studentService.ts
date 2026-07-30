@@ -196,18 +196,6 @@ export const studentService = {
   },
 
   /**
-   * Fetches attendance records for a student.
-   */
-  async fetchStudentAttendance(
-    studentId: string,
-  ): Promise<ClientInstructorFeedback[]> {
-    const q = query(collection(db, instructorFeedbackCollection))
-    const querySnapshot = await getDocs(q)
-    const records = querySnapshot.docs.map((d) => d.data())
-    return parseAttendanceRecords(records)
-  },
-
-  /**
    * Enrolls a student into a class and triggers enrollment email API.
    */
   async enrollStudent(

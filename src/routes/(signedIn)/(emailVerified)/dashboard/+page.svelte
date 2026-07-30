@@ -10,12 +10,7 @@
   import sendClassReminder from '$lib/data/helpers/sendClassReminders'
   import { ClassStatus } from '$lib/data/types/ClassStatus'
   import { alert } from '$lib/stores'
-  import {
-    formatDate,
-    timestampToDate,
-    writeToClipboard,
-    copyEmails,
-  } from '$lib/utils'
+  import { formatDate, timestampToDate, copyEmails } from '$lib/utils'
   import {
     collection,
     getCountFromServer,

@@ -3,7 +3,6 @@
   import { db } from '$lib/client/firebase'
   import { alert } from '$lib/stores'
   import { invalidate } from '$app/navigation'
-  import type { FirebaseError } from 'firebase/app'
   import Card from '$lib/components/Card.svelte'
   import { coursesJson, gendersJson, raceJson, reasonsJson } from '$lib/data'
   import {

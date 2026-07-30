@@ -79,7 +79,6 @@
   }
 
   let values: Data.Registration<'client'> = $state(cloneDeep(defaultValues))
-  let decision: Data.Decision | null
   let formEl: HTMLFormElement | undefined = $state()
 
   $effect(() => {

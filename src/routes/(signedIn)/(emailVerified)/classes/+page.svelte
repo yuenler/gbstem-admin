@@ -147,7 +147,7 @@
       <th scope="col" class="px-6 py-3">Classes Missing Feedback</th>
     {/snippet}
     {#snippet body()}
-      {#each feedback.classes as value, i (value.id)}
+      {#each feedback.classes as value (value.id)}
         <tr
           class="border-b bg-white hover:cursor-pointer hover:bg-gray-50"
           onclick={() => {

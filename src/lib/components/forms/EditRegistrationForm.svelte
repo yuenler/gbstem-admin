@@ -3,7 +3,6 @@
   import { db } from '$lib/client/firebase'
   import { alert } from '$lib/stores'
   import { invalidate } from '$app/navigation'
-  import type { FirebaseError } from 'firebase/app'
   import {
     currentSemester,
     registrationsCollection,
@@ -29,7 +28,6 @@
   import FormInput from '../FormInput.svelte'
   import FormSelect from '../FormSelect.svelte'
   import FormCheckbox from '../FormCheckbox.svelte'
-  import FormTextarea from '../FormTextarea.svelte'
 
   interface Props {
     id: string | undefined

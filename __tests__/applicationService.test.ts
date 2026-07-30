@@ -36,7 +36,6 @@ describe('admin applicationService (Data Access Layer)', () => {
       const res = await applicationService.loadApplicationDetails(
         'applications',
         'app-1',
-        {} as any,
       )
 
       expect(res.values.personal.email).toBe('test@example.com')
@@ -49,11 +48,7 @@ describe('admin applicationService (Data Access Layer)', () => {
       })
 
       await expect(
-        applicationService.loadApplicationDetails(
-          'applications',
-          'app-1',
-          {} as any,
-        ),
+        applicationService.loadApplicationDetails('applications', 'app-1'),
       ).rejects.toThrow('Application not found.')
     })
   })
@@ -80,7 +75,6 @@ describe('admin applicationService (Data Access Layer)', () => {
         'app-1',
         'likely yes',
         null,
-        {} as any,
       )
 
       expect(firestore.setDoc).toHaveBeenCalled()

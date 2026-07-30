@@ -9,9 +9,8 @@
   import { actionsState } from '$lib/stores.svelte'
   import Token from '$lib/components/Token.svelte'
   import PerPageControl from '$lib/components/PerPageControl.svelte'
-  import { goto, invalidate } from '$app/navigation'
+  import { invalidate } from '$app/navigation'
   import { page } from '$app/state'
-  import type { FirebaseError } from 'firebase/app'
   import { writeToClipboard } from '$lib/utils'
 
   interface Props {

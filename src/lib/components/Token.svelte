@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
   import CreateTokenForm from './forms/CreateTokenForm.svelte'
 
