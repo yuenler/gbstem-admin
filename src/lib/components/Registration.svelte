@@ -26,7 +26,6 @@
     collection = registrationsCollection,
   }: Props = $props()
 
-  let loading = $state(true)
   let disabled = $state(true)
   let dbValues: Data.Registration<'client'> | undefined = $state()
 
@@ -88,9 +87,7 @@
     if (!open || currentId === undefined) return
     let cancelled = false
     ;(async () => {
-      loading = true
       disabled = true
-      values = cloneDeep(defaultValues)
       try {
         const registrationSnapshot = await getDoc(
           doc(db, collection, currentId),
@@ -107,8 +104,6 @@
       } catch (err: any) {
         console.error('Failed to load registration:', err)
         alert.trigger('error', 'Failed to load registration.')
-      } finally {
-        if (!cancelled) loading = false
       }
     })()
     return () => {

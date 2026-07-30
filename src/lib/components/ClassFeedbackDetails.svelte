@@ -1,18 +1,11 @@
 <script lang="ts">
-  import {
-    type Timestamp,
-    doc,
-    getDoc,
-    serverTimestamp,
-    setDoc,
-    updateDoc,
-  } from 'firebase/firestore'
-  import Card from '$lib/components/Card.svelte'
   import { db } from '$lib/client/firebase'
+  import Card from '$lib/components/Card.svelte'
+  import { instructorFeedbackCollection } from '$lib/data/collections'
+  import { alert } from '$lib/stores'
+  import { doc, getDoc } from 'firebase/firestore'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
-  import { alert } from '$lib/stores'
-  import { instructorFeedbackCollection } from '$lib/data/collections'
 
   interface Props {
     open?: boolean
@@ -21,7 +14,6 @@
 
   let { open = $bindable(false), id }: Props = $props()
 
-  let loading = $state(true)
   let disabled = $state(true)
 
   interface ClientInstructorFeedback {
@@ -51,7 +43,6 @@
     if (currentId === undefined) return
     let cancelled = false
     ;(async () => {
-      loading = true
       disabled = true
       try {
         const snapshot = await getDoc(
@@ -66,8 +57,6 @@
       } catch (err: any) {
         console.error('Failed to load feedback:', err)
         alert.trigger('error', 'Failed to load feedback.')
-      } finally {
-        if (!cancelled) loading = false
       }
     })()
     return () => {

@@ -16,14 +16,8 @@
   }
 
   let { data }: Props = $props()
-  let showValidation = false
-  let currentUser: Data.User.Store
-  let scheduled = false
-  let loading = true
   let selectedClassId: string | undefined = $state(undefined)
-  let checked: Array<number> = []
   let showClassDetailsDialog = $state(false)
-
   let currentPage = $derived(data.page ?? 1)
   let currentLimit = $derived(data.limit ?? 25)
 
@@ -93,17 +87,6 @@
 
   let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
   let url = objectUrl(() => blob)
-
-  function handleCheckAll(
-    e: Event & { currentTarget: EventTarget & HTMLInputElement },
-  ) {
-    const target = e.target as HTMLInputElement
-    if (target.checked) {
-      checked = Array.from({ length: data.classes.length }, (_, i) => i)
-    } else {
-      checked = []
-    }
-  }
 </script>
 
 <svelte:head>
