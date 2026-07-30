@@ -1,0 +1,121 @@
+process.env.TZ = 'America/New_York'
+import type {} from '../src/data.d.ts'
+import {
+  parseInterviewSlotDoc,
+  parseSlotRequestDoc,
+  sortSlotRequestsByDate,
+  filterEligibleInterviewees,
+  generateInterviewSlotId,
+  buildAssignInterviewApiPayload,
+  resetInterviewSlotToAdd,
+  canUserModifySlot,
+} from '$lib/helpers/setInterviewTimes'
+
+describe('SetInterviewTimes Helpers', () => {
+  describe('parseInterviewSlotDoc', () => {
+    test('returns null when input is null or missing date', () => {
+      expect(parseInterviewSlotDoc('slot-1', null)).toBeNull()
+      expect(parseInterviewSlotDoc('slot-1', {})).toBeNull()
+    })
+
+    test('parses raw doc into Data.InterviewSlot with ISO string date', () => {
+      const testDate = new Date(2026, 4, 28, 14, 30)
+      const rawData = {
+        date: { seconds: Math.floor(testDate.getTime() / 1000) },
+        interviewerName: 'Jane Doe',
+        interviewerEmail: 'jane@example.com',
+      }
+
+      const slot = parseInterviewSlotDoc('slot-100', rawData)
+      expect(slot?.id).toBe('slot-100')
+      expect(slot?.interviewerName).toBe('Jane Doe')
+      expect(slot?.date).toContain('2026-05-28')
+    })
+  })
+
+  describe('parseSlotRequestDoc & sortSlotRequestsByDate', () => {
+    test('parses raw request doc and extracts uid from ID', () => {
+      const raw = {
+        date: { seconds: 1779900600 },
+        firstName: 'Alice',
+        lastName: 'Smith',
+        email: 'alice@example.com',
+      }
+
+      const req = parseSlotRequestDoc('uid123-2026-05-28', raw)
+      expect(req?.id).toBe('uid123-2026-05-28')
+      expect(req?.uid).toBe('uid123')
+      expect(req?.firstName).toBe('Alice')
+    })
+
+    test('sorts requests chronologically by date', () => {
+      const req1 = { date: new Date('2026-05-20') } as Data.SlotRequest
+      const req2 = { date: new Date('2026-05-10') } as Data.SlotRequest
+
+      const sorted = sortSlotRequestsByDate([req1, req2])
+      expect(sorted[0].date.getTime()).toBeLessThan(sorted[1].date.getTime())
+    })
+  })
+
+  describe('filterEligibleInterviewees', () => {
+    test('filters out applicants who are already interviewed or not submitted', () => {
+      const docs = [
+        {
+          id: 'doc-1',
+          meta: { interview: false, submitted: true },
+          personal: { firstName: 'Alice', lastName: 'Zimmerman' },
+        },
+        {
+          id: 'doc-2',
+          meta: { interview: true, submitted: true }, // Already interviewed
+          personal: { firstName: 'Bob', lastName: 'Smith' },
+        },
+        {
+          id: 'doc-3',
+          meta: { interview: false, submitted: false }, // Not submitted
+          personal: { firstName: 'Charlie', lastName: 'Brown' },
+        },
+      ]
+
+      const { names, options } = filterEligibleInterviewees(docs)
+      expect(names).toEqual([{ name: 'Alice Zimmerman' }])
+      expect(options).toHaveLength(1)
+    })
+  })
+
+  describe('generateInterviewSlotId', () => {
+    test('constructs unique ID combining timestamp and user UID', () => {
+      const id = generateInterviewSlotId('2026-05-28T10:00:00Z', 'user456')
+      expect(id).toContain('user456')
+      expect(typeof id).toBe('string')
+    })
+  })
+
+  describe('buildAssignInterviewApiPayload & resetInterviewSlotToAdd', () => {
+    test('builds API request payload correctly', () => {
+      const slot = resetInterviewSlotToAdd('Jane Doe', 'jane@example.com')
+      slot.intervieweeFirstName = 'Alice'
+      slot.intervieweeEmail = 'alice@example.com'
+      slot.date = '2026-05-28T10:00'
+
+      const payload = buildAssignInterviewApiPayload(slot)
+      expect(payload.firstName).toBe('Alice')
+      expect(payload.interviewer).toBe('Jane Doe')
+      expect(payload.email).toBe('jane@example.com')
+    })
+  })
+
+  describe('canUserModifySlot', () => {
+    test('allows modification if user is slot owner or admin', () => {
+      expect(
+        canUserModifySlot('owner@example.com', 'owner@example.com', 'reviewer'),
+      ).toBe(true)
+      expect(
+        canUserModifySlot('owner@example.com', 'other@example.com', 'admin'),
+      ).toBe(true)
+      expect(
+        canUserModifySlot('owner@example.com', 'other@example.com', 'reviewer'),
+      ).toBe(false)
+    })
+  })
+})

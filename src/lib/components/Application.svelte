@@ -9,25 +9,26 @@
   import { interviewAttendanceJson } from '$lib/data'
   import {
     applicationsCollection,
-    currentSemester,
-    semesterCollectionPath,
     semesterDates,
-    semesterIdFromPath,
     withSemester,
   } from '$lib/data/collections'
-  import { alert } from '$lib/stores'
-  import { formatDateShort, toLocalISOString } from '$lib/utils'
   import {
-    type Timestamp,
-    doc,
-    getDoc,
-    serverTimestamp,
-    setDoc,
-    updateDoc,
-  } from 'firebase/firestore'
+    buildDecisionApiPayload,
+    buildFullDecisionPayload,
+    buildLikelyDecisionPayload,
+    buildNotesPayload,
+    buildScheduleInterviewPayload,
+    calculateInterviewDeadline,
+    createDefaultApplicationValues,
+    createDefaultInterviewValues,
+    normalizeInterviewData,
+    resolveDecisionsCollectionPath,
+    resolveViewedSemester,
+  } from '$lib/helpers/application'
+  import { alert } from '$lib/stores'
+  import { formatDateShort } from '$lib/utils'
+  import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
   import { cloneDeep } from 'lodash-es'
-  import type { DecisionRequestBody } from '../../routes/api/decision/+server'
-  import type { ScheduleInterviewRequestBody } from '../../routes/api/scheduleInterview/+server'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
   import EditApplicationForm from './forms/EditApplicationForm.svelte'
@@ -48,9 +49,9 @@
   // writes must target that same semester's `decisions` subcollection, not always the
   // current one — mirrors semesterIdFromPath(collection) ?? currentSemester in
   // EditApplicationForm/EditRegistrationForm.
-  const viewedSemester = () => semesterIdFromPath(collection) ?? currentSemester
+  const viewedSemester = () => resolveViewedSemester(collection)
   const decisionsCollectionForView = () =>
-    semesterCollectionPath(viewedSemester(), 'decisions')
+    resolveDecisionsCollectionPath(viewedSemester())
 
   let loading = $state(true)
   let disabled = $state(true)
@@ -59,74 +60,10 @@
     new Date(semesterDates.classesStart),
   )
   const semesterEndDate = formatDateShort(new Date(semesterDates.classesEnd))
-  const defaultValues: Data.Application<'client'> = {
-    personal: {
-      email: '',
-      firstName: '',
-      lastName: '',
-      gender: '',
-      race: [],
-      phoneNumber: '',
-      dateOfBirth: '',
-    },
-    academic: {
-      school: '',
-      graduationYear: '',
-    },
-    program: {
-      courses: [],
-      preferences: '',
-      timeSlots: '',
-      notAvailable: '',
-      inPerson: false,
-      numClasses: '',
-      reason: '',
-    },
-    essay: {
-      taughtBefore: false,
-      academicBackground: '',
-      teachingScenario: '',
-      why: '',
-    },
-    agreements: {
-      entireProgram: false,
-      timeCommitment: false,
-      submitting: false,
-    },
-    meta: {
-      id: '',
-      uid: '',
-      decision: null,
-      submitted: false,
-      interview: false,
-    },
-    timestamps: {
-      created: serverTimestamp() as Timestamp,
-      updated: serverTimestamp() as Timestamp,
-    },
-  }
+  const defaultValues = createDefaultApplicationValues()
+  const defaultInterview = createDefaultInterviewValues()
+
   let dbValues: Data.Application<'client'> | undefined = $state()
-
-  const defaultInterview: Data.Interview = {
-    date: '',
-    interviewer: '',
-    notes: '',
-    type: 'interview',
-    likelyDecision: 'likely no',
-    attendance: 'Null',
-    conversation: 0,
-    conversationNotes: '',
-    lastSemesterNotes: '',
-    mockLessonExplanations: 0,
-    mockLessonEngagement: 0,
-    mockLessonPace: 0,
-    mockLessonOverall: 0,
-    mockLessonNotes: '',
-    techNotes: '',
-    teachingPreferences: '',
-    availabilityNotes: '',
-  }
-
   let interview: Data.Interview = $state(cloneDeep(defaultInterview))
   let values: Data.Application<'client'> = $state(cloneDeep(defaultValues))
   let decision: Data.Decision | null | undefined = $state()
@@ -153,53 +90,21 @@
             const decisionSnapshot = await getDoc(data.meta.decision)
             if (cancelled) return
             if (decisionSnapshot.exists()) {
-              const dData = decisionSnapshot.data() as Data.Interview
-              const {
-                type,
-                likelyDecision,
-                notes,
-                interviewer,
-                attendance,
-                conversation,
-                conversationNotes,
-                lastSemesterNotes,
-                mockLessonEngagement,
-                mockLessonExplanations,
-                mockLessonNotes,
-                techNotes,
-                mockLessonPace,
-                mockLessonOverall,
-                teachingPreferences,
-                availabilityNotes,
-                date,
-              } = dData
-              decision = type ?? null
-              interview.type = type ?? ''
-              interview.likelyDecision = likelyDecision ?? null
-              interview.notes = notes ?? ''
-              interview.interviewer = interviewer ?? ''
-              interview.attendance = attendance ?? ''
-              interview.conversation = conversation ?? 0
-              interview.conversationNotes = conversationNotes ?? ''
-              interview.lastSemesterNotes = lastSemesterNotes ?? ''
-              interview.mockLessonExplanations = mockLessonExplanations ?? 0
-              interview.mockLessonNotes = mockLessonNotes ?? ''
-              interview.techNotes = techNotes ?? ''
-              interview.mockLessonPace = mockLessonPace ?? 0
-              interview.mockLessonOverall = mockLessonOverall ?? 0
-              interview.teachingPreferences = teachingPreferences ?? ''
-              interview.mockLessonEngagement = mockLessonEngagement ?? 0
-              interview.availabilityNotes = availabilityNotes ?? ''
-              interview.date = toLocalISOString(new Date(date)) ?? ''
+              const normalized = normalizeInterviewData(
+                decisionSnapshot.data() as Data.Interview,
+              )
+              decision = normalized.decision
+              interview = normalized.interview
             } else {
               decision = null
-              interview.likelyDecision = null
-              interview = cloneDeep(defaultInterview)
+              interview = {
+                ...cloneDeep(defaultInterview),
+                likelyDecision: null,
+              }
             }
           } else {
             decision = null
-            interview.likelyDecision = null
-            interview = cloneDeep(defaultInterview)
+            interview = { ...cloneDeep(defaultInterview), likelyDecision: null }
           }
         } else {
           alert.trigger('error', 'Application not found.')
@@ -221,46 +126,10 @@
     if (frozenId === undefined) return
     loading = true
     try {
-      const {
-        conversation,
-        conversationNotes,
-        mockLessonExplanations,
-        mockLessonEngagement,
-        mockLessonPace,
-        mockLessonOverall,
-        mockLessonNotes,
-        teachingPreferences,
-        availabilityNotes,
-        notes,
-        lastSemesterNotes,
-        techNotes,
-        date,
-        interviewer,
-        attendance,
-      } = interview
       const decisionDocRef = doc(db, decisionsCollectionForView(), frozenId)
       await setDoc(
         decisionDocRef,
-        withSemester(
-          {
-            conversation,
-            conversationNotes,
-            mockLessonExplanations,
-            mockLessonEngagement,
-            mockLessonPace,
-            mockLessonOverall,
-            mockLessonNotes,
-            teachingPreferences,
-            availabilityNotes,
-            notes,
-            techNotes,
-            lastSemesterNotes,
-            date,
-            interviewer,
-            attendance,
-          },
-          viewedSemester(),
-        ),
+        withSemester(buildNotesPayload(interview), viewedSemester()),
         { merge: true },
       )
       await updateDoc(doc(db, collection, frozenId), {
@@ -287,10 +156,7 @@
       await setDoc(
         decisionDocRef,
         withSemester(
-          {
-            likelyDecision: newDecision,
-            type: decision ?? null,
-          },
+          buildLikelyDecisionPayload(newDecision, decision),
           viewedSemester(),
         ),
         { merge: true },
@@ -310,15 +176,9 @@
   }
 
   async function handleDecision(newDecision: Data.Decision) {
-    const today = new Date()
-    const weekDeadline = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
-    const interviewDeadline = formatDateShort(
-      new Date(
-        Math.min(
-          weekDeadline.getTime(),
-          new Date(semesterDates.instructorOrientation).getTime(),
-        ),
-      ),
+    const interviewDeadline = calculateInterviewDeadline(
+      new Date(),
+      semesterDates.instructorOrientation,
     )
 
     const confirmation = confirm(
@@ -332,50 +192,10 @@
     loading = true
     try {
       interview.type = newDecision
-      const {
-        type,
-        notes,
-        interviewer,
-        attendance,
-        conversation,
-        conversationNotes,
-        lastSemesterNotes,
-        mockLessonEngagement,
-        mockLessonExplanations,
-        mockLessonNotes,
-        mockLessonPace,
-        mockLessonOverall,
-        teachingPreferences,
-        availabilityNotes,
-        techNotes,
-        date,
-        likelyDecision,
-      } = interview
       const decisionDocRef = doc(db, decisionsCollectionForView(), frozenId)
       await setDoc(
         decisionDocRef,
-        withSemester(
-          {
-            type,
-            likelyDecision,
-            notes,
-            interviewer,
-            attendance,
-            conversation,
-            conversationNotes,
-            lastSemesterNotes,
-            mockLessonEngagement,
-            mockLessonExplanations,
-            mockLessonNotes,
-            mockLessonPace,
-            mockLessonOverall,
-            teachingPreferences,
-            techNotes,
-            availabilityNotes,
-            date,
-          },
-          viewedSemester(),
-        ),
+        withSemester(buildFullDecisionPayload(interview), viewedSemester()),
       )
       await updateDoc(doc(db, collection, frozenId), {
         'meta.decision': decisionDocRef,
@@ -385,11 +205,11 @@
       decision = newDecision
 
       if (newDecision === 'interview') {
-        const payload: ScheduleInterviewRequestBody = {
-          email: values.personal.email,
-          name: values.personal.firstName,
-          deadline: interviewDeadline,
-        }
+        const payload = buildScheduleInterviewPayload(
+          values.personal.email,
+          values.personal.firstName,
+          interviewDeadline,
+        )
         await fetch('/api/scheduleInterview', {
           method: 'POST',
           headers: {
@@ -398,12 +218,11 @@
           body: JSON.stringify(payload),
         })
       } else {
-        const payload: DecisionRequestBody = {
-          decision: newDecision as
-            'rejected' | 'waitlisted' | 'substitute' | 'accepted',
-          email: values.personal.email,
-          name: values.personal.firstName,
-        }
+        const payload = buildDecisionApiPayload(
+          newDecision,
+          values.personal.email,
+          values.personal.firstName,
+        )
         await fetch('/api/decision', {
           method: 'POST',
           headers: {

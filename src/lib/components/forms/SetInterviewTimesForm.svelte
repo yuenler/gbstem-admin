@@ -7,8 +7,18 @@
     interviewTimesCollection,
     withSemester,
   } from '$lib/data/collections'
+  import {
+    buildAssignInterviewApiPayload,
+    canUserModifySlot,
+    filterEligibleInterviewees,
+    generateInterviewSlotId,
+    parseInterviewSlotDoc,
+    parseSlotRequestDoc,
+    resetInterviewSlotToAdd,
+    sortSlotRequestsByDate,
+  } from '$lib/helpers/setInterviewTimes'
   import { alert } from '$lib/stores'
-  import { cn, formatDate, formatDateLocal, toLocalISOString } from '$lib/utils'
+  import { cn, formatDate, formatDateLocal } from '$lib/utils'
   import {
     collection,
     deleteDoc,
@@ -19,7 +29,6 @@
     updateDoc,
   } from 'firebase/firestore'
   import { onMount } from 'svelte'
-  import type { AssignInterviewRequestBody } from '../../../routes/api/assignInterview/+server'
   import Button from '../Button.svelte'
   import Card from '../Card.svelte'
   import Loading from '../Loading.svelte'
@@ -61,13 +70,9 @@
     const q = query(collection(db, interviewTimesCollection))
     const querySnapshot = await getDocs(q)
     querySnapshot.forEach((doc) => {
-      const interviewInfo = doc.data()
-      if (interviewInfo.date) {
-        interviewSlots.push({
-          ...interviewInfo,
-          date: toLocalISOString(new Date(interviewInfo.date.seconds * 1000)),
-          id: doc.id,
-        } as Data.InterviewSlot)
+      const slot = parseInterviewSlotDoc(doc.id, doc.data())
+      if (slot) {
+        interviewSlots.push(slot)
       }
     })
     return interviewSlots
@@ -78,42 +83,18 @@
     const q = query(collection(db, 'interviewTimeRequests'))
     const querySnapshot = await getDocs(q)
     querySnapshot.forEach((doc) => {
-      const slotRequest = doc.data()
-      slotRequests.push({
-        date: new Date(slotRequest.date.seconds * 1000),
-        id: doc.id,
-        uid: doc.id.replace(/-\d{4}-\d{2}-\d{2}.*$/, ''),
-        firstName: slotRequest.firstName,
-        lastName: slotRequest.lastName,
-        email: slotRequest.email,
-      } as Data.SlotRequest)
+      const request = parseSlotRequestDoc(doc.id, doc.data())
+      if (request) {
+        slotRequests.push(request)
+      }
     })
-    slotRequests.sort((a, b) => a.date.getTime() - b.date.getTime())
-    return slotRequests
+    return sortSlotRequestsByDate(slotRequests)
   }
 
   async function getInterviewees() {
-    const names: { name: string }[] = []
-    const options: Data.Application<'client'>[] = []
     const q = query(collection(db, applicationsCollection))
     const querySnapshot = await getDocs(q)
-    querySnapshot.forEach((doc) => {
-      if (doc.data()) {
-        const user = doc.data() as Data.Application<'client'>
-        if (
-          user.meta &&
-          user.meta.interview === false &&
-          user.meta.submitted === true
-        ) {
-          names.push({
-            name: `${user.personal.firstName} ${user.personal.lastName}`,
-          })
-          options.push({ ...user, docId: doc.id } as any)
-        }
-      }
-    })
-    names.sort((a, b) => a.name.localeCompare(b.name))
-    return { names, options }
+    return filterEligibleInterviewees(querySnapshot.docs)
   }
 
   let selectedIntervieweeDocId = $state('')
@@ -172,9 +153,10 @@
         return
       }
     }
-    const id = `${new Date(interviewSlotToAdd.date).getTime()}${
-      currentUser?.object?.uid
-    }`
+    const id = generateInterviewSlotId(
+      interviewSlotToAdd.date,
+      currentUser?.object?.uid,
+    )
     interviewSlotToAdd.id = id
     allInterviewSlots = [
       ...allInterviewSlots,
@@ -198,14 +180,7 @@
             'meta.interview': true,
           },
         )
-        const payload: AssignInterviewRequestBody = {
-          intervieweeEmail: interviewSlotToAdd.intervieweeEmail || '',
-          firstName: interviewSlotToAdd.intervieweeFirstName || '',
-          interviewer: interviewSlotToAdd.interviewerName || '',
-          email: interviewSlotToAdd.interviewerEmail || '',
-          link: interviewSlotToAdd.meetingLink || '',
-          date: formatDateLocal(interviewSlotToAdd.date),
-        }
+        const payload = buildAssignInterviewApiPayload(interviewSlotToAdd)
         await fetch('/api/assignInterview', {
           method: 'POST',
           headers: {
@@ -221,31 +196,30 @@
       console.error('Add timeslot error:', err)
       alert.trigger('error', 'Failed to add timeslot.')
     }
-    interviewSlotToAdd.meetingLink = ''
-    interviewSlotToAdd.date = ''
-    interviewSlotToAdd.intervieweeId = ''
-    interviewSlotToAdd.intervieweeEmail = ''
-    interviewSlotToAdd.intervieweeFirstName = ''
-    interviewSlotToAdd.intervieweeLastName = ''
-    interviewSlotToAdd.interviewSlotStatus = 'available'
+    interviewSlotToAdd = resetInterviewSlotToAdd(
+      currentUser?.object?.displayName ?? '',
+      currentUser?.object?.email ?? '',
+    )
     interviewee = ''
     allInterviewSlots = await getData()
   }
 
   function handleClear() {
     interviewee = ''
-    interviewSlotToAdd.intervieweeId = ''
-    interviewSlotToAdd.intervieweeEmail = ''
-    interviewSlotToAdd.intervieweeFirstName = ''
-    interviewSlotToAdd.intervieweeLastName = ''
-    interviewSlotToAdd.interviewSlotStatus = 'available'
+    interviewSlotToAdd = resetInterviewSlotToAdd(
+      interviewSlotToAdd.interviewerName,
+      interviewSlotToAdd.interviewerEmail,
+    )
     alert.trigger('success', 'Interviewee cleared.')
   }
 
   async function updateTime(interview: Data.InterviewSlot) {
     if (
-      interview.interviewerEmail !== currentUser?.object?.email &&
-      currentUser?.profile?.role !== 'admin'
+      !canUserModifySlot(
+        interview.interviewerEmail,
+        currentUser?.object?.email,
+        currentUser?.profile?.role,
+      )
     ) {
       alert.trigger(
         'error',
@@ -271,8 +245,11 @@
 
   const deleteTime = async (interview: Data.InterviewSlot) => {
     if (
-      interview.interviewerEmail !== currentUser?.object?.email &&
-      currentUser?.profile?.role !== 'admin'
+      !canUserModifySlot(
+        interview.interviewerEmail,
+        currentUser?.object?.email,
+        currentUser?.profile?.role,
+      )
     ) {
       alert.trigger(
         'error',

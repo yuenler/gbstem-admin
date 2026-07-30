@@ -124,6 +124,7 @@ jest.mock('firebase/firestore', () => {
     setDoc: jest.fn(),
     updateDoc: jest.fn(),
     arrayUnion: jest.fn((...val: any[]) => val),
+    serverTimestamp: jest.fn(() => ({ seconds: 0, nanoseconds: 0 })),
     Timestamp: MockTimestamp,
   }
 })

@@ -10,6 +10,12 @@
   import sendClassReminder from '$lib/data/helpers/sendClassReminders'
   import type ClassData from '$lib/data/types/ClassData'
   import type Student from '$lib/data/types/Student'
+  import {
+    buildEnrollApiPayload,
+    formatClassName,
+    parseAttendanceRecords,
+    parseStudentProfileData,
+  } from '$lib/helpers/studentDetails'
   import { alert } from '$lib/stores'
   import {
     copyEmails,
@@ -29,7 +35,6 @@
     updateDoc,
   } from 'firebase/firestore'
   import { tick } from 'svelte'
-  import type { EnrollRequestBody } from '../../routes/api/enroll/+server'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
 
@@ -123,15 +128,7 @@
       if (studentDoc.exists()) {
         const data = studentDoc.data()
         if (data) {
-          studentData = {
-            name: `${data.personal.studentFirstName} ${data.personal.studentLastName}`,
-            email: data.personal.email,
-            secondaryEmail: data.personal.secondaryEmail,
-            phone: data.personal.phoneNumber,
-            grade: data.academic.grade,
-            school: data.academic.school,
-            parentName: `${data.personal.parentFirstName} ${data.personal.parentLastName}`,
-          }
+          studentData = parseStudentProfileData(data)
           studentID = studentDoc.id
 
           if (data.meta?.uid) {
@@ -187,8 +184,7 @@
           const data = doc.data() as ClassData
           if (data) {
             data.id = doc.id
-            const name =
-              `${data.course} taught by ${data.instructorFirstName} ${data.instructorLastName} at ${data.classTime1} ${data.classDay1} and ${data.classTime2} ${data.classDay2}`.trim()
+            const name = formatClassName(data)
             nameToUid[name] = data.id
             classesOptions.push({ name })
             if (data.students.includes(studentId)) {
@@ -200,25 +196,9 @@
       }
 
       // Process attendance
-      attendance = []
-      if (attendanceSnap) {
-        attendanceSnap.forEach((doc) => {
-          const data = doc.data()
-          if (data) {
-            attendance.push({
-              courseName: data.courseName,
-              date: data.date,
-              attendanceList: data.attendanceList,
-              feedback: data.feedback,
-              id: doc.id,
-              classNumber: data.classNumber,
-              instructorName: data.instructorName,
-              students: data.students,
-            })
-          }
-        })
-        attendance.sort((a, b) => a.classNumber - b.classNumber)
-      }
+      attendance = attendanceSnap
+        ? parseAttendanceRecords(attendanceSnap.docs)
+        : []
     } finally {
       checkInLoading = false
     }
@@ -265,18 +245,7 @@
       selectedClass = ''
       await tick()
       await loadStudentClasses(studentID)
-      const payload: EnrollRequestBody = {
-        email: studentData.email,
-        firstName: (studentData.parentName || '').split(' ')[0],
-        instructor: `${classSelected.instructorFirstName} ${classSelected.instructorLastName}`,
-        instructorEmail: classSelected.instructorEmail,
-        classTimes: [classSelected.classTime1, classSelected.classTime2],
-        classDays: [classSelected.classDay1, classSelected.classDay2],
-        course: classSelected.course,
-        meetingLink: classSelected.meetingLink,
-        online: classSelected.online,
-        studentName: studentData.name,
-      }
+      const payload = buildEnrollApiPayload(studentData, classSelected)
       await fetch('/api/enroll', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
