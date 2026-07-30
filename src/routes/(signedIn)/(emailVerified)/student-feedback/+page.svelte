@@ -5,6 +5,7 @@
   import PerPageControl from '$lib/components/PerPageControl.svelte'
   import SearchBox from '$lib/components/SearchBox.svelte'
   import Table from '$lib/components/Table.svelte'
+  import { objectUrl } from '$lib/objectUrl.svelte'
   import { generateCSV } from '$lib/utils'
   import type { PageData } from './$types'
 
@@ -59,14 +60,7 @@
     ),
   )
   let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
-  // Revoke the previous object URL whenever blob changes (and on
-  // unmount) - otherwise every filter/search/page change here leaks one.
-  let url = $state('')
-  $effect(() => {
-    const objectUrl = URL.createObjectURL(blob)
-    url = objectUrl
-    return () => URL.revokeObjectURL(objectUrl)
-  })
+  let url = objectUrl(() => blob)
 </script>
 
 <svelte:head>
@@ -79,7 +73,7 @@
   <PerPageControl />
   <Button
     class="flex h-12 items-center"
-    href={url}
+    href={url.current}
     download="student-feedback.csv">Download</Button
   >
 </div>

@@ -8,6 +8,7 @@
   import StatusFilter from '$lib/components/StatusFilter.svelte'
   import StudentDetails from '$lib/components/StudentDetails.svelte'
   import Table from '$lib/components/Table.svelte'
+  import { objectUrl } from '$lib/objectUrl.svelte'
   import { studentService } from '$lib/services/studentService'
   import { generateCSV, normalizeCapitals } from '$lib/utils'
   import { kebabCase } from 'lodash-es'
@@ -84,14 +85,7 @@
   let csvWithHeaders = $derived(generateCSV(csvHeaders, rows))
 
   let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
-  // Revoke the previous object URL whenever blob changes (and on
-  // unmount) - otherwise every filter/search/page change here leaks one.
-  let url = $state('')
-  $effect(() => {
-    const objectUrl = URL.createObjectURL(blob)
-    url = objectUrl
-    return () => URL.revokeObjectURL(objectUrl)
-  })
+  let url = objectUrl(() => blob)
 
   let currentPage = $derived(data.page ?? 1)
   let currentLimit = $derived(data.limit ?? 25)
@@ -190,8 +184,10 @@
   <CourseFilter paramName="course" />
   <StatusFilter type="students" />
   <PerPageControl />
-  <Button class="flex h-12 items-center" href={url} download="students.csv"
-    >Download</Button
+  <Button
+    class="flex h-12 items-center"
+    href={url.current}
+    download="students.csv">Download</Button
   >
 </div>
 

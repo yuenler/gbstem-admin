@@ -8,6 +8,7 @@
   import SearchBox from '$lib/components/SearchBox.svelte'
   import Table from '$lib/components/Table.svelte'
   import { SubRequestStatus } from '$lib/data/helpers/SubRequestStatus'
+  import { objectUrl } from '$lib/objectUrl.svelte'
   import { formatDate, generateCSV } from '$lib/utils'
   import type { PageData } from './$types'
 
@@ -77,14 +78,7 @@
     ),
   )
   let blob = $derived(new Blob([csvWithHeaders], { type: 'text/csv' }))
-  // Revoke the previous object URL whenever blob changes (and on
-  // unmount) - otherwise every filter/search/page change here leaks one.
-  let url = $state('')
-  $effect(() => {
-    const objectUrl = URL.createObjectURL(blob)
-    url = objectUrl
-    return () => URL.revokeObjectURL(objectUrl)
-  })
+  let url = objectUrl(() => blob)
 </script>
 
 <svelte:head>
@@ -95,8 +89,10 @@
   <SearchBox basePath="/sub-requests" />
   <CourseFilter paramName="course" />
   <PerPageControl />
-  <Button class="flex h-12 items-center" href={url} download="sub-requests.csv"
-    >Download</Button
+  <Button
+    class="flex h-12 items-center"
+    href={url.current}
+    download="sub-requests.csv">Download</Button
   >
 </div>
 
