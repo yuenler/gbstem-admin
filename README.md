@@ -60,7 +60,7 @@ For local development and testing, you can use the **Firebase Emulator Suite** t
 
    Make sure the host and port values match your emulator configurations in `firebase.json`.
 
-3. For new emulator instances, run `npm run seed` to seed the database with a demo admin user and a demo signup token.
+3. For new emulator instances, run `yarn seed` to seed the database with a demo admin user and a demo signup token.
    - Email: <demo@gbstem.org>
    - Password: `penguin`
    - Signup Token: `demo-token`
@@ -78,40 +78,40 @@ For local development and testing, you can use the **Firebase Emulator Suite** t
 
 ```bash
 # install dependencies
-npm install
+yarn install
 
 # run the development server
-npm run dev
+yarn dev
 
 # start the development server and open in browser
-npm start
+yarn start
 
 # preview the production build locally
-npm run preview
+yarn preview
 
 # automatically format code
-npm run format
+yarn format
 
 # check for type errors
-npm run check
+yarn run check
 
 # check for type errors and watch for changes
-npm run check:watch
+yarn run check:watch
 
 # check for style and lint issues
-npm run lint
+yarn lint
 
 # run unit tests
-npm test
+yarn test
 
 # build for production
-npm run build
+yarn build
 
 # build and deploy to Firebase
-npm run deploy
+yarn deploy
 ```
 
-Open [http://localhost:5173](http://localhost:5173) with your browser to see the result for `npm run dev` or `npm start`. You can start editing any page or component, and when running in development mode, your changes will be reflected in the browser automatically.
+Open [http://localhost:5173](http://localhost:5173) with your browser to see the result for `yarn dev` or `yarn start`. You can start editing any page or component, and when running in development mode, your changes will be reflected in the browser automatically.
 
 ## Code Organization: Helpers, Services, and Where New Code Should Go
 
@@ -184,7 +184,7 @@ Transitioning gbSTEM to a new semester (e.g., from `Spring26` to `Fall26`) is a 
    - Add `{ "id": "Fall26", "name": "Fall 2026" }` to the **top** of [`collectionsList.json`](src/lib/data/collectionsList.json), so it's selected by default and appears first in the past-semester dropdown.
    - Review and update course catalog data in [`springCourses.json`](src/lib/data/springCourses.json) or [`fallCourses.json`](src/lib/data/fallCourses.json), then copy the updated file to the portal repository's `src/lib/data/` directory.
    - Update every field in [`semesterDates.json`](src/lib/data/semesterDates.json) to the new semester's actual dates (`MM/DD/YY`, matching the new suffix's year), then copy the updated file to the portal repository's `src/lib/data/` directory.
-3. Run `npm run lint && npm run test` in both repos to verify the changes (this will fail loudly for errors like a malformed date, incorrect year in `semesterDates.json`, or other format issues).
+3. Run `yarn lint && yarn test` in both repos to verify the changes (this will fail loudly for errors like a malformed date, incorrect year in `semesterDates.json`, or other format issues).
 4. Deploy both apps.
 
 That's it — the new semester's subcollections (`semesters/Fall26/applications`, etc.) spring into existence automatically on first write.
@@ -212,21 +212,21 @@ ncu -t minor -u firebase firebase-admin typescript "@types/node" zod
 ncu --peer --reject firebase,firebase-admin,typescript,"@types/node",zod -u
 
 # Install the updated packages and update package-lock.json
-npm install
+yarn install
 
 # Run unit tests to verify no breaking changes were introduced
-npm test
+yarn test
 
 # Run type checks
-npm run check
+yarn run check
 
 # Run lint checks to ensure code style consistency
-npm run lint
+yarn lint
 
 # Go to http://localhost:5173 and do manual visual checks and tests
 
 # Build the project for production to verify compatibility and compile-time checks
-npm run build
+yarn build
 ```
 
 After verifying that the tests, linting, and build pass successfully, commit and submit both `package.json` and `package-lock.json` to the repository.

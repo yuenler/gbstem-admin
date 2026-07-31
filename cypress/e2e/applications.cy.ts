@@ -258,8 +258,8 @@ describe('Section D: Instructor Applications Management', () => {
   // `semesters/{Semester}/applications`. Names are unique per semester so this test can assert
   // the Fall25 applicant does NOT show up after switching back to the current semester.
   it('Test Case 10c: Deciding On a Past-Semester Applicant Writes To That Semester', () => {
-    cy.exec('npm run seed:legacy', { timeout: 120000 })
-    cy.exec('npm run migrate', { timeout: 120000 })
+    cy.exec('yarn seed:legacy', { timeout: 120000 })
+    cy.exec('yarn migrate', { timeout: 120000 })
 
     // Switch to a past semester via the Collection dropdown, same flow as Test Case 9.
     cy.get('input[name="collection"]').clear().type('Fall 2025')

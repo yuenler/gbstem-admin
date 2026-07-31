@@ -15,7 +15,6 @@
 // Emulator-only: unlike migrate-semesters.ts, this script has no --production mode at all -
 // it exists purely to set up a rehearsal scenario and should never touch anything else.
 import admin from 'firebase-admin'
-import { z } from 'zod'
 import {
   applicationSchema,
   classSchema,
@@ -330,7 +329,7 @@ async function seedLegacy() {
   }
   console.log(
     `\nLegacy seeding completed for: ${LEGACY_SEMESTERS.join(', ')}. ` +
-      `Run "npm run migrate:dry" to preview migrating it into the new schema.`,
+      `Run "yarn migrate:dry" to preview migrating it into the new schema.`,
   )
 }
 

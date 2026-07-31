@@ -2,9 +2,9 @@
 
 This document details the manual and automated regression test suite to verify all core features of the gbSTEM Admin website before any production release. It is structured sequentially to facilitate direct translation into Cypress E2E tests.
 
-If you want to watch Cypress execute this in your browser, you can start it with extra arguments like the following, where `--headed` makes it so it runs a visible browser and `--browser` selects a browser to run (this example is using Chromium, the open source version of Chrome that is often installed on Linux systems but you can also use `chrome` to run the official version of Google Chrome, or `firefox` to run Firefox). But as you'll see, it goes **very** fast and is hard to keep up with. You can use other arguments to have it add a video that you can playback at a slower speed. For example, `npm run cypress --browser=chromium --headed --video` will create a video of the test run in the `cypress/videos` directory. There are many [options you can use](https://docs.cypress.io/guides/references/command-line#cypress-open). See [this page](https://docs.cypress.io/guides/getting-started/opening-the-app) to get started with Cypress.
+If you want to watch Cypress execute this in your browser, you can start it with extra arguments like the following, where `--headed` makes it so it runs a visible browser and `--browser` selects a browser to run (this example is using Chromium, the open source version of Chrome that is often installed on Linux systems but you can also use `chrome` to run the official version of Google Chrome, or `firefox` to run Firefox). But as you'll see, it goes **very** fast and is hard to keep up with. You can use other arguments to have it add a video that you can playback at a slower speed. For example, `yarn cypress --browser=chromium --headed --video` will create a video of the test run in the `cypress/videos` directory. There are many [options you can use](https://docs.cypress.io/guides/references/command-line#cypress-open). See [this page](https://docs.cypress.io/guides/getting-started/opening-the-app) to get started with Cypress.
 
-`npm run cypress --browser=chromium --headed`
+`yarn cypress --browser=chromium --headed`
 
 However, remember that you can actually see what is happening on the screen in a way that Cypress isn't: it just keys off of HTML elements and CSS classes, so can miss major visual bugs. That means it is important for you to do a test run yourself, or at least carefully watch the Cypress test run. It is also important to use meaningful IDs and class names when we create our components and tests.
 
@@ -30,7 +30,7 @@ Follow these steps to establish a clean, predictable, local testing environment.
 1. Start the Firebase Emulator suite:
 
    ```bash
-   npm run emulators
+   yarn emulators
    ```
 
 ### C. Seed Local Emulator Database
@@ -38,7 +38,7 @@ Follow these steps to establish a clean, predictable, local testing environment.
 1. Populate the emulators with mock seed data by running:
 
    ```bash
-   npm run seed
+   yarn seed
    ```
 
 ### D. Run the Development Server
@@ -46,7 +46,7 @@ Follow these steps to establish a clean, predictable, local testing environment.
 1. Start the SvelteKit local server:
 
    ```bash
-   npm run dev
+   yarn dev
    ```
 
    _Verify that the application is running at <http://localhost:5173> and you can log in._
