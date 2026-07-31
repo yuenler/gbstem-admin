@@ -68,7 +68,7 @@ const mockAuth = {
 }
 jest.mock('firebase/auth', () => ({
   getAuth: jest.fn(() => mockAuth),
-  onAuthStateChanged: jest.fn((authObj: any, callback: any) => {
+  onAuthStateChanged: jest.fn((_authObj: any, callback: any) => {
     authStateChangedCallback = callback
     return jest.fn() // unsubscribe
   }),
@@ -146,7 +146,6 @@ jest.mock('$lib/stores', () => ({
 }))
 
 import { user } from '../src/lib/client/firebase'
-import { get } from 'svelte/store'
 import { verifyToken } from '../src/lib/server/firebase'
 import { SubRequestStatus } from '../src/lib/data/helpers/SubRequestStatus'
 import sendClassReminder from '../src/lib/data/helpers/sendClassReminders'
