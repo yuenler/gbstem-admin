@@ -1,14 +1,9 @@
 <script lang="ts">
-  import { db } from '$lib/client/firebase'
   import Card from '$lib/components/Card.svelte'
   import { registrationsCollection } from '$lib/data/collections'
+  import { registrationService } from '$lib/services/registrationService'
   import { alert } from '$lib/stores'
-  import {
-    type Timestamp,
-    doc,
-    getDoc,
-    serverTimestamp,
-  } from 'firebase/firestore'
+  import { type Timestamp, serverTimestamp } from 'firebase/firestore'
   import { cloneDeep } from 'lodash-es'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
@@ -88,13 +83,12 @@
     ;(async () => {
       disabled = true
       try {
-        const registrationSnapshot = await getDoc(
-          doc(db, collection, currentId),
+        const data = await registrationService.fetchRegistration(
+          collection,
+          currentId,
         )
         if (cancelled) return
-        if (registrationSnapshot.exists()) {
-          const data =
-            registrationSnapshot.data() as Data.Registration<'client'>
+        if (data) {
           values = cloneDeep(data)
           dbValues = cloneDeep(data)
         } else {

@@ -3,8 +3,7 @@
   import { format } from 'date-fns'
   import type { PageData } from './$types'
   import Button from '$lib/components/Button.svelte'
-  import { deleteDoc, doc } from 'firebase/firestore'
-  import { db } from '$lib/client/firebase'
+  import { tokenService } from '$lib/services/tokenService'
   import { alert } from '$lib/stores'
   import { actionsState } from '$lib/stores.svelte'
   import Token from '$lib/components/Token.svelte'
@@ -55,12 +54,8 @@
           color: 'red',
           callback: async () => {
             try {
-              await Promise.all(
-                checked.map((i) => {
-                  const token = data.tokens[i]
-                  return deleteDoc(doc(db, 'tokens', token.id))
-                }),
-              )
+              const tokenIds = checked.map((i) => data.tokens[i].id)
+              await tokenService.deleteTokens(tokenIds)
               await invalidate('app:tokens')
               checked = []
               alert.trigger('success', 'Token deleted.')
@@ -115,7 +110,7 @@
     values: Data.Token<'pojo'>
   }) {
     try {
-      await deleteDoc(doc(db, 'tokens', token.id))
+      await tokenService.deleteToken(token.id)
       await invalidate('app:tokens')
       alert.trigger('success', 'Token deleted.')
     } catch (err: any) {

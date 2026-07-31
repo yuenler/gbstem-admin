@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { db } from '$lib/client/firebase'
-  import { doc, serverTimestamp, updateDoc } from 'firebase/firestore'
+  import { studentService } from '$lib/services/studentService'
   import type { PageData } from './$types'
   import Button from '$lib/components/Button.svelte'
   import { format } from 'date-fns'
@@ -14,25 +13,8 @@
   let { data }: Props = $props()
 
   async function handleCheckIn() {
-    const hhidRef = doc(db, 'hhids', data.applicant.user.hhid)
     try {
-      await updateDoc(hhidRef, {
-        checkedIn: true,
-        checkedInAt: serverTimestamp(),
-        food: {
-          '2023-10-20': {
-            dinner: false,
-          },
-          '2023-10-21': {
-            breakfast: false,
-            lunch: false,
-            dinner: false,
-          },
-          '2023-10-22': {
-            breakfast: false,
-          },
-        },
-      })
+      await studentService.checkInStudent(data.applicant.user.hhid, new Date())
       await invalidateAll()
       alert.trigger('success', 'Checked in successfully.')
     } catch (err: any) {
@@ -43,9 +25,12 @@
 
   async function handleMeal(date: string, meal: string, state: boolean) {
     try {
-      await updateDoc(doc(db, 'hhids', data.applicant.user.hhid), {
-        [`food.${date}.${meal}`]: !state,
-      })
+      await studentService.updateStudentMeal(
+        data.applicant.user.hhid,
+        date,
+        meal,
+        !state,
+      )
       await invalidateAll()
     } catch (err: any) {
       console.error('Meal status update failed:', err)

@@ -61,6 +61,35 @@ describe('interviewService (Data Access Layer)', () => {
     })
   })
 
+  describe('fetchEligibleInterviewees', () => {
+    it('queries applications and filters to eligible interviewees', async () => {
+      const mockDocs = [
+        {
+          id: 'app-1',
+          data: () => ({
+            meta: { interview: false, submitted: true },
+            personal: { firstName: 'Timmy', lastName: 'Tester' },
+          }),
+        },
+        {
+          id: 'app-2',
+          data: () => ({
+            meta: { interview: true, submitted: true },
+            personal: { firstName: 'Already', lastName: 'Scheduled' },
+          }),
+        },
+      ]
+      ;(firestore.getDocs as jest.Mock).mockResolvedValueOnce({
+        docs: mockDocs,
+      })
+
+      const result = await interviewService.fetchEligibleInterviewees()
+      expect(result.names).toEqual([{ name: 'Timmy Tester' }])
+      expect(result.options).toHaveLength(1)
+      expect((result.options[0] as any).docId).toBe('app-1')
+    })
+  })
+
   describe('createOrAssignInterviewSlot', () => {
     it('saves new slot and triggers email API if assigned', async () => {
       ;(firestore.setDoc as jest.Mock).mockResolvedValueOnce(undefined)
@@ -115,11 +144,57 @@ describe('interviewService (Data Access Layer)', () => {
     })
   })
 
+  describe('updateInterviewSlot', () => {
+    it('saves the updated slot with a Date-coerced date field', async () => {
+      ;(firestore.setDoc as jest.Mock).mockResolvedValueOnce(undefined)
+
+      const interview = {
+        id: 'slot-1',
+        date: '2026-08-01T15:00:00.000Z',
+        meetingLink: 'https://zoom.us/2',
+        interviewerName: 'Alice',
+        interviewerEmail: 'alice@example.com',
+      } as unknown as Data.InterviewSlot
+
+      await interviewService.updateInterviewSlot(interview)
+
+      expect(firestore.setDoc).toHaveBeenCalledTimes(1)
+      const [, payload] = (firestore.setDoc as jest.Mock).mock.calls[0]
+      expect(payload.date).toBeInstanceOf(Date)
+      expect(payload.meetingLink).toBe('https://zoom.us/2')
+    })
+
+    it('propagates errors from setDoc', async () => {
+      ;(firestore.setDoc as jest.Mock).mockRejectedValueOnce(
+        new Error('permission-denied'),
+      )
+
+      const interview = {
+        id: 'slot-1',
+        date: '2026-08-01T15:00:00.000Z',
+        meetingLink: 'https://zoom.us/2',
+      } as unknown as Data.InterviewSlot
+
+      await expect(
+        interviewService.updateInterviewSlot(interview),
+      ).rejects.toThrow('permission-denied')
+    })
+  })
+
   describe('deleteInterviewSlot', () => {
     it('calls deleteDoc with slot id', async () => {
       ;(firestore.deleteDoc as jest.Mock).mockResolvedValueOnce(undefined)
       await interviewService.deleteInterviewSlot('slot-1')
       expect(firestore.deleteDoc).toHaveBeenCalled()
+    })
+
+    it('propagates errors from deleteDoc', async () => {
+      ;(firestore.deleteDoc as jest.Mock).mockRejectedValueOnce(
+        new Error('not-found'),
+      )
+      await expect(
+        interviewService.deleteInterviewSlot('slot-1'),
+      ).rejects.toThrow('not-found')
     })
   })
 })

@@ -1,12 +1,10 @@
 <script lang="ts">
   import { page } from '$app/state'
-  import { addDoc, collection } from 'firebase/firestore'
-  import { db } from '$lib/client/firebase'
+  import { tokenService } from '$lib/services/tokenService'
   import Button from '../Button.svelte'
   import { alert } from '$lib/stores'
   import { invalidate } from '$app/navigation'
   import DialogActions from '../DialogActions.svelte'
-  import { addHours } from 'date-fns'
   import { writeToClipboard } from '$lib/utils'
   import { superForm, defaults } from 'sveltekit-superforms'
   import { zod } from 'sveltekit-superforms/adapters'
@@ -35,18 +33,15 @@
         if (!formVal.valid) return
 
         try {
-          const snapshot = await addDoc(collection(db, 'tokens'), {
-            role: formVal.data.role,
-            consumable: formVal.data.consumable,
-            expires: addHours(new Date(), formVal.data.expires),
-            consumers: [],
-          } as Data.Token<'pojo'>)
+          const tokenId = await tokenService.createToken(
+            formVal.data.role,
+            formVal.data.consumable,
+            formVal.data.expires,
+          )
 
           await invalidate('app:applications')
           try {
-            await writeToClipboard(
-              `${page.url.host}/signup?token=${snapshot.id}`,
-            )
+            await writeToClipboard(`${page.url.host}/signup?token=${tokenId}`)
           } catch {
             // ignore clipboard errors
           }

@@ -4,6 +4,7 @@ import {
   instructorFeedbackCollection,
   registrationsCollection,
 } from '$lib/data/collections'
+import { retreatMealSchedule } from '$lib/data/retreatMealSchedule'
 import type ClassData from '$lib/data/types/ClassData'
 import type Student from '$lib/data/types/Student'
 import {
@@ -22,6 +23,7 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore'
+import { cloneDeep } from 'lodash-es'
 
 /**
  * Service providing Data Access Layer for student details, class enrollment, and attendance.
@@ -259,11 +261,7 @@ export const studentService = {
       {
         checkedIn: true,
         checkedInAt: now,
-        food: {
-          '2023-10-20': { dinner: false },
-          '2023-10-21': { breakfast: false, lunch: false, dinner: false },
-          '2023-10-22': { breakfast: false },
-        },
+        food: cloneDeep(retreatMealSchedule),
       },
       { merge: true },
     )

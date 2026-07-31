@@ -115,6 +115,19 @@ export const interviewService = {
   },
 
   /**
+   * Updates an existing interview slot's date and meeting link in Firestore.
+   */
+  async updateInterviewSlot(interview: Data.InterviewSlot): Promise<void> {
+    await setDoc(
+      doc(db, interviewTimesCollection, interview.id),
+      withSemester({
+        ...interview,
+        date: new Date(interview.date),
+      }),
+    )
+  },
+
+  /**
    * Deletes an interview slot from Firestore.
    */
   async deleteInterviewSlot(slotId: string): Promise<void> {

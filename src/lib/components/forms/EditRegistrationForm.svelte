@@ -1,14 +1,8 @@
 <script lang="ts">
-  import { doc, setDoc } from 'firebase/firestore'
-  import { db } from '$lib/client/firebase'
   import { alert } from '$lib/stores'
   import { invalidate } from '$app/navigation'
-  import {
-    currentSemester,
-    registrationsCollection,
-    semesterIdFromPath,
-    withSemester,
-  } from '$lib/data/collections'
+  import { registrationsCollection } from '$lib/data/collections'
+  import { registrationService } from '$lib/services/registrationService'
   import { superForm, defaults } from 'sveltekit-superforms'
   import { zod } from 'sveltekit-superforms/adapters'
   import { registrationSchema } from './schemas'
@@ -141,12 +135,10 @@
             },
           }
           try {
-            await setDoc(
-              doc(db, collection, id),
-              withSemester(
-                updatedValues,
-                semesterIdFromPath(collection) ?? currentSemester,
-              ),
+            await registrationService.saveRegistration(
+              collection,
+              id,
+              updatedValues,
             )
             values = updatedValues
             dbValues = cloneDeep(updatedValues)

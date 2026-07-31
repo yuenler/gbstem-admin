@@ -1,26 +1,17 @@
 <script lang="ts">
-  import { db, user } from '$lib/client/firebase'
+  import { user } from '$lib/client/firebase'
   import Button from '$lib/components/Button.svelte'
   import Card from '$lib/components/Card.svelte'
-  import {
-    applicationsCollection,
-    classesCollection,
-    registrationsCollection,
-  } from '$lib/data/collections'
   import sendClassReminder from '$lib/data/helpers/sendClassReminders'
   import { ClassStatus } from '$lib/data/types/ClassStatus'
+  import {
+    dashboardService,
+    type ClassToday,
+    type DashboardData,
+  } from '$lib/services/dashboardService'
   import { alert } from '$lib/stores'
   import { formatDate, timestampToDate, copyEmails } from '$lib/utils'
-  import {
-    collection,
-    getCountFromServer,
-    getDocs,
-    query,
-    Timestamp,
-    where,
-  } from 'firebase/firestore'
   import { fade } from 'svelte/transition'
-  import { onDestroy } from 'svelte'
   import type { PageData } from './$types'
 
   interface Props {
@@ -28,26 +19,6 @@
   }
 
   let { data: pageData }: Props = $props()
-
-  type DashboardData = {
-    applications: {
-      total: number
-      submitted: number
-      decided: number
-      registered: number
-      totalRegistrationsStarted: number
-      enrolled: number
-    }
-    users: {
-      total: number
-    }
-  }
-
-  type ClassToday = {
-    id: string
-    classNumber: number
-    class: Data.Class
-  }
 
   let classesToday: ClassToday[] = $state([])
 
@@ -72,12 +43,6 @@
   let userRole = $derived($user?.profile?.role || pageData?.user?.role)
   let isReviewer = $derived(userRole === 'reviewer')
 
-  let queryTimeout: any
-
-  onDestroy(() => {
-    if (queryTimeout) window.clearTimeout(queryTimeout)
-  })
-
   function getClassStatusBg(status: string) {
     switch (status) {
       case ClassStatus.ClassUpcomingSoon:
@@ -98,191 +63,11 @@
     try {
       const currentRole = $user?.profile?.role || pageData?.user?.role
       const reviewer = currentRole === 'reviewer'
-      const applicationsColl = collection(db, applicationsCollection)
-
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        queryTimeout = window.setTimeout(() => {
-          reject(new Error('Query timeout (10 seconds)'))
-        }, 10000)
-      })
-
-      if (reviewer) {
-        const fetchPromise = Promise.all([
-          getDocs(
-            query(applicationsColl, where('meta.submitted', '==', false)),
-          ),
-          Promise.all([
-            getCountFromServer(applicationsColl),
-            getCountFromServer(
-              query(applicationsColl, where('meta.submitted', '==', true)),
-            ),
-            getCountFromServer(
-              query(applicationsColl, where('meta.decision', '!=', null)),
-            ),
-          ]),
-        ])
-
-        const [uncompletedApplicationsSnapshot, counts] = await Promise.race([
-          fetchPromise,
-          timeoutPromise,
-        ])
-
-        const appEmails: string[] = []
-        uncompletedApplicationsSnapshot.forEach((doc) => {
-          const email = doc.data().personal?.email
-          if (email) {
-            appEmails.push(email)
-          }
-        })
-        uncompletedApplicationsEmails = appEmails
-        uncompletedRegistrationsEmails = []
-
-        const [
-          totalApplicationsSnapshot,
-          submittedApplicationsSnapshot,
-          decidedApplicationsSnapshot,
-        ] = counts
-
-        dashboardData = {
-          applications: {
-            total: totalApplicationsSnapshot.data().count,
-            submitted: submittedApplicationsSnapshot.data().count,
-            decided: decidedApplicationsSnapshot.data().count,
-            registered: 0,
-            totalRegistrationsStarted: 0,
-            enrolled: 0,
-          },
-          users: {
-            total: 0,
-          },
-        }
-        classesToday = []
-      } else {
-        const usersColl = collection(db, 'users')
-        const registrationsColl = collection(db, registrationsCollection)
-        const classesColl = collection(db, classesCollection)
-
-        const fetchPromise = Promise.all([
-          getDocs(
-            query(registrationsColl, where('meta.submitted', '==', false)),
-          ),
-          getDocs(
-            query(applicationsColl, where('meta.submitted', '==', false)),
-          ),
-          getDocs(
-            query(registrationsColl, where('meta.submitted', '==', true)),
-          ),
-          Promise.all([
-            getCountFromServer(applicationsColl),
-            getCountFromServer(
-              query(applicationsColl, where('meta.submitted', '==', true)),
-            ),
-            getCountFromServer(
-              query(applicationsColl, where('meta.decision', '!=', null)),
-            ),
-            getCountFromServer(usersColl),
-            getCountFromServer(registrationsColl),
-            getCountFromServer(
-              query(registrationsColl, where('enrolled', '==', true)),
-            ),
-          ]),
-          getDocs(query(classesColl)),
-        ])
-
-        const [
-          uncompletedRegistrationsSnapshot,
-          uncompletedApplicationsSnapshot,
-          submittedRegistrationsSnapshot,
-          counts,
-          classesSnapshot,
-        ] = await Promise.race([fetchPromise, timeoutPromise])
-
-        // Process submitted registration emails for filtering
-        const submittedRegEmails = new Set<string>()
-        submittedRegistrationsSnapshot.forEach((doc) => {
-          const email = doc.data().personal?.email
-          if (email && typeof email === 'string') {
-            submittedRegEmails.add(email.trim().toLowerCase())
-          }
-        })
-
-        // Process uncompleted registration emails (exclude users with an already submitted registration)
-        const regEmailsSet = new Set<string>()
-        uncompletedRegistrationsSnapshot.forEach((doc) => {
-          const email = doc.data().personal?.email
-          if (email && typeof email === 'string') {
-            const clean = email.trim()
-            if (clean && !submittedRegEmails.has(clean.toLowerCase())) {
-              regEmailsSet.add(clean)
-            }
-          }
-        })
-        uncompletedRegistrationsEmails = Array.from(regEmailsSet)
-
-        // Process uncompleted application emails
-        const appEmailsSet = new Set<string>()
-        uncompletedApplicationsSnapshot.forEach((doc) => {
-          const email = doc.data().personal?.email
-          if (email && typeof email === 'string') {
-            const clean = email.trim()
-            if (clean) {
-              appEmailsSet.add(clean)
-            }
-          }
-        })
-        uncompletedApplicationsEmails = Array.from(appEmailsSet)
-
-        // Process counts
-        const [
-          totalApplicationsSnapshot,
-          submittedApplicationsSnapshot,
-          decidedApplicationsSnapshot,
-          totalUsersSnapshot,
-          totalRegistrationsSnapshot,
-          enrolledRegistrationsSnapshot,
-        ] = counts
-
-        dashboardData = {
-          applications: {
-            total: totalApplicationsSnapshot.data().count,
-            submitted: submittedApplicationsSnapshot.data().count,
-            decided: decidedApplicationsSnapshot.data().count,
-            registered: submittedRegistrationsSnapshot.size,
-            totalRegistrationsStarted: totalRegistrationsSnapshot.data().count,
-            enrolled: enrolledRegistrationsSnapshot.data().count,
-          },
-          users: {
-            total: totalUsersSnapshot.data().count,
-          },
-        }
-
-        // Process classes today
-        const todayClasses: ClassToday[] = []
-        classesSnapshot.forEach((doc) => {
-          const meetingTimes: Timestamp[] = doc.data().meetingTimes
-          if (meetingTimes !== undefined && Array.isArray(meetingTimes)) {
-            for (let i = 0; i < meetingTimes.length; i++) {
-              const rawTime = meetingTimes[i]
-              if (rawTime) {
-                const meetingTime = timestampToDate(rawTime)
-                if (
-                  meetingTime &&
-                  new Date().toLocaleDateString() ===
-                    meetingTime.toLocaleDateString()
-                ) {
-                  const classSession = doc.data() as Data.Class
-                  todayClasses.push({
-                    id: doc.id,
-                    class: classSession,
-                    classNumber: i,
-                  })
-                }
-              }
-            }
-          }
-        })
-        classesToday = todayClasses
-      }
+      const result = await dashboardService.fetchDashboardData(reviewer)
+      dashboardData = result.dashboardData
+      classesToday = result.classesToday
+      uncompletedRegistrationsEmails = result.uncompletedRegistrationsEmails
+      uncompletedApplicationsEmails = result.uncompletedApplicationsEmails
     } catch (err: any) {
       console.error('Error loading dashboard data:', err)
       alert.trigger(
@@ -290,7 +75,6 @@
         `Failed to load dashboard data: ${err.message || err}`,
       )
     } finally {
-      if (queryTimeout) window.clearTimeout(queryTimeout)
       loading = false
     }
   }

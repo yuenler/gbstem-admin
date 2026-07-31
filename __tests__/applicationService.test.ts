@@ -63,6 +63,25 @@ describe('admin applicationService (Data Access Layer)', () => {
       expect(firestore.setDoc).toHaveBeenCalled()
       expect(firestore.updateDoc).toHaveBeenCalled()
     })
+
+    it('writes to the viewed semester decisions collection when provided', async () => {
+      ;(firestore.doc as jest.Mock).mockClear()
+      ;(firestore.setDoc as jest.Mock).mockResolvedValueOnce(undefined)
+      ;(firestore.updateDoc as jest.Mock).mockResolvedValueOnce(undefined)
+
+      await applicationService.saveNotes(
+        'semesters/Fall25/applications',
+        'app-1',
+        {} as any,
+        'Fall25',
+      )
+
+      expect(firestore.doc).toHaveBeenCalledWith(
+        undefined,
+        'semesters/Fall25/decisions',
+        'app-1',
+      )
+    })
   })
 
   describe('saveLikelyDecision', () => {
@@ -125,6 +144,161 @@ describe('admin applicationService (Data Access Layer)', () => {
         '/api/decision',
         expect.objectContaining({ method: 'POST' }),
       )
+    })
+
+    it('warns but does not throw if the interview scheduling email API responds not-ok', async () => {
+      ;(firestore.setDoc as jest.Mock).mockResolvedValueOnce(undefined)
+      ;(firestore.updateDoc as jest.Mock).mockResolvedValueOnce(undefined)
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        statusText: 'Bad Request',
+      })
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+
+      await expect(
+        applicationService.submitOfficialDecision(
+          'applications',
+          'app-1',
+          'interview',
+          {} as any,
+          'alice@example.com',
+          'Alice',
+          '2026-09-01',
+        ),
+      ).resolves.toBeUndefined()
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Failed to send interview scheduling email:',
+        'Bad Request',
+      )
+      warnSpy.mockRestore()
+    })
+
+    it('warns but does not throw if the decision notification email API responds not-ok', async () => {
+      ;(firestore.setDoc as jest.Mock).mockResolvedValueOnce(undefined)
+      ;(firestore.updateDoc as jest.Mock).mockResolvedValueOnce(undefined)
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        statusText: 'Bad Request',
+      })
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+
+      await applicationService.submitOfficialDecision(
+        'applications',
+        'app-1',
+        'rejected',
+        {} as any,
+        'alice@example.com',
+        'Alice',
+        '2026-09-01',
+      )
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Failed to send decision notification email:',
+        'Bad Request',
+      )
+      warnSpy.mockRestore()
+    })
+
+    it('warns but does not throw if the email fetch call itself rejects', async () => {
+      ;(firestore.setDoc as jest.Mock).mockResolvedValueOnce(undefined)
+      ;(firestore.updateDoc as jest.Mock).mockResolvedValueOnce(undefined)
+      ;(global.fetch as jest.Mock).mockRejectedValueOnce(
+        new Error('network down'),
+      )
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+
+      await expect(
+        applicationService.submitOfficialDecision(
+          'applications',
+          'app-1',
+          'accepted',
+          {} as any,
+          'alice@example.com',
+          'Alice',
+          '2026-09-01',
+        ),
+      ).resolves.toBeUndefined()
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Email notification request failed:',
+        expect.any(Error),
+      )
+      warnSpy.mockRestore()
+    })
+  })
+
+  describe('saveApplicationDetails', () => {
+    it('saves the updated values with semester stamping', async () => {
+      ;(firestore.setDoc as jest.Mock).mockResolvedValueOnce(undefined)
+
+      await applicationService.saveApplicationDetails(
+        'applications',
+        'app-1',
+        { personal: { firstName: 'Alice' } } as any,
+        'Spring26',
+      )
+
+      expect(firestore.setDoc).toHaveBeenCalledTimes(1)
+      const [, payload] = (firestore.setDoc as jest.Mock).mock.calls[0]
+      expect(payload).toEqual(
+        expect.objectContaining({
+          personal: { firstName: 'Alice' },
+          semester: 'Spring26',
+        }),
+      )
+    })
+
+    it('propagates errors from setDoc', async () => {
+      ;(firestore.setDoc as jest.Mock).mockRejectedValueOnce(
+        new Error('permission-denied'),
+      )
+
+      await expect(
+        applicationService.saveApplicationDetails(
+          'applications',
+          'app-1',
+          {} as any,
+        ),
+      ).rejects.toThrow('permission-denied')
+    })
+  })
+
+  describe('bulkSetDecision', () => {
+    it('sets a decision doc and links meta.decision for every application id', async () => {
+      ;(firestore.setDoc as jest.Mock).mockResolvedValue(undefined)
+      ;(firestore.updateDoc as jest.Mock).mockResolvedValue(undefined)
+
+      await applicationService.bulkSetDecision(
+        ['app-1', 'app-2'],
+        'applications',
+        'decisions',
+        'accepted',
+        'Spring26',
+      )
+
+      expect(firestore.setDoc).toHaveBeenCalledTimes(2)
+      expect(firestore.updateDoc).toHaveBeenCalledTimes(2)
+      const [, payload] = (firestore.setDoc as jest.Mock).mock.calls[0]
+      expect(payload).toEqual(
+        expect.objectContaining({ type: 'accepted', semester: 'Spring26' }),
+      )
+    })
+
+    it('rejects if any write in the batch fails', async () => {
+      ;(firestore.setDoc as jest.Mock).mockResolvedValue(undefined)
+      ;(firestore.updateDoc as jest.Mock)
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new Error('permission-denied'))
+
+      await expect(
+        applicationService.bulkSetDecision(
+          ['app-1', 'app-2'],
+          'applications',
+          'decisions',
+          'rejected',
+        ),
+      ).rejects.toThrow('permission-denied')
     })
   })
 })

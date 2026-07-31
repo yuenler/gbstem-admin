@@ -2,6 +2,7 @@
   import Card from '$lib/components/Card.svelte'
   import Select from '$lib/components/Select.svelte'
   import sendClassReminder from '$lib/data/helpers/sendClassReminders'
+  import { retreatMealSchedule } from '$lib/data/retreatMealSchedule'
   import type ClassData from '$lib/data/types/ClassData'
   import type Student from '$lib/data/types/Student'
   import { formatClassName } from '$lib/helpers/studentDetails'
@@ -13,6 +14,7 @@
     getNearestFutureClass,
   } from '$lib/utils'
   import { format } from 'date-fns'
+  import { cloneDeep } from 'lodash-es'
   import { tick } from 'svelte'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
@@ -148,11 +150,7 @@
       await studentService.checkInStudent(studentID, now)
       checkedIn = true
       checkedInAt = now
-      food = {
-        '2023-10-20': { dinner: false },
-        '2023-10-21': { breakfast: false, lunch: false, dinner: false },
-        '2023-10-22': { breakfast: false },
-      }
+      food = cloneDeep(retreatMealSchedule)
       alert.trigger('success', 'Student checked in successfully!')
     } catch (error) {
       console.error('Check-in error:', error)

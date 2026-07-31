@@ -185,4 +185,43 @@ export const applicationService = {
       console.warn('Email notification request failed:', emailErr)
     }
   },
+
+  /**
+   * Saves edited application field values (personal/academic/program/essay/agreements).
+   */
+  async saveApplicationDetails(
+    appCollection: string,
+    appId: string,
+    updatedValues: Data.Application<'client'>,
+    viewedSemester?: string,
+  ): Promise<void> {
+    await setDoc(
+      doc(db, appCollection, appId),
+      withSemester(updatedValues, viewedSemester),
+    )
+  },
+
+  /**
+   * Bulk-assigns a decision to multiple applications and links each to its decision document.
+   */
+  async bulkSetDecision(
+    applicationIds: string[],
+    appCollection: string,
+    decisionsColl: string,
+    decision: Data.Decision,
+    viewedSemester?: string,
+  ): Promise<void> {
+    await Promise.all(
+      applicationIds.map(async (id) => {
+        const decisionDocRef = doc(db, decisionsColl, id)
+        await setDoc(
+          decisionDocRef,
+          withSemester({ type: decision }, viewedSemester),
+        )
+        await updateDoc(doc(db, appCollection, id), {
+          'meta.decision': decisionDocRef,
+        })
+      }),
+    )
+  },
 }

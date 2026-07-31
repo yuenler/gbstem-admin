@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { doc, setDoc } from 'firebase/firestore'
-  import { db } from '$lib/client/firebase'
   import { alert } from '$lib/stores'
   import { invalidate } from '$app/navigation'
   import Card from '$lib/components/Card.svelte'
@@ -9,8 +7,8 @@
     applicationsCollection,
     currentSemester,
     semesterIdFromPath,
-    withSemester,
   } from '$lib/data/collections'
+  import { applicationService } from '$lib/services/applicationService'
   import { superForm, defaults } from 'sveltekit-superforms'
   import { zod } from 'sveltekit-superforms/adapters'
   import { applicationSchema } from './schemas'
@@ -126,12 +124,11 @@
             },
           }
           try {
-            await setDoc(
-              doc(db, collection, id),
-              withSemester(
-                updatedValues,
-                semesterIdFromPath(collection) ?? currentSemester,
-              ),
+            await applicationService.saveApplicationDetails(
+              collection,
+              id,
+              updatedValues,
+              semesterIdFromPath(collection) ?? currentSemester,
             )
             values = updatedValues
             dbValues = cloneDeep(updatedValues)

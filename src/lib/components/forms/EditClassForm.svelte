@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { doc, setDoc } from 'firebase/firestore'
-  import { db } from '$lib/client/firebase'
   import { alert } from '$lib/stores'
   import { invalidate } from '$app/navigation'
   import { coursesJson, daysOfWeekJson } from '$lib/data'
-  import { classesCollection, withSemester } from '$lib/data/collections'
   import type ClassData from '$lib/data/types/ClassData'
+  import { classService } from '$lib/services/classService'
   import { superForm, defaults } from 'sveltekit-superforms'
   import { zod } from 'sveltekit-superforms/adapters'
   import { classSchema } from './schemas'
@@ -58,10 +56,7 @@
             ...formVal.data,
           }
           try {
-            await setDoc(
-              doc(db, classesCollection, id),
-              withSemester(updatedValues),
-            )
+            await classService.saveClassDetails(id, updatedValues)
             values = updatedValues
             disabled = true
             await invalidate('app:registrations')

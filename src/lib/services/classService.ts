@@ -1,12 +1,25 @@
 import { db } from '$lib/client/firebase'
 import {
   classesCollection,
+  instructorFeedbackCollection,
   registrationsCollection,
+  withSemester,
 } from '$lib/data/collections'
 import type ClassData from '$lib/data/types/ClassData'
 import type Student from '$lib/data/types/Student'
 import { normalizeCapitals, timestampToDate } from '$lib/utils'
-import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+
+export interface ClientInstructorFeedback {
+  courseName: string
+  instructorName: string
+  feedback: string
+  date: string
+  classNumber: number
+  attendanceList: Record<string, { present: boolean }>
+  id: string
+  students: string[]
+}
 
 /**
  * Service providing Data Access Layer for Admin Class operations.
@@ -38,6 +51,32 @@ export const classService = {
   ): Promise<void> {
     const classRef = doc(db, classesCollection, classId)
     await updateDoc(classRef, { classStatuses })
+  },
+
+  /**
+   * Overwrites a class document with edited configuration values.
+   */
+  async saveClassDetails(
+    classId: string,
+    updatedValues: ClassData,
+  ): Promise<void> {
+    await setDoc(
+      doc(db, classesCollection, classId),
+      withSemester(updatedValues),
+    )
+  },
+
+  /**
+   * Fetches a single instructor feedback document by ID.
+   */
+  async fetchInstructorFeedback(
+    feedbackId: string,
+  ): Promise<ClientInstructorFeedback | null> {
+    const snap = await getDoc(doc(db, instructorFeedbackCollection, feedbackId))
+    if (!snap.exists()) {
+      return null
+    }
+    return snap.data() as ClientInstructorFeedback
   },
 
   /**

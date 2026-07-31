@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { db, user } from '$lib/client/firebase'
+  import { user } from '$lib/client/firebase'
   import Form from '$lib/components/Form.svelte'
   import Input from '$lib/components/Input.svelte'
-  import { interviewTimesCollection, withSemester } from '$lib/data/collections'
   import {
     canUserModifySlot,
     resetInterviewSlotToAdd,
@@ -10,7 +9,6 @@
   import { interviewService } from '$lib/services/interviewService'
   import { alert } from '$lib/stores'
   import { cn, formatDate, formatDateLocal } from '$lib/utils'
-  import { deleteDoc, doc, setDoc } from 'firebase/firestore'
   import { onMount } from 'svelte'
   import Button from '../Button.svelte'
   import Card from '../Card.svelte'
@@ -158,13 +156,7 @@
       return
     }
     try {
-      await setDoc(
-        doc(db, interviewTimesCollection, interview.id),
-        withSemester({
-          ...interview,
-          date: new Date(interview.date),
-        }),
-      )
+      await interviewService.updateInterviewSlot(interview)
       alert.trigger('success', 'Timeslot updated successfully.')
       allInterviewSlots = await getData()
     } catch (err: any) {
@@ -188,7 +180,7 @@
       return
     }
     try {
-      await deleteDoc(doc(db, interviewTimesCollection, interview.id))
+      await interviewService.deleteInterviewSlot(interview.id)
       allInterviewSlots = await getData()
       alert.trigger('success', 'Timeslot successfully deleted.')
     } catch (err: any) {

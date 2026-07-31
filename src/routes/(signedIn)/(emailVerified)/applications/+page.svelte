@@ -1,7 +1,6 @@
 <script lang="ts">
   import { invalidate } from '$app/navigation'
   import { page } from '$app/state'
-  import { db } from '$lib/client/firebase'
   import Application from '$lib/components/Application.svelte'
   import Button from '$lib/components/Button.svelte'
   import CollectionFilter from '$lib/components/CollectionFilter.svelte'
@@ -12,14 +11,13 @@
   import {
     resolveSemester,
     semesterCollectionPath,
-    withSemester,
   } from '$lib/data/collections'
   import { objectUrl } from '$lib/objectUrl.svelte'
   import { alert } from '$lib/stores'
   import { actionsState } from '$lib/stores.svelte'
+  import { applicationService } from '$lib/services/applicationService'
   import { generateCSV } from '$lib/utils'
   import { format } from 'date-fns'
-  import { doc, setDoc, updateDoc } from 'firebase/firestore'
   import type { PageData } from './$types'
 
   interface Props {
@@ -86,22 +84,13 @@
       color,
       callback: async () => {
         try {
-          await Promise.all(
-            checked.map(async (i) => {
-              const id = data.applications[i].id
-              const decisionDocRef = doc(
-                db,
-                semesterCollectionPath(selectedSemester, 'decisions'),
-                id,
-              )
-              await setDoc(
-                decisionDocRef,
-                withSemester({ type: decision }, selectedSemester),
-              )
-              await updateDoc(doc(db, selectedCollection, id), {
-                'meta.decision': decisionDocRef,
-              })
-            }),
+          const ids = checked.map((i) => data.applications[i].id)
+          await applicationService.bulkSetDecision(
+            ids,
+            selectedCollection,
+            semesterCollectionPath(selectedSemester, 'decisions'),
+            decision,
+            selectedSemester,
           )
           await invalidate('app:applications')
           alert.trigger(

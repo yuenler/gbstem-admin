@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { db } from '$lib/client/firebase'
   import Card from '$lib/components/Card.svelte'
-  import { instructorFeedbackCollection } from '$lib/data/collections'
+  import {
+    classService,
+    type ClientInstructorFeedback,
+  } from '$lib/services/classService'
   import { alert } from '$lib/stores'
-  import { doc, getDoc } from 'firebase/firestore'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
 
@@ -13,17 +14,6 @@
   }
 
   let { open = $bindable(false), id }: Props = $props()
-
-  interface ClientInstructorFeedback {
-    courseName: string
-    instructorName: string
-    feedback: string
-    date: string
-    classNumber: number
-    attendanceList: Record<string, { present: boolean }>
-    id: string
-    students: string[]
-  }
 
   let values: ClientInstructorFeedback = $state({
     courseName: '',
@@ -42,12 +32,10 @@
     let cancelled = false
     ;(async () => {
       try {
-        const snapshot = await getDoc(
-          doc(db, instructorFeedbackCollection, currentId),
-        )
+        const feedback = await classService.fetchInstructorFeedback(currentId)
         if (cancelled) return
-        if (snapshot.exists()) {
-          values = snapshot.data() as ClientInstructorFeedback
+        if (feedback) {
+          values = feedback
         } else {
           alert.trigger('error', 'Feedback not found.')
         }
