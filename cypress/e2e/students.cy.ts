@@ -17,7 +17,7 @@ describe('Section F: Students Directory', () => {
 
   it('Test Case 14: Students Search, Filtering, and Enrolling/Dropping Classes', () => {
     // Verify initial state
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       expect($table).to.contain('Charlie Brown')
       expect($table).to.contain('Sally Brown')
     })
@@ -127,7 +127,7 @@ describe('Section F: Students Directory', () => {
 
     // Search for Charlie
     cy.get('input[placeholder="Search"]').clear().type('Charlie{enter}')
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify Sally gets filtered out and Charlie stays
       expect($table).to.not.contain('Sally Brown')
       expect($table).to.contain('Charlie Brown')

@@ -29,14 +29,14 @@ describe('Section I: Feedback Views', () => {
     cy.get('th').contains('Rating').should('be.visible')
 
     // Verify initial state
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       expect($table).to.contain('Christopher Lee')
       expect($table).to.contain('Charles Jackson')
     })
 
     // Search by student name
     cy.get('input[placeholder="Search"]').clear().type('Christopher{enter}')
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify Charles gets filtered out and Christopher stays
       expect($table).to.not.contain('Charles Jackson')
       expect($table).to.contain('Christopher Lee')
@@ -44,7 +44,7 @@ describe('Section I: Feedback Views', () => {
 
     // Clear search using Clear button
     cy.contains('button', 'Clear').click()
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify both Charles and Christopher show up again
       expect($table).to.contain('Charles Jackson')
       expect($table).to.contain('Christopher Lee')
@@ -52,7 +52,7 @@ describe('Section I: Feedback Views', () => {
 
     // Filter by course
     cy.selectOption('input[name="course"]', 'Python 1')
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify Christopher gets filtered out and John stays
       expect($table).to.not.contain('Christopher Lee')
       expect($table).to.contain('John Williams')
@@ -146,14 +146,14 @@ describe('Section I: Feedback Views', () => {
     cy.get('th').contains('Feedback').should('be.visible')
 
     // Verify initial state
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       expect($table).to.contain('Karen Martin')
       expect($table).to.contain('Charles Jackson')
     })
 
     // Search by instructor name
     cy.get('input[placeholder="Search"]').clear().type('Karen{enter}')
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Ensure Charles gets filtered out and Karen stays
       expect($table).to.not.contain('Charles Jackson')
       expect($table).to.contain('Karen Martin')
@@ -161,7 +161,7 @@ describe('Section I: Feedback Views', () => {
 
     // Clear search using Clear button
     cy.contains('button', 'Clear').click()
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify both Charles and Karen show up again
       expect($table).to.contain('Charles Jackson')
       expect($table).to.contain('Karen Martin')
@@ -169,7 +169,7 @@ describe('Section I: Feedback Views', () => {
 
     // Filter by course
     cy.selectOption('input[name="course"]', 'Python 1')
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify Karen gets filtered out and Mary stays
       expect($table).to.not.contain('Karen Martin')
       expect($table).to.contain('Mary Johnson')

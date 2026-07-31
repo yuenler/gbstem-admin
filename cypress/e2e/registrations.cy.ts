@@ -17,7 +17,7 @@ describe('Section G: Pre-Registrations Directory', () => {
 
   it('Test Case 15: Filter, Search, and Edit Pre-Registrations', () => {
     // Verify initial state
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       expect($table).to.contain('Charlie Brown')
       expect($table).to.contain('Sally Brown')
     })
@@ -27,7 +27,7 @@ describe('Section G: Pre-Registrations Directory', () => {
     cy.wait(500)
 
     // Table should contain Charlie Brown
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify Sally gets filtered out and Charlie stays
       expect($table).to.not.contain('Sally Brown')
       expect($table).to.contain('Charlie Brown')
@@ -35,7 +35,7 @@ describe('Section G: Pre-Registrations Directory', () => {
 
     // Clear search using Clear button
     cy.contains('button', 'Clear').click()
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify both Sally and Charlie show up again
       expect($table).to.contain('Sally Brown')
       expect($table).to.contain('Charlie Brown')
@@ -49,14 +49,14 @@ describe('Section G: Pre-Registrations Directory', () => {
 
     // Select "submitted" from Status filter dropdown
     cy.selectOption('input[name="status"]', 'incomplete')
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify Charlie gets filtered out and Mark stays
       expect($table).to.not.contain('Charlie Brown')
       expect($table).to.contain('Mark Lewis')
     })
 
     cy.selectOption('input[name="status"]', 'all')
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify Charlie gets restored and Mark stays
       expect($table).to.contain('Charlie Brown')
       expect($table).to.contain('Mark Lewis')

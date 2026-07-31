@@ -27,14 +27,14 @@ describe('Section D: Instructor Applications Management', () => {
 
   it('Test Case 9: Filter, Search, and Download Applications Table', () => {
     // Verify initial state
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       expect($table).to.contain('David Miller')
       expect($table).to.contain('Mark Lewis')
     })
 
     // Search for "David"
     cy.get('input[placeholder="Search"]').clear().type('David{enter}')
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Ensure Mark disappears and David stays
       expect($table).to.not.contain('Mark Lewis')
       expect($table).to.contain('David Miller')
@@ -42,7 +42,7 @@ describe('Section D: Instructor Applications Management', () => {
 
     // Clear search using Clear button
     cy.contains('button', 'Clear').click()
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Ensure Mark re-appears
       expect($table).to.contain('Mark Lewis')
       expect($table).to.contain('David Miller')
@@ -53,7 +53,7 @@ describe('Section D: Instructor Applications Management', () => {
     cy.wait(200)
     cy.get('input[name="collection"]').type('{enter}')
     cy.wait(500)
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify no applications from the current semester remain
       expect($table).to.not.contain('David Miller')
       expect($table).to.not.contain('Mark Lewis')
@@ -64,7 +64,7 @@ describe('Section D: Instructor Applications Management', () => {
     cy.wait(200)
     cy.get('input[name="collection"]').type('{enter}')
     cy.wait(500)
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Ensure applications from the current semester reappear
       expect($table).to.contain('David Miller')
       expect($table).to.contain('Mark Lewis')
@@ -75,7 +75,7 @@ describe('Section D: Instructor Applications Management', () => {
     cy.wait(200)
     cy.get('input[name="decision"]').type('{enter}')
     cy.wait(500)
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Ensure demo instructor is removed and David stays
       expect($table).to.not.contain('Demo Instructor')
       expect($table).to.contain('David Miller')

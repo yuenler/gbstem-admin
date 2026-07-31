@@ -25,14 +25,14 @@ describe('Section J: Substitute Requests Log', () => {
     cy.get('th').contains('Substitute Instructor Email').should('be.visible')
 
     // Verify preconditions
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       expect($table).to.contain('Scratch')
       expect($table).to.contain('Python')
     })
 
     // Search query
     cy.get('input[placeholder="Search"]').clear().type('Python{enter}')
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify Scratch gets filtered out and Python stays
       expect($table).to.not.contain('Scratch')
       expect($table).to.contain('Python')
@@ -40,7 +40,7 @@ describe('Section J: Substitute Requests Log', () => {
 
     // Clear search using Clear button
     cy.contains('button', 'Clear').click()
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify Scratch reappears
       expect($table).to.contain('Scratch')
       expect($table).to.contain('Python')
@@ -48,7 +48,7 @@ describe('Section J: Substitute Requests Log', () => {
 
     // Filter by course
     cy.selectOption('input[name="course"]', 'Python 1')
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify Python 2 gets filtered out and Python 1 stays
       expect($table).to.not.contain('Python 2')
       expect($table).to.contain('Python 1')

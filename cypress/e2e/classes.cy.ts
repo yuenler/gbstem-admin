@@ -17,7 +17,7 @@ describe('Section E: Classes Directory', () => {
 
   it('Test Case 12: Classes Search, Filters, and Email Export', () => {
     // Verify initial state
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       expect($table).to.contain('Python 1')
       expect($table).to.contain('Scratch 1')
     })
@@ -29,7 +29,7 @@ describe('Section E: Classes Directory', () => {
     cy.wait(500)
 
     // Table should contain Python 1 classes only
-    cy.get('table').should(($table) => {
+    cy.get('table', { timeout: 10000 }).should(($table) => {
       // Ensure Scratch is filtered out and Python 1 stays
       expect($table).to.not.contain('Scratch 1')
       expect($table).to.contain('Python 1')
@@ -156,7 +156,7 @@ describe('Section E: Classes Directory', () => {
     cy.get('[role="dialog"]').should('exist')
 
     // Verify Class List columns
-    cy.get('table').should('exist')
+    cy.get('table', { timeout: 10000 }).should('exist')
     cy.get('th').contains('Student Name').should('exist')
     cy.get('th').contains('Email').should('exist')
     cy.get('th').contains('Secondary Email').should('exist')

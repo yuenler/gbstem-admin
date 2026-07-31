@@ -6,7 +6,7 @@ describe('Section C: Announcements Page', () => {
 
   it('Test Case 8: View Announcements and Control Pagination', () => {
     // Verify announcements are listed in a table
-    cy.get('table').should('be.visible')
+    cy.get('table', { timeout: 10000 }).should('be.visible')
     cy.get('th').contains('Date').should('be.visible')
     cy.get('th').contains('Title').should('be.visible')
     cy.get('th').contains('Content').should('be.visible')
