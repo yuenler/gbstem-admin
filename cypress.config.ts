@@ -47,6 +47,9 @@ export default defineConfig({
     baseUrl: 'http://localhost:5173',
     // Don't allow using the deprecated, insecure Cypress environment setup.
     allowCypressEnv: false,
+    scrollBehavior: 'center',
+    viewportWidth: 1920,
+    viewportHeight: 1080,
     setupNodeEvents(on, config) {
       installLogsPrinter(on, {
         printLogsToConsole: 'onFail',
