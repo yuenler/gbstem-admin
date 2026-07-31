@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Lint, format, type-check, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - name: Format check
+        run: yarn format:check
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Type check
+        run: yarn run check
+
+      - name: Unit tests
+        run: yarn test
+
+  e2e:
+    name: Cypress e2e
+    needs: checks
+    runs-on: ubuntu-latest
+    env:
+      FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+      FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+      STORAGE_EMULATOR_HOST: 127.0.0.1:9199
+      FIREBASE_PROJECT_ID: demo-gbstem
+      PUBLIC_FIREBASE_PROJECT_ID: demo-gbstem
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: yarn
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - run: yarn install --frozen-lockfile
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Set up env file
+        run: cp .env.example .env.local
+
+      - name: Start dev server + run Cypress against Firebase emulators
+        run: |
+          firebase emulators:exec --project demo-gbstem \
+            'yarn dev & npx wait-on http://localhost:5173 --timeout 60000 && yarn cypress'
