@@ -141,16 +141,19 @@ describe('Section N: End-to-End Account Lifecycle', () => {
     cy.contains('a', 'Classes').should('be.visible')
 
     // 5. Modify Profile Information
-    // Update Name
-    const updatedName = 'Lifecycle Admin Updated'
-    cy.get('input[name="full-name"]').should('have.value', 'Lifecycle Test')
-    cy.get('input[name="full-name"]').clear().type(updatedName)
-    cy.get('input[name="full-name"]')
+    // Update Name. The form seeds from the canonical `users` document and
+    // exposes separate first/last name fields, matching the signup form above.
+    const updatedLastName = 'TestUpdated'
+    cy.get('input[name="first-name"]').should('have.value', 'Lifecycle')
+    cy.get('input[name="last-name"]').should('have.value', 'Test')
+    cy.get('input[name="last-name"]').clear().type(updatedLastName)
+    cy.get('input[name="last-name"]')
       .closest('.items-end')
       .contains('button', 'Update')
       .click({ force: true })
     cy.waitForNotification('Name successfully updated.')
-    cy.get('input[name="full-name"]').should('have.value', updatedName)
+    cy.get('input[name="first-name"]').should('have.value', 'Lifecycle')
+    cy.get('input[name="last-name"]').should('have.value', updatedLastName)
     cy.wait(500)
 
     // Update Email
