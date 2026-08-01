@@ -25,7 +25,10 @@ jobs:
           node-version: '24'
           cache: yarn
 
-      - run: yarn install --frozen-lockfile
+      - name: Enable Corepack
+        run: corepack enable
+
+      - run: yarn install --immutable
 
       - name: Set up env file
         run: cp .env.example .env.local
@@ -65,7 +68,10 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - run: yarn install --frozen-lockfile
+      - name: Enable Corepack
+        run: corepack enable
+
+      - run: yarn install --immutable
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools

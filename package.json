@@ -77,11 +77,22 @@
     "tailwind-merge": "^3.6.0",
     "zod": "^3.25.76"
   },
-  "allowScripts": {
-    "@firebase/util": true,
-    "protobufjs": true,
-    "unrs-resolver": true,
-    "cypress": true,
-    "esbuild": true
-  }
+  "dependenciesMeta": {
+    "@firebase/util": {
+      "built": true
+    },
+    "cypress": {
+      "built": true
+    },
+    "esbuild": {
+      "built": true
+    },
+    "protobufjs": {
+      "built": true
+    },
+    "unrs-resolver": {
+      "built": true
+    }
+  },
+  "packageManager": "yarn@4.17.1"
 }
