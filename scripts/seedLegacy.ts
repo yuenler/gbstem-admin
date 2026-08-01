@@ -159,7 +159,6 @@ async function seedSemester(semesterId: string) {
   const regEnrolled = {
     ...registrationBase,
     meta: {
-      id: regEnrolledId,
       uid: `legacy-uid-reg1-${semesterId}`,
       submitted: true,
     },
@@ -173,7 +172,6 @@ async function seedSemester(semesterId: string) {
   const regUnenrolled = {
     ...registrationBase,
     meta: {
-      id: regUnenrolledId,
       uid: `legacy-uid-reg2-${semesterId}`,
       submitted: true,
     },
@@ -238,7 +236,6 @@ async function seedSemester(semesterId: string) {
       lastName: semesterId,
     },
     meta: {
-      id: appDecidedId,
       uid: `legacy-uid-app1-${semesterId}`,
       interview: true,
       submitted: true,
@@ -262,7 +259,6 @@ async function seedSemester(semesterId: string) {
       lastName: semesterId,
     },
     meta: {
-      id: appUndecidedId,
       uid: `legacy-uid-app2-${semesterId}`,
       interview: false,
       submitted: true,

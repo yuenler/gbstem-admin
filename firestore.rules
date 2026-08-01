@@ -9,12 +9,6 @@ service cloud.firestore {
     // admin.gbstem.org and portal.gbstem.org data
     //
 
-    // Only allows checking if a generated ID document exists, with no data returned.
-    match /ids/{id} {
-      allow read, create: if isSignedIn();
-      allow delete: if isUserWithId(id);
-    }
-
     match /users/{userId} {
       allow read, write: if isUser(userId);
       allow read, write: if isAdmin();
@@ -196,9 +190,6 @@ service cloud.firestore {
     function hasUserId(userId) {
       return request.auth.uid == userId;
     }
-    function hasid(id) {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('id', '') == id;
-    }
     function isAdmin() {
       return isSignedIn() && hasRRole('admin');
     }
@@ -231,10 +222,6 @@ service cloud.firestore {
     function isUser(userId) {
       // Verifying the current user is the owner by UID
       return isSignedIn() && hasUserId(userId);
-    }
-    function isUserWithId(id) {
-      // Verifying the current user's profile document ID maps to the requested identifier
-      return isSignedIn() && hasid(id);
     }
   }
 }

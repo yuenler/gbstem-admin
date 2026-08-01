@@ -178,7 +178,6 @@ async function seed() {
     'confirmations',
     'hhids',
     'users',
-    'ids',
     'instructorClasses',
     'interviewTimeRequests',
     'mail',
@@ -232,50 +231,38 @@ async function seed() {
     'reviewer',
   )
 
-  console.log('Seeding mock profiles in "users" and "ids" collections...')
-  await db.collection('ids').doc('1111111').set({})
+  console.log('Seeding mock profiles in the "users" collection...')
   await db.collection('users').doc('instructor-demo-uid').set({
-    id: '1111111',
     role: 'instructor',
     firstName: 'Demo',
     lastName: 'Instructor',
   })
 
-  await db.collection('ids').doc('5555555').set({})
   await db.collection('users').doc('instructor-rejected-uid').set({
-    id: '5555555',
     role: 'instructor',
     firstName: 'Rejected',
     lastName: 'Instructor',
   })
 
-  await db.collection('ids').doc('6666666').set({})
   await db.collection('users').doc('instructor-interview-uid').set({
-    id: '6666666',
     role: 'instructor',
     firstName: 'Interview',
     lastName: 'Instructor',
   })
 
-  await db.collection('ids').doc('2222222').set({})
   await db.collection('users').doc('student-demo-uid').set({
-    id: '2222222',
     role: 'student',
     firstName: 'Demo',
     lastName: 'Student',
   })
 
-  await db.collection('ids').doc('4444444').set({})
   await db.collection('users').doc('reviewer-demo-uid').set({
-    id: '4444444',
     role: 'reviewer',
     firstName: 'Demo',
     lastName: 'Reviewer',
   })
 
-  await db.collection('ids').doc('3333333').set({})
   await db.collection('users').doc(adminUser.uid).set({
-    id: '3333333',
     role: 'admin',
     firstName: 'Demo',
     lastName: 'Admin',
@@ -395,7 +382,6 @@ async function seed() {
       bypassAgeLimits: false,
     },
     meta: {
-      id: 'reg-charlie',
       uid: 'user1',
       submitted: true,
     },
@@ -449,7 +435,6 @@ async function seed() {
       bypassAgeLimits: false,
     },
     meta: {
-      id: 'reg-sally',
       uid: 'user2',
       submitted: true,
     },
@@ -502,7 +487,6 @@ async function seed() {
       bypassAgeLimits: false,
     },
     meta: {
-      id: 'student-demo-uid-1',
       uid: 'student-demo-uid',
       submitted: true,
     },
@@ -657,7 +641,6 @@ async function seed() {
         bypassAgeLimits: false,
       },
       meta: {
-        id: id,
         uid: `user-fake-${i}`,
         submitted: submitted,
       },
@@ -714,7 +697,6 @@ async function seed() {
       submitting: true,
     },
     meta: {
-      id: 'app-david',
       uid: 'user_app1',
       interview: false,
       submitted: true,
@@ -764,7 +746,6 @@ async function seed() {
       submitting: true,
     },
     meta: {
-      id: 'instructor-demo-uid',
       uid: 'instructor-demo-uid',
       interview: true,
       submitted: true,
@@ -808,7 +789,6 @@ async function seed() {
       lastName: 'Instructor',
     },
     meta: {
-      id: 'instructor-rejected-uid',
       uid: 'instructor-rejected-uid',
       interview: true,
       submitted: true,
@@ -839,7 +819,6 @@ async function seed() {
       lastName: 'Instructor',
     },
     meta: {
-      id: 'instructor-interview-uid',
       uid: 'instructor-interview-uid',
       interview: true,
       submitted: true,
@@ -905,7 +884,6 @@ async function seed() {
         submitting: true,
       },
       meta: {
-        id: id,
         uid: `user-fake-app-${i}`,
         interview: true,
         submitted: submitted,

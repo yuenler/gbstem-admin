@@ -31,6 +31,9 @@ declare global {
         role: Role
       }
       type Profile = {
+        // Patched in from the auth object at read time; mirrors portal's
+        // profile shape so the uid is the single user identifier on both sites.
+        uid: string
         role: Role
       }
       type Store = {
@@ -146,7 +149,6 @@ declare global {
         bypassAgeLimits: boolean
       }
       meta: {
-        id: string
         uid: string
         submitted: boolean
       }
@@ -219,7 +221,6 @@ declare global {
         submitting: boolean
       }
       meta: {
-        id: string
         uid: string
         interview: boolean
         submitted: boolean

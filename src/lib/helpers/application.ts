@@ -63,7 +63,6 @@ export function createDefaultApplicationValues(): Data.Application<'client'> {
       submitting: false,
     },
     meta: {
-      id: '',
       uid: '',
       decision: null,
       submitted: false,

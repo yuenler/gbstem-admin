@@ -94,6 +94,7 @@ function userStore() {
             set({
               object: userObject,
               profile: {
+                uid: userObject.uid,
                 role,
               },
             })

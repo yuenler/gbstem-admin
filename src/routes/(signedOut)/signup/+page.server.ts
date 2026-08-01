@@ -55,65 +55,72 @@ export const actions = {
     const token = formData.get('token') as string
     try {
       const { role } = await verifyToken(token)
+      let uid: string
       try {
-        const { uid } = await adminAuth.createUser({
+        ;({ uid } = await adminAuth.createUser({
           email: values.email,
           password: values.password,
           displayName: `${values.firstName} ${values.lastName}`,
-        })
-        try {
-          await adminAuth.setCustomUserClaims(uid, { role })
-          try {
-            await adminDb
-              .collection('tokens')
-              .doc(token)
-              .update({
-                consumers: FieldValue.arrayUnion(uid),
-              })
-            try {
-              const link = await adminAuth.generateEmailVerificationLink(
-                values.email,
-              )
-              await adminDb.collection('mail').add({
-                to: [values.email],
-                template: {
-                  name: 'action',
-                  data: {
-                    subject: 'Verify Email for gbSTEM Account',
-                    action: {
-                      link,
-                      name: 'Verify Email',
-                      description:
-                        'Please verify your email for your gbSTEM account by clicking the button below.',
-                    },
-                    app: {
-                      name: 'Admin',
-                      link: 'https://admin.gbstem.org',
-                    },
-                  },
-                },
-              })
-              return { success: true }
-            } catch (err) {
-              console.error('Signup database error:', err)
-            }
-          } catch (err) {
-            await adminAuth.deleteUser(uid)
-            return fail(400, {
-              error: 'Updating consumers error. Please try again.',
-            })
-          }
-        } catch (err) {
-          await adminAuth.deleteUser(uid)
-          return fail(400, {
-            error: 'Claim error. Please try again.',
-          })
-        }
+        }))
       } catch (err) {
         return fail(400, {
           error: (err as FirebaseError).message,
         })
       }
+      // Everything past account creation shares one rollback: a half-created
+      // account is worse than no account. Mirrors portal's signup, which also
+      // writes the `users` document so both sites produce identical records.
+      try {
+        await adminAuth.setCustomUserClaims(uid, { role })
+        await adminDb.collection('users').doc(uid).set({
+          role,
+          firstName: values.firstName,
+          lastName: values.lastName,
+        })
+        await adminDb
+          .collection('tokens')
+          .doc(token)
+          .update({
+            consumers: FieldValue.arrayUnion(uid),
+          })
+      } catch (err) {
+        console.error('Signup error, rolling back account:', err)
+        await adminAuth
+          .deleteUser(uid)
+          .catch((delErr) =>
+            console.error('Error rolling back auth user:', delErr),
+          )
+        return fail(400, {
+          error: 'Account setup failed. Please try again.',
+        })
+      }
+      // Deliberately non-fatal: a mail hiccup must not destroy an otherwise
+      // good account. The user can request a new verification email later.
+      try {
+        const link = await adminAuth.generateEmailVerificationLink(values.email)
+        await adminDb.collection('mail').add({
+          to: [values.email],
+          template: {
+            name: 'action',
+            data: {
+              subject: 'Verify Email for gbSTEM Account',
+              action: {
+                link,
+                name: 'Verify Email',
+                description:
+                  'Please verify your email for your gbSTEM account by clicking the button below.',
+              },
+              app: {
+                name: 'Admin',
+                link: 'https://admin.gbstem.org',
+              },
+            },
+          },
+        })
+      } catch (err) {
+        console.error('Signup verification email error:', err)
+      }
+      return { success: true }
     } catch (err) {
       const state = err as 'consumed' | 'expired' | 'fake' | 'unknown'
       switch (state) {

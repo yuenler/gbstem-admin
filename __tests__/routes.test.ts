@@ -106,6 +106,7 @@ const mockDoc = (id = 'id123') => ({
     }),
   }),
   update: jest.fn().mockResolvedValue(undefined),
+  set: jest.fn().mockResolvedValue(undefined),
 })
 
 const mockCollection = {
@@ -513,7 +514,7 @@ describe('signup load and actions', () => {
     expect(res).toEqual({ token: 'token123' })
   })
 
-  it('signup default action creates user successfully', async () => {
+  function mockSignupRequest() {
     const mockFormData = new Map<string, any>([
       ['email', 'test@test.com'],
       ['first-name', 'John'],
@@ -522,17 +523,84 @@ describe('signup load and actions', () => {
       ['confirm-password', 'pass123'],
       ['token', 'token123'],
     ])
-    const mockRequest = {
+    return {
       formData: jest.fn().mockResolvedValue({
         get: (key: string) => mockFormData.get(key),
       }),
     }
+  }
+
+  it('signup default action creates user successfully', async () => {
     mockAdminAuth.createUser.mockResolvedValue({ uid: 'newUid123' })
 
     const res = await signupActions.default({
-      request: mockRequest as any,
+      request: mockSignupRequest() as any,
     } as any)
     expect(res).toEqual({ success: true })
+    expect(mockAdminAuth.setCustomUserClaims).toHaveBeenCalledWith(
+      'newUid123',
+      { role: 'admin' },
+    )
+  })
+
+  it('signup writes the users profile document, matching portal', async () => {
+    mockAdminAuth.createUser.mockResolvedValue({ uid: 'newUid123' })
+    const usersDoc = mockDoc('newUid123')
+    mockAdminDb.collection.mockImplementation((name: string) =>
+      name === 'users'
+        ? ({ doc: () => usersDoc } as any)
+        : (mockCollection as any),
+    )
+
+    await signupActions.default({
+      request: mockSignupRequest() as any,
+    } as any)
+
+    expect(usersDoc.set).toHaveBeenCalledWith({
+      role: 'admin',
+      firstName: 'John',
+      lastName: 'Doe',
+    })
+    mockAdminDb.collection.mockReturnValue(mockCollection)
+  })
+
+  it('signup rolls the auth user back when a downstream step fails', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    mockAdminAuth.createUser.mockResolvedValue({ uid: 'newUid123' })
+    mockAdminAuth.setCustomUserClaims.mockRejectedValueOnce(
+      new Error('claim failed'),
+    )
+    mockAdminAuth.deleteUser.mockResolvedValue(undefined)
+
+    const res = await signupActions.default({
+      request: mockSignupRequest() as any,
+    } as any)
+
+    expect(mockAdminAuth.deleteUser).toHaveBeenCalledWith('newUid123')
+    expect(res).toEqual(
+      expect.objectContaining({
+        data: { error: 'Account setup failed. Please try again.' },
+      }),
+    )
+    errorSpy.mockRestore()
+  })
+
+  it('signup still succeeds when the verification email fails to send', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    mockAdminAuth.createUser.mockResolvedValue({ uid: 'newUid123' })
+    mockAdminAuth.deleteUser.mockClear()
+    mockAdminAuth.generateEmailVerificationLink.mockRejectedValueOnce(
+      new Error('mail down'),
+    )
+
+    const res = await signupActions.default({
+      request: mockSignupRequest() as any,
+    } as any)
+
+    // A mail hiccup must not destroy an otherwise good account.
+    expect(res).toEqual({ success: true })
+    expect(mockAdminAuth.deleteUser).not.toHaveBeenCalled()
+    errorSpy.mockRestore()
   })
 })
 

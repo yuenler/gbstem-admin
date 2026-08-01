@@ -63,7 +63,6 @@
       submitting: false,
     },
     meta: {
-      id: '',
       uid: '',
       submitted: false,
     },

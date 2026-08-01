@@ -469,9 +469,11 @@ describe('client firebase store', () => {
 
     await new Promise(process.nextTick)
 
+    // The uid is patched in from the auth object so the profile carries the
+    // single user identifier, matching portal's store.
     expect(storeSet).toEqual({
       object: mockUserObj,
-      profile: { role: 'instructor' },
+      profile: { uid: 'user123', role: 'instructor' },
     })
 
     unsub()
@@ -498,7 +500,7 @@ describe('client firebase store', () => {
     expect(localStorage.getItem('emailVerified')).toBe('false')
     expect(storeSet).toEqual({
       object: mockUserObj,
-      profile: { role: 'student' },
+      profile: { uid: 'user123', role: 'student' },
     })
 
     unsub()
