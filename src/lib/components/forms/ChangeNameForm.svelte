@@ -1,5 +1,6 @@
 <script lang="ts">
   import { user } from '$lib/client/firebase'
+  import { userService } from '$lib/services/userService'
   import { alert } from '$lib/stores'
   import { updateProfile } from 'firebase/auth'
   import { onMount } from 'svelte'
@@ -10,11 +11,12 @@
   import FormInput from '../FormInput.svelte'
 
   const schema = z.object({
-    fullName: z.string().trim().min(1, 'Full name is required'),
+    firstName: z.string().trim().min(1, 'First name is required'),
+    lastName: z.string().trim().min(1, 'Last name is required'),
   })
 
   const formResult = superForm(
-    defaults({ fullName: '' }, zod(schema as any) as any) as any,
+    defaults({ firstName: '', lastName: '' }, zod(schema as any) as any) as any,
     {
       SPA: true,
       validators: zod(schema as any) as any,
@@ -24,13 +26,34 @@
       async onUpdate({ form: formVal }) {
         if (!formVal.valid) return
         if ($user) {
+          const frozenUser = $user
+          const firstName = formVal.data.firstName.trim()
+          const lastName = formVal.data.lastName.trim()
           try {
-            await updateProfile($user.object, {
-              displayName: formVal.data.fullName.trim(),
+            // `users/{uid}` is canonical, so it goes first: if the derived
+            // displayName sync fails afterwards the rename has still taken
+            // effect, and reporting outright failure would be a lie.
+            await userService.updateUserName(
+              frozenUser.object.uid,
+              firstName,
+              lastName,
+            )
+          } catch (err: any) {
+            console.error('Error updating name:', err)
+            alert.trigger('error', 'Failed to update name.')
+            return
+          }
+          try {
+            await updateProfile(frozenUser.object, {
+              displayName: `${firstName} ${lastName}`,
             })
             alert.trigger('success', 'Name successfully updated.')
           } catch (err: any) {
-            alert.trigger('error', 'Failed to update name.')
+            console.error('Error syncing display name:', err)
+            alert.trigger(
+              'error',
+              'Name updated, but the display name failed to sync. Try again.',
+            )
           }
         }
       },
@@ -40,34 +63,58 @@
   const { form, enhance, delayed } = formResult
 
   onMount(() => {
-    return user.subscribe((u) => {
-      if (u && u.object.displayName) {
-        $form.fullName = u.object.displayName
+    return user.subscribe(async (u) => {
+      if (!u) return
+      try {
+        const stored = await userService.fetchUserName(u.object.uid)
+        if (stored) {
+          $form.firstName = stored.firstName
+          $form.lastName = stored.lastName
+          return
+        }
+      } catch (err) {
+        console.error('Error loading stored name:', err)
       }
+      // Accounts created before signup wrote a `users` document have only a
+      // displayName to go on; split it so the form isn't blank for them.
+      const [first = '', ...rest] = (u.object.displayName ?? '').split(' ')
+      $form.firstName = first
+      $form.lastName = rest.join(' ')
     })
   })
 </script>
 
 <form use:enhance class="w-full">
   <fieldset class="space-y-4" disabled={$delayed}>
-    <div class="flex items-end gap-2">
+    <div class="grid gap-2 sm:grid-cols-2">
       <div class="w-full">
         <FormInput
           form={formResult}
-          name="fullName"
-          label="Name"
-          inputName="full-name"
-          bind:value={$form.fullName}
+          name="firstName"
+          label="First name"
+          inputName="first-name"
+          bind:value={$form.firstName}
         />
       </div>
-      <Button
-        class="h-12 shrink-0"
-        color="blue"
-        type="submit"
-        disabled={$delayed}
-      >
-        Update
-      </Button>
+      <div class="flex items-end gap-2">
+        <div class="w-full">
+          <FormInput
+            form={formResult}
+            name="lastName"
+            label="Last name"
+            inputName="last-name"
+            bind:value={$form.lastName}
+          />
+        </div>
+        <Button
+          class="h-12 shrink-0"
+          color="blue"
+          type="submit"
+          disabled={$delayed}
+        >
+          Update
+        </Button>
+      </div>
     </div>
   </fieldset>
 </form>

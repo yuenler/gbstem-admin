@@ -34,16 +34,19 @@ describe('Section L: Profile and Account Customization', () => {
         })
       })
 
-    // 2. Change name
-    const newName = 'Demo Admin Test'
-    cy.get('input[name="full-name"]').should('have.value', 'Demo Admin')
-    cy.get('input[name="full-name"]').clear().type(newName)
-    cy.get('input[name="full-name"]')
+    // 2. Change name. The form seeds from the canonical `users` document, so
+    // these assert the seeded profile rather than the Auth displayName.
+    cy.get('input[name="first-name"]').should('have.value', 'Demo')
+    cy.get('input[name="last-name"]').should('have.value', 'Admin')
+    cy.get('input[name="first-name"]').clear().type('Demo')
+    cy.get('input[name="last-name"]').clear().type('AdminTest')
+    cy.get('input[name="last-name"]')
       .closest('.items-end')
       .contains('button', 'Update')
       .click({ force: true })
     cy.waitForNotification('Name successfully updated.')
-    cy.get('input[name="full-name"]').should('have.value', newName)
+    cy.get('input[name="first-name"]').should('have.value', 'Demo')
+    cy.get('input[name="last-name"]').should('have.value', 'AdminTest')
     cy.wait(500)
 
     // 3. Change email to temp and then change it back
