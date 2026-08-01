@@ -41,7 +41,7 @@ describe('studentService (Data Access Layer)', () => {
       studentExists?: boolean
       studentData?: any
       confirmedExists?: boolean
-      hhidResult?: { exists: () => boolean; data?: () => any }
+      checkInResult?: { exists: () => boolean; data?: () => any }
       classesDocs?: any[]
       attendanceResult?: { docs: any[]; forEach: (cb: any) => void }
     }
@@ -53,7 +53,7 @@ describe('studentService (Data Access Layer)', () => {
         meta: { uid: 'uid-1' },
       },
       confirmedExists = true,
-      hhidResult = {
+      checkInResult = {
         exists: () => true,
         data: () => ({
           checkedIn: true,
@@ -64,7 +64,7 @@ describe('studentService (Data Access Layer)', () => {
       classesDocs = [],
       attendanceResult = mockQuerySnapshot([]),
     }: BaseMocksOptions = {}) {
-      // getDoc is called for student, hhid, and confirmation - queue each
+      // getDoc is called for student, check-in, and confirmation - queue each
       // call's return value in that order.
       ;(firestore.getDoc as jest.Mock)
         .mockResolvedValueOnce({
@@ -72,7 +72,7 @@ describe('studentService (Data Access Layer)', () => {
           id: 'student-1',
           data: () => studentData,
         })
-        .mockResolvedValueOnce(hhidResult)
+        .mockResolvedValueOnce(checkInResult)
         .mockResolvedValueOnce({ exists: () => confirmedExists })
       ;(firestore.getDocs as jest.Mock)
         .mockResolvedValueOnce(mockQuerySnapshot(classesDocs))
@@ -116,7 +116,7 @@ describe('studentService (Data Access Layer)', () => {
 
       expect(res.studentData).toBeNull()
       expect(res.confirmed).toBe(false)
-      // Only hhid + attendance getDoc/getDocs calls happen, no confirmation lookup
+      // Only check-in + attendance getDoc/getDocs calls happen, no confirmation lookup
       expect(firestore.getDoc).toHaveBeenCalledTimes(2)
     })
 
@@ -135,7 +135,7 @@ describe('studentService (Data Access Layer)', () => {
 
     it('treats a checkedInAt without toDate() as already a plain value', async () => {
       baseMocks({
-        hhidResult: {
+        checkInResult: {
           exists: () => true,
           data: () => ({
             checkedIn: true,
@@ -151,10 +151,10 @@ describe('studentService (Data Access Layer)', () => {
       expect(res.food).toEqual({})
     })
 
-    it('defaults checkedIn/confirmed to false when the hhid and confirmation docs do not exist', async () => {
+    it('defaults checkedIn/confirmed to false when the check-in and confirmation docs do not exist', async () => {
       baseMocks({
         confirmedExists: false,
-        hhidResult: { exists: () => false },
+        checkInResult: { exists: () => false },
       })
 
       const res = await studentService.fetchStudentFullDetails('student-1')
@@ -164,7 +164,7 @@ describe('studentService (Data Access Layer)', () => {
       expect(res.food).toEqual({})
     })
 
-    it('swallows hhid fetch failures (permission issues) and continues with defaults', async () => {
+    it('swallows check-in fetch failures (permission issues) and continues with defaults', async () => {
       ;(firestore.getDoc as jest.Mock)
         .mockResolvedValueOnce({
           exists: () => true,
@@ -181,7 +181,7 @@ describe('studentService (Data Access Layer)', () => {
 
       expect(res.checkedIn).toBe(false)
       expect(warnSpy).toHaveBeenCalledWith(
-        'Failed to fetch hhid details (possible permission issue):',
+        'Failed to fetch check-in details (possible permission issue):',
         expect.any(Error),
       )
       warnSpy.mockRestore()
@@ -210,7 +210,7 @@ describe('studentService (Data Access Layer)', () => {
       warnSpy.mockRestore()
     })
 
-    it('propagates a hard failure fetching classes (not caught, unlike hhid/attendance)', async () => {
+    it('propagates a hard failure fetching classes (not caught, unlike check-in/attendance)', async () => {
       ;(firestore.getDoc as jest.Mock)
         .mockResolvedValueOnce({
           exists: () => true,
@@ -222,7 +222,7 @@ describe('studentService (Data Access Layer)', () => {
       // fetchStudentFullDetails's Promise.all has already subscribed to this
       // promise - an eagerly-rejected promise here would trip Node's
       // unhandled-rejection guard before Promise.all attaches its handler,
-      // since classesPromise (unlike hhid/attendance) has no inline .catch.
+      // since classesPromise (unlike check-in/attendance) has no inline .catch.
       ;(firestore.getDocs as jest.Mock)
         .mockReturnValueOnce(
           Promise.resolve()

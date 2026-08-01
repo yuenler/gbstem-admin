@@ -95,7 +95,6 @@ export const load = (async ({ url, depends }) => {
       const hits = await searchIndex<
         Omit<Data.Registration<'server'>, 'meta' | 'timestamps'> & {
           meta: {
-            hhid: string
             uid: string
             submitted: boolean
             decision: string | null

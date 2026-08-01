@@ -176,7 +176,7 @@ async function seed() {
     'announcements',
     'tokens',
     'confirmations',
-    'hhids',
+    'checkIns',
     'users',
     'instructorClasses',
     'interviewTimeRequests',

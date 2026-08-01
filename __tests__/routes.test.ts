@@ -217,7 +217,6 @@ import { load as tokensLoad } from '../src/routes/(signedIn)/(emailVerified)/tok
 import { load as studentFeedbackLoad } from '../src/routes/(signedIn)/(emailVerified)/student-feedback/+page.server'
 import { load as subRequestsLoad } from '../src/routes/(signedIn)/(emailVerified)/sub-requests/+page.server'
 import { load as announcementsLoad } from '../src/routes/(signedIn)/(emailVerified)/announcements/+page.server'
-import { load as userSlugLoad } from '../src/routes/(signedIn)/(emailVerified)/user/[slug]/+page.server'
 import { load as signedInLayoutLoad } from '../src/routes/(signedIn)/+layout.server'
 import { load as signedOutLayoutLoad } from '../src/routes/(signedOut)/+layout.server'
 import {
@@ -490,13 +489,6 @@ describe('tokens route', () => {
         url: new URL('http://localhost/'),
       } as any),
     ).rejects.toEqual(expect.objectContaining({ __isSvelteKitError: true }))
-  })
-})
-
-describe('user slug page load', () => {
-  it('loads user data if hhid exists', async () => {
-    const res = await userSlugLoad({ params: { slug: 'slug123' } } as any)
-    expect(res).toHaveProperty('applicant')
   })
 })
 

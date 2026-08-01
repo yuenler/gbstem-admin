@@ -162,7 +162,7 @@ Most collections are scoped under a semester document: `semesters/{semesterId}/{
 
 [`src/lib/data/collections.ts`](src/lib/data/collections.ts) derives every one of these paths from a single `suffix` constant (the current semester ID, e.g. `'Spring26'`) via a `semesterCollectionPath(semesterId, name)` helper. The exported constant names (`applicationsCollection`, `registrationsCollection`, etc.) stay the same regardless, so call sites throughout the app never construct paths manually.
 
-A handful of collections are **not** semester-scoped and live at the top level: `subRequests`, `interviewTimeRequests`, `instructorClasses`, `confirmations`, `hhids`, `users`, `ids`, `tokens`, `mail`, `announcements`.
+A handful of collections are **not** semester-scoped and live at the top level: `subRequests`, `interviewTimeRequests`, `instructorClasses`, `confirmations`, `checkIns`, `users`, `tokens`, `mail`, `announcements`.
 
 The current semester's key dates (`classesStart`, `registrationsDue`, etc.) aren't in Firestore at all — every read site only ever needs the _current_ semester's dates, never a past one, so they're static data in [`semesterDates.json`](src/lib/data/semesterDates.json), re-exported as `semesterDates` from `collections.ts`. `__tests__/collections.test.ts` validates every field is a well-formed `MM/DD/YY` date whose year matches `currentSemester`.
 

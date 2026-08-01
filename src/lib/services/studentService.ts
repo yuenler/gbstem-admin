@@ -1,5 +1,6 @@
 import { db } from '$lib/client/firebase'
 import {
+  checkInsCollection,
   classesCollection,
   instructorFeedbackCollection,
   registrationsCollection,
@@ -30,19 +31,21 @@ import { cloneDeep } from 'lodash-es'
  */
 export const studentService = {
   /**
-   * Fetches full student details including confirmations, HHID check-in status, classes, and attendance.
+   * Fetches full student details including confirmations, check-in status, classes, and attendance.
    */
   async fetchStudentFullDetails(studentId: string) {
     // Start fetching everything in parallel to optimize load times and prevent timeout
     const studentDocRef = doc(db, registrationsCollection, studentId)
     const studentPromise = getDoc(studentDocRef)
-    const hhidPromise = getDoc(doc(db, 'hhids', studentId)).catch((err) => {
-      console.warn(
-        'Failed to fetch hhid details (possible permission issue):',
-        err,
-      )
-      return null
-    })
+    const checkInPromise = getDoc(doc(db, checkInsCollection, studentId)).catch(
+      (err) => {
+        console.warn(
+          'Failed to fetch check-in details (possible permission issue):',
+          err,
+        )
+        return null
+      },
+    )
     const classesPromise = getDocs(query(collection(db, classesCollection)))
     const attendancePromise = getDocs(
       query(collection(db, instructorFeedbackCollection)),
@@ -78,10 +81,10 @@ export const studentService = {
     }
 
     // Wait for all other parallel promises
-    const [confirmedDoc, hhidDoc, classesSnap, attendanceSnap] =
+    const [confirmedDoc, checkInDoc, classesSnap, attendanceSnap] =
       await Promise.all([
         confirmedPromise || Promise.resolve(null),
-        hhidPromise,
+        checkInPromise,
         classesPromise,
         attendancePromise,
       ])
@@ -96,14 +99,14 @@ export const studentService = {
       confirmed = confirmedDoc.exists()
     }
 
-    if (hhidDoc && hhidDoc.exists()) {
-      const hhidData = hhidDoc.data()
-      if (hhidData) {
-        checkedIn = hhidData.checkedIn
-        checkedInAt = hhidData.checkedInAt?.toDate
-          ? hhidData.checkedInAt.toDate()
-          : hhidData.checkedInAt
-        food = hhidData.food || {}
+    if (checkInDoc && checkInDoc.exists()) {
+      const checkInData = checkInDoc.data()
+      if (checkInData) {
+        checkedIn = checkInData.checkedIn
+        checkedInAt = checkInData.checkedInAt?.toDate
+          ? checkInData.checkedInAt.toDate()
+          : checkInData.checkedInAt
+        food = checkInData.food || {}
       }
     }
 
@@ -252,12 +255,12 @@ export const studentService = {
   },
 
   /**
-   * Marks a student as checked-in in hhids collection.
+   * Marks a student as checked-in in the `checkIns` collection.
    */
   async checkInStudent(studentId: string, now: Date): Promise<void> {
-    const hhidRef = doc(db, 'hhids', studentId)
+    const checkInRef = doc(db, checkInsCollection, studentId)
     await setDoc(
-      hhidRef,
+      checkInRef,
       {
         checkedIn: true,
         checkedInAt: now,
@@ -268,7 +271,7 @@ export const studentService = {
   },
 
   /**
-   * Updates meal preferences in hhids collection.
+   * Updates meal preferences in the `checkIns` collection.
    */
   async updateStudentMeal(
     studentId: string,
@@ -276,8 +279,8 @@ export const studentService = {
     meal: string,
     newState: boolean,
   ): Promise<void> {
-    const hhidRef = doc(db, 'hhids', studentId)
-    await updateDoc(hhidRef, {
+    const checkInRef = doc(db, checkInsCollection, studentId)
+    await updateDoc(checkInRef, {
       [`food.${date}.${meal}`]: newState,
     })
   },

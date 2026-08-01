@@ -162,7 +162,7 @@ service cloud.firestore {
     //
     // REAL-TIME PROGRAM CHECK-INS AND MEAL CHECKOUTS
     //
-    match /hhids/{userId} {
+    match /checkIns/{userId} {
       allow read: if isSignedIn() && belongsToSameUser(userId) || isAdminOrReviewer();
       allow write: if isSignedIn() && belongsToSameUser(userId) || isAdminOrReviewer();
     }

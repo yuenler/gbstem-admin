@@ -1,7 +1,7 @@
 /**
- * The meal schedule seeded onto a student's `hhids` check-in record when they
- * check in at gbSTEM's in-person retreat, keyed by ISO date (YYYY-MM-DD) to
- * the meals served that day. `hhids` isn't semester-scoped (see the Firestore
+ * The meal schedule seeded onto a student's `checkIns` record when they check
+ * in at gbSTEM's in-person retreat, keyed by ISO date (YYYY-MM-DD) to the
+ * meals served that day. `checkIns` isn't semester-scoped (see the Firestore
  * Schema section of the README), so this lives here as a small standalone
  * config rather than alongside `semesterDates.json`.
  *
