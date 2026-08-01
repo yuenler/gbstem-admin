@@ -20,13 +20,23 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Corepack must own the `yarn` shim before setup-node's `cache: yarn`
+      # probe runs: the probe calls `yarn --version`, and the runner's global
+      # Yarn 1.22 refuses to run in a repo pinning "packageManager": "yarn@4.x".
+      # setup-node has no pre-cache hook, so it runs twice -- once to put Node
+      # on PATH, then again once Corepack is active and the probe detects Berry.
+      # The second call re-uses the Node from the first, so it costs ~a second.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Enable Corepack
+        run: corepack enable
+
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: yarn
-
-      - name: Enable Corepack
-        run: corepack enable
 
       - run: yarn install --immutable
 
@@ -58,6 +68,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # See the note in the `checks` job: setup-node runs twice so that Corepack
+      # owns the `yarn` shim before the `cache: yarn` probe inspects it.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Enable Corepack
+        run: corepack enable
+
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
@@ -67,9 +86,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-
-      - name: Enable Corepack
-        run: corepack enable
 
       - run: yarn install --immutable
 
