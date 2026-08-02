@@ -126,7 +126,7 @@ describe('Section F: Students Directory', () => {
       })
 
     // Search for Charlie
-    cy.get('input[placeholder="Search"]').clear().type('Charlie{enter}')
+    cy.submitSearch('Charlie')
     cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify Sally gets filtered out and Charlie stays
       expect($table).to.not.contain('Sally Brown')

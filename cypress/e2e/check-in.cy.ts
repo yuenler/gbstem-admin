@@ -17,7 +17,7 @@ describe('Section M: Check In Details and Meals', () => {
 
   it('Test Case 22: Student Attendance and Meal Checkouts', () => {
     // Search for Demo Student
-    cy.get('input[placeholder="Search"]').clear().type('Demo Student{enter}')
+    cy.submitSearch('Demo Student')
     cy.wait(500)
 
     // Click Demo Student One to open modal

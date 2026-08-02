@@ -23,7 +23,7 @@ describe('Section G: Pre-Registrations Directory', () => {
     })
 
     // Search for Charlie
-    cy.get('input[placeholder="Search"]').clear().type('Charlie{enter}')
+    cy.submitSearch('Charlie')
     cy.wait(500)
 
     // Table should contain Charlie Brown

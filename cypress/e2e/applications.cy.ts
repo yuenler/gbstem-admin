@@ -8,13 +8,15 @@ const currentSemesterName =
   collectionsList.find((sem) => sem.id === currentSemester)?.name ??
   currentSemester
 
-// Every table assertion in Test Case 9 follows a navigation that re-runs the
-// page's server load. CI has no Algolia credentials, so `searchIndex` falls
-// back to the local search in src/lib/server/search.ts, which reads the entire
-// applications collection and then fetches each hit's decision document. That
-// round trip regularly takes most of 10s under CI load, which made these
-// assertions fail intermittently rather than reveal a real defect.
+// Table assertions here follow a navigation that re-runs the page's server
+// load. CI has no Algolia credentials, so `searchIndex` falls back to the local
+// search in src/lib/server/search.ts, which reads the entire applications
+// collection and then fetches each hit's decision document. This is headroom
+// for that round trip, not for the search race handled by `submitSearch`.
 const TABLE_TIMEOUT = 30000
+
+// Searches go through cy.submitSearch (cypress/support/commands.ts), which
+// works around a typing race that otherwise submits a truncated query.
 
 describe('Section D: Instructor Applications Management', () => {
   beforeEach(() => {
@@ -41,7 +43,7 @@ describe('Section D: Instructor Applications Management', () => {
     })
 
     // Search for "David"
-    cy.get('input[placeholder="Search"]').clear().type('David{enter}')
+    cy.submitSearch('David')
     cy.get('table', { timeout: TABLE_TIMEOUT }).should(($table) => {
       // Ensure Mark disappears and David stays
       expect($table).to.not.contain('Mark Lewis')

@@ -35,7 +35,7 @@ describe('Section I: Feedback Views', () => {
     })
 
     // Search by student name
-    cy.get('input[placeholder="Search"]').clear().type('Christopher{enter}')
+    cy.submitSearch('Christopher')
     cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify Charles gets filtered out and Christopher stays
       expect($table).to.not.contain('Charles Jackson')
@@ -152,7 +152,7 @@ describe('Section I: Feedback Views', () => {
     })
 
     // Search by instructor name
-    cy.get('input[placeholder="Search"]').clear().type('Karen{enter}')
+    cy.submitSearch('Karen')
     cy.get('table', { timeout: 10000 }).should(($table) => {
       // Ensure Charles gets filtered out and Karen stays
       expect($table).to.not.contain('Charles Jackson')

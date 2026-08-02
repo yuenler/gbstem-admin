@@ -18,6 +18,29 @@ Cypress.Commands.add('fillInput', (selector: string, text: string) => {
   })
 })
 
+// Type a term into a SearchBox and submit it.
+//
+// Typing here is racy: `Input.svelte` re-renders on every `value` change, so
+// Svelte can replace the input element mid-`.type()`. Cypress keeps typing into
+// the node it resolved when the command started, the replaced node keeps only
+// the final keystroke, and the form submits that. CI caught this submitting
+// `query=d` for a typed "David" -- and a single letter matches nearly every
+// record, since the local search fallback substring-matches every field, so the
+// filter assertions failed in a way that looked like a slow load but never
+// resolved no matter how long the timeout.
+//
+// fillInput already re-types when the value doesn't stick, so reuse it, then
+// assert the query reached the URL before any table assertions run.
+Cypress.Commands.add('submitSearch', (term: string) => {
+  const selector = 'input[placeholder="Search"]'
+  cy.fillInput(selector, term)
+  cy.get(selector).type('{enter}')
+  // Build the expectation the same way SearchBox does, via URLSearchParams --
+  // it encodes a space as "+", which encodeURIComponent would render as "%20"
+  // and never match for multi-word terms like "Demo Student".
+  cy.url().should('include', new URLSearchParams({ query: term }).toString())
+})
+
 Cypress.Commands.add(
   'signedInSession',
   (

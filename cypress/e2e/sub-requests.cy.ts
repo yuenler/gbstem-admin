@@ -31,7 +31,7 @@ describe('Section J: Substitute Requests Log', () => {
     })
 
     // Search query
-    cy.get('input[placeholder="Search"]').clear().type('Python{enter}')
+    cy.submitSearch('Python')
     cy.get('table', { timeout: 10000 }).should(($table) => {
       // Verify Scratch gets filtered out and Python stays
       expect($table).to.not.contain('Scratch')
