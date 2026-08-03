@@ -8,7 +8,8 @@ const config: Config = {
     // general `.tsx?$` pattern below, which would otherwise also match.
     // Also covers `*.svelte.test.ts` specs that use runes directly (e.g.
     // `$effect.root`) to exercise a `.svelte.ts` module's reactivity.
-    '\\.svelte(\\.test)?\\.ts$': '<rootDir>/jest-transform-svelte-module.cjs',
+    '\\.svelte$': '<rootDir>/jest-transform-svelte-module.cjs',
+    '\\.svelte\\.(test\\.)?ts$': '<rootDir>/jest-transform-svelte-module.cjs',
     '^.+\\.tsx?$': ['ts-jest', {}],
     // The compiled output above imports Svelte's runtime straight from
     // `svelte/internal/client`, which ships as raw ESM (as does its own
@@ -29,7 +30,7 @@ const config: Config = {
   testPathIgnorePatterns: ['/node_modules/'],
   collectCoverage: false,
   collectCoverageFrom: [
-    'src/**/*.{js,jsx,ts,tsx}',
+    'src/**/*.{js,jsx,ts,tsx,svelte}',
     '!**/*.d.ts',
     '!**/node_modules/**',
   ],

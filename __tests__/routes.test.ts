@@ -154,6 +154,21 @@ const mockAdminDb = {
   doc: jest.fn().mockImplementation((id) => mockDoc(id)),
 }
 
+// Shared helper for exercising the `catch` branch of a +page.server.ts load
+// function's Firestore query, which none of the route tests below covered
+// before: `mockCollection.get` is swapped for a rejecting mock just for the
+// duration of `fn`, then restored, following the same save/restore pattern
+// already used by the "loads empty list when course has no classes" test.
+async function withRejectedCollectionGet(fn: () => Promise<void>) {
+  const original = mockCollection.get
+  mockCollection.get = jest.fn().mockRejectedValue(new Error('Firestore boom'))
+  try {
+    await fn()
+  } finally {
+    mockCollection.get = original
+  }
+}
+
 jest.mock('firebase-admin', () => ({
   initializeApp: jest.fn(),
   credential: { cert: jest.fn() },
@@ -206,6 +221,7 @@ jest.mock('firebase/storage', () => ({ getStorage: jest.fn() }))
 
 // Import routes
 import { currentSemester } from '../src/lib/data/collections'
+import { verifyToken } from '$lib/server/firebase'
 import { handle } from '../src/hooks.server'
 import { load as emailVerifiedLayoutLoad } from '../src/routes/(signedIn)/(emailVerified)/+layout.server'
 import { load as applicationsLoad } from '../src/routes/(signedIn)/(emailVerified)/applications/+page.server'
@@ -324,6 +340,33 @@ describe('applications route', () => {
       `semesters/${currentSemester}/applications`,
     )
   })
+
+  it('throws a 500 when the database query fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/?filter=undecided')
+      await expect(
+        applicationsLoad({ url, depends: jest.fn() } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
+  })
+
+  // `searchIndex()` (src/lib/server/search.ts) always uses its local
+  // Firestore-backed fallback under Jest (NODE_ENV=test), never the real
+  // Algolia client - so the search branch's catch block is only reachable
+  // by making the local fallback's own `adminDb...get()` call fail, not by
+  // rejecting the (unused-in-tests) Algolia mock.
+  it('throws a 500 when the local fallback search fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/?query=test')
+      await expect(
+        applicationsLoad({ url, depends: jest.fn() } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
+  })
 })
 
 describe('classes route', () => {
@@ -331,6 +374,31 @@ describe('classes route', () => {
     const url = new URL('http://localhost/?filter=Python+I')
     const res = await classesLoad({ url, depends: jest.fn() } as any)
     expect(res).toHaveProperty('classes')
+  })
+
+  it('throws a 500 when the database query fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/?filter=Python+I')
+      await expect(
+        classesLoad({ url, depends: jest.fn() } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
+  })
+
+  // See the applications-route comment above: searchIndex() always runs its
+  // local Firestore fallback under Jest, so the search branch's catch is
+  // reached via the same adminDb...get() failure, not an Algolia rejection.
+  it('throws a 500 when the local fallback search fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/?query=test')
+      await expect(
+        classesLoad({ url, depends: jest.fn() } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
   })
 
   it('loads classes with search query', async () => {
@@ -359,6 +427,36 @@ describe('instructor-feedback route', () => {
       locals: { user: { role: 'admin' } },
     } as any)
     expect(res).toHaveProperty('feedback')
+  })
+
+  it('throws a 500 when the database query fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/?filter=Scratch')
+      await expect(
+        instructorFeedbackLoad({
+          url,
+          depends: jest.fn(),
+          locals: { user: { role: 'admin' } },
+        } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
+  })
+
+  it('throws a 500 when the local fallback search fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/?query=test')
+      await expect(
+        instructorFeedbackLoad({
+          url,
+          depends: jest.fn(),
+          locals: { user: { role: 'admin' } },
+        } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
   })
 })
 
@@ -391,6 +489,28 @@ describe('registrations route', () => {
     expect(mockAdminDb.collection).toHaveBeenCalledWith(
       `semesters/${currentSemester}/registrations`,
     )
+  })
+
+  it('throws a 500 when the database query fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/?filter=enrolled')
+      await expect(
+        registrationsLoad({ url, depends: jest.fn() } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
+  })
+
+  it('throws a 500 when the local fallback search fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/?query=test')
+      await expect(
+        registrationsLoad({ url, depends: jest.fn() } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
   })
 })
 
@@ -425,6 +545,28 @@ describe('students route', () => {
       mockCollection.get = originalGet
     }
   })
+
+  it('throws a 500 when the database query fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/?filter=submitted')
+      await expect(
+        studentsLoad({ url, depends: jest.fn() } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
+  })
+
+  it('throws a 500 when the local fallback search fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/?query=test')
+      await expect(
+        studentsLoad({ url, depends: jest.fn() } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
+  })
 })
 
 describe('student-feedback route', () => {
@@ -447,6 +589,36 @@ describe('student-feedback route', () => {
     } as any)
     expect(res).toHaveProperty('feedback')
   })
+
+  it('throws a 500 when the database query fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/?filter=Scratch')
+      await expect(
+        studentFeedbackLoad({
+          url,
+          depends: jest.fn(),
+          locals: { user: { role: 'admin' } },
+        } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
+  })
+
+  it('throws a 500 when the local fallback search fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/?query=test')
+      await expect(
+        studentFeedbackLoad({
+          url,
+          depends: jest.fn(),
+          locals: { user: { role: 'admin' } },
+        } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
+  })
 })
 
 describe('sub-requests route', () => {
@@ -461,6 +633,28 @@ describe('sub-requests route', () => {
     const res = await subRequestsLoad({ url, depends: jest.fn() } as any)
     expect(res).toHaveProperty('subRequests')
   })
+
+  it('throws a 500 when the database query fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/?filter=Scratch')
+      await expect(
+        subRequestsLoad({ url, depends: jest.fn() } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
+  })
+
+  it('throws a 500 when the local fallback search fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/?query=test')
+      await expect(
+        subRequestsLoad({ url, depends: jest.fn() } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
+  })
 })
 
 describe('announcements route', () => {
@@ -468,6 +662,17 @@ describe('announcements route', () => {
     const url = new URL('http://localhost/')
     const res = await announcementsLoad({ url, depends: jest.fn() } as any)
     expect(res).toHaveProperty('announcements')
+  })
+
+  it('throws a 500 when the database query fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      const url = new URL('http://localhost/')
+      await expect(
+        announcementsLoad({ url, depends: jest.fn() } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
   })
 })
 
@@ -490,6 +695,20 @@ describe('tokens route', () => {
       } as any),
     ).rejects.toEqual(expect.objectContaining({ __isSvelteKitError: true }))
   })
+
+  it('throws a 500 when the database query fails', async () => {
+    await withRejectedCollectionGet(async () => {
+      await expect(
+        tokensLoad({
+          depends: jest.fn(),
+          locals: { user: { role: 'admin' } },
+          url: new URL('http://localhost/'),
+        } as any),
+      ).rejects.toEqual(
+        expect.objectContaining({ status: 500, __isSvelteKitError: true }),
+      )
+    })
+  })
 })
 
 describe('signup load and actions', () => {
@@ -504,6 +723,38 @@ describe('signup load and actions', () => {
     const url = new URL('http://localhost/?token=token123')
     const res = await signupLoad({ url } as any)
     expect(res).toEqual({ token: 'token123' })
+  })
+
+  it('signup load returns 403 for a consumed token', async () => {
+    ;(verifyToken as jest.Mock).mockRejectedValueOnce('consumed')
+    const url = new URL('http://localhost/?token=usedToken')
+    await expect(signupLoad({ url } as any)).rejects.toEqual(
+      expect.objectContaining({ status: 403, __isSvelteKitError: true }),
+    )
+  })
+
+  it('signup load returns 403 for an expired token', async () => {
+    ;(verifyToken as jest.Mock).mockRejectedValueOnce('expired')
+    const url = new URL('http://localhost/?token=oldToken')
+    await expect(signupLoad({ url } as any)).rejects.toEqual(
+      expect.objectContaining({ status: 403, __isSvelteKitError: true }),
+    )
+  })
+
+  it('signup load redirects to signin for a fake token', async () => {
+    ;(verifyToken as jest.Mock).mockRejectedValueOnce('fake')
+    const url = new URL('http://localhost/?token=fakeToken')
+    await expect(signupLoad({ url } as any)).rejects.toEqual(
+      expect.objectContaining({ __isSvelteKitRedirect: true }),
+    )
+  })
+
+  it('signup load returns 400 for an unrecognized verification failure', async () => {
+    ;(verifyToken as jest.Mock).mockRejectedValueOnce('unknown')
+    const url = new URL('http://localhost/?token=weirdToken')
+    await expect(signupLoad({ url } as any)).rejects.toEqual(
+      expect.objectContaining({ status: 400, __isSvelteKitError: true }),
+    )
   })
 
   function mockSignupRequest() {
@@ -593,6 +844,87 @@ describe('signup load and actions', () => {
     expect(res).toEqual({ success: true })
     expect(mockAdminAuth.deleteUser).not.toHaveBeenCalled()
     errorSpy.mockRestore()
+  })
+
+  it('signup default action fails without creating an account when Auth user creation itself fails', async () => {
+    mockAdminAuth.createUser.mockRejectedValueOnce({
+      message: 'The email address is already in use.',
+    })
+    mockAdminAuth.deleteUser.mockClear()
+
+    const res = await signupActions.default({
+      request: mockSignupRequest() as any,
+    } as any)
+
+    expect(res).toEqual(
+      expect.objectContaining({
+        data: { error: 'The email address is already in use.' },
+      }),
+    )
+    // No account was created, so there's nothing to roll back.
+    expect(mockAdminAuth.deleteUser).not.toHaveBeenCalled()
+  })
+
+  it('signup default action fails gracefully for a consumed token', async () => {
+    ;(verifyToken as jest.Mock).mockRejectedValueOnce('consumed')
+
+    const res = await signupActions.default({
+      request: mockSignupRequest() as any,
+    } as any)
+
+    expect(res).toEqual(
+      expect.objectContaining({
+        data: {
+          error:
+            'Token already consumed. If this token was meant specifically for your account, immediately contact an admin with this message.',
+        },
+      }),
+    )
+  })
+
+  it('signup default action fails gracefully for an expired token', async () => {
+    ;(verifyToken as jest.Mock).mockRejectedValueOnce('expired')
+
+    const res = await signupActions.default({
+      request: mockSignupRequest() as any,
+    } as any)
+
+    expect(res).toEqual(
+      expect.objectContaining({
+        data: {
+          error:
+            'Token has expired. If you need a new token, contact an admin.',
+        },
+      }),
+    )
+  })
+
+  it('signup default action fails gracefully for a fake token', async () => {
+    ;(verifyToken as jest.Mock).mockRejectedValueOnce('fake')
+
+    const res = await signupActions.default({
+      request: mockSignupRequest() as any,
+    } as any)
+
+    expect(res).toEqual(
+      expect.objectContaining({
+        data: { error: 'Something went wrong. Please try again.' },
+      }),
+    )
+  })
+
+  it('signup default action fails gracefully for an unrecognized verification failure', async () => {
+    ;(verifyToken as jest.Mock).mockRejectedValueOnce('unknown')
+
+    const res = await signupActions.default({
+      request: mockSignupRequest() as any,
+    } as any)
+
+    expect(res).toEqual(
+      expect.objectContaining({
+        data: { error: 'Something went wrong. Please try again.' },
+      }),
+    )
   })
 })
 

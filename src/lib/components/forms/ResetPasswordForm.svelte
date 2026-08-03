@@ -1,11 +1,11 @@
 <script lang="ts">
-  import type { ActionRequestBody } from '../../../routes/api/action/+server'
-  import Input from '$lib/components/Input.svelte'
-  import { cn } from '$lib/utils'
-  import { alert } from '$lib/stores'
   import Brand from '$lib/components/Brand.svelte'
+  import EmailInput from '$lib/components/EmailInput.svelte'
   import Form from '$lib/components/Form.svelte'
   import Link from '$lib/components/Link.svelte'
+  import { alert } from '$lib/stores'
+  import { cn } from '$lib/utils'
+  import type { ActionRequestBody } from '../../../routes/api/action/+server'
   import Button from '../Button.svelte'
 
   let disabled = $state(false)
@@ -61,7 +61,7 @@
   <fieldset class="space-y-4" {disabled}>
     <Brand />
     <h1 class="text-2xl font-bold">Reset password</h1>
-    <Input type="email" bind:value={values.email} label="Email" required />
+    <EmailInput bind:value={values.email} label="Email" required />
     <div class="flex items-center justify-between">
       <span>
         <Link href="/signup">Sign up</Link> or

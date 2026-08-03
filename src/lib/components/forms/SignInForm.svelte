@@ -1,14 +1,15 @@
 <script lang="ts">
-  import Input from '$lib/components/Input.svelte'
-  import { cn } from '$lib/utils'
-  import { auth } from '$lib/client/firebase'
-  import { alert } from '$lib/stores'
-  import Brand from '$lib/components/Brand.svelte'
-  import Form from '$lib/components/Form.svelte'
-  import { signInWithEmailAndPassword } from 'firebase/auth'
   import { goto } from '$app/navigation'
-  import Link from '../Link.svelte'
+  import { auth } from '$lib/client/firebase'
+  import Brand from '$lib/components/Brand.svelte'
+  import EmailInput from '$lib/components/EmailInput.svelte'
+  import Form from '$lib/components/Form.svelte'
+  import PasswordInput from '$lib/components/PasswordInput.svelte'
+  import { alert } from '$lib/stores'
+  import { cn } from '$lib/utils'
+  import { signInWithEmailAndPassword } from 'firebase/auth'
   import Button from '../Button.svelte'
+  import Link from '../Link.svelte'
 
   let disabled = $state(false)
   let showValidation = $state(false)
@@ -65,9 +66,8 @@
   <fieldset class="space-y-4" {disabled}>
     <Brand />
     <h1 class="text-2xl font-bold">Sign in</h1>
-    <Input type="email" bind:value={values.email} label="Email" required />
-    <Input
-      type="password"
+    <EmailInput bind:value={values.email} label="Email" required />
+    <PasswordInput
       bind:value={values.password}
       label="Password"
       required

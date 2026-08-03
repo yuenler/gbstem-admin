@@ -1,10 +1,13 @@
 <script lang="ts">
   import { invalidate } from '$app/navigation'
   import Card from '$lib/components/Card.svelte'
+  import CheckboxInput from '$lib/components/CheckboxInput.svelte'
+  import DateTimeInput from '$lib/components/DateTimeInput.svelte'
   import Form from '$lib/components/Form.svelte'
-  import Input from '$lib/components/Input.svelte'
+  import NumberInput from '$lib/components/NumberInput.svelte'
   import Select from '$lib/components/Select.svelte'
   import Textarea from '$lib/components/Textarea.svelte'
+  import TextInput from '$lib/components/TextInput.svelte'
   import { interviewAttendanceJson } from '$lib/data'
   import { applicationsCollection, semesterDates } from '$lib/data/collections'
   import {
@@ -439,14 +442,12 @@
                 <div class="mt-2 text-xs text-gray-500">
                   Autosave is enabled for this browser
                 </div>
-                <Input
-                  type="datetime-local"
+                <DateTimeInput
                   bind:value={interview.date}
                   label="Interview Date"
                   required
                 />
-                <Input
-                  type="text"
+                <TextInput
                   bind:value={interview.interviewer}
                   label="Interviewer"
                   required
@@ -475,8 +476,7 @@
                     idea of how they interact!
                   </li>
                 </ul>
-                <Input
-                  type="number"
+                <NumberInput
                   bind:value={interview.conversation}
                   min="0"
                   max="5"
@@ -499,8 +499,7 @@
                   label="What courses does the candidate want to teach?"
                   required
                 />
-                <Input
-                  type="checkbox"
+                <CheckboxInput
                   bind:value={values.essay.taughtBefore}
                   label="Have they taught for gbSTEM before? (This should be pre-set to the correct value, but if not simply check/uncheck the box as needed)."
                 />
@@ -622,32 +621,28 @@
                     >
                   </div>
                 </div>
-                <Input
-                  type="number"
+                <NumberInput
                   bind:value={interview.mockLessonExplanations}
                   min="0"
                   max="5"
                   label="Please rate the clarity of the candidate's explanations of material in the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 2."
                   required
                 />
-                <Input
-                  type="number"
+                <NumberInput
                   bind:value={interview.mockLessonEngagement}
                   min="0"
                   max="5"
                   label="Please rate the candidate's engagement with the audience (asking questions, relating to students, etc.) in the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 2."
                   required
                 />
-                <Input
-                  type="number"
+                <NumberInput
                   bind:value={interview.mockLessonPace}
                   min="0"
                   max="5"
                   label="Please rate the pace of the mock lesson on a 0 to 5 scale, 0 being the worst and 5 being the best. An average candidate should get a 2."
                   required
                 />
-                <Input
-                  type="number"
+                <NumberInput
                   bind:value={interview.mockLessonOverall}
                   min="0"
                   max="5"

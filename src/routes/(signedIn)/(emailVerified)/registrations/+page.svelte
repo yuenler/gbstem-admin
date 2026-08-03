@@ -110,12 +110,7 @@
   let schoolsBlob = $derived(
     new Blob([uniqueSchools.join('\n')], { type: 'text/csv' }),
   )
-  let schoolsUrl = $state('')
-  $effect(() => {
-    const objectUrl = URL.createObjectURL(schoolsBlob)
-    schoolsUrl = objectUrl
-    return () => URL.revokeObjectURL(objectUrl)
-  })
+  let schoolsUrl = objectUrl(() => schoolsBlob)
 
   let registration = $derived(
     data.registrations.length === 0
@@ -349,7 +344,7 @@
 </Table>
 
 <div class="mt-4 flex w-full justify-between">
-  <Button href={schoolsUrl} download="schools-list.txt"
+  <Button href={schoolsUrl.current} download="schools-list.txt"
     >Download Schools List</Button
   >
   {#if !data.query && data.registrations}

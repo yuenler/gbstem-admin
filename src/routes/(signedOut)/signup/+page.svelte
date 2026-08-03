@@ -5,9 +5,11 @@
   import Button from '$lib/components/Button.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
   import DialogActions from '$lib/components/DialogActions.svelte'
-  import Input from '$lib/components/Input.svelte'
+  import EmailInput from '$lib/components/EmailInput.svelte'
   import Link from '$lib/components/Link.svelte'
   import Loading from '$lib/components/Loading.svelte'
+  import PasswordInput from '$lib/components/PasswordInput.svelte'
+  import TextInput from '$lib/components/TextInput.svelte'
   import type { ActionData, PageData } from './$types'
 
   interface Props {
@@ -64,29 +66,17 @@
     <input name="token" type="hidden" value={data.token} />
     <div class="relative space-y-4">
       <div class="grid gap-2 sm:grid-cols-2 sm:gap-4">
-        <Input
-          type="text"
-          bind:value={values.firstName}
-          label="First name"
-          required
-        />
-        <Input
-          type="text"
-          bind:value={values.lastName}
-          label="Last name"
-          required
-        />
+        <TextInput bind:value={values.firstName} label="First name" required />
+        <TextInput bind:value={values.lastName} label="Last name" required />
       </div>
-      <Input type="email" bind:value={values.email} label="Email" required />
-      <Input
-        type="password"
+      <EmailInput bind:value={values.email} label="Email" required />
+      <PasswordInput
         bind:value={values.password}
         label="Password"
         required
         autocomplete="new-password"
       />
-      <Input
-        type="password"
+      <PasswordInput
         bind:value={values.confirmPassword}
         label="Confirm password"
         required
