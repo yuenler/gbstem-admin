@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Input from './Input.svelte'
-  import Button from './Button.svelte'
-  import Form from './Form.svelte'
   import { goto } from '$app/navigation'
   import { page } from '$app/state'
+  import Button from './Button.svelte'
+  import Form from './Form.svelte'
+  import TextInput from './TextInput.svelte'
 
   interface Props {
     basePath?: string
@@ -64,7 +64,7 @@
 
 <Form class="flex w-96 shrink-0 gap-4" onSubmit={handleSearch}>
   <div class="relative grow">
-    <Input
+    <TextInput
       class={{
         container: 'mt-0',
         input: 'mt-0 pr-20',

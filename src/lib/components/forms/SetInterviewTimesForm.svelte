@@ -1,7 +1,9 @@
 <script lang="ts">
   import { user } from '$lib/client/firebase'
+  import CheckboxInput from '$lib/components/CheckboxInput.svelte'
+  import DateTimeInput from '$lib/components/DateTimeInput.svelte'
   import Form from '$lib/components/Form.svelte'
-  import Input from '$lib/components/Input.svelte'
+  import TextInput from '$lib/components/TextInput.svelte'
   import {
     canUserModifySlot,
     resetInterviewSlotToAdd,
@@ -240,13 +242,11 @@
               </Card>
               <Card>
                 <h2 class="font-bold">Add A Time Slot</h2>
-                <Input
-                  type="datetime-local"
+                <DateTimeInput
                   bind:value={interviewSlotToAdd.date}
                   label="Set Date (your local time)"
                 />
-                <Input
-                  type="text"
+                <TextInput
                   bind:value={interviewSlotToAdd.meetingLink}
                   label="Interview Meeting Link"
                 />
@@ -291,13 +291,11 @@
               </Card>
 
               <div class="my-5 flex gap-5">
-                <Input
-                  type="checkbox"
+                <CheckboxInput
                   bind:value={onlyIncludeMyInterviews}
                   label="Only include my interviews"
                 />
-                <Input
-                  type="checkbox"
+                <CheckboxInput
                   bind:value={onlyShowFutureSlots}
                   label="Only show future interview slots"
                 />
@@ -316,13 +314,11 @@
                         <div>
                           <b>Interviewer: </b>{interview.interviewerName}
                         </div>
-                        <Input
-                          type="datetime-local"
+                        <DateTimeInput
                           bind:value={interview.date}
                           label="Edit Interview Meeting Time"
                         />
-                        <Input
-                          type="text"
+                        <TextInput
                           bind:value={interview.meetingLink}
                           label="Edit Interview Meeting Link"
                         />
