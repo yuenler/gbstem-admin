@@ -5,6 +5,16 @@ import '@testing-library/jest-dom'
 const originalConsoleLog = console.log
 let consoleLogSpy: any
 
+// Route handlers and components intentionally log via console.error/warn
+// before re-throwing or falling back (e.g. "[Load Error] ... page load:",
+// "[API ... Error]:", signup's rollback logging) - that's how a real user
+// would see it in prod logs, but it's noise in test output: it makes
+// `yarn test` look like something is broken to someone new to the codebase
+// even when every test passes. Jest's own PASS/FAIL reporting is the actual
+// signal, so mute both globally rather than chasing every message prefix.
+let consoleErrorSpy: any
+let consoleWarnSpy: any
+
 beforeAll(() => {
   consoleLogSpy = jest
     .spyOn(console, 'log')
@@ -17,11 +27,19 @@ beforeAll(() => {
       }
       originalConsoleLog(message, ...args)
     })
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
 })
 
 afterAll(() => {
   if (consoleLogSpy) {
     consoleLogSpy.mockRestore()
+  }
+  if (consoleErrorSpy) {
+    consoleErrorSpy.mockRestore()
+  }
+  if (consoleWarnSpy) {
+    consoleWarnSpy.mockRestore()
   }
 })
 
