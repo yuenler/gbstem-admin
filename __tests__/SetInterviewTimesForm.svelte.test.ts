@@ -1,0 +1,236 @@
+// The component derives its signed-in state from `$lib/client/firebase`'s
+// `user` store. Driving that store for real would mean faking a chain of
+// Firebase SDK calls (getApps/initializeApp/getAuth/onAuthStateChanged/
+// getIdTokenResult) that's timing-sensitive and, since `user` is a
+// module-level singleton, leaks state across tests in this file if not
+// handled carefully. The component only ever reads the store's emitted
+// {object, profile} shape via `user.subscribe(...)`, so mock that shape
+// directly instead.
+//
+// This mock must be declared BEFORE the imports below: unlike ordinary
+// `.test.ts` files, `.svelte.test.ts` files run through
+// jest-transform-svelte-module.cjs, which does plain `ts.transpileModule`
+// compilation with no jest-hoist step - so `jest.mock()` calls here are NOT
+// hoisted above imports the way they are elsewhere in this repo (see the
+// comment at the top of that file). Placed after the imports, this would
+// register too late: '$lib/client/firebase' would already have been
+// `require()`d (transitively, via the component and interviewService
+// imports) using the real module.
+jest.mock('$lib/client/firebase', () => {
+  const { writable } = require('svelte/store')
+  return {
+    user: writable(undefined),
+    auth: {},
+    db: {},
+    storage: {},
+  }
+})
+
+import { mount, unmount, flushSync } from 'svelte'
+import { fireEvent, waitFor, within } from '@testing-library/dom'
+import { user as mockUserStore } from '$lib/client/firebase'
+import SetInterviewTimesForm from '$lib/components/forms/SetInterviewTimesForm.svelte'
+import { interviewService } from '$lib/services/interviewService'
+
+const authUser = {
+  object: {
+    uid: 'user-1',
+    email: 'interviewer@example.com',
+    displayName: 'Jane Interviewer',
+  },
+  profile: {
+    uid: 'user-1',
+    role: 'admin',
+  },
+}
+
+const reviewerAuthUser = {
+  object: {
+    uid: 'user-2',
+    email: 'reviewer@example.com',
+    displayName: 'Rita Reviewer',
+  },
+  profile: {
+    uid: 'user-2',
+    role: 'reviewer',
+  },
+}
+
+const futureSlot: Data.InterviewSlot = {
+  id: 'slot-1',
+  date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+  interviewerName: 'Jane Interviewer',
+  interviewerEmail: 'interviewer@example.com',
+  intervieweeFirstName: '',
+  intervieweeLastName: '',
+  intervieweeEmail: '',
+  intervieweeId: '',
+  interviewSlotStatus: 'available',
+  meetingLink: 'https://meet.example.com/slot-1',
+}
+
+describe('SetInterviewTimesForm Component', () => {
+  let container: HTMLElement
+
+  beforeEach(() => {
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    ;(mockUserStore as any).set(undefined)
+
+    jest.spyOn(interviewService, 'fetchInterviewSlots').mockResolvedValue([])
+    jest.spyOn(interviewService, 'fetchSlotRequests').mockResolvedValue([])
+    jest
+      .spyOn(interviewService, 'fetchEligibleInterviewees')
+      .mockResolvedValue({ names: [], options: [] })
+    jest
+      .spyOn(interviewService, 'createOrAssignInterviewSlot')
+      .mockImplementation(async (slot) => ({ ...slot, id: 'new-slot' }))
+    jest.spyOn(interviewService, 'deleteInterviewSlot').mockResolvedValue()
+    jest.spyOn(interviewService, 'updateInterviewSlot').mockResolvedValue()
+  })
+
+  afterEach(() => {
+    document.body.removeChild(container)
+    jest.restoreAllMocks()
+  })
+
+  // Mounts with the store still unresolved (undefined), then resolves it to
+  // `user` - mirroring the real timing where onMount subscribes before
+  // Firebase's auth-state listener has fired.
+  async function mountAuthenticated(user: any = authUser) {
+    const app = mount(SetInterviewTimesForm, { target: container })
+    flushSync()
+    ;(mockUserStore as any).set(user)
+    flushSync()
+    await waitFor(() => {
+      expect(within(container).getByText('Add A Time Slot')).toBeInTheDocument()
+    })
+    return app
+  }
+
+  it('shows a loading indicator before the signed-in user resolves', () => {
+    const app = mount(SetInterviewTimesForm, { target: container })
+    flushSync()
+
+    expect(within(container).getByRole('status')).toBeInTheDocument()
+
+    unmount(app)
+  })
+
+  it('renders the main form sections once the user and data have loaded', async () => {
+    const app = await mountAuthenticated()
+
+    expect(interviewService.fetchInterviewSlots).toHaveBeenCalled()
+    expect(interviewService.fetchSlotRequests).toHaveBeenCalled()
+    expect(interviewService.fetchEligibleInterviewees).toHaveBeenCalled()
+    expect(
+      within(container).getByText('Interview Time Requests'),
+    ).toBeInTheDocument()
+    // TextInput always renders a trailing (CSS-hidden when not required) "*"
+    // span inside the <label>, so its accessible text content is literally
+    // "Interview Meeting Link*" - match loosely rather than depending on
+    // that implementation detail.
+    expect(
+      within(container).getByLabelText('Interview Meeting Link', {
+        exact: false,
+      }),
+    ).toBeInTheDocument()
+    expect(
+      within(container).getByLabelText('Only include my interviews'),
+    ).toBeInTheDocument()
+    expect(
+      within(container).getByLabelText('Only show future interview slots'),
+    ).toBeInTheDocument()
+
+    unmount(app)
+  })
+
+  it('renders an existing interview slot belonging to the signed-in user', async () => {
+    ;(interviewService.fetchInterviewSlots as jest.Mock).mockResolvedValue([
+      futureSlot,
+    ])
+    const app = await mountAuthenticated()
+
+    await waitFor(() => {
+      expect(
+        within(container).getByText(futureSlot.meetingLink),
+      ).toBeInTheDocument()
+    })
+    expect(within(container).getByText('available')).toBeInTheDocument()
+    expect(within(container).getByText('Edit')).toBeInTheDocument()
+
+    unmount(app)
+  })
+
+  it('adds a timeslot with the signed-in user as interviewer', async () => {
+    const app = await mountAuthenticated()
+
+    await fireEvent.click(within(container).getByText('Confirm Timeslot'))
+    flushSync()
+
+    await waitFor(() => {
+      expect(interviewService.createOrAssignInterviewSlot).toHaveBeenCalled()
+    })
+    expect(interviewService.createOrAssignInterviewSlot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        interviewerName: 'Jane Interviewer',
+        interviewerEmail: 'interviewer@example.com',
+        intervieweeId: '',
+      }),
+      '',
+      'user-1',
+    )
+
+    unmount(app)
+  })
+
+  it('deletes a timeslot the signed-in user owns', async () => {
+    ;(interviewService.fetchInterviewSlots as jest.Mock)
+      .mockResolvedValueOnce([futureSlot])
+      .mockResolvedValue([])
+    const app = await mountAuthenticated()
+
+    await waitFor(() => {
+      expect(within(container).getByText('Edit')).toBeInTheDocument()
+    })
+    await fireEvent.click(within(container).getByText('Edit'))
+    flushSync()
+
+    await waitFor(() => {
+      expect(within(container).getByText('Delete')).toBeInTheDocument()
+    })
+    await fireEvent.click(within(container).getByText('Delete'))
+    flushSync()
+
+    await waitFor(() => {
+      expect(interviewService.deleteInterviewSlot).toHaveBeenCalledWith(
+        futureSlot.id,
+      )
+    })
+
+    unmount(app)
+  })
+
+  it('hides the Edit control for a slot the signed-in reviewer does not own', async () => {
+    ;(interviewService.fetchInterviewSlots as jest.Mock).mockResolvedValue([
+      futureSlot,
+    ])
+    const app = await mountAuthenticated(reviewerAuthUser)
+
+    // The card itself is filtered out by "Only include my interviews" until
+    // that box is unchecked, since the slot belongs to a different user.
+    await fireEvent.click(
+      within(container).getByLabelText('Only include my interviews'),
+    )
+    flushSync()
+
+    await waitFor(() => {
+      expect(
+        within(container).getByText(futureSlot.meetingLink),
+      ).toBeInTheDocument()
+    })
+    expect(within(container).queryByText('Edit')).toBeNull()
+
+    unmount(app)
+  })
+})
