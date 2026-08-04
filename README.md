@@ -40,7 +40,7 @@ Before running the development server, you must configure your local environment
    cp .env.example .env.local
    ```
 
-2. Open `.env.local` and adjust the placeholder values with your actual service credentials, preferably development credentials if available.
+2. For general development, step 1 gives you everything you need. For special cases where you need access to production resources, you may edit `.env.local` to adjust the placeholder values with the actual service credentials.
 
 > [!WARNING]
 > **Never commit your `.env.local` file or actual secrets to GitHub.** This file is configured to be ignored by Git to prevent exposing sensitive API keys and credentials. For details on how `.env` files work and how to avoid exposing credentials, read the [dotenv environment secrets guide](https://github.com/motdotla/dotenv#should-i-commit-my-env-file) and [GitHub's guide on ignoring files](https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files).
@@ -49,8 +49,8 @@ Before running the development server, you must configure your local environment
 
 For local development and testing, you can use the **Firebase Emulator Suite** to run local instances of Firebase products (Firestore, Authentication, and Storage). This allows you to test application features offline without affecting production or development cloud resources.
 
-1. Follow the official [Firebase Emulator Suite: Connect and Prototype](https://firebase.google.com/docs/emulator-suite/connect_and_prototype?database=Firestore) guide to set up and run the emulators on your local machine.
-2. Update your `.env.local` file to point to the local emulators by uncommenting the relevant lines at the bottom of the file (see snippet below). The Firebase Admin SDK automatically routes operations to the emulators when the following environment variables are set:
+1. Follow the official [Firebase Emulator Suite: Connect and Prototype](https://firebase.google.com/docs/emulator-suite/connect_and_prototype?database=Firestore) guide to set up the emulators on your local machine.
+2. `.env.example` ships with the emulator environment variables already active, so a fresh `.env.local` routes client and server operations to the emulator by default:
 
    ```env
    FIRESTORE_EMULATOR_HOST="127.0.0.1:8080"
@@ -58,7 +58,7 @@ For local development and testing, you can use the **Firebase Emulator Suite** t
    STORAGE_EMULATOR_HOST="127.0.0.1:9199"
    ```
 
-   Make sure the host and port values match your emulator configurations in `firebase.json`.
+   The host and port values match the emulator configurations in `firebase.json`. Comment these out only if you intentionally want the app itself to talk to production Firestore instead of the emulator.
 
 3. For new emulator instances, run `yarn seed` to seed the database with a demo admin user and a demo signup token.
    - Email: <demo@gbstem.org>
@@ -106,9 +106,6 @@ yarn test
 
 # build for production
 yarn build
-
-# build and deploy to Firebase
-yarn deploy
 ```
 
 Open [http://localhost:5173](http://localhost:5173) with your browser to see the result for `yarn dev` or `yarn start`. You can start editing any page or component, and when running in development mode, your changes will be reflected in the browser automatically.
@@ -185,7 +182,7 @@ Transitioning gbSTEM to a new semester (e.g., from `Spring26` to `Fall26`) is a 
    - Review and update course catalog data in [`springCourses.json`](src/lib/data/springCourses.json) or [`fallCourses.json`](src/lib/data/fallCourses.json), then copy the updated file to the portal repository's `src/lib/data/` directory.
    - Update every field in [`semesterDates.json`](src/lib/data/semesterDates.json) to the new semester's actual dates (`MM/DD/YY`, matching the new suffix's year), then copy the updated file to the portal repository's `src/lib/data/` directory.
 3. Run `yarn lint && yarn test` in both repos to verify the changes (this will fail loudly for errors like a malformed date, incorrect year in `semesterDates.json`, or other format issues).
-4. Deploy both apps.
+4. Create a PR for both repos and merge it to `main` for the Vercel auto-deployment to update the live apps.
 
 That's it — the new semester's subcollections (`semesters/Fall26/applications`, etc.) spring into existence automatically on first write.
 
@@ -239,6 +236,7 @@ Below is an alphabetical list of the top-level directories and significant confi
 
 ### Directories
 
+- **`.github/`**: Contains GitHub configuration for GitHub, including our Dependabot configuration for automating minor and patch package updates, and our Continuous Integration (CI) test workflows.
 - **`.husky/`**: Configuration for Husky, managing Git hooks like pre-commit formatting and linting.
 - **`.svelte-kit/`**: Automatically generated directory containing SvelteKit configuration, generated routes, and typings.
 - **`__tests__/`**: Contains all of our Jest unit tests (such as utility tests and form validation schema scenario tests).
