@@ -16,10 +16,12 @@ const config: Config = {
     // `esm-env` dependency) - down-level both so Jest's CJS loader can
     // read them (paired with transformIgnorePatterns below, since
     // node_modules is untransformed by default).
-    'node_modules/(svelte|esm-env|lodash-es)/.*\\.js$':
+    'node_modules[/\\\\](svelte|esm-env|lodash-es)[/\\\\].*\\.js$':
       '<rootDir>/jest-transform-esm-to-cjs.cjs',
   },
-  transformIgnorePatterns: ['/node_modules/(?!svelte/|esm-env/|lodash-es/)'],
+  transformIgnorePatterns: [
+    '[/\\\\]node_modules[/\\\\](?!(svelte|esm-env|lodash-es)[/\\\\])',
+  ],
   coverageProvider: 'v8',
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
