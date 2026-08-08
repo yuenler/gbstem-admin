@@ -44,7 +44,7 @@ describe('Application Helper Functions', () => {
       expect(app.program.courses).toEqual([])
       expect(app.essay.taughtBefore).toBe(false)
       expect(app.agreements.entireProgram).toBe(false)
-      expect(app.meta.decision).toBeNull()
+      expect(app.meta.decided).toBe(false)
     })
 
     test('createDefaultInterviewValues produces expected default interview object', () => {

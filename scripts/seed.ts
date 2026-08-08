@@ -700,7 +700,7 @@ async function seed() {
       uid: 'user_app1',
       interview: false,
       submitted: true,
-      decision: null,
+      decided: false,
     },
     timestamps: {
       created: admin.firestore.FieldValue.serverTimestamp(),
@@ -749,7 +749,7 @@ async function seed() {
       uid: 'instructor-demo-uid',
       interview: true,
       submitted: true,
-      decision: db.collection(decisionsCollection).doc('instructor-demo-uid'),
+      decided: true,
     },
     timestamps: {
       created: admin.firestore.FieldValue.serverTimestamp(),
@@ -792,9 +792,7 @@ async function seed() {
       uid: 'instructor-rejected-uid',
       interview: true,
       submitted: true,
-      decision: db
-        .collection(decisionsCollection)
-        .doc('instructor-rejected-uid'),
+      decided: true,
     },
   }
   validateApplication(appInstructorRejected, 'instructor-rejected-uid')
@@ -822,9 +820,7 @@ async function seed() {
       uid: 'instructor-interview-uid',
       interview: true,
       submitted: true,
-      decision: db
-        .collection(decisionsCollection)
-        .doc('instructor-interview-uid'),
+      decided: true,
     },
   }
   validateApplication(appInstructorInterview, 'instructor-interview-uid')
@@ -887,7 +883,7 @@ async function seed() {
         uid: `user-fake-app-${i}`,
         interview: true,
         submitted: submitted,
-        decision: isDecided ? db.collection(decisionsCollection).doc(id) : null,
+        decided: isDecided,
       },
       timestamps: {
         created: admin.firestore.Timestamp.fromDate(createdDate),

@@ -12,9 +12,14 @@ import type { PageServerLoad } from './$types'
 
 export const load = (async ({ url, depends }) => {
   depends('app:applications')
-  const collectionName = semesterCollectionPath(
-    resolveSemester(url.searchParams.get('semester')),
-    'applications',
+  const semesterId = resolveSemester(url.searchParams.get('semester'))
+  const collectionName = semesterCollectionPath(semesterId, 'applications')
+  // Decision docs are always keyed by the application's own id, so this is derived
+  // rather than trusted from a stored reference field on the application - see the
+  // meta.decided writeup for why that stored-reference shape was unsafe.
+  const decisionsCollectionName = semesterCollectionPath(
+    semesterId,
+    'decisions',
   )
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
@@ -32,8 +37,7 @@ export const load = (async ({ url, depends }) => {
         dbQuery = adminDb
           .collection(collectionName)
           .where('meta.submitted', '==', true)
-          .orderBy('meta.decision')
-          .where('meta.decision', '==', null)
+          .where('meta.decided', '==', false)
           .orderBy('timestamps.updated', 'desc')
       } else if (filter === 'inPerson') {
         dbQuery = adminDb
@@ -64,9 +68,10 @@ export const load = (async ({ url, depends }) => {
       const decisions = (
         await Promise.all(
           snapshot.docs.map((doc: QueryDocumentSnapshot) => {
-            const decision = (doc.data() as Data.Application<'server'>).meta
-              .decision
-            return decision ? decision.get() : null
+            const data = doc.data() as Data.Application<'server'>
+            return data.meta.decided
+              ? adminDb.collection(decisionsCollectionName).doc(doc.id).get()
+              : null
           }),
         )
       ).map((doc: DocumentSnapshot | null) =>
@@ -120,7 +125,7 @@ export const load = (async ({ url, depends }) => {
             uid: string
             interview: boolean
             submitted: boolean
-            decision: string | null
+            decided: boolean
           }
           timestamps: {
             updated: Date
@@ -130,14 +135,14 @@ export const load = (async ({ url, depends }) => {
       >(collectionName, query)
       const decisions = (
         await Promise.all(
-          hits.map((hit) => {
-            const decision = hit.meta.decision as any
-            return decision
-              ? typeof decision.get === 'function'
-                ? decision.get()
-                : adminDb.doc(decision).get()
-              : null
-          }),
+          hits.map((hit) =>
+            hit.meta.decided
+              ? adminDb
+                  .collection(decisionsCollectionName)
+                  .doc(hit.objectID)
+                  .get()
+              : null,
+          ),
         )
       ).map((doc: DocumentSnapshot | null) =>
         doc

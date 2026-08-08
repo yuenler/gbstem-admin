@@ -97,7 +97,6 @@ export const load = (async ({ url, depends }) => {
           meta: {
             uid: string
             submitted: boolean
-            decision: string | null
           }
           timestamps: {
             updated: Date
@@ -105,23 +104,9 @@ export const load = (async ({ url, depends }) => {
           }
         }
       >(collectionName, query)
-      const decisions = (
-        await Promise.all(
-          hits.map((hit) => {
-            const decision = hit.meta.decision as any
-            return decision
-              ? typeof decision.get === 'function'
-                ? decision.get()
-                : adminDb.doc(decision).get()
-              : null
-          }),
-        )
-      ).map((doc: any) =>
-        doc ? (doc.data() as { type: Data.Decision }).type : null,
-      )
       return {
         query,
-        registrations: hits.map((hit, i) => {
+        registrations: hits.map((hit) => {
           return {
             id: hit.objectID,
             values: {
@@ -129,10 +114,7 @@ export const load = (async ({ url, depends }) => {
               academic: hit.academic,
               program: hit.program,
               agreements: hit.agreements,
-              meta: {
-                ...hit.meta,
-                decision: decisions.at(i),
-              },
+              meta: hit.meta,
               timestamps: hit.timestamps,
             },
           }

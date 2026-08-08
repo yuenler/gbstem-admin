@@ -85,7 +85,7 @@ export const dashboardService = {
               query(applicationsColl, where('meta.submitted', '==', true)),
             ),
             getCountFromServer(
-              query(applicationsColl, where('meta.decision', '!=', null)),
+              query(applicationsColl, where('meta.decided', '==', true)),
             ),
           ]),
         ]),
@@ -143,7 +143,7 @@ export const dashboardService = {
             query(applicationsColl, where('meta.submitted', '==', true)),
           ),
           getCountFromServer(
-            query(applicationsColl, where('meta.decision', '!=', null)),
+            query(applicationsColl, where('meta.decided', '==', true)),
           ),
           getCountFromServer(usersColl),
           getCountFromServer(registrationsColl),

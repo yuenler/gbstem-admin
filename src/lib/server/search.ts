@@ -149,29 +149,9 @@ export async function searchIndex<T>(
       return false
     }
 
-    return allDocs.filter((doc) => {
-      // Prevent infinite loops or scanning of internal reference objects (like DocumentReference)
-      // which have prototype methods that shouldn't be recursed or serialized.
-      const safeDoc = { ...doc }
-      // Filter out fields starting with _ or containing Firestore references
-      for (const key of Object.keys(safeDoc)) {
-        if (key === 'meta') {
-          // Keep meta fields but omit decision reference if it's a Firestore DocumentReference
-          const meta = (safeDoc as any)[key]
-          if (meta && typeof meta === 'object') {
-            const safeMeta = { ...meta }
-            if (
-              safeMeta.decision &&
-              typeof safeMeta.decision.get === 'function'
-            ) {
-              delete safeMeta.decision
-            }
-            ;(safeDoc as any)[key] = safeMeta
-          }
-        }
-      }
-      return matchesQuery(safeDoc)
-    }) as Array<T & { objectID: string }>
+    return allDocs.filter((doc) => matchesQuery(doc)) as Array<
+      T & { objectID: string }
+    >
   }
 
   return []
