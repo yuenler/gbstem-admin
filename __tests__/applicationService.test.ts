@@ -19,7 +19,7 @@ describe('admin applicationService (Data Access Layer)', () => {
     it('loads application and associated decision data', async () => {
       const mockApp = {
         personal: { email: 'test@example.com', firstName: 'Alice' },
-        meta: { decision: { id: 'dec-1' } },
+        meta: { decided: true },
       }
       const mockDecision = { type: 'interview', decision: 'interview' }
 
@@ -51,10 +51,29 @@ describe('admin applicationService (Data Access Layer)', () => {
         applicationService.loadApplicationDetails('applications', 'app-1'),
       ).rejects.toThrow('Application not found.')
     })
+
+    it('skips fetching a decision doc when meta.decided is false', async () => {
+      const mockApp = {
+        personal: { email: 'test@example.com', firstName: 'Alice' },
+        meta: { decided: false },
+      }
+      ;(firestore.getDoc as jest.Mock).mockResolvedValueOnce({
+        exists: () => true,
+        data: () => mockApp,
+      })
+
+      const res = await applicationService.loadApplicationDetails(
+        'applications',
+        'app-1',
+      )
+
+      expect(firestore.getDoc).toHaveBeenCalledTimes(1)
+      expect(res.decision).toBeNull()
+    })
   })
 
   describe('saveNotes', () => {
-    it('sets decision doc with notes payload and updates application meta.decision', async () => {
+    it('sets decision doc with notes payload and updates application meta.decided', async () => {
       ;(firestore.setDoc as jest.Mock).mockResolvedValueOnce(undefined)
       ;(firestore.updateDoc as jest.Mock).mockResolvedValueOnce(undefined)
 
@@ -265,7 +284,7 @@ describe('admin applicationService (Data Access Layer)', () => {
   })
 
   describe('bulkSetDecision', () => {
-    it('sets a decision doc and links meta.decision for every application id', async () => {
+    it('sets a decision doc and flips meta.decided for every application id', async () => {
       ;(firestore.setDoc as jest.Mock).mockResolvedValue(undefined)
       ;(firestore.updateDoc as jest.Mock).mockResolvedValue(undefined)
 

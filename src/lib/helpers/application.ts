@@ -64,7 +64,7 @@ export function createDefaultApplicationValues(): Data.Application<'client'> {
     },
     meta: {
       uid: '',
-      decision: null,
+      decided: false,
       submitted: false,
       interview: false,
     },

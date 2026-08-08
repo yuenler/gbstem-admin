@@ -2,6 +2,7 @@ import { db } from '$lib/client/firebase'
 import {
   decisionsCollection,
   semesterCollectionPath,
+  semesterIdFromPath,
   withSemester,
 } from '$lib/data/collections'
 import {
@@ -56,8 +57,14 @@ export const applicationService = {
       likelyDecision: null,
     }
 
-    if (data.meta.decision) {
-      const decisionSnap = await getDoc(data.meta.decision)
+    if (data.meta.decided) {
+      // Decision docs are always keyed by the application's own id, so the path is
+      // derived here rather than trusted from a stored reference field - see the
+      // meta.decided writeup for why that stored-reference shape was unsafe.
+      const decColl = getDecisionsCollection(
+        semesterIdFromPath(appCollection) ?? undefined,
+      )
+      const decisionSnap = await getDoc(doc(db, decColl, appId))
       if (decisionSnap.exists()) {
         const normalized = normalizeInterviewData(
           decisionSnap.data() as Data.Interview,
@@ -87,7 +94,7 @@ export const applicationService = {
       { merge: true },
     )
     await updateDoc(doc(db, appCollection, appId), {
-      'meta.decision': decisionDocRef,
+      'meta.decided': true,
     })
   },
 
@@ -112,7 +119,7 @@ export const applicationService = {
       { merge: true },
     )
     await updateDoc(doc(db, appCollection, appId), {
-      'meta.decision': decisionDocRef,
+      'meta.decided': true,
     })
   },
 
@@ -142,7 +149,7 @@ export const applicationService = {
       withSemester(buildFullDecisionPayload(updatedInterview), viewedSemester),
     )
     await updateDoc(doc(db, appCollection, appId), {
-      'meta.decision': decisionDocRef,
+      'meta.decided': true,
     })
 
     try {
@@ -219,7 +226,7 @@ export const applicationService = {
           withSemester({ type: decision }, viewedSemester),
         )
         await updateDoc(doc(db, appCollection, id), {
-          'meta.decision': decisionDocRef,
+          'meta.decided': true,
         })
       }),
     )

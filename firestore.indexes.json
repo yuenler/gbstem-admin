@@ -73,7 +73,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "meta.submitted", "order": "ASCENDING" },
-        { "fieldPath": "meta.decision", "order": "ASCENDING" },
+        { "fieldPath": "meta.decided", "order": "ASCENDING" },
         { "fieldPath": "timestamps.updated", "order": "DESCENDING" }
       ]
     },

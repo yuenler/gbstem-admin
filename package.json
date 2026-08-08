@@ -20,6 +20,8 @@
     "migrate": "npx tsx scripts/migrate-semesters.ts",
     "migrate:dry": "npx tsx scripts/migrate-semesters.ts --dry-run",
     "migrate:verify": "npx tsx scripts/migrate-semesters.ts --verify",
+    "backfill:decided": "npx tsx scripts/backfill-decided.ts",
+    "backfill:decided:dry": "npx tsx scripts/backfill-decided.ts --dry-run",
     "emulators": "firebase emulators:start --log-verbosity=quiet",
     "prepare": "husky || true"
   },

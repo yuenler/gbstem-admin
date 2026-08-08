@@ -121,7 +121,7 @@ const mockCollection = {
             created: { toDate: () => new Date() },
           },
           meta: {
-            decision: { get: () => Promise.resolve({ data: () => ({}) }) },
+            decided: true,
           },
           attendanceList: { '1': { present: true } },
           meetingTimes: [],

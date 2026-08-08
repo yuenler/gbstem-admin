@@ -1,11 +1,5 @@
-import type {
-  DocumentReference as ServerDocumentReference,
-  Timestamp as ServerTimestamp,
-} from 'firebase-admin/firestore'
-import type {
-  DocumentReference as ClientDocumentReference,
-  Timestamp as ClientTimestamp,
-} from 'firebase/firestore'
+import type { Timestamp as ServerTimestamp } from 'firebase-admin/firestore'
+import type { Timestamp as ClientTimestamp } from 'firebase/firestore'
 import type { User as ClientUser } from 'firebase/auth'
 
 declare global {
@@ -224,13 +218,7 @@ declare global {
         uid: string
         interview: boolean
         submitted: boolean
-        decision:
-          | (T extends 'client'
-              ? ClientDocumentReference
-              : T extends 'server'
-                ? ServerDocumentReference
-                : Decision)
-          | null
+        decided: boolean
       }
       timestamps: {
         created: T extends 'client'
