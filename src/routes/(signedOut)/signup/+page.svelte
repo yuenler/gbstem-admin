@@ -10,6 +10,7 @@
   import Loading from '$lib/components/Loading.svelte'
   import PasswordInput from '$lib/components/PasswordInput.svelte'
   import TextInput from '$lib/components/TextInput.svelte'
+  import { alert } from '$lib/stores'
   import type { ActionData, PageData } from './$types'
 
   interface Props {
@@ -45,6 +46,12 @@
       disabled = false
       switch (result.type) {
         case 'success': {
+          if (result.data?.emailWarning) {
+            alert.trigger(
+              'error',
+              'Account created, but the verification email failed to send. You can request another from your profile page after signing in.',
+            )
+          }
           return goto('/signin')
         }
         default: {
