@@ -95,7 +95,10 @@ export const actions = {
         })
       }
       // Deliberately non-fatal: a mail hiccup must not destroy an otherwise
-      // good account. The user can request a new verification email later.
+      // good account. The user can request a new verification email later,
+      // but the `emailWarning` flag lets the client tell them the first one
+      // never went out, since a silent failure leaves them trusting an email
+      // that was never sent.
       try {
         const link = await adminAuth.generateEmailVerificationLink(values.email)
         await adminDb.collection('mail').add({
@@ -119,6 +122,7 @@ export const actions = {
         })
       } catch (err) {
         console.error('Signup verification email error:', err)
+        return { success: true, emailWarning: true }
       }
       return { success: true }
     } catch (err) {

@@ -840,8 +840,9 @@ describe('signup load and actions', () => {
       request: mockSignupRequest() as any,
     } as any)
 
-    // A mail hiccup must not destroy an otherwise good account.
-    expect(res).toEqual({ success: true })
+    // A mail hiccup must not destroy an otherwise good account, but the
+    // client needs to know the email never went out.
+    expect(res).toEqual({ success: true, emailWarning: true })
     expect(mockAdminAuth.deleteUser).not.toHaveBeenCalled()
     errorSpy.mockRestore()
   })
