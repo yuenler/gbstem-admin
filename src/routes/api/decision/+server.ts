@@ -2,7 +2,7 @@ import { acceptEmailTemplate } from '$lib/data/emailTemplates/acceptEmailTemplat
 import { rejectionEmailTemplate } from '$lib/data/emailTemplates/rejectionEmailTemplate'
 import { subEmailTemplate } from '$lib/data/emailTemplates/subEmailTemplate'
 import { waitlistEmailTemplate } from '$lib/data/emailTemplates/waitlistEmailTemplate'
-import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
+import { handleApiError, verifyAdminOrReviewer } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
 import { addDataToHtmlTemplate } from '$lib/utils'
 import { json } from '@sveltejs/kit'
@@ -20,7 +20,7 @@ export type DecisionRequestBody = z.infer<typeof decisionSchema>
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   try {
-    verifyAdmin(locals)
+    verifyAdminOrReviewer(locals)
     const body = decisionSchema.parse(await request.json())
 
     const intervieweeEmail = body.email

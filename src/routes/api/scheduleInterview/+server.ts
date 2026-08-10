@@ -1,5 +1,5 @@
 import { scheduleInterviewEmailTemplate } from '$lib/data/emailTemplates/scheduleInterviewEmailTemplate'
-import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
+import { handleApiError, verifyAdminOrReviewer } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
 import { addDataToHtmlTemplate } from '$lib/utils'
 import { json } from '@sveltejs/kit'
@@ -19,7 +19,7 @@ export type ScheduleInterviewRequestBody = z.infer<
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   try {
-    verifyAdmin(locals)
+    verifyAdminOrReviewer(locals)
     const body = scheduleInterviewSchema.parse(await request.json())
 
     const intervieweeEmail = body.email

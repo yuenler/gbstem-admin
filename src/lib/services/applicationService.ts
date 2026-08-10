@@ -209,7 +209,8 @@ export const applicationService = {
   },
 
   /**
-   * Bulk-assigns a decision to multiple applications and links each to its decision document.
+   * Bulk-assigns a decision to multiple applications, links each to its decision document,
+   * and sends decision or interview notification emails.
    */
   async bulkSetDecision(
     applicationIds: string[],
@@ -217,7 +218,12 @@ export const applicationService = {
     decisionsColl: string,
     decision: Data.Decision,
     viewedSemester?: string,
+    instructorOrientationDate?: string,
   ): Promise<void> {
+    const interviewDeadline = instructorOrientationDate
+      ? calculateInterviewDeadline(new Date(), instructorOrientationDate)
+      : ''
+
     await Promise.all(
       applicationIds.map(async (id) => {
         const decisionDocRef = doc(db, decisionsColl, id)
@@ -228,6 +234,43 @@ export const applicationService = {
         await updateDoc(doc(db, appCollection, id), {
           'meta.decided': true,
         })
+
+        try {
+          const appSnap = await getDoc(doc(db, appCollection, id))
+          if (appSnap.exists()) {
+            const data = appSnap.data() as Data.Application<'client'>
+            const applicantEmail = data.personal?.email
+            const applicantFirstName = data.personal?.firstName
+
+            if (applicantEmail && applicantFirstName) {
+              if (decision === 'interview') {
+                const payload = buildScheduleInterviewPayload(
+                  applicantEmail,
+                  applicantFirstName,
+                  interviewDeadline,
+                )
+                await fetch('/api/scheduleInterview', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload),
+                })
+              } else {
+                const payload = buildDecisionApiPayload(
+                  decision,
+                  applicantEmail,
+                  applicantFirstName,
+                )
+                await fetch('/api/decision', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload),
+                })
+              }
+            }
+          }
+        } catch (emailErr) {
+          console.warn('Bulk email notification request failed:', emailErr)
+        }
       }),
     )
   },

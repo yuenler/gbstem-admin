@@ -249,6 +249,7 @@ describe('Section D: Instructor Applications Management', () => {
     // A permission-denied write (the pre-fix behavior) surfaces as an error toast here
     // instead of this success toast.
     cy.waitForNotification('1 applicant waitlisted.')
+    cy.verifyEmailSent('applicant-28@gmail.com', 'gbSTEM Instructor Decision')
 
     cy.contains('tr', 'Mark Lewis').within(() => {
       cy.get('.text-yellow-300').should('exist')
@@ -359,6 +360,7 @@ describe('Section D: Instructor Applications Management', () => {
 
     // Wait for update
     cy.wait(500)
+    cy.verifyEmailSent('applicant1@gmail.com', 'gbSTEM Instructor Decision')
 
     // Close the modal
     cy.contains('button', /^Close$/).click({ force: true })

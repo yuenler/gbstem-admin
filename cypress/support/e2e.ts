@@ -27,4 +27,5 @@ before(() => {
 
   // Restore the emulator database to the seed state to ensure tests are deterministic
   cy.exec('yarn seed', { timeout: 120000 })
+  cy.clearTestEmails()
 })

@@ -1,4 +1,7 @@
+import { actionEmailTemplate } from '$lib/data/emailTemplates/actionEmailTemplate'
+import { sendEmail } from '$lib/server/email'
 import { adminAuth, adminDb, verifyToken } from '$lib/server/firebase'
+import { addDataToHtmlTemplate } from '$lib/utils'
 import { error, fail, redirect } from '@sveltejs/kit'
 import type { FirebaseError } from 'firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
@@ -101,24 +104,29 @@ export const actions = {
       // that was never sent.
       try {
         const link = await adminAuth.generateEmailVerificationLink(values.email)
-        await adminDb.collection('mail').add({
-          to: [values.email],
-          template: {
-            name: 'action',
-            data: {
-              subject: 'Verify Email for gbSTEM Account',
-              action: {
-                link,
-                name: 'Verify Email',
-                description:
-                  'Please verify your email for your gbSTEM account by clicking the button below.',
-              },
-              app: {
-                name: 'Admin',
-                link: 'https://admin.gbstem.org',
-              },
+        const template = {
+          name: 'action',
+          data: {
+            subject: 'Verify Email for gbSTEM Account',
+            action: {
+              link,
+              name: 'Verify Email',
+              description:
+                'Please verify your email for your gbSTEM account by clicking the button below.',
+            },
+            app: {
+              name: 'Admin',
+              link: 'https://admin.gbstem.org',
             },
           },
+        }
+
+        const htmlBody = addDataToHtmlTemplate(actionEmailTemplate, template)
+
+        await sendEmail({
+          to: values.email,
+          subject: template.data.subject,
+          html: htmlBody,
         })
       } catch (err) {
         console.error('Signup verification email error:', err)

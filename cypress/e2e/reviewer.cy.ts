@@ -123,6 +123,7 @@ describe('Section O: Reviewer Role Access Control', () => {
 
     // Wait for update
     cy.wait(500)
+    cy.verifyEmailSent('applicant1@gmail.com', 'gbSTEM Instructor Decision')
 
     // Close the modal
     cy.contains('button', /^Close$/).click({ force: true })
