@@ -16,6 +16,20 @@ export function verifyAdmin(locals: App.Locals) {
 }
 
 /**
+ * Ensures the user is signed in and has either the admin or reviewer role.
+ * Throws a 401 if not signed in, and 403 if not an admin or reviewer.
+ */
+export function verifyAdminOrReviewer(locals: App.Locals) {
+  if (!locals.user) {
+    throw error(401, 'User not signed in.')
+  }
+  if (locals.user.role !== 'admin' && locals.user.role !== 'reviewer') {
+    throw error(403, 'Unauthorized: Admin or Reviewer role required.')
+  }
+  return locals.user
+}
+
+/**
  * Ensures the user is signed in (authenticated).
  * Throws a 401 if not signed in.
  */

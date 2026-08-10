@@ -9,6 +9,7 @@ import {
   classSchema,
   registrationSchema,
 } from '../src/lib/components/forms/schemas'
+import semesterDates from '../src/lib/data/semesterDates.json'
 
 function validateClass(data: any, id: string) {
   try {
@@ -302,7 +303,10 @@ async function seed() {
     meetingTimes: [
       admin.firestore.Timestamp.fromDate(new Date()),
       admin.firestore.Timestamp.fromDate(
-        new Date(Date.now() + 48 * 60 * 60 * 1000),
+        new Date(
+          new Date(semesterDates.classesStart).getTime() +
+            7 * 24 * 60 * 60 * 1000,
+        ),
       ),
     ],
     completedClassDates: [],
@@ -329,7 +333,10 @@ async function seed() {
     meetingTimes: [
       admin.firestore.Timestamp.fromDate(new Date()),
       admin.firestore.Timestamp.fromDate(
-        new Date(Date.now() + 48 * 60 * 60 * 1000),
+        new Date(
+          new Date(semesterDates.classesStart).getTime() +
+            8 * 24 * 60 * 60 * 1000,
+        ),
       ),
     ],
     completedClassDates: [],
@@ -924,7 +931,10 @@ async function seed() {
       meetingTimes = [
         admin.firestore.Timestamp.fromDate(new Date()),
         admin.firestore.Timestamp.fromDate(
-          new Date(Date.now() + 48 * 60 * 60 * 1000),
+          new Date(
+            new Date(semesterDates.classesStart).getTime() +
+              7 * 24 * 60 * 60 * 1000,
+          ),
         ),
       ]
       classStatuses = ['ClassNotHeld', 'ClassInFuture']
@@ -932,7 +942,10 @@ async function seed() {
       meetingTimes = [
         admin.firestore.Timestamp.fromDate(new Date()),
         admin.firestore.Timestamp.fromDate(
-          new Date(Date.now() + 48 * 60 * 60 * 1000),
+          new Date(
+            new Date(semesterDates.classesStart).getTime() +
+              7 * 24 * 60 * 60 * 1000,
+          ),
         ),
       ]
       classStatuses = ['EverythingComplete', 'ClassInFuture']

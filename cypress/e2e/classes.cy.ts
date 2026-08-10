@@ -194,6 +194,7 @@ describe('Section E: Classes Directory', () => {
         cy.get('.bg-red-200').should('contain', 'No upcoming classes')
       } else {
         cy.waitForNotification('sent')
+        cy.verifyEmailSent('student@gbstem.org', 'gbSTEM Class Reminder')
       }
     })
 
@@ -204,6 +205,10 @@ describe('Section E: Classes Directory', () => {
         cy.get('.bg-red-200').should('contain', 'No upcoming classes')
       } else {
         cy.waitForNotification('sent')
+        cy.verifyEmailSent(
+          'instructor@gbstem.org',
+          'gbSTEM Class Teaching Reminder',
+        )
       }
     })
 

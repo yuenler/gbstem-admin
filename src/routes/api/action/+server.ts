@@ -1,6 +1,7 @@
+import { actionEmailTemplate } from '$lib/data/emailTemplates/actionEmailTemplate'
 import { handleApiError, verifyAuthenticated } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
-import { adminAuth, adminDb } from '$lib/server/firebase'
+import { adminAuth } from '$lib/server/firebase'
 import { addDataToHtmlTemplate } from '$lib/utils'
 import { error, json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
@@ -93,21 +94,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       data: {
         ...data,
         app: {
-          name: 'Portal',
-          link: 'https://portal.gbstem.org',
+          name: 'Admin',
+          link: 'https://admin.gbstem.org',
         },
       },
     }
 
-    // get html template from firebase
-    const document = await adminDb
-      .collection('templates')
-      .doc(template.name)
-      .get()
-    const html = (document.data()?.html as string) ?? ''
-
-    // replace html template with data
-    const htmlBody = addDataToHtmlTemplate(html, template)
+    const htmlBody = addDataToHtmlTemplate(actionEmailTemplate, template)
 
     try {
       await sendEmail({

@@ -156,6 +156,7 @@ describe('Section F: Students Directory', () => {
     // Click Add Class
     cy.contains('button', 'Add Class').click({ force: true })
     cy.waitForNotification('Enrolled in class successfully!')
+    cy.verifyEmailSent('parent1@gmail.com', 'class details for Charlie Brown')
     cy.wait(500)
 
     // Class 1 Information should appear

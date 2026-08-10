@@ -284,9 +284,16 @@ describe('admin applicationService (Data Access Layer)', () => {
   })
 
   describe('bulkSetDecision', () => {
-    it('sets a decision doc and flips meta.decided for every application id', async () => {
+    it('sets a decision doc, flips meta.decided, and triggers decision email for every application id', async () => {
       ;(firestore.setDoc as jest.Mock).mockResolvedValue(undefined)
       ;(firestore.updateDoc as jest.Mock).mockResolvedValue(undefined)
+      ;(firestore.getDoc as jest.Mock).mockResolvedValue({
+        exists: () => true,
+        data: () => ({
+          personal: { email: 'alice@example.com', firstName: 'Alice' },
+        }),
+      })
+      ;(global.fetch as jest.Mock).mockResolvedValue({ ok: true })
 
       await applicationService.bulkSetDecision(
         ['app-1', 'app-2'],
@@ -298,6 +305,18 @@ describe('admin applicationService (Data Access Layer)', () => {
 
       expect(firestore.setDoc).toHaveBeenCalledTimes(2)
       expect(firestore.updateDoc).toHaveBeenCalledTimes(2)
+      expect(global.fetch).toHaveBeenCalledTimes(2)
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/decision',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            decision: 'accepted',
+            email: 'alice@example.com',
+            name: 'Alice',
+          }),
+        }),
+      )
       const [, payload] = (firestore.setDoc as jest.Mock).mock.calls[0]
       expect(payload).toEqual(
         expect.objectContaining({ type: 'accepted', semester: 'Spring26' }),
