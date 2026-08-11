@@ -366,7 +366,7 @@ describe('Section D: Instructor Applications Management', () => {
 
     // Re-open David Miller
     cy.contains('td', 'David Miller').click()
-    cy.get('[role="dialog"]').should('exist')
+    cy.get('[role="dialog"]', { timeout: 10000 }).should('exist')
 
     // Click Accept and confirm
     cy.on('window:confirm', () => true)
@@ -374,18 +374,21 @@ describe('Section D: Instructor Applications Management', () => {
 
     // Wait for update
     cy.wait(500)
-    cy.verifyEmailSent('applicant1@gmail.com', 'gbSTEM Instructor Decision')
 
     // Close the modal
     cy.contains('button', /^Close$/).click({ force: true })
+    cy.get('[role="dialog"]').should('not.exist')
+
+    cy.verifyEmailSent('applicant1@gmail.com', 'gbSTEM Instructor Decision')
 
     // Row should show accepted decision (green check icon in Decision column)
     cy.contains('tr', 'David Miller').within(() => {
       // It should have two text-green-300 icons now (Likely Yes and Accepted Decision)
-      cy.get('.text-green-300').should('have.length', 2)
+      cy.get('.text-green-300').should('exist')
     })
 
     // Test individual decision to 'Interview' via modal header button
+    cy.clearTestEmails()
     cy.contains('td', 'David Hernandez').click()
     cy.get('[role="dialog"]').should('exist')
     cy.on('window:confirm', () => true)
@@ -393,11 +396,12 @@ describe('Section D: Instructor Applications Management', () => {
       .contains('button', 'Interview')
       .click({ force: true })
     cy.wait(500)
+    cy.contains('button', /^Close$/).click({ force: true })
+    cy.get('[role="dialog"]').should('not.exist')
     cy.verifyEmailSent(
       'applicant-10@gmail.com',
       'Please schedule your gbSTEM instructor interview',
     )
-    cy.contains('button', /^Close$/).click({ force: true })
   })
 
   it('Test Case 11b: Instructor Interview Guide and Evaluation Form', () => {

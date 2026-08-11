@@ -153,10 +153,19 @@ export const applicationService = {
     })
 
     try {
+      // Re-fetch the application to make sure we don't get stale data from
+      // a Svelte UI component.
+      const appSnap = await getDoc(doc(db, appCollection, appId))
+      const appData = appSnap?.exists?.()
+        ? (appSnap.data() as Data.Application<'client'>)
+        : null
+      const email = appData?.personal?.email || applicantEmail
+      const firstName = appData?.personal?.firstName || applicantFirstName
+
       if (newDecision === 'interview') {
         const payload = buildScheduleInterviewPayload(
-          applicantEmail,
-          applicantFirstName,
+          email,
+          firstName,
           interviewDeadline,
         )
         const res = await fetch('/api/scheduleInterview', {
@@ -171,11 +180,7 @@ export const applicationService = {
           )
         }
       } else {
-        const payload = buildDecisionApiPayload(
-          newDecision,
-          applicantEmail,
-          applicantFirstName,
-        )
+        const payload = buildDecisionApiPayload(newDecision, email, firstName)
         const res = await fetch('/api/decision', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

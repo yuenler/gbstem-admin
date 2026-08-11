@@ -165,6 +165,36 @@ describe('admin applicationService (Data Access Layer)', () => {
       )
     })
 
+    it('fetches application document to use true applicant email and name if available', async () => {
+      ;(firestore.setDoc as jest.Mock).mockResolvedValueOnce(undefined)
+      ;(firestore.updateDoc as jest.Mock).mockResolvedValueOnce(undefined)
+      ;(firestore.getDoc as jest.Mock).mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({
+          personal: { email: 'david-h@example.com', firstName: 'David' },
+        }),
+      })
+      ;(global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true })
+
+      await applicationService.submitOfficialDecision(
+        'applications',
+        'app-10',
+        'interview',
+        {} as any,
+        'stale@example.com',
+        'Stale',
+        '2026-09-01',
+      )
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/scheduleInterview',
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.stringContaining('david-h@example.com'),
+        }),
+      )
+    })
+
     it('warns but does not throw if the interview scheduling email API responds not-ok', async () => {
       ;(firestore.setDoc as jest.Mock).mockResolvedValueOnce(undefined)
       ;(firestore.updateDoc as jest.Mock).mockResolvedValueOnce(undefined)
