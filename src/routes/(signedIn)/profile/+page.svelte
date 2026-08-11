@@ -138,6 +138,9 @@
           </button>
         </div>
       </div>
+      <Field>
+        {`Role: ${data.user.role}`}
+      </Field>
       <div class="text-sm">
         Any problems with changing your profile? Contact us at <a
           href="mailto:contact@gbstem.org"

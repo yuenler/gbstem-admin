@@ -169,6 +169,7 @@ describe('Section A: Authentication and Navigation', () => {
       cy.visit('/profile')
       cy.get('.bg-red-200').should('not.exist')
       cy.contains('Please verify your email').should('not.exist')
+      cy.contains('Role: admin').should('be.visible')
 
       // Verify main navigation links are now visible
       cy.contains('a', 'Dashboard').should('be.visible')
@@ -251,6 +252,7 @@ describe('Section A: Authentication and Navigation', () => {
       cy.visit('/profile')
       cy.get('.bg-red-200').should('not.exist')
       cy.contains('Please verify your email').should('not.exist')
+      cy.contains('Role: reviewer').should('be.visible')
 
       // Verify main navigation links are now visible
       cy.contains('a', 'Dashboard').should('be.visible')
