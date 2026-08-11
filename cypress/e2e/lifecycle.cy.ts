@@ -63,7 +63,7 @@ describe('Section N: End-to-End Account Lifecycle', () => {
     // Find the new row
     cy.get('tbody tr').then(($rows) => {
       let foundRow: any = null
-      $rows.each((i: number, el: any) => {
+      $rows.each((_: number, el: any) => {
         const $row = Cypress.$(el)
         const tokenId = $row.find('th').text().trim()
         if (tokenId.length === 20) {
@@ -101,16 +101,9 @@ describe('Section N: End-to-End Account Lifecycle', () => {
     cy.fillInput('input[name="confirm-password"]', initialPassword)
     cy.get('button[type="submit"]').click()
 
-    // Expect sign up to redirect back to signin page on success
-    cy.url().should('include', '/signin')
-    cy.get('h1').should('contain', 'Sign in')
-
-    // 3. Sign In and Trigger Email Verification Guard
-    cy.fillInput('input[type="email"]', initialEmail)
-    cy.fillInput('input[type="password"]', initialPassword)
-    cy.get('button[type="submit"]').click()
-
+    // Expect sign up to leave user signed in and redirect to profile page on success
     cy.url().should('include', '/profile')
+    cy.get('h1').should('contain', 'Profile')
     cy.get('[role="dialog"]').should('exist')
     cy.contains('Please verify your email').should('be.visible')
     cy.waitForNotification('Email is not verified.', 'bg-red-200')
@@ -126,7 +119,7 @@ describe('Section N: End-to-End Account Lifecycle', () => {
       .click({ force: true })
     cy.get('[role="dialog"]').should('not.exist')
 
-    // 4. Verify Email (Emulator Side-Channel)
+    // 4. Verify Email (emulated email side-channel)
     cy.getLatestOobLink(initialEmail, 'VERIFY_EMAIL').then((link) => {
       cy.request(link)
     })
@@ -181,7 +174,7 @@ describe('Section N: End-to-End Account Lifecycle', () => {
     cy.waitForNotification('A verification email was sent.', 'bg-gray-200')
     cy.wait(500)
 
-    // Verify the new email using emulator side-channel
+    // Verify the new email (emulated email side-channel)
     cy.getLatestOobLink(updatedEmail, 'VERIFY_AND_CHANGE_EMAIL').then(
       (link) => {
         cy.request(link)
@@ -228,7 +221,7 @@ describe('Section N: End-to-End Account Lifecycle', () => {
     cy.get('button[type="submit"]').click()
     cy.get('body').should('contain', 'Password reset email was sent')
 
-    // Find password reset link from emulator
+    // Get the password reset link (emulated email side-channel)
     const finalPassword = 'finalPassword456'
     cy.getLatestOobLink(updatedEmail, 'PASSWORD_RESET').then((link) => {
       const resetLink = `${link}&newPassword=${finalPassword}`

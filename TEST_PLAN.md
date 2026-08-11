@@ -127,7 +127,7 @@ TODO: Update this to check for the actual email being sent, not just the toast, 
 
 - **Description**: Verify that a new account can be created using a valid registration token.
 - **Steps**:
-  1. Navigate to: `http://localhost:5173/signup?token=demo-token`.
+  1. Navigate to: `http://localhost:5173/signup?token=demo-admin-token`.
   2. Verify that the **Sign up** page loads and the token input is populated.
   3. Fill out the fields:
      - **First name**: `Test`
