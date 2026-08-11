@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
   import { goto } from '$app/navigation'
+  import { auth } from '$lib/client/firebase'
   import Brand from '$lib/components/Brand.svelte'
   import Button from '$lib/components/Button.svelte'
   import Dialog from '$lib/components/Dialog.svelte'
@@ -11,6 +12,7 @@
   import PasswordInput from '$lib/components/PasswordInput.svelte'
   import TextInput from '$lib/components/TextInput.svelte'
   import { alert } from '$lib/stores'
+  import { signInWithEmailAndPassword } from 'firebase/auth'
   import type { ActionData, PageData } from './$types'
 
   interface Props {
@@ -43,18 +45,48 @@
   use:enhance={() => {
     disabled = true
     return async ({ result, update }) => {
-      disabled = false
       switch (result.type) {
         case 'success': {
-          if (result.data?.emailWarning) {
-            alert.trigger(
-              'error',
-              'Account created, but the verification email failed to send. You can request another from your profile page after signing in.',
+          try {
+            const credential = await signInWithEmailAndPassword(
+              auth,
+              values.email,
+              values.password,
             )
+            const idToken = await credential.user.getIdToken()
+            const res = await fetch('/api/auth', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ idToken }),
+            })
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}))
+              throw new Error(data.message || 'Unauthorized')
+            }
+            if (result.data?.emailWarning) {
+              alert.trigger(
+                'error',
+                'Account created, but the verification email failed to send. You can request another from your profile page.',
+              )
+            }
+            return goto('/profile')
+          } catch (err: any) {
+            disabled = false
+            console.error('Sign in error after signup:', err)
+            const isFirebaseError =
+              err.code && typeof err.code === 'string' && err.code.includes('/')
+            if (isFirebaseError) {
+              alert.trigger('error', err.code, true)
+            } else {
+              alert.trigger('error', err.message || 'Unauthorized')
+            }
           }
-          return goto('/signin')
+          break
         }
         default: {
+          disabled = false
           values = {
             ...values,
             password: '',

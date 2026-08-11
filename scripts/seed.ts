@@ -269,18 +269,23 @@ async function seed() {
     lastName: 'Admin',
   })
 
-  // Create Signup Token
-  console.log('Creating a demo signup token in "tokens" collection...')
-  const demoToken = {
-    consumable: false,
-    consumers: [],
-    expires: admin.firestore.Timestamp.fromDate(
-      new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-    ),
-    role: 'admin',
+  // Create Signup Tokens
+  console.log('Creating demo signup tokens in "tokens" collection...')
+  for (const role of ['admin', 'reviewer']) {
+    const demoToken = {
+      consumable: false,
+      consumers: [],
+      expires: admin.firestore.Timestamp.fromDate(
+        new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      ),
+      role: role,
+    }
+    validateToken(demoToken, 'demo-' + role + '-token')
+    await db
+      .collection('tokens')
+      .doc('demo-' + role + '-token')
+      .set(demoToken)
   }
-  validateToken(demoToken, 'demo-token')
-  await db.collection('tokens').doc('demo-token').set(demoToken)
 
   // Semester dates are no longer a Firestore document - they're static data in
   // src/lib/data/semesterDates.json (imported as `semesterDates` above), so there's
@@ -1094,7 +1099,7 @@ async function seed() {
   console.log('- Reviewer:   reviewer@gbstem.org')
   console.log('- Instructor: instructor@gbstem.org')
   console.log('- Student:    student@gbstem.org')
-  console.log('Sign-up Token:  demo-token')
+  console.log('Sign-up Token:  demo-admin-token')
   console.log('--------------------------------------------------')
 }
 

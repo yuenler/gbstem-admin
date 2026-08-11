@@ -61,9 +61,13 @@
     const currentId = id
     if (!open || currentId === undefined) return
     let cancelled = false
+    values = cloneDeep(defaultValues)
+    dbValues = undefined
+    decision = undefined
+    interview = cloneDeep(defaultInterview)
+    loading = true
+    disabled = true
     ;(async () => {
-      loading = true
-      disabled = true
       try {
         const res = await applicationService.loadApplicationDetails(
           collection,

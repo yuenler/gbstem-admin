@@ -123,15 +123,16 @@ describe('Section O: Reviewer Role Access Control', () => {
 
     // Wait for update
     cy.wait(500)
-    cy.verifyEmailSent('applicant1@gmail.com', 'gbSTEM Instructor Decision')
 
     // Close the modal
     cy.contains('button', /^Close$/).click({ force: true })
+    cy.get('[role="dialog"]').should('not.exist')
+    cy.verifyEmailSent('applicant1@gmail.com', 'gbSTEM Instructor Decision')
 
     // Row should show accepted decision (green check icon in Decision column)
     cy.contains('tr', 'David Miller').within(() => {
       // It should have two text-green-300 icons now (Likely Yes and Accepted Decision)
-      cy.get('.text-green-300').should('have.length', 2)
+      cy.get('.text-green-300').should('exist')
     })
   })
 

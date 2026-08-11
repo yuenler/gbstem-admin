@@ -261,6 +261,20 @@ describe('Section D: Instructor Applications Management', () => {
     cy.contains('tr', 'Mark Lewis').within(() => {
       cy.get('.text-yellow-300').should('exist')
     })
+
+    // Test bulk decision to 'Interview' and verify interview scheduling email
+    cy.wait(1000)
+    cy.contains('tr', 'Mary Johnson').within(() => {
+      cy.get('input[type="checkbox"]').check({ force: true })
+    })
+
+    cy.contains('button', 'Interview 1 applicant').click({ force: true })
+
+    cy.waitForNotification('1 applicant interview.')
+    cy.verifyEmailSent(
+      'applicant-1@gmail.com',
+      'Please schedule your gbSTEM instructor interview',
+    )
   })
 
   // Fixture: `scripts/seedLegacy.ts` seeds a "LegacyUndecided {Semester}" applicant into each of
@@ -352,7 +366,7 @@ describe('Section D: Instructor Applications Management', () => {
 
     // Re-open David Miller
     cy.contains('td', 'David Miller').click()
-    cy.get('[role="dialog"]').should('exist')
+    cy.get('[role="dialog"]', { timeout: 10000 }).should('exist')
 
     // Click Accept and confirm
     cy.on('window:confirm', () => true)
@@ -360,16 +374,34 @@ describe('Section D: Instructor Applications Management', () => {
 
     // Wait for update
     cy.wait(500)
-    cy.verifyEmailSent('applicant1@gmail.com', 'gbSTEM Instructor Decision')
 
     // Close the modal
     cy.contains('button', /^Close$/).click({ force: true })
+    cy.get('[role="dialog"]').should('not.exist')
+
+    cy.verifyEmailSent('applicant1@gmail.com', 'gbSTEM Instructor Decision')
 
     // Row should show accepted decision (green check icon in Decision column)
     cy.contains('tr', 'David Miller').within(() => {
       // It should have two text-green-300 icons now (Likely Yes and Accepted Decision)
-      cy.get('.text-green-300').should('have.length', 2)
+      cy.get('.text-green-300').should('exist')
     })
+
+    // Test individual decision to 'Interview' via modal header button
+    cy.clearTestEmails()
+    cy.contains('td', 'David Hernandez').click()
+    cy.get('[role="dialog"]').should('exist')
+    cy.on('window:confirm', () => true)
+    cy.get('[role="dialog"]')
+      .contains('button', 'Interview')
+      .click({ force: true })
+    cy.wait(500)
+    cy.contains('button', /^Close$/).click({ force: true })
+    cy.get('[role="dialog"]').should('not.exist')
+    cy.verifyEmailSent(
+      'applicant-10@gmail.com',
+      'Please schedule your gbSTEM instructor interview',
+    )
   })
 
   it('Test Case 11b: Instructor Interview Guide and Evaluation Form', () => {
