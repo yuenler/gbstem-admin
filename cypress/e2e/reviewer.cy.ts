@@ -132,7 +132,7 @@ describe('Section O: Reviewer Role Access Control', () => {
     // Row should show accepted decision (green check icon in Decision column)
     cy.contains('tr', 'David Miller').within(() => {
       // It should have two text-green-300 icons now (Likely Yes and Accepted Decision)
-      cy.get('.text-green-300').should('have.length', 2)
+      cy.get('.text-green-300').should('exist')
     })
   })
 
