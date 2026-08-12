@@ -13,7 +13,6 @@ describe('Section C: Announcements Page', () => {
 
     // Navigate to a URL with custom limit parameter
     cy.visit('/announcements?limit=50&page=1')
-    cy.wait(500)
 
     // The dropdown input should automatically reflect the limit "50"
     cy.get('input[name="per-page"]').should('have.value', '50')

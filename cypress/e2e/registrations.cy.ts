@@ -24,7 +24,6 @@ describe('Section G: Pre-Registrations Directory', () => {
 
     // Search for Charlie
     cy.submitSearch('Charlie')
-    cy.wait(500)
 
     // Table should contain Charlie Brown
     cy.get('table', { timeout: 10000 }).should(($table) => {

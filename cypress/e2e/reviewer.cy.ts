@@ -95,7 +95,9 @@ describe('Section O: Reviewer Role Access Control', () => {
   it('Test Case 26: Reviewer Allowed Operations', () => {
     cy.visit('/applications')
     cy.title().should('contain', 'Applications')
-    cy.wait(1000) // Wait for applications list to load
+    // Raw cy.visit() (not cy.signedInSession()), so there's no built-in
+    // settle time for Svelte to attach event handlers before the click below.
+    cy.wait(1000)
 
     // Open application modal for David Miller
     cy.contains('td', 'David Miller').click()
@@ -121,9 +123,6 @@ describe('Section O: Reviewer Role Access Control', () => {
     cy.on('window:confirm', () => true)
     cy.contains('button', 'Accept').click({ force: true })
 
-    // Wait for update
-    cy.wait(500)
-
     // Close the modal
     cy.contains('button', /^Close$/).click({ force: true })
     cy.get('[role="dialog"]').should('not.exist')
@@ -139,7 +138,9 @@ describe('Section O: Reviewer Role Access Control', () => {
   it('Test Case 27: Reviewer Disallowed Write Operations (Firestore Level)', () => {
     cy.visit('/registrations')
     cy.title().should('contain', 'Registrations')
-    cy.wait(1000) // Wait for applications list to load
+    // Raw cy.visit() (not cy.signedInSession()), so there's no built-in
+    // settle time for Svelte to attach event handlers before the click below.
+    cy.wait(1000)
 
     // Try to toggle "Bypass Age Limits?" which reviewer doesn't have permissions to write
     cy.contains('tr', 'Charlie Brown').find('input[id^="bypass-"]').click()

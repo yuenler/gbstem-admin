@@ -23,7 +23,11 @@ declare namespace Cypress {
         'VERIFY_EMAIL' | 'PASSWORD_RESET' | 'VERIFY_AND_CHANGE_EMAIL',
     ): Chainable<string>
     clearTestEmails(): Chainable<any>
-    verifyEmailSent(email: string, subjectSubstring: string): Chainable<any>
+    verifyEmailSent(
+      email: string,
+      subjectSubstring: string,
+      timeoutMs?: number,
+    ): Chainable<any>
     waitForNotification(
       text: string,
       colorClass?: string,

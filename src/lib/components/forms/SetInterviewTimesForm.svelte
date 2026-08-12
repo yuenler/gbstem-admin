@@ -44,6 +44,22 @@
     return interviewService.fetchInterviewSlots()
   }
 
+  // addTime/updateTime/deleteTime each independently refetch and reassign
+  // allInterviewSlots after their own write. Since those refetches run
+  // concurrently and aren't guaranteed to resolve in the order they started,
+  // an older (slower) refetch can resolve after a newer one and clobber it
+  // with stale data -- e.g. an edit's refetch overwriting a delete that
+  // already completed. Guard with a request counter so only the
+  // most-recently-started refetch is ever applied.
+  let slotsRequestVersion = 0
+  async function refetchSlots() {
+    const version = ++slotsRequestVersion
+    const data = await getData()
+    if (version === slotsRequestVersion) {
+      allInterviewSlots = data
+    }
+  }
+
   async function getTimeRequests() {
     return interviewService.fetchSlotRequests()
   }
@@ -80,7 +96,7 @@
       if (user) {
         try {
           currentUser = user
-          allInterviewSlots = await getData()
+          await refetchSlots()
           interviewSlotRequests = await getTimeRequests()
           const intervieweeInfo = await getInterviewees()
           intervieweeNames = intervieweeInfo.names
@@ -131,7 +147,7 @@
       currentUser?.object?.email ?? '',
     )
     interviewee = ''
-    allInterviewSlots = await getData()
+    await refetchSlots()
   }
 
   function handleClear() {
@@ -160,7 +176,7 @@
     try {
       await interviewService.updateInterviewSlot(interview)
       alert.trigger('success', 'Timeslot updated successfully.')
-      allInterviewSlots = await getData()
+      await refetchSlots()
     } catch (err: any) {
       console.error('Update timeslot error:', err)
       alert.trigger('error', 'Failed to update timeslot.')
@@ -183,8 +199,13 @@
     }
     try {
       await interviewService.deleteInterviewSlot(interview.id)
-      allInterviewSlots = await getData()
+      // Remove it from local state immediately rather than waiting on the
+      // refetch below, so the card disappears even if that round trip is slow.
+      allInterviewSlots = allInterviewSlots.filter(
+        (slot) => slot.id !== interview.id,
+      )
       alert.trigger('success', 'Timeslot successfully deleted.')
+      await refetchSlots()
     } catch (err: any) {
       console.error('Delete timeslot error:', err)
       alert.trigger('error', 'Failed to delete timeslot.')
@@ -211,188 +232,182 @@
       <p class="mt-1">{loadError}</p>
     </div>
   {:else}
-    {#await allInterviewSlots then value}
-      {#await interviewSlotRequests then interviewRequests}
-        {#await intervieweeNames then intervieweeNames}
-          <Form class={cn(showValidation && 'show-validation', className)}>
-            <div class="right-2 items-center">
-              <Card class="mb-4">
-                <h2 class="font-bold">Interview Time Requests</h2>
-                {#each interviewRequests as request (request.id)}
-                  {#if intervieweeOptions.find((option) => option.meta.uid === (request.uid || request.id.replace(/-\d{4}-\d{2}-\d{2}.*$/, '')))?.meta.interview === false}
-                    {#if request.date > new Date()}
-                      <div
-                        class="mt-2 flex items-center justify-between rounded-lg bg-blue-100 p-4"
-                      >
-                        <p>{formatDateLocal(request.date)}</p>
-                        <p>{request.firstName} {request.lastName}</p>
-                        <p>{request.email}</p>
-                      </div>
-                    {:else if request.date > new Date(new Date().setDate(new Date().getDate() - 30))}
-                      <div
-                        class="mt-2 flex items-center justify-between rounded-lg bg-red-100 p-4"
-                      >
-                        <p>{formatDateLocal(request.date)}</p>
-                        <p>{request.firstName} {request.lastName}</p>
-                        <p>{request.email}</p>
-                      </div>
-                    {/if}
-                  {/if}
-                {/each}
-              </Card>
-              <Card>
-                <h2 class="font-bold">Add A Time Slot</h2>
-                <DateTimeInput
-                  bind:value={interviewSlotToAdd.date}
-                  label="Set Date (your local time)"
-                />
-                <TextInput
-                  bind:value={interviewSlotToAdd.meetingLink}
-                  label="Interview Meeting Link"
-                />
-                <div class="flex items-end gap-4">
-                  <Select
-                    bind:value={interviewee}
-                    label="Assign Interviewee (ONLY USE when fulfilling that person's interview time request)"
-                    options={intervieweeNames}
+    <Form class={cn(showValidation && 'show-validation', className)}>
+      <div class="right-2 items-center">
+        <Card class="mb-4">
+          <h2 class="font-bold">Interview Time Requests</h2>
+          {#each interviewSlotRequests as request (request.id)}
+            {#if intervieweeOptions.find((option) => option.meta.uid === (request.uid || request.id.replace(/-\d{4}-\d{2}-\d{2}.*$/, '')))?.meta.interview === false}
+              {#if request.date > new Date()}
+                <div
+                  class="mt-2 flex items-center justify-between rounded-lg bg-blue-100 p-4"
+                >
+                  <p>{formatDateLocal(request.date)}</p>
+                  <p>{request.firstName} {request.lastName}</p>
+                  <p>{request.email}</p>
+                </div>
+              {:else if request.date > new Date(new Date().setDate(new Date().getDate() - 30))}
+                <div
+                  class="mt-2 flex items-center justify-between rounded-lg bg-red-100 p-4"
+                >
+                  <p>{formatDateLocal(request.date)}</p>
+                  <p>{request.firstName} {request.lastName}</p>
+                  <p>{request.email}</p>
+                </div>
+              {/if}
+            {/if}
+          {/each}
+        </Card>
+        <Card>
+          <h2 class="font-bold">Add A Time Slot</h2>
+          <DateTimeInput
+            bind:value={interviewSlotToAdd.date}
+            label="Set Date (your local time)"
+          />
+          <TextInput
+            bind:value={interviewSlotToAdd.meetingLink}
+            label="Interview Meeting Link"
+          />
+          <div class="flex items-end gap-4">
+            <Select
+              bind:value={interviewee}
+              label="Assign Interviewee (ONLY USE when fulfilling that person's interview time request)"
+              options={intervieweeNames}
+            />
+            <Button
+              color="red"
+              class="h-fit"
+              onclick={() => {
+                handleClear()
+              }}
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#000000"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                ><polyline points="3 6 5 6 21 6"></polyline><path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                ></path><line x1="10" y1="11" x2="10" y2="17"></line><line
+                  x1="14"
+                  y1="11"
+                  x2="14"
+                  y2="17"
+                ></line></svg
+              ></Button
+            >
+          </div>
+          <div class="right-2 items-center">
+            <Button color="blue" class="my-4 px-2 py-1" onclick={addTime}
+              >Confirm Timeslot</Button
+            >
+          </div>
+        </Card>
+
+        <div class="my-5 flex gap-5">
+          <CheckboxInput
+            bind:value={onlyIncludeMyInterviews}
+            label="Only include my interviews"
+          />
+          <CheckboxInput
+            bind:value={onlyShowFutureSlots}
+            label="Only show future interview slots"
+          />
+        </div>
+      </div>
+
+      {#each allInterviewSlots as interview (interview.id)}
+        {#if editSlot === interview.id}
+          {#if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser?.object?.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
+            <Card>
+              <Form
+                class={cn(showValidation && 'show-validation', className)}
+                onSubmit={() => updateTime(interview)}
+              >
+                <div style="padding:1rem;">
+                  <div>
+                    <b>Interviewer: </b>{interview.interviewerName}
+                  </div>
+                  <DateTimeInput
+                    bind:value={interview.date}
+                    label="Edit Interview Meeting Time"
                   />
-                  <Button
-                    color="red"
-                    class="h-fit"
-                    onclick={() => {
-                      handleClear()
-                    }}
-                    ><svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#000000"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      ><polyline points="3 6 5 6 21 6"></polyline><path
-                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                      ></path><line x1="10" y1="11" x2="10" y2="17"></line><line
-                        x1="14"
-                        y1="11"
-                        x2="14"
-                        y2="17"
-                      ></line></svg
-                    ></Button
-                  >
-                </div>
-                <div class="right-2 items-center">
-                  <Button color="blue" class="my-4 px-2 py-1" onclick={addTime}
-                    >Confirm Timeslot</Button
-                  >
-                </div>
-              </Card>
-
-              <div class="my-5 flex gap-5">
-                <CheckboxInput
-                  bind:value={onlyIncludeMyInterviews}
-                  label="Only include my interviews"
-                />
-                <CheckboxInput
-                  bind:value={onlyShowFutureSlots}
-                  label="Only show future interview slots"
-                />
-              </div>
-            </div>
-
-            {#each value as interview (interview.id)}
-              {#if editSlot === interview.id}
-                {#if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser?.object?.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
-                  <Card>
-                    <Form
-                      class={cn(showValidation && 'show-validation', className)}
-                      onSubmit={() => updateTime(interview)}
-                    >
-                      <div style="padding:1rem;">
-                        <div>
-                          <b>Interviewer: </b>{interview.interviewerName}
-                        </div>
-                        <DateTimeInput
-                          bind:value={interview.date}
-                          label="Edit Interview Meeting Time"
-                        />
-                        <TextInput
-                          bind:value={interview.meetingLink}
-                          label="Edit Interview Meeting Link"
-                        />
-                        <div class="flex gap-5">
-                          <div class="right-2 items-center">
-                            <Button
-                              color="blue"
-                              class="my-4 px-2 py-1"
-                              onclick={() => {
-                                updateTime(interview)
-                                editSlot = ''
-                              }}>Save</Button
-                            >
-                          </div>
-                          <div class="right-2 items-center">
-                            <Button
-                              color="blue"
-                              class="my-4 px-2 py-1"
-                              onclick={() => {
-                                deleteTime(interview)
-                                editSlot = ''
-                              }}>Delete</Button
-                            >
-                          </div>
-                        </div>
-                      </div>
-                    </Form>
-                  </Card>
-                {/if}
-              {:else if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser?.object?.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
-                <Card>
-                  <div class="my-1">
-                    <b>Interviewer:</b>
-                    {interview.interviewerName}
-                  </div>
-                  <div>
-                    <b>Time:</b>
-                    {formatDate(new Date(interview.date))}
-                  </div>
-                  <div>
-                    <b>Meeting Link:</b>
-                    <a href={interview.meetingLink} target="_blank">
-                      {interview.meetingLink}
-                    </a>
-                  </div>
-                  <!-- interview status -->
-                  <div>
-                    <b>Interview Status:</b>
-                    {interview.interviewSlotStatus}
-                  </div>
-
-                  {#if interview.intervieweeId !== ''}
-                    <div>
-                      <b>Interviewee:</b>
-                      {interview.intervieweeFirstName}
-                      {interview.intervieweeLastName}
-                    </div>
-                  {/if}
-
-                  {#if (interview.interviewSlotStatus === 'available' || interview.interviewSlotStatus === 'pending') && (interview.interviewerEmail === currentUser?.object?.email || currentUser?.profile?.role === 'admin')}
-                    <div>
+                  <TextInput
+                    bind:value={interview.meetingLink}
+                    label="Edit Interview Meeting Link"
+                  />
+                  <div class="flex gap-5">
+                    <div class="right-2 items-center">
                       <Button
                         color="blue"
                         class="my-4 px-2 py-1"
-                        onclick={() => (editSlot = interview.id)}>Edit</Button
+                        onclick={() => {
+                          updateTime(interview)
+                          editSlot = ''
+                        }}>Save</Button
                       >
                     </div>
-                  {/if}
-                </Card>
-              {/if}
-            {/each}
-          </Form>
-        {/await}
-      {/await}
-    {/await}
+                    <div class="right-2 items-center">
+                      <Button
+                        color="blue"
+                        class="my-4 px-2 py-1"
+                        onclick={() => {
+                          deleteTime(interview)
+                          editSlot = ''
+                        }}>Delete</Button
+                      >
+                    </div>
+                  </div>
+                </div>
+              </Form>
+            </Card>
+          {/if}
+        {:else if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser?.object?.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
+          <Card>
+            <div class="my-1">
+              <b>Interviewer:</b>
+              {interview.interviewerName}
+            </div>
+            <div>
+              <b>Time:</b>
+              {formatDate(new Date(interview.date))}
+            </div>
+            <div>
+              <b>Meeting Link:</b>
+              <a href={interview.meetingLink} target="_blank">
+                {interview.meetingLink}
+              </a>
+            </div>
+            <!-- interview status -->
+            <div>
+              <b>Interview Status:</b>
+              {interview.interviewSlotStatus}
+            </div>
+
+            {#if interview.intervieweeId !== ''}
+              <div>
+                <b>Interviewee:</b>
+                {interview.intervieweeFirstName}
+                {interview.intervieweeLastName}
+              </div>
+            {/if}
+
+            {#if (interview.interviewSlotStatus === 'available' || interview.interviewSlotStatus === 'pending') && (interview.interviewerEmail === currentUser?.object?.email || currentUser?.profile?.role === 'admin')}
+              <div>
+                <Button
+                  color="blue"
+                  class="my-4 px-2 py-1"
+                  onclick={() => (editSlot = interview.id)}>Edit</Button
+                >
+              </div>
+            {/if}
+          </Card>
+        {/if}
+      {/each}
+    </Form>
   {/if}
 </svelte:boundary>

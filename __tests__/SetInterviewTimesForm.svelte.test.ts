@@ -208,6 +208,14 @@ describe('SetInterviewTimesForm Component', () => {
       )
     })
 
+    // The deleted slot's card must actually leave the DOM, not just have
+    // triggered the delete call -- this is what a slow/stale refetch would miss.
+    await waitFor(() => {
+      expect(
+        within(container).queryByText(futureSlot.meetingLink),
+      ).not.toBeInTheDocument()
+    })
+
     unmount(app)
   })
 

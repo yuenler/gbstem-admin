@@ -60,9 +60,11 @@ describe('Section D: Instructor Applications Management', () => {
 
     // Select "Fall 2025" from Collection dropdown
     cy.get('input[name="collection"]').clear().type('Fall 2025')
-    cy.wait(200)
-    cy.get('input[name="collection"]').type('{enter}')
-    cy.wait(500)
+    cy.get('input[name="collection"]')
+      .parent()
+      .find('button')
+      .contains('Fall 2025')
+      .click({ force: true })
     cy.get('table', { timeout: TABLE_TIMEOUT }).should(($table) => {
       // Verify no applications from the current semester remain
       expect($table).to.not.contain('David Miller')
@@ -71,9 +73,11 @@ describe('Section D: Instructor Applications Management', () => {
 
     // Switch back to the current semester to see the applications again
     cy.get('input[name="collection"]').clear().type(currentSemesterName)
-    cy.wait(200)
-    cy.get('input[name="collection"]').type('{enter}')
-    cy.wait(500)
+    cy.get('input[name="collection"]')
+      .parent()
+      .find('button')
+      .contains(currentSemesterName)
+      .click({ force: true })
     cy.get('table', { timeout: TABLE_TIMEOUT }).should(($table) => {
       // Ensure applications from the current semester reappear
       expect($table).to.contain('David Miller')
@@ -82,9 +86,11 @@ describe('Section D: Instructor Applications Management', () => {
 
     // Select "undecided" from Decision dropdown
     cy.get('input[name="decision"]').clear().type('undecided')
-    cy.wait(200)
-    cy.get('input[name="decision"]').type('{enter}')
-    cy.wait(500)
+    cy.get('input[name="decision"]')
+      .parent()
+      .find('button')
+      .contains('undecided')
+      .click({ force: true })
     cy.get('table', { timeout: TABLE_TIMEOUT }).should(($table) => {
       // Ensure demo instructor is removed and David stays
       expect($table).to.not.contain('Demo Instructor')
@@ -262,7 +268,11 @@ describe('Section D: Instructor Applications Management', () => {
       cy.get('.text-yellow-300').should('exist')
     })
 
-    // Test bulk decision to 'Interview' and verify interview scheduling email
+    // Test bulk decision to 'Interview' and verify interview scheduling email.
+    // cy.reload() re-hydrates the page from scratch, so give Svelte a beat to
+    // attach event handlers before interacting -- the row is visible from SSR
+    // markup well before its checkbox's onclick listener is wired up, so a
+    // retrying assertion on the row itself doesn't catch this.
     cy.wait(1000)
     cy.contains('tr', 'Mary Johnson').within(() => {
       cy.get('input[type="checkbox"]').check({ force: true })
@@ -288,13 +298,17 @@ describe('Section D: Instructor Applications Management', () => {
 
     // Switch to a past semester via the Collection dropdown, same flow as Test Case 9.
     cy.get('input[name="collection"]').clear().type('Fall 2025')
-    cy.wait(200)
-    cy.get('input[name="collection"]').type('{enter}')
-    cy.wait(500)
+    cy.get('input[name="collection"]')
+      .parent()
+      .find('button')
+      .contains('Fall 2025')
+      .click({ force: true })
 
     const pastSemesterApplicantName = 'LegacyUndecided Fall25'
 
-    cy.contains('tr', pastSemesterApplicantName).within(() => {
+    cy.contains('tr', pastSemesterApplicantName, {
+      timeout: TABLE_TIMEOUT,
+    }).within(() => {
       cy.get('input[type="checkbox"]').check({ force: true })
     })
     cy.contains('button', 'Waitlist 1 applicant').click({ force: true })
@@ -309,10 +323,14 @@ describe('Section D: Instructor Applications Management', () => {
     // would only reproduce if the same uid also has a current-semester application, so a
     // fully faithful fixture needs a shared uid across both semesters).
     cy.get('input[name="collection"]').clear().type(currentSemesterName)
-    cy.wait(200)
-    cy.get('input[name="collection"]').type('{enter}')
-    cy.wait(500)
-    cy.contains('tr', pastSemesterApplicantName).should('not.exist')
+    cy.get('input[name="collection"]')
+      .parent()
+      .find('button')
+      .contains(currentSemesterName)
+      .click({ force: true })
+    cy.contains('tr', pastSemesterApplicantName, {
+      timeout: TABLE_TIMEOUT,
+    }).should('not.exist')
   })
 
   it('Test Case 11: Application Details Modal, Editing Details, and Decision Updates', () => {
@@ -372,9 +390,6 @@ describe('Section D: Instructor Applications Management', () => {
     cy.on('window:confirm', () => true)
     cy.contains('button', 'Accept').click({ force: true })
 
-    // Wait for update
-    cy.wait(500)
-
     // Close the modal
     cy.contains('button', /^Close$/).click({ force: true })
     cy.get('[role="dialog"]').should('not.exist')
@@ -395,7 +410,6 @@ describe('Section D: Instructor Applications Management', () => {
     cy.get('[role="dialog"]')
       .contains('button', 'Interview')
       .click({ force: true })
-    cy.wait(500)
     cy.contains('button', /^Close$/).click({ force: true })
     cy.get('[role="dialog"]').should('not.exist')
     cy.verifyEmailSent(
