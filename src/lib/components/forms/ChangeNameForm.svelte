@@ -9,11 +9,14 @@
   import { z } from 'zod'
   import Button from '../Button.svelte'
   import FormInput from '../FormInput.svelte'
+  import Loading from '../Loading.svelte'
 
   const schema = z.object({
     firstName: z.string().trim().min(1, 'First name is required'),
     lastName: z.string().trim().min(1, 'Last name is required'),
   })
+
+  let loading = $state(true)
 
   const formResult = superForm(
     defaults({ firstName: '', lastName: '' }, zod(schema as any) as any) as any,
@@ -63,8 +66,9 @@
   const { form, enhance, delayed } = formResult
 
   onMount(() => {
+    let initialized = false
     return user.subscribe(async (u) => {
-      if (!u) return
+      if (!u || initialized) return
       try {
         const stored = await userService.fetchUserName(u.object.uid)
         if (stored) {
@@ -74,6 +78,9 @@
         }
       } catch (err) {
         console.error('Error loading stored name:', err)
+      } finally {
+        initialized = true
+        loading = false
       }
       // Accounts created before signup wrote a `users` document have only a
       // displayName to go on; split it so the form isn't blank for them.
@@ -84,37 +91,41 @@
   })
 </script>
 
-<form use:enhance class="w-full">
-  <fieldset class="space-y-4" disabled={$delayed}>
-    <div class="grid gap-2 sm:grid-cols-2">
-      <div class="w-full">
-        <FormInput
-          form={formResult}
-          name="firstName"
-          label="First name"
-          inputName="first-name"
-          bind:value={$form.firstName}
-        />
-      </div>
-      <div class="flex items-end gap-2">
+{#if loading}
+  <Loading />
+{:else}
+  <form use:enhance class="w-full">
+    <fieldset class="space-y-4" disabled={$delayed}>
+      <div class="grid gap-2 sm:grid-cols-2">
         <div class="w-full">
           <FormInput
             form={formResult}
-            name="lastName"
-            label="Last name"
-            inputName="last-name"
-            bind:value={$form.lastName}
+            name="firstName"
+            label="First name"
+            inputName="first-name"
+            bind:value={$form.firstName}
           />
         </div>
-        <Button
-          class="h-12 shrink-0"
-          color="blue"
-          type="submit"
-          disabled={$delayed}
-        >
-          Update
-        </Button>
+        <div class="flex items-end gap-2">
+          <div class="w-full">
+            <FormInput
+              form={formResult}
+              name="lastName"
+              label="Last name"
+              inputName="last-name"
+              bind:value={$form.lastName}
+            />
+          </div>
+          <Button
+            class="h-12 shrink-0"
+            color="blue"
+            type="submit"
+            disabled={$delayed}
+          >
+            Update
+          </Button>
+        </div>
       </div>
-    </div>
-  </fieldset>
-</form>
+    </fieldset>
+  </form>
+{/if}
