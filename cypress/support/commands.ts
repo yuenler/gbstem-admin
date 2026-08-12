@@ -110,14 +110,19 @@ Cypress.Commands.add('signOutViaUi', () => {
   cy.get('input[type="email"]').should('be.visible')
 })
 
+// Select.svelte debounces its dropdown filtering by 150ms (see Select.svelte),
+// so instead of guessing that delay with a fixed wait, click the rendered
+// option button once it appears -- the click() at the end of this chain
+// retries the whole query until the (debounced) option shows up.
 Cypress.Commands.add('selectOption', (selector: string, text: string) => {
   cy.get(selector).then(($el) => {
     const el = $el[0] as HTMLInputElement
     el.value = text
     el.dispatchEvent(new Event('input', { bubbles: true }))
   })
-  cy.wait(300)
-  cy.get(selector).type('{enter}', { force: true })
+  cy.get(selector).parent().find('button').contains(text).click({
+    force: true,
+  })
 })
 
 Cypress.Commands.add('parseCsv', (csvText: string) => {
@@ -196,10 +201,14 @@ Cypress.Commands.add('clearTestEmails', () => {
 
 Cypress.Commands.add(
   'verifyEmailSent',
-  (email: string, subjectSubstring: string) => {
-    return cy.request('GET', '/api/test/emails').then((response) => {
-      const sentEmails = response.body || []
-      const match = sentEmails
+  (email: string, subjectSubstring: string, timeoutMs: number = 10000) => {
+    // The send is triggered server-side by the write that preceded this call
+    // (e.g. a decision update), so the email may not have landed in the test
+    // inbox yet -- poll for it instead of assuming the caller waited long
+    // enough before calling this command.
+    const deadline = Date.now() + timeoutMs
+    const findMatch = (sentEmails: any[]) =>
+      sentEmails
         .filter((msg: any) => {
           const toMatch = Array.isArray(msg.to)
             ? msg.to.includes(email)
@@ -208,12 +217,19 @@ Cypress.Commands.add(
           return toMatch && subjectMatch
         })
         .pop()
-      expect(
-        match,
-        `Expected an email sent to ${email} with subject containing "${subjectSubstring}"`,
-      ).to.not.equal(undefined)
-      return match
-    })
+    const attempt = (): Cypress.Chainable<any> =>
+      cy.request('GET', '/api/test/emails').then((response) => {
+        const match = findMatch(response.body || [])
+        if (match) return cy.wrap(match)
+        if (Date.now() >= deadline) {
+          expect(
+            match,
+            `Expected an email sent to ${email} with subject containing "${subjectSubstring}"`,
+          ).to.not.equal(undefined)
+        }
+        return cy.wait(250, { log: false }).then(attempt)
+      })
+    return attempt()
   },
 )
 

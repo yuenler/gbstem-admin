@@ -18,7 +18,6 @@ describe('Section N: End-to-End Account Lifecycle', () => {
     // 1. Generate the Registration Token
     cy.signedInSession('admin', { initialPage: '/tokens' })
     cy.selectOption('input[name="per-page"]', '50')
-    cy.wait(500)
 
     // Open creation modal
     cy.get('th').find('button').click({ force: true })
@@ -28,9 +27,11 @@ describe('Section N: End-to-End Account Lifecycle', () => {
     cy.get('input[name="what-role-should-this-token-grant"]')
       .clear()
       .type('admin')
-    cy.wait(300)
-    cy.get('input[name="what-role-should-this-token-grant"]').type('{enter}')
-    cy.wait(200)
+    cy.get('input[name="what-role-should-this-token-grant"]')
+      .parent()
+      .find('button')
+      .contains('admin')
+      .click({ force: true })
 
     // Check "Should this token be one-time use?"
     cy.get('input[name="should-this-token-be-one-time-use"]').check({
@@ -49,7 +50,6 @@ describe('Section N: End-to-End Account Lifecycle', () => {
     // Click Create
     cy.contains('button', 'Create').click({ force: true })
     cy.waitForNotification('Changes were saved successfully.')
-    cy.wait(1000)
 
     // Setup clipboard stub to capture the token
     let signupUrl = ''
@@ -60,18 +60,22 @@ describe('Section N: End-to-End Account Lifecycle', () => {
       })
     })
 
-    // Find the new row
+    // Find the new row. Retry via .should() until it renders instead of
+    // guessing how long the table takes to pick up the new token.
+    cy.get('tbody tr', { timeout: 10000 }).should(($rows) => {
+      const found = $rows
+        .toArray()
+        .some((el) => Cypress.$(el).find('th').text().trim().length === 20)
+      expect(
+        found,
+        'expected a newly created 20-character token ID row',
+      ).to.equal(true)
+    })
     cy.get('tbody tr').then(($rows) => {
-      let foundRow: any = null
-      $rows.each((_: number, el: any) => {
-        const $row = Cypress.$(el)
-        const tokenId = $row.find('th').text().trim()
-        if (tokenId.length === 20) {
-          foundRow = $row
-        }
-      })
-      expect(foundRow).to.not.equal(null)
-      cy.wrap(foundRow).as('newAdminRow')
+      const foundRow = $rows
+        .toArray()
+        .find((el) => Cypress.$(el).find('th').text().trim().length === 20)
+      cy.wrap(Cypress.$(foundRow)).as('newAdminRow')
     })
 
     // Copy token link
@@ -79,7 +83,6 @@ describe('Section N: End-to-End Account Lifecycle', () => {
       cy.contains('button', 'Copy').click({ force: true })
     })
     cy.waitForNotification('Token copied.')
-    cy.wait(500)
 
     // Sign out
     cy.signOutViaUi()
@@ -147,7 +150,6 @@ describe('Section N: End-to-End Account Lifecycle', () => {
     cy.waitForNotification('Name successfully updated.')
     cy.get('input[name="first-name"]').should('have.value', 'Lifecycle')
     cy.get('input[name="last-name"]').should('have.value', updatedLastName)
-    cy.wait(500)
 
     // Update Email
     const updatedEmail = `${generateDateHash('lifecycle.admin.new')}@gbstem.org`
@@ -172,7 +174,6 @@ describe('Section N: End-to-End Account Lifecycle', () => {
       .click({ force: true })
 
     cy.waitForNotification('A verification email was sent.', 'bg-gray-200')
-    cy.wait(500)
 
     // Verify the new email (emulated email side-channel)
     cy.getLatestOobLink(updatedEmail, 'VERIFY_AND_CHANGE_EMAIL').then(
@@ -254,8 +255,10 @@ describe('Section N: End-to-End Account Lifecycle', () => {
       .click({ force: true })
 
     cy.waitForNotification('Account was successfully deleted.')
-    cy.wait(2500) // Wait for reload delay in DeleteAccountForm.svelte (2000ms)
 
-    cy.url().should('include', '/signin')
+    // DeleteAccountForm.svelte reloads the page 2000ms after this toast, which
+    // then redirects to /signin since the account no longer has a session --
+    // let the assertion's own retry window span that delay instead of a fixed wait.
+    cy.url({ timeout: 8000 }).should('include', '/signin')
   })
 })

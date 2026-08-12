@@ -14,7 +14,6 @@ describe('Section K: Registration Signup Tokens', () => {
     // Authenticate as Admin
     cy.signedInSession('admin', { initialPage: '/tokens' })
     cy.selectOption('input[name="per-page"]', '50')
-    cy.wait(500)
   })
 
   it('Test Case 20: Create, Copy, and Delete Signup Tokens', () => {
@@ -27,9 +26,11 @@ describe('Section K: Registration Signup Tokens', () => {
     cy.get('input[name="what-role-should-this-token-grant"]')
       .clear()
       .type('admin')
-    cy.wait(300)
-    cy.get('input[name="what-role-should-this-token-grant"]').type('{enter}')
-    cy.wait(200)
+    cy.get('input[name="what-role-should-this-token-grant"]')
+      .parent()
+      .find('button')
+      .contains('admin')
+      .click({ force: true })
 
     // Check "Should this token be one-time use?"
     cy.get('input[name="should-this-token-be-one-time-use"]').check({
@@ -48,7 +49,6 @@ describe('Section K: Registration Signup Tokens', () => {
     // Click Create
     cy.contains('button', 'Create').click({ force: true })
     cy.waitForNotification('Changes were saved successfully.')
-    cy.wait(1000)
 
     cy.window().then((win) => {
       const stub = cy.stub(win.navigator.clipboard, 'writeText')
@@ -56,25 +56,23 @@ describe('Section K: Registration Signup Tokens', () => {
       cy.wrap(stub).as('clipboardCopy')
     })
 
-    // Find the newly created row (role "admin" and token ID has length 20)
-    cy.get('tbody tr').then(($rows) => {
-      let foundRow: any = null
-      const rowsDebug: string[] = []
-      $rows.each((i: number, el: any) => {
-        const $row = Cypress.$(el)
-        const tokenId = $row.find('th').text().trim()
-        rowsDebug.push(
-          `Row ${i} token ID: "${tokenId}" (length ${tokenId.length})`,
-        )
-        if (tokenId.length === 20) {
-          foundRow = $row
-        }
-      })
+    // Find the newly created row (role "admin" and token ID has length 20).
+    // Retry via .should() until the row renders instead of guessing how long
+    // the table takes to pick up the new token.
+    cy.get('tbody tr', { timeout: 10000 }).should(($rows) => {
+      const found = $rows
+        .toArray()
+        .some((el) => Cypress.$(el).find('th').text().trim().length === 20)
       expect(
-        foundRow,
-        `Could not find a 20-character token ID. Found rows:\n${rowsDebug.join('\n')}`,
-      ).to.not.equal(null)
-      cy.wrap(foundRow).as('newAdminRow')
+        found,
+        'expected a newly created 20-character token ID row',
+      ).to.equal(true)
+    })
+    cy.get('tbody tr').then(($rows) => {
+      const foundRow = $rows
+        .toArray()
+        .find((el) => Cypress.$(el).find('th').text().trim().length === 20)
+      cy.wrap(Cypress.$(foundRow)).as('newAdminRow')
     })
 
     cy.get('@newAdminRow').within(() => {

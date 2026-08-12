@@ -31,23 +31,29 @@ describe('Section H: Interview Timeslots Configuration', () => {
 
         // Assign Interviewee: select David Miller
         cy.get('input[name^="assign-interviewee"]').clear().type('David Miller')
-        cy.wait(300)
-        cy.get('input[name^="assign-interviewee"]').type('{enter}')
+        cy.get('input[name^="assign-interviewee"]')
+          .parent()
+          .find('button')
+          .contains('David Miller')
+          .click({ force: true })
       })
-    cy.wait(200)
 
     // Confirm Timeslot with an assigned interviewe
     cy.on('window:confirm', () => true)
     cy.contains('button', 'Confirm Timeslot').click({ force: true })
     cy.waitForNotification('Interviewee assigned and email sent.')
     cy.verifyEmailSent('applicant1@gmail.com', 'your interview with')
-    cy.wait(500)
 
-    // Verify slot is created and appears in list
-    cy.contains('div', 'David Miller').should('exist')
+    // Verify slot is created and appears in list. Scope by the meeting link
+    // we just typed rather than "David Miller" -- scripts/seed.ts also seeds
+    // a "slot-1" interview owned by Demo Admin with David Miller as the
+    // interviewee, and Firestore's unscoped query doesn't guarantee result
+    // order, so matching on the name alone can land on the wrong card.
+    cy.contains('a', 'https://zoom.us/j/9999999999').should('exist')
 
     // Find the newly created slot card and click Edit
-    cy.contains('David Miller')
+    cy.contains('a', 'https://zoom.us/j/9999999999')
+      .parent()
       .parent()
       .within(() => {
         cy.contains('button', 'Edit').click({ force: true })
@@ -64,13 +70,14 @@ describe('Section H: Interview Timeslots Configuration', () => {
         cy.contains('button', 'Save').click({ force: true })
       })
     cy.waitForNotification('Timeslot updated successfully.')
-    cy.wait(500)
 
     // Verify updated details
     cy.contains('a', 'https://zoom.us/j/8888888888').should('exist')
 
-    // Click Edit again on the card for David Miller
-    cy.contains('David Miller')
+    // Click Edit again on the same card, scoped by its (now updated) unique
+    // meeting link for the same reason as above.
+    cy.contains('a', 'https://zoom.us/j/8888888888')
+      .parent()
       .parent()
       .within(() => {
         cy.contains('button', 'Edit').click({ force: true })
@@ -84,7 +91,6 @@ describe('Section H: Interview Timeslots Configuration', () => {
         cy.contains('button', 'Delete').click({ force: true })
       })
     cy.waitForNotification('Timeslot successfully deleted.')
-    cy.wait(500)
 
     // Verify it is removed from list
     cy.contains('a', 'https://zoom.us/j/8888888888').should('not.exist')

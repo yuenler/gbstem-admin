@@ -143,7 +143,6 @@ describe('Section F: Students Directory', () => {
       .eq(0)
       .clear({ force: true })
       .type('Python 1', { force: true })
-    cy.wait(500)
     cy.get('input[name="select-a-class"]')
       .eq(0)
       .parent()
@@ -151,13 +150,11 @@ describe('Section F: Students Directory', () => {
       .find('button')
       .contains('Python 1')
       .click({ force: true })
-    cy.wait(200)
 
     // Click Add Class
     cy.contains('button', 'Add Class').click({ force: true })
     cy.waitForNotification('Enrolled in class successfully!')
     cy.verifyEmailSent('parent1@gmail.com', 'class details for Charlie Brown')
-    cy.wait(500)
 
     // Class 1 Information should appear
     cy.contains('h2', 'Class 1 Information').should('exist')
@@ -169,7 +166,6 @@ describe('Section F: Students Directory', () => {
       .eq(1)
       .clear({ force: true })
       .type('Python 1', { force: true })
-    cy.wait(500)
     cy.get('input[name="select-a-class"]')
       .eq(1)
       .parent()
@@ -177,12 +173,10 @@ describe('Section F: Students Directory', () => {
       .find('button')
       .contains('Python 1')
       .click({ force: true })
-    cy.wait(200)
 
     // Click Drop Class
     cy.contains('button', 'Drop Class').click({ force: true })
     cy.waitForNotification('Dropped class successfully!')
-    cy.wait(500)
 
     // Class 1 Information should no longer exist
     cy.contains('h2', 'Class 1 Information').should('not.exist')

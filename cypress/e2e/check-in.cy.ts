@@ -18,7 +18,6 @@ describe('Section M: Check In Details and Meals', () => {
   it('Test Case 22: Student Attendance and Meal Checkouts', () => {
     // Search for Demo Student
     cy.submitSearch('Demo Student')
-    cy.wait(500)
 
     // Click Demo Student One to open modal
     cy.contains('td', 'Demo Student One').click()
@@ -31,7 +30,6 @@ describe('Section M: Check In Details and Meals', () => {
     // Click Check In button
     cy.contains('button', 'Check In').click({ force: true })
     cy.waitForNotification('Student checked in successfully!')
-    cy.wait(500)
 
     // Meal Status should now be visible
     cy.contains('div', 'Meal Status').should('exist')

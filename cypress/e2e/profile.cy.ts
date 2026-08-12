@@ -47,7 +47,6 @@ describe('Section L: Profile and Account Customization', () => {
     cy.waitForNotification('Name successfully updated.')
     cy.get('input[name="first-name"]').should('have.value', 'Demo')
     cy.get('input[name="last-name"]').should('have.value', 'AdminTest')
-    cy.wait(500)
 
     // 3. Change email to temp and then change it back
     // We target the "Change email" fieldset
@@ -71,6 +70,11 @@ describe('Section L: Profile and Account Customization', () => {
       .find('button[type="submit"]')
       .click({ force: true })
     cy.waitForNotification('A verification email was sent.', 'bg-gray-200')
+    // Firebase Auth appears to reject a second email-action-link request for
+    // the same account made too soon after the first (verified via repeated
+    // real test runs: removing this wait made the second request below fail
+    // with a 400 from /api/action every time) -- not a client-side race, so
+    // give it real breathing room rather than retrying blindly.
     cy.wait(1000)
 
     // Change email back to demo@gbstem.org
@@ -92,6 +96,8 @@ describe('Section L: Profile and Account Customization', () => {
       .find('button[type="submit"]')
       .click({ force: true })
     cy.waitForNotification('A verification email was sent.', 'bg-gray-200')
+    // Same Auth-throttling consideration as above, ahead of the next
+    // reauthenticate-and-mutate flow.
     cy.wait(1000)
 
     // 4. Change password to temp and then change it back
@@ -122,6 +128,8 @@ describe('Section L: Profile and Account Customization', () => {
         cy.get('input[name="new-password"]').should('have.value', '')
         cy.get('input[name="confirm-password"]').should('have.value', '')
       })
+    // Same Auth-throttling consideration as above, ahead of the next
+    // reauthenticate-and-mutate flow.
     cy.wait(1000)
 
     // Change password to penguin!, which allows us to test that the previous

@@ -24,9 +24,11 @@ describe('Section E: Classes Directory', () => {
 
     // Select "Python 1" from Course filter dropdown
     cy.get('input[name="course"]').clear().type('Python 1')
-    cy.wait(200)
-    cy.get('input[name="course"]').type('{enter}')
-    cy.wait(500)
+    cy.get('input[name="course"]')
+      .parent()
+      .find('button')
+      .contains('Python 1')
+      .click({ force: true })
 
     // Table should contain Python 1 classes only
     cy.get('table', { timeout: 10000 }).should(($table) => {
@@ -188,7 +190,11 @@ describe('Section E: Classes Directory', () => {
     // Click reminders (trigger alert)
     cy.on('window:confirm', () => true)
     cy.contains('button', 'Send Reminder To All Students').click()
-    cy.wait(500)
+    cy.get('body', { timeout: 10000 }).should(($body) => {
+      expect($body.find('.bg-red-200, .bg-green-200').length).to.be.greaterThan(
+        0,
+      )
+    })
     cy.get('body').then(($body) => {
       if ($body.find('.bg-red-200').length > 0) {
         cy.get('.bg-red-200').should('contain', 'No upcoming classes')
@@ -199,7 +205,11 @@ describe('Section E: Classes Directory', () => {
     })
 
     cy.contains('button', 'Send Instructor Reminder').click()
-    cy.wait(500)
+    cy.get('body', { timeout: 10000 }).should(($body) => {
+      expect($body.find('.bg-red-200, .bg-green-200').length).to.be.greaterThan(
+        0,
+      )
+    })
     cy.get('body').then(($body) => {
       if ($body.find('.bg-red-200').length > 0) {
         cy.get('.bg-red-200').should('contain', 'No upcoming classes')
