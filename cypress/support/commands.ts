@@ -25,14 +25,27 @@ Cypress.Commands.add('fillInput', (selector: string, text: string) => {
 //
 // fillInput already re-types when the value doesn't stick, so reuse it, then
 // assert the query reached the URL before any table assertions run.
+//
+// That URL assertion needs its own generous timeout, not Cypress's 4s
+// default: SvelteKit's client router only updates the URL/history *after*
+// the destination route's `load()` resolves, and `goto()` here re-runs the
+// same page load that pages like applications.cy.ts give 30s of headroom to
+// elsewhere (see its TABLE_TIMEOUT comment) -- CI has no Algolia credentials,
+// so that load falls back to a full-collection local search. Without this,
+// the URL check can time out on a plain slow load and get misread as the
+// typing race above, which it isn't.
+const SEARCH_URL_TIMEOUT = 30000
 Cypress.Commands.add('submitSearch', (term: string) => {
   const selector = 'input[placeholder="Search"]'
   cy.fillInput(selector, term)
   cy.get(selector).type('{enter}')
   // Build the expectation the same way SearchBox does, via URLSearchParams --
-  // it encodes a space as "+", which encodeURIComponent would render as "%20"
-  // and never match for multi-word terms like "Demo Student".
-  cy.url().should('include', new URLSearchParams({ query: term }).toString())
+  // it encodes a space as "+", which encodeURIComponent would never match for
+  // multi-word terms like "Demo Student".
+  cy.url({ timeout: SEARCH_URL_TIMEOUT }).should(
+    'include',
+    new URLSearchParams({ query: term }).toString(),
+  )
 })
 
 Cypress.Commands.add(

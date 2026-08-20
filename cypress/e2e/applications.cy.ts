@@ -12,7 +12,9 @@ const currentSemesterName =
 // load. CI has no Algolia credentials, so `searchIndex` falls back to the local
 // search in src/lib/server/search.ts, which reads the entire applications
 // collection and then fetches each hit's decision document. This is headroom
-// for that round trip, not for the search race handled by `submitSearch`.
+// for that round trip; `submitSearch`'s own URL assertion (cypress/support/
+// commands.ts) needs the same headroom for the same reason -- SvelteKit
+// doesn't update the URL until that same load resolves -- and now carries it.
 const TABLE_TIMEOUT = 30000
 
 // Searches go through cy.submitSearch (cypress/support/commands.ts), which
