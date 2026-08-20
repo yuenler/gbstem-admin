@@ -1,5 +1,5 @@
 import { resolveSemester, semesterCollectionPath } from '$lib/data/collections'
-import { adminDb } from '$lib/server/firebase'
+import { adminDb, toDateSafe } from '$lib/server/firebase'
 import { searchIndex } from '$lib/server/search'
 import { error } from '@sveltejs/kit'
 import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
@@ -72,8 +72,16 @@ export const load = (async ({ url, depends }) => {
                 ...data.meta,
               },
               timestamps: {
-                updated: data.timestamps.updated.toDate(),
-                created: data.timestamps.created.toDate(),
+                updated: toDateSafe(
+                  data.timestamps.updated,
+                  doc.id,
+                  'timestamps.updated',
+                ),
+                created: toDateSafe(
+                  data.timestamps.created,
+                  doc.id,
+                  'timestamps.created',
+                ),
               },
             },
           }

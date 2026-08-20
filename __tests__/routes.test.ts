@@ -190,6 +190,15 @@ jest.mock('$lib/server/firebase', () => ({
   adminAuth: mockAdminAuth,
   adminDb: mockAdminDb,
   verifyToken: jest.fn().mockResolvedValue({ role: 'admin' }),
+  toDateSafe: jest.fn((timestamp, docId, field) => {
+    if (timestamp && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate()
+    }
+    console.error(
+      `[Firestore Data Error] doc ${docId} has a null/missing "${field}" timestamp; falling back to epoch.`,
+    )
+    return new Date(0)
+  }),
 }))
 
 // Mocks for firebase/app, auth, firestore, storage

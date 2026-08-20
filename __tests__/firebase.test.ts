@@ -74,7 +74,7 @@ jest.mock('firebase-admin', () => ({
 }))
 
 // Import the module under test for static tests
-import { verifyToken } from '../src/lib/server/firebase'
+import { toDateSafe, verifyToken } from '../src/lib/server/firebase'
 
 describe('firebase.ts server setup', () => {
   const originalEnv = { ...process.env }
@@ -201,6 +201,46 @@ describe('firebase.ts server setup', () => {
         .mockImplementation(() => {})
 
       await expect(verifyToken('error-token')).rejects.toBe('unknown')
+      consoleErrorSpy.mockRestore()
+    })
+  })
+
+  describe('toDateSafe', () => {
+    it('converts a valid Firestore Timestamp to a Date', () => {
+      const date = new Date('2026-01-01T00:00:00Z')
+      const timestamp = { toDate: () => date }
+      expect(toDateSafe(timestamp as any, 'doc1', 'timestamps.created')).toBe(
+        date,
+      )
+    })
+
+    it('falls back to epoch and logs when the timestamp is null', () => {
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
+
+      const res = toDateSafe(null, 'doc1', 'timestamps.created')
+      expect(res).toEqual(new Date(0))
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'doc doc1 has a null/missing "timestamps.created" timestamp',
+        ),
+      )
+      consoleErrorSpy.mockRestore()
+    })
+
+    it('falls back to epoch and logs when the timestamp is missing', () => {
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
+
+      const res = toDateSafe(undefined, 'doc2', 'timestamps.updated')
+      expect(res).toEqual(new Date(0))
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'doc doc2 has a null/missing "timestamps.updated" timestamp',
+        ),
+      )
       consoleErrorSpy.mockRestore()
     })
   })
