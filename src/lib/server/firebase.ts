@@ -36,6 +36,7 @@ import {
   getFirestore,
   Query,
   type Firestore,
+  type Timestamp,
 } from 'firebase-admin/firestore'
 
 // Wrap prototype methods with a timeout and error logger
@@ -122,6 +123,25 @@ if (!building) {
 } else {
   adminAuth = {} as Auth
   adminDb = {} as Firestore
+}
+
+/**
+ * Converts a Firestore Timestamp to a Date, tolerating documents with a
+ * null/missing timestamp field (seen in some legacy production records).
+ * Logs which doc/field was bad instead of crashing the whole page load.
+ */
+export function toDateSafe(
+  timestamp: Timestamp | null | undefined,
+  docId: string,
+  field: string,
+): Date {
+  if (timestamp && typeof timestamp.toDate === 'function') {
+    return timestamp.toDate()
+  }
+  console.error(
+    `[Firestore Data Error] doc ${docId} has a null/missing "${field}" timestamp; falling back to epoch.`,
+  )
+  return new Date(0)
 }
 
 export async function verifyToken(
