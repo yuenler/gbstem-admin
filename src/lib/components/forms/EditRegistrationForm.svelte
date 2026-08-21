@@ -135,11 +135,16 @@
             },
           }
           try {
-            await registrationService.saveRegistration(
-              collection,
-              id,
-              updatedValues,
-            )
+            // Send the validated form data rather than `updatedValues`: the latter
+            // re-merges `values`, the snapshot taken when the dialog opened, so it
+            // would rewrite fields this form doesn't render (the parent's name).
+            await registrationService.saveRegistration(collection, id, {
+              personal: formVal.data.personal,
+              academic: formVal.data.academic,
+              program: formVal.data.program,
+              inPerson: formVal.data.inPerson,
+              agreements: formVal.data.agreements,
+            })
             values = updatedValues
             dbValues = cloneDeep(updatedValues)
             disabled = true

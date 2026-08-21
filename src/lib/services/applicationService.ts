@@ -31,6 +31,20 @@ function getDecisionsCollection(viewedSemester?: string): string {
 }
 
 /**
+ * The field groups the admin edit form owns, each `Partial` because the write is a
+ * merge: the form sends only the sub-fields it renders, and Firestore merges nested
+ * maps key by key. Sub-fields it deliberately doesn't render - `personal.firstName`,
+ * `lastName` and `email`, which the applicant changes from their portal profile, and
+ * `program.numClasses` - are therefore left untouched instead of being rewritten from
+ * the dialog's stale snapshot.
+ */
+export type ApplicationEditableFields = {
+  [K in 'personal' | 'academic' | 'program' | 'essay' | 'agreements']: Partial<
+    Data.Application<'client'>[K]
+  >
+}
+
+/**
  * Data Access Layer for Admin Application Review & Decision Workflows.
  */
 export const applicationService = {
@@ -200,16 +214,24 @@ export const applicationService = {
 
   /**
    * Saves edited application field values (personal/academic/program/essay/agreements).
+   *
+   * Takes only the fields the edit form actually owns and merges them in, rather
+   * than a full application object - the edit dialog loads `values` once when it
+   * opens and can go stale relative to concurrent writes (e.g. a backfill script,
+   * the applicant saving their own form in the portal, or another admin action).
+   * A full `setDoc()` from that stale snapshot would silently revert whatever
+   * those writers changed; merging only the edited fields can't.
    */
   async saveApplicationDetails(
     appCollection: string,
     appId: string,
-    updatedValues: Data.Application<'client'>,
+    editedFields: ApplicationEditableFields,
     viewedSemester?: string,
   ): Promise<void> {
     await setDoc(
       doc(db, appCollection, appId),
-      withSemester(updatedValues, viewedSemester),
+      withSemester(editedFields, viewedSemester),
+      { merge: true },
     )
   },
 
