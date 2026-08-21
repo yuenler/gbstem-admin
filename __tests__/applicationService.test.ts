@@ -289,13 +289,16 @@ describe('admin applicationService (Data Access Layer)', () => {
       )
 
       expect(firestore.setDoc).toHaveBeenCalledTimes(1)
-      const [, payload] = (firestore.setDoc as jest.Mock).mock.calls[0]
+      const [, payload, options] = (firestore.setDoc as jest.Mock).mock.calls[0]
       expect(payload).toEqual(
         expect.objectContaining({
           personal: { firstName: 'Alice' },
           semester: 'Spring26',
         }),
       )
+      // Merge-only write so fields the edit form doesn't own (timestamps, meta, ...)
+      // can't be clobbered by a stale in-memory snapshot - see saveApplicationDetails's docstring.
+      expect(options).toEqual({ merge: true })
     })
 
     it('propagates errors from setDoc', async () => {

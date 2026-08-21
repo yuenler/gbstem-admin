@@ -124,10 +124,19 @@
             },
           }
           try {
+            // Send the validated form data rather than `updatedValues`: the latter
+            // re-merges `values`, the snapshot taken when the dialog opened, so it
+            // would rewrite fields this form only displays (name, email).
             await applicationService.saveApplicationDetails(
               collection,
               id,
-              updatedValues,
+              {
+                personal: formVal.data.personal,
+                academic: formVal.data.academic,
+                program: formVal.data.program,
+                essay: formVal.data.essay,
+                agreements: formVal.data.agreements,
+              },
               semesterIdFromPath(collection) ?? currentSemester,
             )
             values = updatedValues

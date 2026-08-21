@@ -320,6 +320,44 @@ describe('Zod Validation Schemas', () => {
         expect(resultTooLong.error.issues[0].message).toBe('Max 500 characters')
       }
     })
+
+    // The admin edit dialog sends this schema's output straight to Firestore as a
+    // merge write, so anything zod fails to strip here would clobber a field the
+    // form doesn't own - see applicationService's ApplicationEditableFields.
+    it('strips fields the edit form does not own so a merge write cannot clobber them', () => {
+      const result = applicationSchema.safeParse({
+        ...validApplication,
+        personal: {
+          ...validApplication.personal,
+          firstName: 'Stale',
+          lastName: 'Snapshot',
+          email: 'stale@example.com',
+        },
+        program: { ...validApplication.program, numClasses: '2' },
+        meta: {
+          uid: 'user-1',
+          interview: true,
+          submitted: true,
+          decided: true,
+        },
+        timestamps: { created: 'then', updated: 'then' },
+      })
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(Object.keys(result.data)).toEqual([
+          'personal',
+          'academic',
+          'program',
+          'essay',
+          'agreements',
+        ])
+        expect(result.data.personal).not.toHaveProperty('firstName')
+        expect(result.data.personal).not.toHaveProperty('lastName')
+        expect(result.data.personal).not.toHaveProperty('email')
+        expect(result.data.program).not.toHaveProperty('numClasses')
+      }
+    })
   })
 
   describe('registrationSchema', () => {
@@ -421,6 +459,35 @@ describe('Zod Validation Schemas', () => {
           }
         }
       })
+    })
+
+    // The admin edit dialog sends this schema's output straight to Firestore as a
+    // merge write, so anything zod fails to strip here would clobber a field the
+    // form doesn't own - see registrationService's RegistrationEditableFields.
+    it('strips fields the edit form does not own so a merge write cannot clobber them', () => {
+      const result = registrationSchema.safeParse({
+        ...validRegistration,
+        personal: {
+          ...validRegistration.personal,
+          parentFirstName: 'Stale',
+          parentLastName: 'Snapshot',
+        },
+        meta: { uid: 'user-1', submitted: true },
+        timestamps: { created: 'then', updated: 'then' },
+      })
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(Object.keys(result.data)).toEqual([
+          'personal',
+          'academic',
+          'program',
+          'inPerson',
+          'agreements',
+        ])
+        expect(result.data.personal).not.toHaveProperty('parentFirstName')
+        expect(result.data.personal).not.toHaveProperty('parentLastName')
+      }
     })
   })
 
