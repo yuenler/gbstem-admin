@@ -1,6 +1,7 @@
 import { instructorFeedbackCollection } from '$lib/data/collections'
 import { adminDb } from '$lib/server/firebase'
 import { searchIndex } from '$lib/server/search'
+import { parsePagination } from '$lib/utils'
 import { error } from '@sveltejs/kit'
 import type { Query, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import type { PageServerLoad } from './$types'
@@ -23,11 +24,7 @@ export const load = (async ({ url, depends, locals }) => {
   depends('app:instructorFeedback')
   const query = url.searchParams.get('query')
   if (query === null || query === '') {
-    const pageStr = url.searchParams.get('page') ?? '1'
-    const limitStr = url.searchParams.get('limit') ?? '25'
-    const pageNum = parseInt(pageStr, 10)
-    const limitVal = parseInt(limitStr, 10)
-    const offsetVal = (pageNum - 1) * limitVal
+    const { pageNum, limitVal, offsetVal } = parsePagination(url)
 
     const course = url.searchParams.get('course')
     try {

@@ -27,6 +27,9 @@ import {
   getNearestFutureClassIndex,
   isClassUpcoming,
   normalizeCapitals,
+  parseLimit,
+  parsePage,
+  parsePagination,
   timestampToDate,
   toLocalISOString,
   trapFocus,
@@ -543,6 +546,201 @@ describe('utils', () => {
 
         expect(generateCSV(headers, rows, false)).toBe(unsortedExpected)
         expect(generateCSV(headers, rows, true, 1)).toBe(sortByColumn1Expected)
+      })
+    })
+  })
+
+  describe('pagination helpers', () => {
+    describe('parsePage', () => {
+      it('parses valid numeric strings and numbers', () => {
+        expect(parsePage('1')).toBe(1)
+        expect(parsePage('5')).toBe(5)
+        expect(parsePage('42')).toBe(42)
+        expect(parsePage(3)).toBe(3)
+        expect(parsePage(4.8)).toBe(4)
+      })
+
+      it('falls back to defaultPage for empty, missing, or invalid values', () => {
+        expect(parsePage(undefined)).toBe(1)
+        expect(parsePage(null)).toBe(1)
+        expect(parsePage('')).toBe(1)
+        expect(parsePage('abc')).toBe(1)
+        expect(parsePage('0')).toBe(1)
+        expect(parsePage('-5')).toBe(1)
+        expect(parsePage(-5)).toBe(1)
+        expect(parsePage(NaN)).toBe(1)
+        expect(parsePage(Infinity)).toBe(1)
+      })
+
+      it('respects a custom defaultPage', () => {
+        expect(parsePage(undefined, 3)).toBe(3)
+        expect(parsePage('', 5)).toBe(5)
+        expect(parsePage('0', 2)).toBe(2)
+        expect(parsePage('-1', 4)).toBe(4)
+        expect(parsePage('7', 2)).toBe(7)
+      })
+    })
+
+    describe('parseLimit', () => {
+      it('parses valid numeric strings and numbers', () => {
+        expect(parseLimit('25')).toBe(25)
+        expect(parseLimit('50')).toBe(50)
+        expect(parseLimit('100')).toBe(100)
+        expect(parseLimit(50)).toBe(50)
+        expect(parseLimit(99.9)).toBe(99)
+      })
+
+      it('falls back to defaultLimit for empty, missing, or invalid values', () => {
+        expect(parseLimit(undefined)).toBe(25)
+        expect(parseLimit(null)).toBe(25)
+        expect(parseLimit('')).toBe(25)
+        expect(parseLimit('abc')).toBe(25)
+        expect(parseLimit('0')).toBe(25)
+        expect(parseLimit('-10')).toBe(25)
+        expect(parseLimit(-10)).toBe(25)
+        expect(parseLimit(NaN)).toBe(25)
+        expect(parseLimit(Infinity)).toBe(25)
+      })
+
+      it('respects a custom defaultLimit', () => {
+        expect(parseLimit(undefined, 50)).toBe(50)
+        expect(parseLimit('', 100)).toBe(100)
+        expect(parseLimit('0', 10)).toBe(10)
+        expect(parseLimit('-5', 20)).toBe(20)
+        expect(parseLimit('75', 25)).toBe(75)
+      })
+    })
+
+    describe('parsePagination', () => {
+      it('parses pagination from URL objects correctly', () => {
+        const url = new URL('https://example.com/tokens?page=3&limit=50')
+        const result = parsePagination(url)
+        expect(result).toEqual({
+          page: 3,
+          limit: 50,
+          offset: 100,
+          pageNum: 3,
+          limitVal: 50,
+          offsetVal: 100,
+        })
+      })
+
+      it('parses pagination from URLSearchParams', () => {
+        const params = new URLSearchParams('page=2&limit=25')
+        const result = parsePagination(params)
+        expect(result).toEqual({
+          page: 2,
+          limit: 25,
+          offset: 25,
+          pageNum: 2,
+          limitVal: 25,
+          offsetVal: 25,
+        })
+      })
+
+      it('parses pagination from query strings', () => {
+        const resultWithQuestionMark = parsePagination('?page=4&limit=10')
+        expect(resultWithQuestionMark).toEqual({
+          page: 4,
+          limit: 10,
+          offset: 30,
+          pageNum: 4,
+          limitVal: 10,
+          offsetVal: 30,
+        })
+
+        const resultWithoutQuestionMark = parsePagination('page=4&limit=10')
+        expect(resultWithoutQuestionMark).toEqual({
+          page: 4,
+          limit: 10,
+          offset: 30,
+          pageNum: 4,
+          limitVal: 10,
+          offsetVal: 30,
+        })
+      })
+
+      it('parses pagination from objects with searchParams property', () => {
+        const obj = { searchParams: new URLSearchParams('page=5&limit=20') }
+        const result = parsePagination(obj)
+        expect(result).toEqual({
+          page: 5,
+          limit: 20,
+          offset: 80,
+          pageNum: 5,
+          limitVal: 20,
+          offsetVal: 80,
+        })
+      })
+
+      it('handles empty, missing, or invalid parameters gracefully', () => {
+        expect(parsePagination(new URL('https://example.com/tokens'))).toEqual({
+          page: 1,
+          limit: 25,
+          offset: 0,
+          pageNum: 1,
+          limitVal: 25,
+          offsetVal: 0,
+        })
+
+        expect(
+          parsePagination(
+            new URL('https://example.com/tokens?page=&limit='),
+          ),
+        ).toEqual({
+          page: 1,
+          limit: 25,
+          offset: 0,
+          pageNum: 1,
+          limitVal: 25,
+          offsetVal: 0,
+        })
+
+        expect(
+          parsePagination(
+            new URL('https://example.com/tokens?page=invalid&limit=xyz'),
+          ),
+        ).toEqual({
+          page: 1,
+          limit: 25,
+          offset: 0,
+          pageNum: 1,
+          limitVal: 25,
+          offsetVal: 0,
+        })
+
+        expect(parsePagination(null)).toEqual({
+          page: 1,
+          limit: 25,
+          offset: 0,
+          pageNum: 1,
+          limitVal: 25,
+          offsetVal: 0,
+        })
+
+        expect(parsePagination(undefined)).toEqual({
+          page: 1,
+          limit: 25,
+          offset: 0,
+          pageNum: 1,
+          limitVal: 25,
+          offsetVal: 0,
+        })
+      })
+
+      it('supports custom options for defaults', () => {
+        const result = parsePagination(new URL('https://example.com/tokens'), {
+          defaultPage: 2,
+          defaultLimit: 10,
+        })
+        expect(result).toEqual({
+          page: 2,
+          limit: 10,
+          offset: 10,
+          pageNum: 2,
+          limitVal: 10,
+          offsetVal: 10,
+        })
       })
     })
   })
