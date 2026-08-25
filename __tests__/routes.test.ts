@@ -695,6 +695,17 @@ describe('tokens route', () => {
     expect(res).toHaveProperty('tokens')
   })
 
+  it('handles invalid or empty limit and page query parameters gracefully', async () => {
+    const res = await tokensLoad({
+      depends: jest.fn(),
+      locals: { user: { role: 'admin' } },
+      url: new URL('http://localhost/?page=&limit='),
+    } as any)
+    expect(res).toHaveProperty('tokens')
+    expect(res.page).toBe(1)
+    expect(res.limit).toBe(25)
+  })
+
   it('throws error for non-admin user', async () => {
     await expect(
       tokensLoad({

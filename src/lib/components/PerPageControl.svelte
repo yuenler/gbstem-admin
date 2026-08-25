@@ -2,11 +2,14 @@
   import { page } from '$app/state'
   import { goto } from '$app/navigation'
   import Select from './Select.svelte'
+  import { parseLimit } from '$lib/utils'
 
-  let limitValue = $derived(String(page.url.searchParams.get('limit') ?? '25'))
+  let limitValue = $derived(
+    String(parseLimit(page.url.searchParams.get('limit'))),
+  )
 
   function handleLimitChange(newLimit: string) {
-    if (newLimit === limitValue) return
+    if (!newLimit || newLimit === limitValue) return
 
     const base = new URLSearchParams(page.url.searchParams)
     base.set('limit', newLimit)

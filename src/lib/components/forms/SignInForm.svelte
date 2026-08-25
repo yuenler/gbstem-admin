@@ -2,80 +2,85 @@
   import { goto } from '$app/navigation'
   import { auth } from '$lib/client/firebase'
   import Brand from '$lib/components/Brand.svelte'
-  import EmailInput from '$lib/components/EmailInput.svelte'
-  import Form from '$lib/components/Form.svelte'
-  import PasswordInput from '$lib/components/PasswordInput.svelte'
   import { alert } from '$lib/stores'
-  import { cn } from '$lib/utils'
   import { signInWithEmailAndPassword } from 'firebase/auth'
+  import { defaults, superForm } from 'sveltekit-superforms'
+  import { zod } from 'sveltekit-superforms/adapters'
+  import { z } from 'zod'
   import Button from '../Button.svelte'
+  import FormInput from '../FormInput.svelte'
   import Link from '../Link.svelte'
 
-  let disabled = $state(false)
-  let showValidation = $state(false)
-  let values = $state({
-    email: '',
-    password: '',
+  const schema = z.object({
+    email: z.string().email('Invalid email address'),
+    password: z.string().min(1, 'Password is required'),
   })
 
-  async function handleSubmit(data: SubmitData) {
-    if (data.error === null) {
-      showValidation = false
-      disabled = true
-      try {
-        const credential = await signInWithEmailAndPassword(
-          auth,
-          values.email,
-          values.password,
-        )
-        const idToken = await credential.user.getIdToken()
-        const res = await fetch('/api/auth', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ idToken }),
-        })
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}))
-          throw new Error(data.message || 'Unauthorized')
+  const formResult = superForm(
+    defaults({ email: '', password: '' }, zod(schema as any) as any) as any,
+    {
+      SPA: true,
+      validators: zod(schema as any) as any,
+      async onUpdate({ form: formVal }: { form: any }) {
+        if (!formVal.valid) return
+        try {
+          const credential = await signInWithEmailAndPassword(
+            auth,
+            formVal.data.email,
+            formVal.data.password,
+          )
+          const idToken = await credential.user.getIdToken()
+          const res = await fetch('/api/auth', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ idToken }),
+          })
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}))
+            throw new Error(data.message || 'Unauthorized')
+          }
+          await goto('/dashboard')
+        } catch (err: any) {
+          console.error('Sign in error:', err)
+          const isFirebaseError =
+            err.code && typeof err.code === 'string' && err.code.includes('/')
+          if (isFirebaseError) {
+            alert.trigger('error', err.code, true)
+          } else {
+            alert.trigger('error', err.message || 'Unauthorized')
+          }
         }
-        await goto('/dashboard')
-      } catch (err: any) {
-        disabled = false
-        console.error('Sign in error:', err)
-        const isFirebaseError =
-          err.code && typeof err.code === 'string' && err.code.includes('/')
-        if (isFirebaseError) {
-          alert.trigger('error', err.code, true)
-        } else {
-          alert.trigger('error', err.message || 'Unauthorized')
-        }
-      }
-    } else {
-      showValidation = true
-      alert.trigger('error', data.error)
-    }
-  }
+      },
+    },
+  )
+
+  const { form, enhance, submitting } = formResult
 </script>
 
-<Form
-  class={cn('max-w-lg', showValidation && 'show-validation')}
-  onSubmit={handleSubmit}
->
-  <fieldset class="space-y-4" {disabled}>
+<form use:enhance class="w-full max-w-lg">
+  <fieldset class="space-y-4" disabled={$submitting}>
     <Brand />
     <h1 class="text-2xl font-bold">Sign in</h1>
-    <EmailInput bind:value={values.email} label="Email" required />
-    <PasswordInput
-      bind:value={values.password}
+    <FormInput
+      form={formResult}
+      name="email"
+      label="Email"
+      type="email"
+      bind:value={$form.email}
+    />
+    <FormInput
+      form={formResult}
+      name="password"
       label="Password"
-      required
+      type="password"
+      bind:value={$form.password}
       autocomplete="current-password"
     />
     <div class="flex items-center justify-between">
       <Link href="/reset-password">Forgot password?</Link>
-      <Button color="blue" type="submit">Sign in</Button>
+      <Button color="blue" type="submit" disabled={$submitting}>Sign in</Button>
     </div>
   </fieldset>
-</Form>
+</form>

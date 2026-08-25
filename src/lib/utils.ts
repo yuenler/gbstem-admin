@@ -318,3 +318,85 @@ export function generateCSV(
   const rowLines = rowData.map((row) => row.map(escapeCSVCell).join(','))
   return [headerLine, ...rowLines].join('\n')
 }
+
+/**
+ * Safely parses a page number from a string, number, or null/undefined.
+ * Falls back to `defaultPage` (default: 1) if invalid, non-numeric, or < 1.
+ */
+export function parsePage(
+  value: string | number | null | undefined,
+  defaultPage = 1,
+): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value >= 1
+      ? Math.floor(value)
+      : defaultPage
+  }
+  const parsed = parseInt(value || '', 10)
+  return !isNaN(parsed) && parsed >= 1 ? parsed : defaultPage
+}
+
+/**
+ * Safely parses a limit/per-page value from a string, number, or null/undefined.
+ * Falls back to `defaultLimit` (default: 25) if invalid, non-numeric, or < 1.
+ */
+export function parseLimit(
+  value: string | number | null | undefined,
+  defaultLimit = 25,
+): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value >= 1
+      ? Math.floor(value)
+      : defaultLimit
+  }
+  const parsed = parseInt(value || '', 10)
+  return !isNaN(parsed) && parsed >= 1 ? parsed : defaultLimit
+}
+
+/**
+ * Extracts and safely parses pagination parameters (`page`, `limit`, and calculated `offset`)
+ * from a URL, URLSearchParams, or query object.
+ */
+export function parsePagination(
+  urlOrParams:
+    | URL
+    | URLSearchParams
+    | { searchParams: URLSearchParams }
+    | string
+    | null
+    | undefined,
+  options?: { defaultPage?: number; defaultLimit?: number },
+) {
+  const defaultPage = options?.defaultPage ?? 1
+  const defaultLimit = options?.defaultLimit ?? 25
+
+  let params: URLSearchParams | undefined
+  if (urlOrParams instanceof URLSearchParams) {
+    params = urlOrParams
+  } else if (urlOrParams instanceof URL) {
+    params = urlOrParams.searchParams
+  } else if (
+    urlOrParams &&
+    typeof urlOrParams === 'object' &&
+    'searchParams' in urlOrParams
+  ) {
+    params = urlOrParams.searchParams
+  } else if (typeof urlOrParams === 'string') {
+    params = new URLSearchParams(
+      urlOrParams.startsWith('?') ? urlOrParams.slice(1) : urlOrParams,
+    )
+  }
+
+  const pageNum = parsePage(params?.get('page'), defaultPage)
+  const limitVal = parseLimit(params?.get('limit'), defaultLimit)
+  const offsetVal = (pageNum - 1) * limitVal
+
+  return {
+    page: pageNum,
+    limit: limitVal,
+    offset: offsetVal,
+    pageNum,
+    limitVal,
+    offsetVal,
+  }
+}

@@ -19,7 +19,7 @@ describe('Section A: Authentication and Navigation', () => {
   it('Test Case 2: Unsuccessful Sign In', () => {
     cy.visit('/signin')
     cy.get('input[type="email"]').should('be.visible')
-    cy.wait(500) // Let Svelte finish page load
+    cy.waitForFormHydration()
     cy.fillInput('input[type="email"]', 'demo@gbstem.org')
     cy.fillInput('input[type="password"]', 'wrongpassword')
     cy.get('button[type="submit"]').click()
@@ -33,7 +33,7 @@ describe('Section A: Authentication and Navigation', () => {
     // Try logging in as instructor
     cy.visit('/signin')
     cy.get('input[type="email"]').should('be.visible')
-    cy.wait(500)
+    cy.waitForFormHydration()
     cy.fillInput('input[type="email"]', 'instructor@gbstem.org')
     cy.fillInput('input[type="password"]', 'penguin')
     cy.get('button[type="submit"]').click()
@@ -52,7 +52,7 @@ describe('Section A: Authentication and Navigation', () => {
 
     cy.visit('/signin')
     cy.get('input[type="email"]').should('be.visible')
-    cy.wait(500)
+    cy.waitForFormHydration()
     cy.fillInput('input[type="email"]', 'student@gbstem.org')
     cy.fillInput('input[type="password"]', 'penguin')
     cy.get('button[type="submit"]').click()
@@ -69,7 +69,7 @@ describe('Section A: Authentication and Navigation', () => {
     cy.visit('/')
     cy.url().should('include', '/signin')
     cy.get('input[type="email"]').should('be.visible')
-    cy.wait(500) // Wait for the double redirect and auth listener to settle
+    cy.waitForFormHydration()
     cy.fillInput('input[type="email"]', 'demo@gbstem.org')
     cy.fillInput('input[type="password"]', 'penguin')
     cy.get('button[type="submit"]').click()
@@ -89,7 +89,7 @@ describe('Section A: Authentication and Navigation', () => {
     cy.contains('a', 'Forgot password?').click()
     cy.url().should('include', '/reset-password')
     cy.get('input[type="email"]').should('be.visible')
-    cy.wait(500) // Wait for Svelte transition to settle
+    cy.waitForFormHydration()
 
     cy.fillInput('input[type="email"]', 'demo@gbstem.org')
     cy.get('button[type="submit"]').click()
@@ -108,7 +108,7 @@ describe('Section A: Authentication and Navigation', () => {
       cy.visit('/signup?token=demo-admin-token')
       cy.get('h1').should('contain', 'Sign up')
       cy.get('input[name="first-name"]').should('be.visible')
-      cy.wait(500) // Wait for signup initialization
+      cy.waitForFormHydration()
 
       const first = 'Charlie'
       const last = generateDateHash(`Brown-${resend ? 'resend' : 'orig'}`)
@@ -191,7 +191,7 @@ describe('Section A: Authentication and Navigation', () => {
       cy.visit('/signup?token=demo-reviewer-token')
       cy.get('h1').should('contain', 'Sign up')
       cy.get('input[name="first-name"]').should('be.visible')
-      cy.wait(500) // Wait for signup initialization
+      cy.waitForFormHydration()
 
       const first = 'Charlie'
       const last = generateDateHash(`Reviewer-${resend ? 'resend' : 'orig'}`)

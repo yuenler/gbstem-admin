@@ -10,7 +10,12 @@ declare namespace Cypress {
     signOutViaUi(): Chainable<any>
     fillInput(selector: string, text: string): Chainable<any>
     submitSearch(term: string): Chainable<any>
-    selectOption(selector: string, text: string): Chainable<any>
+    selectOption(
+      selector: string,
+      text: string,
+      options?: Partial<Cypress.Timeoutable>,
+    ): Chainable<any>
+    waitForFormHydration(selector?: string): Chainable<any>
     parseCsv(csvText: string): Chainable<string[][]>
     parseCopiedEmails(clipboardText: string): Chainable<string[]>
     dropCsvColumn(
@@ -32,6 +37,13 @@ declare namespace Cypress {
       text: string,
       colorClass?: string,
       timeoutMs?: number,
+    ): Chainable<any>
+    getFirebaseAuthToken(): Chainable<string>
+    getFirestoreUserId(authToken: string, email: string): Chainable<string>
+    getFirestoreDoc(
+      authToken: string,
+      collection: string,
+      docId: string,
     ): Chainable<any>
   }
 }

@@ -1,15 +1,12 @@
 import { adminDb } from '$lib/server/firebase'
+import { parsePagination } from '$lib/utils'
 import { error } from '@sveltejs/kit'
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore'
 import type { PageServerLoad } from './$types'
 
 export const load = (async ({ url, depends }) => {
   depends('app:announcements')
-  const pageStr = url.searchParams.get('page') ?? '1'
-  const limitStr = url.searchParams.get('limit') ?? '25'
-  const pageNum = parseInt(pageStr, 10)
-  const limitVal = parseInt(limitStr, 10)
-  const offsetVal = (pageNum - 1) * limitVal
+  const { pageNum, limitVal, offsetVal } = parsePagination(url)
 
   try {
     let dbQuery = adminDb
