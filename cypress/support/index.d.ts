@@ -45,5 +45,6 @@ declare namespace Cypress {
       collection: string,
       docId: string,
     ): Chainable<any>
+    captureConfirms(answer?: boolean): Chainable<string[]>
   }
 }
