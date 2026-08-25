@@ -684,9 +684,7 @@ describe('utils', () => {
         })
 
         expect(
-          parsePagination(
-            new URL('https://example.com/tokens?page=&limit='),
-          ),
+          parsePagination(new URL('https://example.com/tokens?page=&limit=')),
         ).toEqual({
           page: 1,
           limit: 25,

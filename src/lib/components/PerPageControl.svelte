@@ -4,7 +4,9 @@
   import Select from './Select.svelte'
   import { parseLimit } from '$lib/utils'
 
-  let limitValue = $derived(String(parseLimit(page.url.searchParams.get('limit'))))
+  let limitValue = $derived(
+    String(parseLimit(page.url.searchParams.get('limit'))),
+  )
 
   function handleLimitChange(newLimit: string) {
     if (!newLimit || newLimit === limitValue) return
