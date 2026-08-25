@@ -238,7 +238,7 @@ describe('Section N: End-to-End Account Lifecycle', () => {
 
     // 7. Delete Account
     cy.visit('/profile')
-    cy.wait(1000) // Allow Svelte page to hydrate and attach event handlers
+    cy.waitForFormHydration()
     cy.contains('span', 'Delete account')
       .parent()
       .find('button[type="button"]')
