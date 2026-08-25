@@ -12,6 +12,23 @@ Cypress.Commands.add('fillInput', (selector: string, text: string) => {
   cy.get(selector).should('have.value', text)
 })
 
+// Waits until a form's `use:enhance` action has actually run.
+//
+// Every form in this app is a Superforms SPA form (`<form use:enhance>`), and
+// that action sets `method="post"` on the element when it runs - so the
+// attribute's presence is a direct signal that the JS submit handler is
+// attached. It is worth waiting on precisely because of what happens without
+// it: submitting a not-yet-hydrated form does a *native GET*, navigating to
+// `?email=...&password=...` instead of running any JS, so no validation, no
+// Firebase call, and no error toast ever happen. That is a silent wrong-looking
+// pass or a confusing timeout, not an obvious failure.
+//
+// This replaced fixed `cy.wait(500)` calls that were racing hydration under
+// full-suite load.
+Cypress.Commands.add('waitForFormHydration', (selector = 'form') => {
+  cy.get(selector, { timeout: 15000 }).should('have.attr', 'method', 'post')
+})
+
 // Type a term into a SearchBox and submit it.
 //
 // Typing here is racy: `Input.svelte` re-renders on every `value` change, so
@@ -123,20 +140,39 @@ Cypress.Commands.add('signOutViaUi', () => {
   cy.get('input[type="email"]').should('be.visible')
 })
 
-// Select.svelte debounces its dropdown filtering by 150ms (see Select.svelte),
-// so instead of guessing that delay with a fixed wait, click the rendered
-// option button once it appears -- the click() at the end of this chain
-// retries the whole query until the (debounced) option shows up.
-Cypress.Commands.add('selectOption', (selector: string, text: string) => {
-  cy.get(selector).then(($el) => {
-    const el = $el[0] as HTMLInputElement
-    el.value = text
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  })
-  cy.get(selector).parent().find('button').contains(text).click({
-    force: true,
-  })
-})
+// Picks an option in a Select.svelte combobox.
+//
+// Two things this has to work around, both learned the hard way:
+//
+// 1. Clearing first is required for a select that already holds a value.
+//    `handleFocusIn` shows the whole option list, but the `filterOptionsBy`
+//    effect then narrows it by the text in the input on a 150ms debounce - so
+//    a pre-filled select collapses to just its own current value about a frame
+//    after the dropdown opens, and every other option disappears before a
+//    retrying assertion can land on it. Clearing resets the filter to the full
+//    list, and `handleInput` sets `open = true`, so it opens the dropdown too.
+//
+// 2. The option lookup is scoped to this select's own dropdown, not the page.
+//    Other buttons elsewhere may carry the same text - the dashboard's class
+//    picker is labelled with its class's course name, so an unscoped
+//    `cy.contains('button', 'Mathematics 1a')` matches the picker and silently
+//    switches class instead of choosing the option. The input and its option
+//    list share a parent, and the only other button under that parent is the
+//    dropdown toggle, which has no text and so can never match.
+Cypress.Commands.add(
+  'selectOption',
+  (selector: string, text: string, options?: Partial<Cypress.Timeoutable>) => {
+    cy.get(selector, options).clear({ force: true })
+    cy.get(selector, options)
+      .parent()
+      .find('button')
+      .contains(text, options)
+      .click({ force: true })
+    // `contains` matches substrings, so confirm the option that was clicked is
+    // the one asked for rather than one merely containing that text.
+    cy.get(selector, options).should('have.value', text)
+  },
+)
 
 Cypress.Commands.add('parseCsv', (csvText: string) => {
   const parsed = Papa.parse<string[]>(csvText, {
@@ -256,5 +292,91 @@ Cypress.Commands.add(
     return cy
       .get(`.${colorClass}`, { timeout: timeoutMs })
       .should('contain', text)
+  },
+)
+
+const getFirebaseAuthBaseUrl = () =>
+  `http://${Cypress.expose('FIREBASE_AUTH_EMULATOR_HOST') || '127.0.0.1:9099'}`
+const getFirestoreBaseUrl = () =>
+  `http://${Cypress.expose('FIRESTORE_EMULATOR_HOST') || '127.0.0.1:8080'}`
+
+Cypress.Commands.add('getFirebaseAuthToken', () => {
+  return cy
+    .request({
+      method: 'POST',
+      url: `${getFirebaseAuthBaseUrl()}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=does-not-matter`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: {
+        email: 'demo@gbstem.org',
+        password: 'penguin',
+        returnSecureToken: true,
+      },
+    })
+    .then((response) => {
+      return response.body.idToken
+    })
+})
+
+Cypress.Commands.add(
+  'getFirestoreUserId',
+  (_authToken: string, email: string) => {
+    return cy.task('getFirestoreUserId', email).then((uid) => {
+      if (!uid) {
+        throw new Error(`Could not find user ID for email: ${email}`)
+      }
+      return uid as string
+    })
+  },
+)
+
+const convertValue = (val: any): any => {
+  if (!val) return null
+  if ('stringValue' in val) return val.stringValue
+  if ('integerValue' in val) return parseInt(val.integerValue, 10)
+  if ('doubleValue' in val) return parseFloat(val.doubleValue)
+  if ('booleanValue' in val) return val.booleanValue
+  if ('arrayValue' in val) {
+    const values = val.arrayValue.values || []
+    return values.map(convertValue)
+  }
+  if ('mapValue' in val) {
+    const fields = val.mapValue.fields || {}
+    const obj: any = {}
+    for (const key of Object.keys(fields)) {
+      obj[key] = convertValue(fields[key])
+    }
+    return obj
+  }
+  if ('nullValue' in val) return null
+  return val
+}
+
+Cypress.Commands.add(
+  'getFirestoreDoc',
+  (authToken: string, collection: string, docId: string) => {
+    return cy
+      .request({
+        method: 'GET',
+        url: `${getFirestoreBaseUrl()}/v1/projects/demo-gbstem/databases/(default)/documents/${collection}/${docId}`,
+        failOnStatusCode: false,
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      })
+      .then((response) => {
+        if (response.status === 404) {
+          return null
+        }
+        expect(response.status).to.equal(200)
+
+        const fields = response.body.fields || {}
+        const data: any = {}
+        for (const key of Object.keys(fields)) {
+          data[key] = convertValue(fields[key])
+        }
+        return data
+      })
   },
 )
