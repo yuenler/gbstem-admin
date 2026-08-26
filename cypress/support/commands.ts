@@ -1,6 +1,32 @@
 // Add all new commands to index.d.ts as well.
 import Papa from 'papaparse'
 
+/**
+ * Sets a field's value directly and fires the `input` event Svelte's
+ * `bind:value` listens for, rather than typing it.
+ *
+ * Use this for inputs bound to a superforms store - every field inside the
+ * edit dialogs and the interview slot form. A multi-keystroke approach
+ * (`cy.fillInput`, or `type('{selectall}{backspace}...')`) can be interrupted
+ * partway through by a re-render that restores the store's value, which
+ * appends instead of replacing and yields a mangled result like
+ * "555-011555-0110". That only happens when the new text matches what was
+ * already there, so it stays hidden until a test re-applies the same fixture.
+ * A single assignment leaves no such window.
+ *
+ * Prefer `cy.fillInput` elsewhere: it drives the field the way a user does,
+ * and its visibility and focus checks catch inputs this one would silently
+ * write to.
+ */
+Cypress.Commands.add('setFieldValue', (selector: string, value: string) => {
+  cy.get(selector).then(($el) => {
+    const el = $el[0] as HTMLInputElement | HTMLTextAreaElement
+    el.value = value
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  cy.get(selector).should('have.value', value)
+})
+
 Cypress.Commands.add('fillInput', (selector: string, text: string) => {
   cy.get(selector)
     .scrollIntoView()
@@ -382,3 +408,34 @@ Cypress.Commands.add(
       })
   },
 )
+
+/**
+ * Records every `window.confirm` raised for the rest of the test and answers
+ * them all with `answer` (default: accept). Yields the recording array, so the
+ * idiomatic use is to alias it:
+ *
+ * ```ts
+ * cy.captureConfirms().as('confirms')
+ * // ...do the thing...
+ * cy.get('@confirms').should('have.length', 1)
+ * cy.get('@confirms').its(0).should('contain', 'overwrite')
+ * ```
+ *
+ * Prefer this over a bare `cy.on('window:confirm', () => true)`. Cypress
+ * accepts confirms automatically, so that form asserts nothing: a prompt that
+ * should never have appeared is accepted in silence and looks exactly like
+ * correct behaviour, and a prompt whose wording has drifted still passes.
+ * Capturing the text is what makes "no prompt appeared" and "this prompt
+ * appeared" both assertable.
+ *
+ * The array is mutated in place, so `cy.get('@confirms')` re-yields live state
+ * and Cypress retries length assertions against it.
+ */
+Cypress.Commands.add('captureConfirms', (answer: boolean = true) => {
+  const seen: string[] = []
+  cy.on('window:confirm', (text: string) => {
+    seen.push(text)
+    return answer
+  })
+  return cy.wrap(seen, { log: false })
+})

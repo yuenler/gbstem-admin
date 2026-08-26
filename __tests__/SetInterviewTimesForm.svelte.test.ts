@@ -162,27 +162,17 @@ describe('SetInterviewTimesForm Component', () => {
     unmount(app)
   })
 
-  it('adds a timeslot with the signed-in user as interviewer', async () => {
-    const app = await mountAuthenticated()
-
-    await fireEvent.click(within(container).getByText('Confirm Timeslot'))
-    flushSync()
-
-    await waitFor(() => {
-      expect(interviewService.createOrAssignInterviewSlot).toHaveBeenCalled()
-    })
-    expect(interviewService.createOrAssignInterviewSlot).toHaveBeenCalledWith(
-      expect.objectContaining({
-        interviewerName: 'Jane Interviewer',
-        interviewerEmail: 'interviewer@example.com',
-        intervieweeId: '',
-      }),
-      '',
-      'user-1',
-    )
-
-    unmount(app)
-  })
+  // The add card's submit path is deliberately NOT covered here.
+  //
+  // It went through superforms in this change, so exercising it means firing a
+  // real form submission - and jsdom implements neither implicit submission
+  // from a submit button's click nor the constraint validation superforms
+  // relies on, so a jsdom test of it asserts the harness rather than the form.
+  // Cypress covers it against a real browser instead: interviews.cy.ts Test
+  // Case 16b (a filled slot reaches Firestore with every field) and 16c (an
+  // empty one is refused). The test that used to live here asserted the
+  // opposite - that an empty card wrote a slot - which is the behaviour this
+  // change removed.
 
   it('deletes a timeslot the signed-in user owns', async () => {
     ;(interviewService.fetchInterviewSlots as jest.Mock)

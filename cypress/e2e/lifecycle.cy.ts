@@ -38,13 +38,9 @@ describe('Section N: End-to-End Account Lifecycle', () => {
       force: true,
     })
 
-    // Set hours to 24
-    cy.get('input[name="after-how-many-hours-should-this-token-expire"]').then(
-      ($el) => {
-        const el = $el[0] as HTMLInputElement
-        el.value = '24'
-        el.dispatchEvent(new Event('input', { bubbles: true }))
-      },
+    cy.setFieldValue(
+      'input[name="after-how-many-hours-should-this-token-expire"]',
+      '24',
     )
 
     // Click Create

@@ -12,6 +12,11 @@
   import { superForm, defaults } from 'sveltekit-superforms'
   import { zod } from 'sveltekit-superforms/adapters'
   import { applicationSchema } from './schemas'
+  import {
+    applicationDisplayValues,
+    applicationEditedFields,
+    toApplicationFormValues as toFormValues,
+  } from '$lib/helpers/editApplicationForm'
   import { cloneDeep } from 'lodash-es'
   import FormInput from '../FormInput.svelte'
   import FormSelect from '../FormSelect.svelte'
@@ -44,51 +49,6 @@
 
   const schema = applicationSchema
 
-  function toFormValues(v: Data.Application<'client'>) {
-    return {
-      personal: {
-        phoneNumber: v.personal?.phoneNumber || '',
-        dateOfBirth: v.personal?.dateOfBirth || '',
-        gender: v.personal?.gender || '',
-        race: v.personal?.race || [],
-      },
-      academic: {
-        school: v.academic?.school || '',
-        graduationYear: v.academic?.graduationYear || new Date().getFullYear(),
-      },
-      program: {
-        courses: v.program?.courses || [],
-        preferences: v.program?.preferences || '',
-        timeSlots: v.program?.timeSlots || '',
-        notAvailable: v.program?.notAvailable || '',
-        inPerson:
-          v.program?.inPerson !== undefined ? v.program.inPerson : false,
-        reason: v.program?.reason || '',
-      },
-      essay: {
-        taughtBefore:
-          v.essay?.taughtBefore !== undefined ? v.essay.taughtBefore : false,
-        academicBackground: v.essay?.academicBackground || '',
-        teachingScenario: v.essay?.teachingScenario || '',
-        why: v.essay?.why || '',
-      },
-      agreements: {
-        entireProgram:
-          v.agreements?.entireProgram !== undefined
-            ? v.agreements.entireProgram
-            : false,
-        timeCommitment:
-          v.agreements?.timeCommitment !== undefined
-            ? v.agreements.timeCommitment
-            : false,
-        submitting:
-          v.agreements?.submitting !== undefined
-            ? v.agreements.submitting
-            : false,
-      },
-    }
-  }
-
   const formResult = superForm(
     defaults(toFormValues(values) as any, zod(schema as any) as any) as any,
     {
@@ -100,29 +60,7 @@
         if (!formVal.valid) return
         loading = true
         if (id !== undefined) {
-          const updatedValues = {
-            ...values,
-            personal: {
-              ...values.personal,
-              ...formVal.data.personal,
-            },
-            academic: {
-              ...values.academic,
-              ...formVal.data.academic,
-            },
-            program: {
-              ...values.program,
-              ...formVal.data.program,
-            },
-            essay: {
-              ...values.essay,
-              ...formVal.data.essay,
-            },
-            agreements: {
-              ...values.agreements,
-              ...formVal.data.agreements,
-            },
-          }
+          const updatedValues = applicationDisplayValues(values, formVal.data)
           try {
             // Send the validated form data rather than `updatedValues`: the latter
             // re-merges `values`, the snapshot taken when the dialog opened, so it
@@ -130,13 +68,7 @@
             await applicationService.saveApplicationDetails(
               collection,
               id,
-              {
-                personal: formVal.data.personal,
-                academic: formVal.data.academic,
-                program: formVal.data.program,
-                essay: formVal.data.essay,
-                agreements: formVal.data.agreements,
-              },
+              applicationEditedFields(formVal.data),
               semesterIdFromPath(collection) ?? currentSemester,
             )
             values = updatedValues

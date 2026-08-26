@@ -125,3 +125,28 @@ export function canUserModifySlot(
 ): boolean {
   return slotInterviewerEmail === userEmail || userRole === 'admin'
 }
+
+/**
+ * Maps an interview slot into superform-compatible values.
+ *
+ * `id` is deliberately absent: `interviewSlotSchema` doesn't describe it and
+ * `generateInterviewSlotId` produces it at write time, so it is carried
+ * alongside the form data rather than through it.
+ *
+ * Same hazard as the other forms' mappers - a schema field missing here shows
+ * the schema's default instead of the stored value, and both slot writes are
+ * `setDoc` with no `{ merge: true }`, so that default is then stored.
+ */
+export function toInterviewSlotFormValues(slot: Data.InterviewSlot) {
+  return {
+    date: slot.date || '',
+    meetingLink: slot.meetingLink || '',
+    interviewerName: slot.interviewerName || '',
+    interviewerEmail: slot.interviewerEmail || '',
+    intervieweeFirstName: slot.intervieweeFirstName || '',
+    intervieweeLastName: slot.intervieweeLastName || '',
+    intervieweeEmail: slot.intervieweeEmail || '',
+    intervieweeId: slot.intervieweeId || '',
+    interviewSlotStatus: slot.interviewSlotStatus || ('available' as const),
+  }
+}
