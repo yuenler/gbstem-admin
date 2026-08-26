@@ -30,10 +30,11 @@ describe('Section H: Interview Timeslots Configuration', () => {
     cy.contains('h2', 'Add A Time Slot')
       .parent()
       .within(() => {
-        cy.get('input[type="datetime-local"]').clear().type('2027-10-10T10:00')
-        cy.get('input[name="interview-meeting-link"]')
-          .clear()
-          .type('https://zoom.us/j/9999999999')
+        cy.setFieldValue('input[type="datetime-local"]', '2027-10-10T10:00')
+        cy.setFieldValue(
+          'input[name="interview-meeting-link"]',
+          'https://zoom.us/j/9999999999',
+        )
 
         // Assign Interviewee: select David Miller
         cy.get('input[name^="assign-interviewee"]').clear().type('David Miller')
@@ -70,9 +71,10 @@ describe('Section H: Interview Timeslots Configuration', () => {
       .parent()
       .parent()
       .within(() => {
-        cy.get('input[name="edit-interview-meeting-link"]')
-          .clear()
-          .type('https://zoom.us/j/8888888888')
+        cy.setFieldValue(
+          'input[name="edit-interview-meeting-link"]',
+          'https://zoom.us/j/8888888888',
+        )
         cy.contains('button', 'Save').click({ force: true })
       })
     cy.waitForNotification('Timeslot updated successfully.')
@@ -135,12 +137,11 @@ function fillAddSlot() {
   cy.contains('h2', 'Add A Time Slot')
     .parent()
     .within(() => {
-      cy.get('input[name="set-date-your-local-time"]')
-        .clear({ force: true })
-        .type(SLOT_DATE_LOCAL, { force: true })
-      cy.get('input[name="interview-meeting-link"]')
-        .clear({ force: true })
-        .type(SLOT_LINK, { force: true })
+      cy.setFieldValue(
+        'input[name="set-date-your-local-time"]',
+        SLOT_DATE_LOCAL,
+      )
+      cy.setFieldValue('input[name="interview-meeting-link"]', SLOT_LINK)
     })
 }
 
@@ -227,9 +228,7 @@ describe('Section F: Interview Slot Field Coverage', () => {
       .within(() => {
         cy.contains('button', 'Edit').click({ force: true })
       })
-    cy.get('input[name="edit-interview-meeting-link"]')
-      .clear({ force: true })
-      .type(editedLink, { force: true })
+    cy.setFieldValue('input[name="edit-interview-meeting-link"]', editedLink)
     cy.contains('button', 'Save').click({ force: true })
     cy.waitForNotification('Timeslot updated successfully.')
 

@@ -233,14 +233,7 @@ describe('Section E: Classes Directory', () => {
 
     // Generate a random capacity to ensure we verify write success
     const newCapacity = Math.floor(Math.random() * 50) + 15
-    cy.get('input[name="class-capacity"]').then(($el) => {
-      $el.val(newCapacity)
-      $el[0].dispatchEvent(new Event('input', { bubbles: true }))
-    })
-    cy.get('input[name="class-capacity"]').should(
-      'have.value',
-      String(newCapacity),
-    )
+    cy.setFieldValue('input[name="class-capacity"]', String(newCapacity))
 
     // Click Save changes
     cy.contains('button', 'Save changes').click()
@@ -288,36 +281,15 @@ const SEEDED_CLASS_SEARCH = 'Bob'
  */
 const CLASS_TIMESTAMP_FIELDS = ['meetingTimes', 'completedClassDates']
 
-/**
- * Types into a field inside the class dialog. Same single-`type` replacement
- * as the registration and application specs - see `fillField` there for why
- * `clear()` then `type()` races the superforms store.
- */
-function fillClassField(selector: string, value: string) {
-  // Sets the value natively rather than typing it.
-  //
-  // These inputs are bound to a superforms store, and any multi-keystroke
-  // approach - `clear()` then `type()`, or `type('{selectall}{backspace}...')`
-  // - can be interrupted by a re-render that restores the old value partway
-  // through, leaving a mangled result like "555-011555-0110". It only shows up
-  // when the new text matches what was already there, so it hides until a test
-  // re-applies the same fixture. One synchronous assignment plus the `input`
-  // event Svelte's `bind:value` listens for has no such window. Test Case 20
-  // in tokens.cy.ts already used this for the same reason.
-  cy.get(selector).then(($el) => {
-    const el = $el[0] as HTMLInputElement | HTMLTextAreaElement
-    el.value = value
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  })
-  cy.get(selector).should('have.value', value)
-}
-
 function fillClassForm(input: ClassInput) {
   // Native `<select>` elements here, not the custom combobox the other admin
   // forms use, so `cy.select` rather than `cy.selectOption`.
   cy.get('select[name="course"]').select(input.course, { force: true })
-  fillClassField('input[name="gradeRecommendation"]', input.gradeRecommendation)
-  fillClassField('input[name="class-capacity"]', input.classCap)
+  cy.setFieldValue(
+    'input[name="gradeRecommendation"]',
+    input.gradeRecommendation,
+  )
+  cy.setFieldValue('input[name="class-capacity"]', input.classCap)
 
   if (input.online) {
     cy.get('input[name="online"]').check({ force: true })
@@ -326,14 +298,14 @@ function fillClassForm(input: ClassInput) {
   }
 
   cy.get('select[name="classDay1"]').select(input.classDay1, { force: true })
-  fillClassField('input[name="classTime1"]', input.classTime1)
+  cy.setFieldValue('input[name="classTime1"]', input.classTime1)
 
   // `meetingLink`, `classDay2` and `classTime2` only render while the class is
   // online - Test Case 13c covers what happens to them when it isn't.
   if (input.online) {
-    fillClassField('input[name="meetingLink"]', input.meetingLink)
+    cy.setFieldValue('input[name="meetingLink"]', input.meetingLink)
     cy.get('select[name="classDay2"]').select(input.classDay2, { force: true })
-    fillClassField('input[name="classTime2"]', input.classTime2)
+    cy.setFieldValue('input[name="classTime2"]', input.classTime2)
   }
 }
 
@@ -396,6 +368,14 @@ function assertClassDoc(input: ClassInput) {
 }
 
 function openClassForEdit() {
+  // Close any dialog a previous step left open, so the row underneath is
+  // clickable and the form remounts from the stored document.
+  cy.get('body').then(($body) => {
+    if ($body.find('[role="dialog"]').length) {
+      cy.contains('button', /^Close$/).click({ force: true })
+      cy.get('[role="dialog"]').should('not.exist')
+    }
+  })
   // Searched rather than scanned: the directory paginates, and this class is
   // not on the first page. Only searched when the term isn't already applied -
   // re-typing into a box that already holds it races the box's own controlled

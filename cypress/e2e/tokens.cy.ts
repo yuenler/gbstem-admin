@@ -39,13 +39,9 @@ describe('Section K: Registration Signup Tokens', () => {
       force: true,
     })
 
-    // Set hours to 24 natively
-    cy.get('input[name="after-how-many-hours-should-this-token-expire"]').then(
-      ($el) => {
-        const el = $el[0] as HTMLInputElement
-        el.value = '24'
-        el.dispatchEvent(new Event('input', { bubbles: true }))
-      },
+    cy.setFieldValue(
+      'input[name="after-how-many-hours-should-this-token-expire"]',
+      '24',
     )
 
     // Click Create

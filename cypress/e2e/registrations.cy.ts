@@ -307,36 +307,6 @@ const SEEDED_REGISTRATION_ID = 'reg-sally'
 const REGISTRATION_ARRAY_FIELDS = ['personal.race']
 
 /**
- * Types into a field inside the registration dialog.
- *
- * Not `cy.fillInput`, and deliberately not `scrollIntoView` either. The dialog
- * is `position: fixed` with a `sticky top-2 z-50` Edit/Save header, so a field
- * scrolled to the top of the container sits underneath that header and Cypress
- * reports it covered. `scrollIntoView` asserts visibility itself, so it cannot
- * be used to get out of that state - it fails for the same reason. Forcing the
- * interaction is the way through; the `have.value` check afterwards is what
- * keeps that from hiding a field that never actually took the text.
- */
-function fillField(selector: string, value: string) {
-  // Sets the value natively rather than typing it.
-  //
-  // These inputs are bound to a superforms store, and any multi-keystroke
-  // approach - `clear()` then `type()`, or `type('{selectall}{backspace}...')`
-  // - can be interrupted by a re-render that restores the old value partway
-  // through, leaving a mangled result like "555-011555-0110". It only shows up
-  // when the new text matches what was already there, so it hides until a test
-  // re-applies the same fixture. One synchronous assignment plus the `input`
-  // event Svelte's `bind:value` listens for has no such window. Test Case 20
-  // in tokens.cy.ts already used this for the same reason.
-  cy.get(selector).then(($el) => {
-    const el = $el[0] as HTMLInputElement | HTMLTextAreaElement
-    el.value = value
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  })
-  cy.get(selector).should('have.value', value)
-}
-
-/**
  * Fills every field the form renders.
  *
  * `program.inPerson` is set before the in-person block because
@@ -344,12 +314,21 @@ function fillField(selector: string, value: string) {
  * the same conditional-field trap the portal's application form has.
  */
 function fillRegistrationForm(input: RegistrationInput) {
-  fillField('input[name="personal.studentFirstName"]', input.studentFirstName)
-  fillField('input[name="personal.studentLastName"]', input.studentLastName)
-  fillField('input[name="personal.email"]', input.email)
-  fillField('input[name="personal.secondaryEmail"]', input.secondaryEmail)
-  fillField('input[name="personal.phoneNumber"]', input.phoneNumber)
-  fillField('input[name="personal.dateOfBirth"]', input.dateOfBirth)
+  cy.setFieldValue(
+    'input[name="personal.studentFirstName"]',
+    input.studentFirstName,
+  )
+  cy.setFieldValue(
+    'input[name="personal.studentLastName"]',
+    input.studentLastName,
+  )
+  cy.setFieldValue('input[name="personal.email"]', input.email)
+  cy.setFieldValue(
+    'input[name="personal.secondaryEmail"]',
+    input.secondaryEmail,
+  )
+  cy.setFieldValue('input[name="personal.phoneNumber"]', input.phoneNumber)
+  cy.setFieldValue('input[name="personal.dateOfBirth"]', input.dateOfBirth)
   cy.selectOption('input[name="personal.gender"]', input.gender)
   cy.selectOption('input[name="personal.frlp"]', input.frlp)
   cy.selectOption(
@@ -364,7 +343,7 @@ function fillRegistrationForm(input: RegistrationInput) {
     cy.get(`input[id="race-${race}"]`).check({ force: true })
   })
 
-  fillField('input[name="academic.school"]', input.school)
+  cy.setFieldValue('input[name="academic.school"]', input.school)
   cy.selectOption('input[name="student-grade"]', input.grade)
 
   cy.selectOption('input[name="program.csCourse"]', input.csCourse)
@@ -383,8 +362,8 @@ function fillRegistrationForm(input: RegistrationInput) {
 
   setCheckbox('input[name="program.inPerson"]', input.inPerson)
   if (input.inPerson) {
-    fillField('input[name="inPerson.allergies"]', input.allergies)
-    fillField('input[name="inPerson.parentPickup"]', input.parentPickup)
+    cy.setFieldValue('input[name="inPerson.allergies"]', input.allergies)
+    cy.setFieldValue('input[name="inPerson.parentPickup"]', input.parentPickup)
   }
 
   setCheckbox('input[name="agreements.mediaRelease"]', input.mediaRelease)
@@ -481,6 +460,14 @@ function assertRegistrationDoc(input: RegistrationInput) {
  * follow. Test Case 15d covers renaming, and restores the name itself.
  */
 function openRegistrationForEdit(name = 'Sally Brown') {
+  // Close any dialog a previous step left open, so the row underneath is
+  // clickable and the form remounts from the stored document.
+  cy.get('body').then(($body) => {
+    if ($body.find('[role="dialog"]').length) {
+      cy.contains('button', 'Close').click({ force: true })
+      cy.get('[role="dialog"]').should('not.exist')
+    }
+  })
   // Forced: this row sits at the bottom of the page, where the pagination
   // controls overlap it. The click only has to reach the row's handler.
   cy.contains('td', name).click({ force: true })
@@ -615,8 +602,8 @@ describe('Section G: Pre-Registration Field Coverage', () => {
     saveRegistration()
 
     openRegistrationForEdit()
-    fillField('input[name="personal.studentFirstName"]', 'Patricia')
-    fillField('input[name="personal.studentLastName"]', 'Reichardt')
+    cy.setFieldValue('input[name="personal.studentFirstName"]', 'Patricia')
+    cy.setFieldValue('input[name="personal.studentLastName"]', 'Reichardt')
     saveRegistration()
     assertRegistrationDoc({
       ...REGISTRATION_INITIAL,
@@ -628,8 +615,8 @@ describe('Section G: Pre-Registration Field Coverage', () => {
     cy.get('[role="dialog"]').should('not.exist')
 
     openRegistrationForEdit('Patricia Reichardt')
-    fillField('input[name="personal.studentFirstName"]', 'Sally')
-    fillField('input[name="personal.studentLastName"]', 'Brown')
+    cy.setFieldValue('input[name="personal.studentFirstName"]', 'Sally')
+    cy.setFieldValue('input[name="personal.studentLastName"]', 'Brown')
     saveRegistration()
     assertRegistrationDoc(REGISTRATION_INITIAL)
   })

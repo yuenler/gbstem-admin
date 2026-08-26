@@ -559,34 +559,6 @@ const SEEDED_APPLICANT_SEARCH = 'Mary'
 /** `bind:group` stores tick order, so both need sorting before compare. */
 const APPLICATION_ARRAY_FIELDS = ['personal.race', 'program.courses']
 
-/**
- * Types into a field inside the application dialog.
- *
- * Forced for the same reason as the registration spec's helper: the dialog is
- * `position: fixed` under a sticky header, so a field can be reported covered,
- * and `scrollIntoView` asserts visibility itself so it cannot fix that. The
- * `have.value` check is what stops forcing from hiding a field that never took
- * the text.
- */
-function fillAppField(selector: string, value: string) {
-  // Sets the value natively rather than typing it.
-  //
-  // These inputs are bound to a superforms store, and any multi-keystroke
-  // approach - `clear()` then `type()`, or `type('{selectall}{backspace}...')`
-  // - can be interrupted by a re-render that restores the old value partway
-  // through, leaving a mangled result like "555-011555-0110". It only shows up
-  // when the new text matches what was already there, so it hides until a test
-  // re-applies the same fixture. One synchronous assignment plus the `input`
-  // event Svelte's `bind:value` listens for has no such window. Test Case 20
-  // in tokens.cy.ts already used this for the same reason.
-  cy.get(selector).then(($el) => {
-    const el = $el[0] as HTMLInputElement | HTMLTextAreaElement
-    el.value = value
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  })
-  cy.get(selector).should('have.value', value)
-}
-
 function setAppCheckbox(selector: string, checked: boolean) {
   if (checked) cy.get(selector).check({ force: true })
   else cy.get(selector).uncheck({ force: true })
@@ -600,8 +572,8 @@ function setAppCheckbox(selector: string, checked: boolean) {
  * the same conditional-field trap the portal's application form has.
  */
 function fillApplicationForm(input: ApplicationInput) {
-  fillAppField('input[name="personal.phoneNumber"]', input.phoneNumber)
-  fillAppField('input[name="personal.dateOfBirth"]', input.dateOfBirth)
+  cy.setFieldValue('input[name="personal.phoneNumber"]', input.phoneNumber)
+  cy.setFieldValue('input[name="personal.dateOfBirth"]', input.dateOfBirth)
   cy.selectOption('input[name="personal.gender"]', input.gender)
 
   // Clear every box first so the result is the input exactly, not the input
@@ -611,31 +583,34 @@ function fillApplicationForm(input: ApplicationInput) {
     cy.get(`input[id="app-race-${race}"]`).check({ force: true })
   })
 
-  fillAppField('input[name="academic.school"]', input.school)
-  fillAppField('input[name="academic.graduationYear"]', input.graduationYear)
+  cy.setFieldValue('input[name="academic.school"]', input.school)
+  cy.setFieldValue(
+    'input[name="academic.graduationYear"]',
+    input.graduationYear,
+  )
 
   cy.get('input[id^="app-course-"]').uncheck({ force: true })
   input.courses.forEach((course) => {
     cy.get(`input[id="app-course-${course}"]`).check({ force: true })
   })
 
-  fillAppField('input[name="program.preferences"]', input.preferences)
-  fillAppField('input[name="program.timeSlots"]', input.timeSlots)
-  fillAppField('textarea[name="program.notAvailable"]', input.notAvailable)
+  cy.setFieldValue('input[name="program.preferences"]', input.preferences)
+  cy.setFieldValue('input[name="program.timeSlots"]', input.timeSlots)
+  cy.setFieldValue('textarea[name="program.notAvailable"]', input.notAvailable)
   setAppCheckbox('input[name="program.inPerson"]', input.inPerson)
   cy.selectOption('input[name="program.reason"]', input.reason)
 
   setAppCheckbox('input[name="essay.taughtBefore"]', input.taughtBefore)
-  fillAppField(
+  cy.setFieldValue(
     'textarea[name="essay.academicBackground"]',
     input.academicBackground,
   )
   if (!input.taughtBefore) {
-    fillAppField(
+    cy.setFieldValue(
       'textarea[name="essay.teachingScenario"]',
       input.teachingScenario,
     )
-    fillAppField('textarea[name="essay.why"]', input.why)
+    cy.setFieldValue('textarea[name="essay.why"]', input.why)
   }
 
   setAppCheckbox('input[name="agreements.entireProgram"]', input.entireProgram)
@@ -749,6 +724,14 @@ function assertApplicationDoc(input: ApplicationInput) {
  * defensive check Test Case 11b already makes.
  */
 function openApplicationForEdit() {
+  // Close any dialog a previous step left open, so the row underneath is
+  // clickable and the form remounts from the stored document.
+  cy.get('body').then(($body) => {
+    if ($body.find('[role="dialog"]').length) {
+      cy.contains('button', /^Close$/).click({ force: true })
+      cy.get('[role="dialog"]').should('not.exist')
+    }
+  })
   // Only search when the term isn't already applied. Re-typing into a search
   // box that already holds it races the box's own controlled value and lands
   // as "Maryary", which then matches no rows.
