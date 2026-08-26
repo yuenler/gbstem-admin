@@ -99,7 +99,7 @@ describe('Section B: Dashboard and Navigation Layout', () => {
       })
 
     // Click Send Instructor Reminder on an item
-    cy.on('window:confirm', () => true)
+    cy.captureConfirms().as('confirms')
     cy.contains('h2', 'Classes Today')
       .parent()
       .within(() => {
@@ -108,6 +108,11 @@ describe('Section B: Dashboard and Navigation Layout', () => {
           .contains('Send Instructor Reminder')
           .click()
       })
+
+    cy.get('@confirms').should('have.length', 1)
+    cy.get('@confirms')
+      .its(0)
+      .should('contain', 'Send class reminder to instructor')
 
     // Verify success alert triggers
     cy.waitForNotification('A reminder email was sent!')

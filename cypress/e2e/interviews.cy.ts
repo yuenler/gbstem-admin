@@ -46,8 +46,12 @@ describe('Section H: Interview Timeslots Configuration', () => {
       })
 
     // Confirm Timeslot with an assigned interviewe
-    cy.on('window:confirm', () => true)
+    cy.captureConfirms().as('confirms')
     cy.contains('button', 'Confirm Timeslot').click({ force: true })
+    cy.get('@confirms').should('have.length', 1)
+    cy.get('@confirms')
+      .its(0)
+      .should('contain', 'assign David Miller as the interviewee')
     cy.waitForNotification('Interviewee assigned and email sent.')
     cy.verifyEmailSent('applicant1@gmail.com', 'your interview with')
 
@@ -102,6 +106,10 @@ describe('Section H: Interview Timeslots Configuration', () => {
 
     // Verify it is removed from list
     cy.contains('a', 'https://zoom.us/j/8888888888').should('not.exist')
+
+    // Assigning the interviewee is the only prompt this flow should raise --
+    // editing and deleting the slot must not.
+    cy.get('@confirms').should('have.length', 1)
   })
 })
 

@@ -194,7 +194,7 @@ describe('Section E: Classes Directory', () => {
     cy.waitForNotification('copied to clipboard')
 
     // Click reminders (trigger alert)
-    cy.on('window:confirm', () => true)
+    cy.captureConfirms().as('confirms')
     cy.contains('button', 'Send Reminder To All Students').click()
     cy.get('body', { timeout: 10000 }).should(($body) => {
       expect($body.find('.bg-red-200, .bg-green-200').length).to.be.greaterThan(
@@ -209,6 +209,11 @@ describe('Section E: Classes Directory', () => {
         cy.verifyEmailSent('student@gbstem.org', 'gbSTEM Class Reminder')
       }
     })
+
+    cy.get('@confirms').should('have.length', 1)
+    cy.get('@confirms')
+      .its(0)
+      .should('contain', 'Send class reminder to all students')
 
     cy.contains('button', 'Send Instructor Reminder').click()
     cy.get('body', { timeout: 10000 }).should(($body) => {
@@ -227,6 +232,11 @@ describe('Section E: Classes Directory', () => {
         )
       }
     })
+
+    cy.get('@confirms').should('have.length', 2)
+    cy.get('@confirms')
+      .its(1)
+      .should('contain', 'Send class reminder to instructor')
 
     // Edit capacity
     cy.contains('button', 'Edit').click()
@@ -252,6 +262,10 @@ describe('Section E: Classes Directory', () => {
 
     // Close modal
     cy.contains('button', 'Close').click()
+
+    // The two reminders are the only things here that should have prompted --
+    // editing and saving the class must not.
+    cy.get('@confirms').should('have.length', 2)
   })
 })
 

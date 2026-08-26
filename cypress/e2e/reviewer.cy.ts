@@ -120,8 +120,10 @@ describe('Section O: Reviewer Role Access Control', () => {
     cy.get('[role="dialog"]').should('exist')
 
     // Click Accept and confirm
-    cy.on('window:confirm', () => true)
+    cy.captureConfirms().as('confirms')
     cy.contains('button', 'Accept').click({ force: true })
+    cy.get('@confirms').should('have.length', 1)
+    cy.get('@confirms').its(0).should('contain', 'update the decision')
 
     // Close the modal
     cy.contains('button', /^Close$/).click({ force: true })

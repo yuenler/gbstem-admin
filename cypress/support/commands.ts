@@ -411,7 +411,7 @@ Cypress.Commands.add(
 
 /**
  * Records every `window.confirm` raised for the rest of the test and answers
- * them all with `answer` (default: accept). Yields the recording array, so the
+ * them with `answer` (default: accept). Yields the recording array, so the
  * idiomatic use is to alias it:
  *
  * ```ts
@@ -428,14 +428,23 @@ Cypress.Commands.add(
  * Capturing the text is what makes "no prompt appeared" and "this prompt
  * appeared" both assertable.
  *
+ * Pass a function when a single test has to accept some prompts and dismiss
+ * others (e.g. cancel-then-confirm loops) - it is re-evaluated per prompt, so
+ * flipping a local `let` inside `cy.then()` steers the next answer. A handler
+ * cannot be unregistered mid-test, and any handler returning `false` cancels
+ * the confirm, so a second `cy.captureConfirms(false)` would not work here.
+ *
  * The array is mutated in place, so `cy.get('@confirms')` re-yields live state
  * and Cypress retries length assertions against it.
  */
-Cypress.Commands.add('captureConfirms', (answer: boolean = true) => {
-  const seen: string[] = []
-  cy.on('window:confirm', (text: string) => {
-    seen.push(text)
-    return answer
-  })
-  return cy.wrap(seen, { log: false })
-})
+Cypress.Commands.add(
+  'captureConfirms',
+  (answer: boolean | (() => boolean) = true) => {
+    const seen: string[] = []
+    cy.on('window:confirm', (text: string) => {
+      seen.push(text)
+      return typeof answer === 'function' ? answer() : answer
+    })
+    return cy.wrap(seen, { log: false })
+  },
+)

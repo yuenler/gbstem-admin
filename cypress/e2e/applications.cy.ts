@@ -393,8 +393,10 @@ describe('Section D: Instructor Applications Management', () => {
     cy.get('[role="dialog"]', { timeout: 10000 }).should('exist')
 
     // Click Accept and confirm
-    cy.on('window:confirm', () => true)
+    cy.captureConfirms().as('confirms')
     cy.contains('button', 'Accept').click({ force: true })
+    cy.get('@confirms').should('have.length', 1)
+    cy.get('@confirms').its(0).should('contain', 'update the decision')
 
     // Close the modal
     cy.contains('button', /^Close$/).click({ force: true })
@@ -412,10 +414,13 @@ describe('Section D: Instructor Applications Management', () => {
     cy.clearTestEmails()
     cy.contains('td', 'David Hernandez').click()
     cy.get('[role="dialog"]').should('exist')
-    cy.on('window:confirm', () => true)
+    // The capture above is still recording -- a confirm handler stays
+    // registered for the rest of the test.
     cy.get('[role="dialog"]')
       .contains('button', 'Interview')
       .click({ force: true })
+    cy.get('@confirms').should('have.length', 2)
+    cy.get('@confirms').its(1).should('contain', 'update the decision')
     cy.contains('button', /^Close$/).click({ force: true })
     cy.get('[role="dialog"]').should('not.exist')
     cy.verifyEmailSent(
