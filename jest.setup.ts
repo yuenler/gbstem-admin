@@ -1,5 +1,27 @@
 import { afterAll, beforeAll, jest } from '@jest/globals'
 import '@testing-library/jest-dom'
+import { TextDecoder, TextEncoder } from 'node:util'
+
+// jsdom omits these Web APIs. `sveltekit-superforms/adapters` loads every
+// adapter it ships, including the Effect one, whose base64 helper reaches for
+// `TextEncoder` at import time - so any test that touches a superforms-based
+// component needs them present, not just tests that encode anything.
+// Also absent from jsdom, and superforms clones its initial form data with it
+// on every `superForm(...)` call - so without this the component renders its
+// error boundary instead of the form.
+if (typeof globalThis.structuredClone === 'undefined') {
+  globalThis.structuredClone = ((value: unknown) =>
+    value === undefined
+      ? undefined
+      : JSON.parse(JSON.stringify(value))) as typeof globalThis.structuredClone
+}
+
+if (typeof globalThis.TextEncoder === 'undefined') {
+  globalThis.TextEncoder =
+    TextEncoder as unknown as typeof globalThis.TextEncoder
+  globalThis.TextDecoder =
+    TextDecoder as unknown as typeof globalThis.TextDecoder
+}
 
 // Spy on console.log to suppress "Email sent" messages
 const originalConsoleLog = console.log

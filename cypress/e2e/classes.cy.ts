@@ -293,25 +293,21 @@ const CLASS_TIMESTAMP_FIELDS = ['meetingTimes', 'completedClassDates']
  * as the registration and application specs - see `fillField` there for why
  * `clear()` then `type()` races the superforms store.
  */
-/** Input types Cypress refuses to accept keystroke sequences for. */
-const STRUCTURED_INPUT_TYPES = [
-  'date',
-  'time',
-  'datetime-local',
-  'month',
-  'week',
-]
-
 function fillClassField(selector: string, value: string) {
+  // Sets the value natively rather than typing it.
+  //
+  // These inputs are bound to a superforms store, and any multi-keystroke
+  // approach - `clear()` then `type()`, or `type('{selectall}{backspace}...')`
+  // - can be interrupted by a re-render that restores the old value partway
+  // through, leaving a mangled result like "555-011555-0110". It only shows up
+  // when the new text matches what was already there, so it hides until a test
+  // re-applies the same fixture. One synchronous assignment plus the `input`
+  // event Svelte's `bind:value` listens for has no such window. Test Case 20
+  // in tokens.cy.ts already used this for the same reason.
   cy.get(selector).then(($el) => {
-    if (STRUCTURED_INPUT_TYPES.includes(($el[0] as HTMLInputElement).type)) {
-      // `cy.type` rejects a `{selectall}{backspace}` prefix on these - it
-      // validates the whole string against the input's format first.
-      cy.get(selector).clear({ force: true })
-      cy.get(selector).type(value, { force: true })
-    } else {
-      cy.get(selector).type(`{selectall}{backspace}${value}`, { force: true })
-    }
+    const el = $el[0] as HTMLInputElement | HTMLTextAreaElement
+    el.value = value
+    el.dispatchEvent(new Event('input', { bubbles: true }))
   })
   cy.get(selector).should('have.value', value)
 }
@@ -413,6 +409,13 @@ function openClassForEdit() {
   cy.get('[role="dialog"]').should('exist')
   cy.contains('button', 'Edit').click({ force: true })
   cy.get('input[name="gradeRecommendation"]').should('not.be.disabled')
+  // Wait for the form store to be populated from the stored document before
+  // filling anything. `toXFormValues` runs in an `$effect` after the dialog
+  // opens, and a field set before it lands is overwritten by it - silently,
+  // because the input shows the typed value while the store still holds the
+  // stored one, and it is the store that gets saved.
+  cy.get('input[name="classTime1"]').should('not.have.value', '')
+  cy.get('input[name="class-capacity"]').should('not.have.value', '')
 }
 
 function saveClass() {

@@ -8,7 +8,7 @@
   import { writeToClipboard } from '$lib/utils'
   import { superForm, defaults } from 'sveltekit-superforms'
   import { zod } from 'sveltekit-superforms/adapters'
-  import { tokenSchema } from './schemas'
+  import { getCreateTokenFormDefaults, tokenSchema } from './schemas'
   import FormInput from '../FormInput.svelte'
   import FormSelect from '../FormSelect.svelte'
   import FormCheckbox from '../FormCheckbox.svelte'
@@ -22,10 +22,7 @@
   const schema = tokenSchema
 
   const formResult = superForm(
-    defaults(
-      { role: 'reviewer', consumable: false, expires: 24 },
-      zod(schema as any) as any,
-    ) as any,
+    defaults(getCreateTokenFormDefaults(), zod(schema as any) as any) as any,
     {
       SPA: true,
       validators: zod(schema as any) as any,

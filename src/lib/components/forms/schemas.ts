@@ -195,17 +195,19 @@ export const interviewSlotSchema = z.object({
     .default('available'),
 })
 
-export function getClassDetailsFormDefaults() {
+/**
+ * Initial values for CreateTokenForm.
+ *
+ * Exported rather than inlined in the component so `formFieldParity.test.ts`
+ * can check it against `tokenSchema`. A create-only form has no stored
+ * document to fall back on, so a schema field missing from here starts out
+ * `undefined` and is written that way.
+ */
+export function getCreateTokenFormDefaults() {
   return {
-    course: '',
-    gradeRecommendation: '',
-    classCap: 15,
-    meetingLink: '',
-    classDay1: 'Monday' as const,
-    classTime1: '',
-    classDay2: '',
-    classTime2: '',
-    online: true,
+    role: 'reviewer' as const,
+    consumable: false,
+    expires: 24,
   }
 }
 

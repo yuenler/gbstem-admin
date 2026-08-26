@@ -318,19 +318,20 @@ const REGISTRATION_ARRAY_FIELDS = ['personal.race']
  * keeps that from hiding a field that never actually took the text.
  */
 function fillField(selector: string, value: string) {
-  // Replaced in a single `type` rather than `clear()` then `type()`. These
-  // inputs are bound to the superforms store, and the gap between the two
-  // commands lets a re-render restore the old value - which then either
-  // survives (the clear "not taking") or gets typed onto (a doubled value like
-  // "555-0110555-0110"). One keystroke sequence leaves no such gap. Date
-  // inputs don't accept `{selectall}{backspace}`, so those still clear first.
+  // Sets the value natively rather than typing it.
+  //
+  // These inputs are bound to a superforms store, and any multi-keystroke
+  // approach - `clear()` then `type()`, or `type('{selectall}{backspace}...')`
+  // - can be interrupted by a re-render that restores the old value partway
+  // through, leaving a mangled result like "555-011555-0110". It only shows up
+  // when the new text matches what was already there, so it hides until a test
+  // re-applies the same fixture. One synchronous assignment plus the `input`
+  // event Svelte's `bind:value` listens for has no such window. Test Case 20
+  // in tokens.cy.ts already used this for the same reason.
   cy.get(selector).then(($el) => {
-    if (($el[0] as HTMLInputElement).type === 'date') {
-      cy.get(selector).clear({ force: true })
-      cy.get(selector).type(value, { force: true })
-    } else {
-      cy.get(selector).type(`{selectall}{backspace}${value}`, { force: true })
-    }
+    const el = $el[0] as HTMLInputElement | HTMLTextAreaElement
+    el.value = value
+    el.dispatchEvent(new Event('input', { bubbles: true }))
   })
   cy.get(selector).should('have.value', value)
 }
@@ -487,6 +488,13 @@ function openRegistrationForEdit(name = 'Sally Brown') {
   cy.contains('button', 'Edit').click()
   cy.contains('button', 'Save changes').should('be.visible')
   cy.get('input[name="personal.studentFirstName"]').should('not.be.disabled')
+  // Wait for the form store to be populated from the stored document before
+  // filling anything. `toXFormValues` runs in an `$effect` after the dialog
+  // opens, and a field set before it lands is overwritten by it - silently,
+  // because the input shows the typed value while the store still holds the
+  // stored one, and it is the store that gets saved.
+  cy.get('input[name="personal.studentFirstName"]').should('not.have.value', '')
+  cy.get('input[name="personal.dateOfBirth"]').should('not.have.value', '')
 }
 
 function saveRegistration() {

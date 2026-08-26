@@ -21,8 +21,12 @@ import {
   classSchema,
   getApplyFormDefaults,
   getClassDataDefaults,
+  getCreateTokenFormDefaults,
+  getInterviewSlotDefaults,
   getRegistrationFormDefaults,
+  interviewSlotSchema,
   registrationSchema,
+  tokenSchema,
 } from '$lib/components/forms/schemas'
 import { createDefaultApplicationValues } from '$lib/helpers/application'
 import {
@@ -216,10 +220,7 @@ const APPLICATION_FORM = {
  * allowlist of groups - so it takes the shared checks but not the
  * `editedFields` block.
  *
- * `getClassDataDefaults` stands in for both factories. Note that admin's
- * `getClassDetailsFormDefaults()` is currently dead code (nothing but its own
- * test references it), so it is deliberately not the subject here - testing it
- * would pin a factory no form actually flows through.
+ * `getClassDataDefaults` stands in for both factories.
  */
 const CLASS_FORM = {
   label: 'class',
@@ -396,4 +397,98 @@ describe('registration parent-name handling', () => {
     expect(written.personal).not.toHaveProperty('parentFirstName')
     expect(written.personal).not.toHaveProperty('parentLastName')
   })
+})
+
+/**
+ * The two admin-only forms that have no stored document to map back from, so
+ * they get the defaults half of the parity check and not the round-trip half.
+ *
+ * Their risk is the mirror image of the edit forms': there is no
+ * `toXFormValues` allowlist to drift, but there is also no stored value to
+ * fall back on. A schema field missing from the defaults factory starts out
+ * `undefined` and is written that way on the very first save.
+ */
+describe.each([
+  {
+    label: 'create token',
+    schema: tokenSchema as unknown as z.ZodTypeAny,
+    getDefaults: getCreateTokenFormDefaults,
+    expectedFields: ['role', 'consumable', 'expires'],
+    // Pre-populated, so the dialog opens ready to submit as-is.
+    expectedInvalidPaths: [] as string[],
+  },
+  {
+    label: 'interview slot',
+    schema: interviewSlotSchema as unknown as z.ZodTypeAny,
+    getDefaults: () => getInterviewSlotDefaults(),
+    expectedFields: [
+      'date',
+      'meetingLink',
+      'interviewerName',
+      'interviewerEmail',
+      'intervieweeFirstName',
+      'intervieweeLastName',
+      'intervieweeEmail',
+      'intervieweeId',
+      'interviewSlotStatus',
+    ],
+    // A blank slot form legitimately opens invalid: these four are the fields
+    // the interviewer has to supply. Listing them is the point - if a fifth
+    // appears, or one of the others stops having a usable default, that is a
+    // change worth seeing.
+    expectedInvalidPaths: [
+      'date',
+      'meetingLink',
+      'interviewerName',
+      'interviewerEmail',
+    ],
+  },
+])(
+  '$label defaults',
+  ({ schema, getDefaults, expectedFields, expectedInvalidPaths }) => {
+    const leaves = schemaLeaves(schema)
+
+    test('the schema walker finds the expected field set', () => {
+      // Spelled out rather than counted: these two schemas are small enough that
+      // naming them makes a silent addition or removal obvious in the diff.
+      expect(leaves.map((leaf) => leaf.path)).toEqual(expectedFields)
+    })
+
+    test.each(leaves)(
+      'schema field $path has a default in the defaults factory',
+      ({ path }) => {
+        expect(hasPath(getDefaults(), path)).toBe(true)
+      },
+    )
+
+    test('only the fields the user must supply fail validation', () => {
+      // A default the schema rejects for any *other* reason is worse than a
+      // missing one: the form opens invalid with nothing visibly wrong.
+      const result = (schema as any).safeParse(getDefaults())
+      const invalid = (result.error?.issues ?? []).map((issue: any) =>
+        issue.path.join('.'),
+      )
+      expect([...new Set<string>(invalid)].sort()).toEqual(
+        [...expectedInvalidPaths].sort(),
+      )
+    })
+  },
+)
+
+/**
+ * `getInterviewSlotDefaults` also carries `id`, which `interviewSlotSchema`
+ * does not describe. That is deliberate - the id is generated at write time by
+ * `generateInterviewSlotId` - but it means the slot defaults are the one place
+ * where "not in the schema" is expected rather than a drift signal.
+ */
+test('interview slot defaults expose only id beyond the schema', () => {
+  const validated = new Set(
+    schemaLeaves(interviewSlotSchema as unknown as z.ZodTypeAny).map(
+      (leaf) => leaf.path,
+    ),
+  )
+  const extras = objectLeaves(getInterviewSlotDefaults()).filter(
+    (path) => !validated.has(path),
+  )
+  expect(extras).toEqual(['id'])
 })

@@ -18,7 +18,11 @@ module.exports = {
     const result = ts.transpileModule(sourceText, {
       compilerOptions: {
         module: ts.ModuleKind.CommonJS,
-        target: ts.ScriptTarget.ES2020,
+        // ES2022, not ES2020: Svelte 5's own reactivity sources subclass
+        // built-ins (`class SvelteMap extends Map`) and use class fields,
+        // which TypeScript's ES2020 class down-level emits as a `super`
+        // reference Node rejects with "'super' keyword unexpected here".
+        target: ts.ScriptTarget.ES2022,
         esModuleInterop: true,
         allowSyntheticDefaultImports: true,
         experimentalDecorators: true,

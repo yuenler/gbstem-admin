@@ -1,22 +1,23 @@
 <script lang="ts">
   import { user } from '$lib/client/firebase'
   import CheckboxInput from '$lib/components/CheckboxInput.svelte'
-  import DateTimeInput from '$lib/components/DateTimeInput.svelte'
-  import Form from '$lib/components/Form.svelte'
-  import TextInput from '$lib/components/TextInput.svelte'
   import {
     canUserModifySlot,
     resetInterviewSlotToAdd,
+    toInterviewSlotFormValues,
   } from '$lib/helpers/setInterviewTimes'
   import { interviewService } from '$lib/services/interviewService'
   import { alert } from '$lib/stores'
   import { cn, formatDate, formatDateLocal } from '$lib/utils'
   import { onMount } from 'svelte'
+  import { defaults, superForm } from 'sveltekit-superforms'
+  import { zod } from 'sveltekit-superforms/adapters'
   import Button from '../Button.svelte'
   import Card from '../Card.svelte'
+  import FormInput from '../FormInput.svelte'
   import Loading from '../Loading.svelte'
   import Select from '../Select.svelte'
-  import { getInterviewSlotDefaults } from './schemas'
+  import { getInterviewSlotDefaults, interviewSlotSchema } from './schemas'
 
   interface Props {
     class?: string
@@ -36,6 +37,75 @@
   let interviewSlotToAdd: Data.InterviewSlot = $state(
     getInterviewSlotDefaults(),
   )
+
+  const schema = interviewSlotSchema
+
+  /**
+   * The "Add A Time Slot" card.
+   *
+   * Superforms makes the schema the thing that actually guards the write.
+   *
+   * `interviewSlotToAdd` is the carrier for the fields the schema doesn't own
+   * (`id`) and for the interviewee lookup below, which writes into
+   * `$addFormData` so validation sees it.
+   */
+  const addFormResult = superForm(
+    defaults(
+      toInterviewSlotFormValues(getInterviewSlotDefaults()),
+      zod(schema as any) as any,
+    ) as any,
+    {
+      id: 'add-interview-slot',
+      SPA: true,
+      validators: zod(schema as any) as any,
+      resetForm: false,
+      async onUpdate({ form: formVal }: { form: any }) {
+        if (!formVal.valid) return
+        await addTime(formVal.data)
+      },
+    },
+  )
+  const {
+    form: addFormData,
+    enhance: addEnhance,
+    delayed: addDelayed,
+  } = addFormResult
+
+  /**
+   * The per-slot edit card. One superForm rather than one per slot: `editSlot`
+   * holds a single id, so only one card is ever open, and its values are set
+   * when that card opens.
+   */
+  const editFormResult = superForm(
+    defaults(
+      toInterviewSlotFormValues(getInterviewSlotDefaults()),
+      zod(schema as any) as any,
+    ) as any,
+    {
+      id: 'edit-interview-slot',
+      SPA: true,
+      validators: zod(schema as any) as any,
+      resetForm: false,
+      async onUpdate({ form: formVal }: { form: any }) {
+        if (!formVal.valid) return
+        const slot = allInterviewSlots.find((s) => s.id === editSlot)
+        if (!slot) return
+        await updateTime({ ...slot, ...formVal.data })
+        editSlot = ''
+      },
+    },
+  )
+  const {
+    form: editFormData,
+    enhance: editEnhance,
+    delayed: editDelayed,
+  } = editFormResult
+
+  function openSlotForEdit(slot: Data.InterviewSlot) {
+    editSlot = slot.id
+    editFormResult.form.set(toInterviewSlotFormValues(slot))
+  }
+
   let currentUser: Data.User.Store | undefined = $state()
   let loading = $state(true)
   let loadError = $state<string | null>(null)
@@ -82,11 +152,16 @@
           meta: { uid },
         } = selectedInterviewee
         selectedIntervieweeDocId = (selectedInterviewee as any).docId || ''
-        interviewSlotToAdd.intervieweeId = uid
-        interviewSlotToAdd.intervieweeEmail = email
-        interviewSlotToAdd.intervieweeFirstName = firstName
-        interviewSlotToAdd.intervieweeLastName = lastName
-        interviewSlotToAdd.interviewSlotStatus = 'pending'
+        // Into the form store, not `interviewSlotToAdd`: these are schema
+        // fields, so they have to be what validation and the write see.
+        addFormData.update((current: any) => ({
+          ...current,
+          intervieweeId: uid,
+          intervieweeEmail: email,
+          intervieweeFirstName: firstName,
+          intervieweeLastName: lastName,
+          interviewSlotStatus: 'pending',
+        }))
       }
     }
   })
@@ -101,9 +176,11 @@
           const intervieweeInfo = await getInterviewees()
           intervieweeNames = intervieweeInfo.names
           intervieweeOptions = intervieweeInfo.options
-          interviewSlotToAdd.interviewerName =
-            currentUser.object.displayName ?? ''
-          interviewSlotToAdd.interviewerEmail = currentUser.object.email ?? ''
+          addFormData.update((current: any) => ({
+            ...current,
+            interviewerName: currentUser?.object.displayName ?? '',
+            interviewerEmail: currentUser?.object.email ?? '',
+          }))
           loadError = null
         } catch (err: any) {
           console.error('Failed to load interview slots:', err)
@@ -115,10 +192,10 @@
     })
   })
 
-  const addTime = async () => {
-    if (interviewSlotToAdd.intervieweeId != '') {
+  const addTime = async (formData: any) => {
+    if (formData.intervieweeId != '') {
       const confirmation = confirm(
-        `Are you sure you want to assign ${interviewSlotToAdd.intervieweeFirstName} ${interviewSlotToAdd.intervieweeLastName} as the interviewee for this slot? An email will be sent to the interviewee confirming the interview has been scheduled.`,
+        `Are you sure you want to assign ${formData.intervieweeFirstName} ${formData.intervieweeLastName} as the interviewee for this slot? An email will be sent to the interviewee confirming the interview has been scheduled.`,
       )
       if (!confirmation) {
         return
@@ -126,13 +203,15 @@
     }
 
     try {
+      // `id` comes from `interviewSlotToAdd` rather than the form: the schema
+      // doesn't describe it and the service generates the real one anyway.
       const addedSlot = await interviewService.createOrAssignInterviewSlot(
-        interviewSlotToAdd,
+        { ...interviewSlotToAdd, ...formData },
         selectedIntervieweeDocId,
         currentUser?.object?.uid,
       )
       allInterviewSlots = [...allInterviewSlots, addedSlot]
-      if (interviewSlotToAdd.intervieweeId != '') {
+      if (formData.intervieweeId != '') {
         alert.trigger('success', 'Interviewee assigned and email sent.')
       } else {
         alert.trigger('success', 'Timeslot added successfully.')
@@ -146,16 +225,26 @@
       currentUser?.object?.displayName ?? '',
       currentUser?.object?.email ?? '',
     )
+    addFormData.set(toInterviewSlotFormValues(interviewSlotToAdd))
     interviewee = ''
     await refetchSlots()
   }
 
   function handleClear() {
     interviewee = ''
-    interviewSlotToAdd = resetInterviewSlotToAdd(
-      interviewSlotToAdd.interviewerName,
-      interviewSlotToAdd.interviewerEmail,
-    )
+    addFormData.update((current: any) => ({
+      ...current,
+      ...toInterviewSlotFormValues(
+        resetInterviewSlotToAdd(
+          current.interviewerName,
+          current.interviewerEmail,
+        ),
+      ),
+      // The date and link the interviewer already typed are theirs to keep -
+      // this button clears the *interviewee*, which is all it claims to do.
+      date: current.date,
+      meetingLink: current.meetingLink,
+    }))
     alert.trigger('success', 'Interviewee cleared.')
   }
 
@@ -232,7 +321,7 @@
       <p class="mt-1">{loadError}</p>
     </div>
   {:else}
-    <Form class={cn(showValidation && 'show-validation', className)}>
+    <div class={cn('w-full', showValidation && 'show-validation', className)}>
       <div class="right-2 items-center">
         <Card class="mb-4">
           <h2 class="font-bold">Interview Time Requests</h2>
@@ -258,55 +347,67 @@
             {/if}
           {/each}
         </Card>
-        <Card>
-          <h2 class="font-bold">Add A Time Slot</h2>
-          <DateTimeInput
-            bind:value={interviewSlotToAdd.date}
-            label="Set Date (your local time)"
-          />
-          <TextInput
-            bind:value={interviewSlotToAdd.meetingLink}
-            label="Interview Meeting Link"
-          />
-          <div class="flex items-end gap-4">
-            <Select
-              bind:value={interviewee}
-              label="Assign Interviewee (ONLY USE when fulfilling that person's interview time request)"
-              options={intervieweeNames}
+        <form use:addEnhance class="w-full">
+          <Card>
+            <h2 class="font-bold">Add A Time Slot</h2>
+            <FormInput
+              form={addFormResult}
+              name="date"
+              inputName="set-date-your-local-time"
+              type="datetime-local"
+              label="Set Date (your local time)"
+              bind:value={$addFormData.date}
             />
-            <Button
-              color="red"
-              class="h-fit"
-              onclick={() => {
-                handleClear()
-              }}
-              ><svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#000000"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                ><polyline points="3 6 5 6 21 6"></polyline><path
-                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                ></path><line x1="10" y1="11" x2="10" y2="17"></line><line
-                  x1="14"
-                  y1="11"
-                  x2="14"
-                  y2="17"
-                ></line></svg
-              ></Button
-            >
-          </div>
-          <div class="right-2 items-center">
-            <Button color="blue" class="my-4 px-2 py-1" onclick={addTime}
-              >Confirm Timeslot</Button
-            >
-          </div>
-        </Card>
+            <FormInput
+              form={addFormResult}
+              name="meetingLink"
+              inputName="interview-meeting-link"
+              label="Interview Meeting Link"
+              bind:value={$addFormData.meetingLink}
+            />
+            <div class="flex items-end gap-4">
+              <Select
+                bind:value={interviewee}
+                label="Assign Interviewee (ONLY USE when fulfilling that person's interview time request)"
+                options={intervieweeNames}
+              />
+              <Button
+                color="red"
+                class="h-fit"
+                onclick={() => {
+                  handleClear()
+                }}
+                ><svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#000000"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  ><polyline points="3 6 5 6 21 6"></polyline><path
+                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                  ></path><line x1="10" y1="11" x2="10" y2="17"></line><line
+                    x1="14"
+                    y1="11"
+                    x2="14"
+                    y2="17"
+                  ></line></svg
+                ></Button
+              >
+            </div>
+            <div class="right-2 items-center">
+              <Button
+                color="blue"
+                class="my-4 px-2 py-1"
+                type="submit"
+                disabled={$addDelayed}>Confirm Timeslot</Button
+              >
+            </div>
+          </Card>
+        </form>
 
         <div class="my-5 flex gap-5">
           <CheckboxInput
@@ -324,31 +425,40 @@
         {#if editSlot === interview.id}
           {#if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser?.object?.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
             <Card>
-              <Form
-                class={cn(showValidation && 'show-validation', className)}
-                onSubmit={() => updateTime(interview)}
+              <form
+                use:editEnhance
+                class={cn(
+                  'w-full',
+                  showValidation && 'show-validation',
+                  className,
+                )}
               >
                 <div style="padding:1rem;">
                   <div>
                     <b>Interviewer: </b>{interview.interviewerName}
                   </div>
-                  <DateTimeInput
-                    bind:value={interview.date}
+                  <FormInput
+                    form={editFormResult}
+                    name="date"
+                    inputName="edit-interview-meeting-time"
+                    type="datetime-local"
                     label="Edit Interview Meeting Time"
+                    bind:value={$editFormData.date}
                   />
-                  <TextInput
-                    bind:value={interview.meetingLink}
+                  <FormInput
+                    form={editFormResult}
+                    name="meetingLink"
+                    inputName="edit-interview-meeting-link"
                     label="Edit Interview Meeting Link"
+                    bind:value={$editFormData.meetingLink}
                   />
                   <div class="flex gap-5">
                     <div class="right-2 items-center">
                       <Button
                         color="blue"
                         class="my-4 px-2 py-1"
-                        onclick={() => {
-                          updateTime(interview)
-                          editSlot = ''
-                        }}>Save</Button
+                        type="submit"
+                        disabled={$editDelayed}>Save</Button
                       >
                     </div>
                     <div class="right-2 items-center">
@@ -363,7 +473,7 @@
                     </div>
                   </div>
                 </div>
-              </Form>
+              </form>
             </Card>
           {/if}
         {:else if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser?.object?.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
@@ -401,13 +511,13 @@
                 <Button
                   color="blue"
                   class="my-4 px-2 py-1"
-                  onclick={() => (editSlot = interview.id)}>Edit</Button
+                  onclick={() => openSlotForEdit(interview)}>Edit</Button
                 >
               </div>
             {/if}
           </Card>
         {/if}
       {/each}
-    </Form>
+    </div>
   {/if}
 </svelte:boundary>
