@@ -35,6 +35,9 @@
     disabled?: boolean
     formEl?: HTMLFormElement | undefined
     collection?: string
+    seedVersion?: number
+    /** False while the parent is still fetching - see `loaded` below. */
+    loaded?: boolean
   }
 
   let {
@@ -44,6 +47,12 @@
     disabled = $bindable(true),
     formEl = $bindable(undefined),
     collection = registrationsCollection,
+    seedVersion = 0,
+    // Defaults to true so a parent that doesn't track loading is unaffected.
+    // The parents that do pass it keep the form uneditable until the fetch
+    // lands, because the seed that arrives with it replaces the whole store -
+    // anything typed before then would be silently discarded.
+    loaded = true,
   }: Props = $props()
 
   const schema = registrationSchema
@@ -91,14 +100,29 @@
 
   const { form, enhance, submitting } = formResult
 
-  // React to parent values changing (e.g. loaded data or cancel changes)
+  // Seeding the form is an event, not a derivation. The parent bumps
+  // `seedVersion` at the two moments a reseed is correct - the document
+  // finished loading, and "Delete changes" was pressed - and this effect
+  // reacts to that alone.
+  //
+  // Reacting to `values` itself (which this did) meant *any* reassignment
+  // replaced the whole store: the parent's fetch resolves asynchronously, so
+  // an admin who hit Edit and started typing before it landed had those edits
+  // silently reverted, with no error and the save then writing the stale
+  // values back. It was reproducible in Cypress as an intermittent failure in
+  // registrations.cy.ts Test Case 15c, where only the first few fields typed
+  // came back with their old values and everything after the load landed
+  // stuck. See CLAUDE.md on not using $effect to copy state.
+  let lastSeed = -1
   $effect(() => {
+    if (seedVersion === lastSeed) return
+    lastSeed = seedVersion
     form.set(toFormValues(values))
   })
 </script>
 
 <form bind:this={formEl} use:enhance class="w-full max-w-2xl">
-  <fieldset class="space-y-14" disabled={disabled || $submitting}>
+  <fieldset class="space-y-14" disabled={disabled || $submitting || !loaded}>
     <div class="grid gap-1">
       <span class="font-bold">Personal</span>
       <div class="grid gap-1 sm:grid-cols-2 sm:gap-3">

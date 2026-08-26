@@ -51,15 +51,25 @@
   })
 
   let formEl: HTMLFormElement | undefined = $state()
+  // Gates the Edit button: this dialog keeps the previous class's `values`
+  // when it reopens, so without this an admin could start editing stale data
+  // and have the fetch below overwrite the edits when it lands.
+  let loaded = $state(false)
+  // Bumped only when the form should be reseeded from `values` - see the note
+  // on the $effect in EditRegistrationForm.svelte.
+  let seedVersion = $state(0)
 
   async function loadClassData(classId: string) {
     studentList = []
     disabled = true
+    loaded = false
 
     try {
       const data = await classService.fetchClassData(classId)
       if (data) {
         values = { ...data }
+        seedVersion++
+        loaded = true
         const studentUids = data.students
         if (studentUids) {
           getStudentList(studentUids)
@@ -84,8 +94,10 @@
   }
   function handleDeleteChanges() {
     disabled = true
-    // Reset to the current Firestore loaded data
+    // Reset to the current Firestore loaded data. The reseed is what discards
+    // the form's edits; the copy below just keeps `values` a fresh object.
     values = { ...values }
+    seedVersion++
   }
 
   /**
@@ -163,7 +175,9 @@
           </div>
         {/if}
         <div class="flex flex-wrap gap-2">
-          <Button color="green" onclick={handleEdit}>Edit</Button>
+          <Button color="green" onclick={handleEdit} disabled={!loaded}>
+            Edit
+          </Button>
           <Button color="red" onclick={() => (open = false)}>Close</Button>
           <Button
             color="blue"
@@ -191,7 +205,14 @@
         </div>
       </Card>
       <div class="mt-4 flex justify-center">
-        <EditClassForm bind:formEl bind:disabled bind:values {id} />
+        <EditClassForm
+          bind:formEl
+          bind:disabled
+          bind:values
+          {id}
+          {seedVersion}
+          {loaded}
+        />
       </div>
 
       <div>

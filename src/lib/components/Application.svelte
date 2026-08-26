@@ -56,6 +56,12 @@
   let values: Data.Application<'client'> = $state(cloneDeep(defaultValues))
   let decision: Data.Decision | null | undefined = $state()
   let formEl: HTMLFormElement | undefined = $state()
+  // Keeps the form uneditable until the fetch lands. Distinct from `loading`,
+  // which the save path also raises - this one is only about the initial read.
+  let loaded = $state(false)
+  // Bumped only when the form should be reseeded from `values` - see the note
+  // on the $effect in EditRegistrationForm.svelte.
+  let seedVersion = $state(0)
 
   $effect(() => {
     const currentId = id
@@ -66,6 +72,7 @@
     decision = undefined
     interview = cloneDeep(defaultInterview)
     loading = true
+    loaded = false
     disabled = true
     ;(async () => {
       try {
@@ -78,6 +85,8 @@
         dbValues = cloneDeep(res.values)
         decision = res.decision
         interview = res.interview
+        seedVersion++
+        loaded = true
       } catch (err: any) {
         if (!cancelled) {
           console.error('Failed to load application:', err)
@@ -181,6 +190,7 @@
   function handleDeleteChanges() {
     disabled = true
     if (dbValues) values = cloneDeep(dbValues)
+    seedVersion++
   }
 </script>
 
@@ -415,7 +425,9 @@
                 : 'Show Interview Form'}</Button
             >
             {#if disabled && !showInterviewForm}
-              <Button onclick={handleEdit}>Edit</Button>
+              <!-- Gated on the load: editing stale values would have them
+                   overwritten when the fetch lands. -->
+              <Button onclick={handleEdit} disabled={!loaded}>Edit</Button>
             {/if}
             <Button onclick={() => (open = false)}>Close</Button>
           </div>
@@ -434,6 +446,8 @@
             {collection}
             {semesterStartDate}
             {semesterEndDate}
+            {seedVersion}
+            {loaded}
           />
         </Card>
         {#if showInterviewForm}
