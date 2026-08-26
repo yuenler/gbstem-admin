@@ -3,11 +3,11 @@
   import { registrationsCollection } from '$lib/data/collections'
   import { registrationService } from '$lib/services/registrationService'
   import { alert } from '$lib/stores'
-  import { type Timestamp, serverTimestamp } from 'firebase/firestore'
   import { cloneDeep } from 'lodash-es'
   import Button from './Button.svelte'
   import Dialog from './Dialog.svelte'
   import EditRegistrationForm from './forms/EditRegistrationForm.svelte'
+  import { createDefaultRegistrationValues } from '$lib/helpers/editRegistrationForm'
 
   interface Props {
     open?: boolean
@@ -24,55 +24,9 @@
   let disabled = $state(true)
   let dbValues: Data.Registration<'client'> | undefined = $state()
 
-  const defaultValues: Data.Registration<'client'> = {
-    personal: {
-      email: '',
-      studentFirstName: '',
-      studentLastName: '',
-      parentFirstName: '',
-      parentLastName: '',
-      gender: '',
-      race: [],
-      phoneNumber: '',
-      dateOfBirth: '',
-      frlp: '',
-      parentEducation: '',
-      secondaryEmail: '',
-    },
-    academic: {
-      school: '',
-      grade: '',
-    },
-    program: {
-      csCourse: '',
-      engineeringCourse: '',
-      mathCourse: '',
-      scienceCourse: '',
-      inPerson: false,
-      reason: '',
-    },
-    inPerson: {
-      allergies: '',
-      parentPickup: '',
-    },
-    agreements: {
-      mediaRelease: false,
-      bypassAgeLimits: false,
-      entireProgram: false,
-      timeCommitment: false,
-      submitting: false,
-    },
-    meta: {
-      uid: '',
-      submitted: false,
-    },
-    timestamps: {
-      created: serverTimestamp() as Timestamp,
-      updated: serverTimestamp() as Timestamp,
-    },
-  }
-
-  let values: Data.Registration<'client'> = $state(cloneDeep(defaultValues))
+  let values: Data.Registration<'client'> = $state(
+    createDefaultRegistrationValues(),
+  )
   let formEl: HTMLFormElement | undefined = $state()
 
   $effect(() => {

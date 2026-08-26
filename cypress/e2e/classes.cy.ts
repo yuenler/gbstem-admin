@@ -1,3 +1,9 @@
+import {
+  classesCollection,
+  currentSemester,
+} from '../../src/lib/data/collections'
+import { prepareDocForCompare } from '../support/utils'
+
 describe('Section E: Classes Directory', () => {
   beforeEach(() => {
     // Ignore transient Firebase emulator connection exceptions
@@ -253,5 +259,250 @@ describe('Section E: Classes Directory', () => {
 
     // Close modal
     cy.contains('button', 'Close').click()
+  })
+})
+
+/** Every field EditClassForm actually renders. */
+interface ClassInput {
+  course: string
+  gradeRecommendation: string
+  classCap: string
+  meetingLink: string
+  classDay1: string
+  classTime1: string
+  classDay2: string
+  classTime2: string
+  online: boolean
+}
+
+/** Bob Jones's Scratch 1 class - Test Case 13 works on Demo Instructor's. */
+const SEEDED_CLASS_ID = 'class-scratch'
+const SEEDED_CLASS_INSTRUCTOR = 'Bob Jones'
+/** Search matches one name field at a time, so a full name matches nothing. */
+const SEEDED_CLASS_SEARCH = 'Bob'
+
+/**
+ * `meetingTimes` and `completedClassDates` hold Firestore timestamps, which
+ * `getFirestoreDoc`'s converter returns as raw wrappers rather than dates.
+ * They are asserted for length separately.
+ */
+const CLASS_TIMESTAMP_FIELDS = ['meetingTimes', 'completedClassDates']
+
+/**
+ * Types into a field inside the class dialog. Same single-`type` replacement
+ * as the registration and application specs - see `fillField` there for why
+ * `clear()` then `type()` races the superforms store.
+ */
+/** Input types Cypress refuses to accept keystroke sequences for. */
+const STRUCTURED_INPUT_TYPES = [
+  'date',
+  'time',
+  'datetime-local',
+  'month',
+  'week',
+]
+
+function fillClassField(selector: string, value: string) {
+  cy.get(selector).then(($el) => {
+    if (STRUCTURED_INPUT_TYPES.includes(($el[0] as HTMLInputElement).type)) {
+      // `cy.type` rejects a `{selectall}{backspace}` prefix on these - it
+      // validates the whole string against the input's format first.
+      cy.get(selector).clear({ force: true })
+      cy.get(selector).type(value, { force: true })
+    } else {
+      cy.get(selector).type(`{selectall}{backspace}${value}`, { force: true })
+    }
+  })
+  cy.get(selector).should('have.value', value)
+}
+
+function fillClassForm(input: ClassInput) {
+  // Native `<select>` elements here, not the custom combobox the other admin
+  // forms use, so `cy.select` rather than `cy.selectOption`.
+  cy.get('select[name="course"]').select(input.course, { force: true })
+  fillClassField('input[name="gradeRecommendation"]', input.gradeRecommendation)
+  fillClassField('input[name="class-capacity"]', input.classCap)
+
+  if (input.online) {
+    cy.get('input[name="online"]').check({ force: true })
+  } else {
+    cy.get('input[name="online"]').uncheck({ force: true })
+  }
+
+  cy.get('select[name="classDay1"]').select(input.classDay1, { force: true })
+  fillClassField('input[name="classTime1"]', input.classTime1)
+
+  // `meetingLink`, `classDay2` and `classTime2` only render while the class is
+  // online - Test Case 13c covers what happens to them when it isn't.
+  if (input.online) {
+    fillClassField('input[name="meetingLink"]', input.meetingLink)
+    cy.get('select[name="classDay2"]').select(input.classDay2, { force: true })
+    fillClassField('input[name="classTime2"]', input.classTime2)
+  }
+}
+
+/**
+ * The complete class document the form is expected to have written.
+ *
+ * `classService.saveClassDetails` uses `setDoc` with **no** `{ merge: true }`,
+ * so this really is the whole document: anything missing from the write is
+ * deleted outright rather than left alone. That makes every unrendered field
+ * below - the roster, the generated schedule, the instructor's name, the
+ * co-instructor list - depend on `classEditedFields` spreading `values`.
+ */
+function expectedClassDoc(input: ClassInput) {
+  return {
+    semester: currentSemester,
+    course: input.course,
+    gradeRecommendation: input.gradeRecommendation,
+    classCap: Number(input.classCap),
+    meetingLink: input.meetingLink,
+    classDay1: input.classDay1,
+    classTime1: input.classTime1,
+    classDay2: input.classDay2,
+    classTime2: input.classTime2,
+    online: input.online,
+    // None of these are rendered by this form.
+    instructorEmail: 'instructor2@gbstem.org',
+    instructorFirstName: 'Bob',
+    instructorLastName: 'Jones',
+    otherInstructorEmails: 'assistant@gbstem.org',
+    students: ['student3'],
+    classStatuses: ['FeedbackIncomplete', 'ClassInFuture'],
+    feedbackCompleted: [false, false],
+  }
+}
+
+function readClassDoc(): Cypress.Chainable<any> {
+  return cy
+    .getFirebaseAuthToken()
+    .then((authToken: string) =>
+      cy.getFirestoreDoc(authToken, classesCollection, SEEDED_CLASS_ID),
+    )
+}
+
+function assertClassDoc(input: ClassInput) {
+  readClassDoc().then((data: any) => {
+    expect(data, 'class document').to.not.equal(null)
+    expect(
+      prepareDocForCompare(data, { omit: CLASS_TIMESTAMP_FIELDS }),
+    ).to.deep.equal(
+      prepareDocForCompare(expectedClassDoc(input), {
+        omit: CLASS_TIMESTAMP_FIELDS,
+      }),
+    )
+    // Dropped from the comparison above, so checked here rather than not at
+    // all - a full-document overwrite that lost them would be invisible
+    // otherwise.
+    expect(data.meetingTimes, 'meeting times').to.have.length(2)
+    expect(data.completedClassDates, 'completed class dates').to.have.length(0)
+  })
+}
+
+function openClassForEdit() {
+  // Searched rather than scanned: the directory paginates, and this class is
+  // not on the first page. Only searched when the term isn't already applied -
+  // re-typing into a box that already holds it races the box's own controlled
+  // value and lands as "BobBob".
+  cy.url().then((url) => {
+    if (!url.includes(`query=${SEEDED_CLASS_SEARCH}`)) {
+      cy.submitSearch(SEEDED_CLASS_SEARCH)
+    }
+  })
+  cy.contains('tr', SEEDED_CLASS_INSTRUCTOR).click({ force: true })
+  cy.get('[role="dialog"]').should('exist')
+  cy.contains('button', 'Edit').click({ force: true })
+  cy.get('input[name="gradeRecommendation"]').should('not.be.disabled')
+}
+
+function saveClass() {
+  cy.contains('button', 'Save changes').click({ force: true })
+  cy.waitForNotification('Changes were saved successfully.')
+}
+
+const CLASS_INITIAL: ClassInput = {
+  course: 'Python 1',
+  gradeRecommendation: '3-5',
+  classCap: '9',
+  meetingLink: 'https://zoom.us/j/111222333',
+  classDay1: 'Monday',
+  classTime1: '15:30',
+  classDay2: 'Wednesday',
+  classTime2: '16:45',
+  online: true,
+}
+
+/** Every field differs except `online`, which Test Case 13c covers. */
+const CLASS_MODIFIED: ClassInput = {
+  course: 'Engineering 1',
+  gradeRecommendation: '6-8',
+  classCap: '14',
+  meetingLink: 'https://zoom.us/j/444555666',
+  classDay1: 'Thursday',
+  classTime1: '17:15',
+  classDay2: 'Friday',
+  classTime2: '18:00',
+  online: true,
+}
+
+describe('Section E: Class Field Coverage', () => {
+  beforeEach(() => {
+    Cypress.on('uncaught:exception', (err) => {
+      if (
+        err.message.includes('Connection failed') ||
+        err.message.includes('Firebase')
+      ) {
+        return false
+      }
+      return true
+    })
+    cy.signedInSession('admin', { initialPage: '/classes' })
+  })
+
+  it('Test Case 13b: Class - Every Field Reaches Firestore', () => {
+    openClassForEdit()
+    fillClassForm(CLASS_INITIAL)
+    saveClass()
+    assertClassDoc(CLASS_INITIAL)
+  })
+
+  it('Test Case 13c: Class - Every Field Can Be Modified', () => {
+    openClassForEdit()
+    fillClassForm(CLASS_INITIAL)
+    saveClass()
+    assertClassDoc(CLASS_INITIAL)
+
+    // Re-open so the stored document is read back through `toClassFormValues`,
+    // which is where a field missing from that mapper comes back as the
+    // schema's default - and with no `{ merge: true }` on the write, that
+    // default is then stored.
+    cy.contains('button', /^Close$/).click({ force: true })
+    cy.get('[role="dialog"]').should('not.exist')
+    openClassForEdit()
+    cy.get('input[name="class-capacity"]').should(
+      'have.value',
+      CLASS_INITIAL.classCap,
+    )
+
+    fillClassForm(CLASS_MODIFIED)
+    saveClass()
+    assertClassDoc(CLASS_MODIFIED)
+  })
+
+  it('Test Case 13d: Class - Offline Class Keeps Its Hidden Online Fields', () => {
+    // `meetingLink`, `classDay2` and `classTime2` stop rendering once a class
+    // is marked in-person, but they stay in the form data and so stay in the
+    // write. With a non-merging `setDoc` behind this form, blanking them
+    // instead would erase the stored values outright.
+    openClassForEdit()
+    fillClassForm(CLASS_INITIAL)
+    saveClass()
+
+    openClassForEdit()
+    cy.get('input[name="online"]').uncheck({ force: true })
+    cy.get('input[name="meetingLink"]').should('not.exist')
+    saveClass()
+
+    assertClassDoc({ ...CLASS_INITIAL, online: false })
   })
 })

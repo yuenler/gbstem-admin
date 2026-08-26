@@ -6,6 +6,11 @@
   import { superForm, defaults } from 'sveltekit-superforms'
   import { zod } from 'sveltekit-superforms/adapters'
   import { registrationSchema } from './schemas'
+  import {
+    registrationDisplayValues,
+    registrationEditedFields,
+    toRegistrationFormValues as toFormValues,
+  } from '$lib/helpers/editRegistrationForm'
   import { cloneDeep } from 'lodash-es'
   import {
     gendersJson,
@@ -43,64 +48,6 @@
 
   const schema = registrationSchema
 
-  function toFormValues(v: Data.Registration<'client'>) {
-    return {
-      personal: {
-        studentFirstName: v.personal?.studentFirstName || '',
-        studentLastName: v.personal?.studentLastName || '',
-        parentFirstName: v.personal?.parentFirstName || '',
-        parentLastName: v.personal?.parentLastName || '',
-        email: v.personal?.email || '',
-        secondaryEmail: v.personal?.secondaryEmail || '',
-        phoneNumber: v.personal?.phoneNumber || '',
-        dateOfBirth: v.personal?.dateOfBirth || '',
-        gender: v.personal?.gender || '',
-        race: v.personal?.race || [],
-        frlp: v.personal?.frlp || '',
-        parentEducation: v.personal?.parentEducation || '',
-      },
-      academic: {
-        school: v.academic?.school || '',
-        grade: v.academic?.grade || '',
-      },
-      program: {
-        csCourse: v.program?.csCourse || '',
-        mathCourse: v.program?.mathCourse || '',
-        engineeringCourse: v.program?.engineeringCourse || '',
-        scienceCourse: v.program?.scienceCourse || '',
-        inPerson:
-          v.program?.inPerson !== undefined ? v.program.inPerson : false,
-        reason: v.program?.reason || '',
-      },
-      inPerson: {
-        allergies: v.inPerson?.allergies || '',
-        parentPickup: v.inPerson?.parentPickup || '',
-      },
-      agreements: {
-        mediaRelease:
-          v.agreements?.mediaRelease !== undefined
-            ? v.agreements.mediaRelease
-            : false,
-        bypassAgeLimits:
-          v.agreements?.bypassAgeLimits !== undefined
-            ? v.agreements.bypassAgeLimits
-            : false,
-        entireProgram:
-          v.agreements?.entireProgram !== undefined
-            ? v.agreements.entireProgram
-            : false,
-        timeCommitment:
-          v.agreements?.timeCommitment !== undefined
-            ? v.agreements.timeCommitment
-            : false,
-        submitting:
-          v.agreements?.submitting !== undefined
-            ? v.agreements.submitting
-            : false,
-      },
-    }
-  }
-
   const formResult = superForm(
     defaults(toFormValues(values) as any, zod(schema as any) as any) as any,
     {
@@ -111,40 +58,16 @@
       async onUpdate({ form: formVal }) {
         if (!formVal.valid) return
         if (id !== undefined) {
-          const updatedValues = {
-            ...values,
-            personal: {
-              ...values.personal,
-              ...formVal.data.personal,
-            },
-            academic: {
-              ...values.academic,
-              ...formVal.data.academic,
-            },
-            program: {
-              ...values.program,
-              ...formVal.data.program,
-            },
-            inPerson: {
-              ...values.inPerson,
-              ...formVal.data.inPerson,
-            },
-            agreements: {
-              ...values.agreements,
-              ...formVal.data.agreements,
-            },
-          }
+          const updatedValues = registrationDisplayValues(values, formVal.data)
           try {
             // Send the validated form data rather than `updatedValues`: the latter
             // re-merges `values`, the snapshot taken when the dialog opened, so it
             // would rewrite fields this form doesn't render (the parent's name).
-            await registrationService.saveRegistration(collection, id, {
-              personal: formVal.data.personal,
-              academic: formVal.data.academic,
-              program: formVal.data.program,
-              inPerson: formVal.data.inPerson,
-              agreements: formVal.data.agreements,
-            })
+            await registrationService.saveRegistration(
+              collection,
+              id,
+              registrationEditedFields(formVal.data),
+            )
             values = updatedValues
             dbValues = cloneDeep(updatedValues)
             disabled = true

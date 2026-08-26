@@ -1,4 +1,8 @@
-import { currentSemester } from '../../src/lib/data/collections'
+import {
+  applicationsCollection,
+  currentSemester,
+} from '../../src/lib/data/collections'
+import { prepareDocForCompare } from '../support/utils'
 import collectionsList from '../../src/lib/data/collectionsList.json'
 
 // The display name (e.g. "Spring 2026") for the current semester, as shown in the
@@ -512,5 +516,408 @@ describe('Section D: Instructor Applications Management', () => {
 
     // Close
     cy.contains('button', /^Close$/).click({ force: true })
+  })
+})
+
+/** Every field EditApplicationForm actually renders. */
+interface ApplicationInput {
+  phoneNumber: string
+  dateOfBirth: string
+  gender: string
+  race: string[]
+  school: string
+  graduationYear: string
+  courses: string[]
+  preferences: string
+  timeSlots: string
+  notAvailable: string
+  inPerson: boolean
+  reason: string
+  taughtBefore: boolean
+  academicBackground: string
+  teachingScenario: string
+  why: string
+  entireProgram: boolean
+  timeCommitment: boolean
+  submitting: boolean
+}
+
+/**
+ * `app-fake-1` - Mary Johnson. Chosen because no other test in this spec
+ * touches her: Test Cases 9 through 11b all work on David Miller, David
+ * Hernandez or Mark Lewis, and the seed runs once per spec file.
+ */
+const SEEDED_APPLICATION_ID = 'app-fake-1'
+const SEEDED_APPLICANT_NAME = 'Mary Johnson'
+/**
+ * Searched by first name alone: the directory's search matches a single name
+ * field at a time, so the full name matches nothing. 'Mary' is unique across
+ * the seeded applicants - the seed assigns each of its 30 first names once.
+ */
+const SEEDED_APPLICANT_SEARCH = 'Mary'
+
+/** `bind:group` stores tick order, so both need sorting before compare. */
+const APPLICATION_ARRAY_FIELDS = ['personal.race', 'program.courses']
+
+/**
+ * Types into a field inside the application dialog.
+ *
+ * Forced for the same reason as the registration spec's helper: the dialog is
+ * `position: fixed` under a sticky header, so a field can be reported covered,
+ * and `scrollIntoView` asserts visibility itself so it cannot fix that. The
+ * `have.value` check is what stops forcing from hiding a field that never took
+ * the text.
+ */
+function fillAppField(selector: string, value: string) {
+  // Replaced in a single `type` rather than `clear()` then `type()`. These
+  // inputs are bound to the superforms store, and the gap between the two
+  // commands lets a re-render restore the old value - which then either
+  // survives (the clear "not taking") or gets typed onto (a doubled value like
+  // "555-0110555-0110"). One keystroke sequence leaves no such gap. Date
+  // inputs don't accept `{selectall}{backspace}`, so those still clear first.
+  cy.get(selector).then(($el) => {
+    if (($el[0] as HTMLInputElement).type === 'date') {
+      cy.get(selector).clear({ force: true })
+      cy.get(selector).type(value, { force: true })
+    } else {
+      cy.get(selector).type(`{selectall}{backspace}${value}`, { force: true })
+    }
+  })
+  cy.get(selector).should('have.value', value)
+}
+
+function setAppCheckbox(selector: string, checked: boolean) {
+  if (checked) cy.get(selector).check({ force: true })
+  else cy.get(selector).uncheck({ force: true })
+}
+
+/**
+ * Fills every field the form renders.
+ *
+ * `essay.taughtBefore` is set before the essay fields because
+ * `essay.teachingScenario`/`essay.why` only render while it is *un*ticked -
+ * the same conditional-field trap the portal's application form has.
+ */
+function fillApplicationForm(input: ApplicationInput) {
+  fillAppField('input[name="personal.phoneNumber"]', input.phoneNumber)
+  fillAppField('input[name="personal.dateOfBirth"]', input.dateOfBirth)
+  cy.selectOption('input[name="personal.gender"]', input.gender)
+
+  // Clear every box first so the result is the input exactly, not the input
+  // unioned with whatever was stored.
+  cy.get('input[id^="app-race-"]').uncheck({ force: true })
+  input.race.forEach((race) => {
+    cy.get(`input[id="app-race-${race}"]`).check({ force: true })
+  })
+
+  fillAppField('input[name="academic.school"]', input.school)
+  fillAppField('input[name="academic.graduationYear"]', input.graduationYear)
+
+  cy.get('input[id^="app-course-"]').uncheck({ force: true })
+  input.courses.forEach((course) => {
+    cy.get(`input[id="app-course-${course}"]`).check({ force: true })
+  })
+
+  fillAppField('input[name="program.preferences"]', input.preferences)
+  fillAppField('input[name="program.timeSlots"]', input.timeSlots)
+  fillAppField('textarea[name="program.notAvailable"]', input.notAvailable)
+  setAppCheckbox('input[name="program.inPerson"]', input.inPerson)
+  cy.selectOption('input[name="program.reason"]', input.reason)
+
+  setAppCheckbox('input[name="essay.taughtBefore"]', input.taughtBefore)
+  fillAppField(
+    'textarea[name="essay.academicBackground"]',
+    input.academicBackground,
+  )
+  if (!input.taughtBefore) {
+    fillAppField(
+      'textarea[name="essay.teachingScenario"]',
+      input.teachingScenario,
+    )
+    fillAppField('textarea[name="essay.why"]', input.why)
+  }
+
+  setAppCheckbox('input[name="agreements.entireProgram"]', input.entireProgram)
+  setAppCheckbox(
+    'input[name="agreements.timeCommitment"]',
+    input.timeCommitment,
+  )
+  setAppCheckbox('input[name="agreements.submitting"]', input.submitting)
+}
+
+/**
+ * The complete application document the form is expected to have written.
+ *
+ * `personal.email`/`firstName`/`lastName`, `program.numClasses` and the whole
+ * of `meta` are never rendered by this form, so every one of them has to
+ * survive the save untouched - which is exactly what `applicationEditedFields`
+ * promises by writing only the validated form data.
+ */
+function expectedApplicationDoc(input: ApplicationInput, meta: any) {
+  return {
+    semester: currentSemester,
+    personal: {
+      email: 'applicant-1@gmail.com',
+      firstName: 'Mary',
+      lastName: 'Johnson',
+      phoneNumber: input.phoneNumber,
+      dateOfBirth: input.dateOfBirth,
+      gender: input.gender,
+      race: input.race,
+    },
+    academic: {
+      school: input.school,
+      graduationYear: Number(input.graduationYear),
+    },
+    program: {
+      courses: input.courses,
+      preferences: input.preferences,
+      // Not in `applicationSchema` and not rendered, so zod strips it from the
+      // write and the seeded value has to remain.
+      numClasses: '1',
+      timeSlots: input.timeSlots,
+      notAvailable: input.notAvailable,
+      inPerson: input.inPerson,
+      reason: input.reason,
+    },
+    essay: {
+      taughtBefore: input.taughtBefore,
+      academicBackground: input.academicBackground,
+      teachingScenario: input.teachingScenario,
+      why: input.why,
+    },
+    agreements: {
+      entireProgram: input.entireProgram,
+      timeCommitment: input.timeCommitment,
+      submitting: input.submitting,
+    },
+    // Passed in rather than hard-coded: `meta` is owned by the decision
+    // actions and by the applicant in the portal, and the bulk-decision tests
+    // earlier in this spec change `meta.decided`. Asserting it equals what it
+    // was immediately before the save is both order-independent and a stronger
+    // claim than any fixed value - it says this form changed none of it.
+    meta,
+  }
+}
+
+/** Reads the fixture application straight out of Firestore. */
+function readApplicationDoc(): Cypress.Chainable<any> {
+  return cy
+    .getFirebaseAuthToken()
+    .then((authToken: string) =>
+      cy.getFirestoreDoc(
+        authToken,
+        applicationsCollection,
+        SEEDED_APPLICATION_ID,
+      ),
+    )
+}
+
+/**
+ * `meta` as it stood before the form saved. Captured per test rather than
+ * assumed, so these tests don't depend on which decisions the tests above
+ * happened to apply.
+ */
+let metaBeforeEdit: any
+
+function captureApplicationMeta() {
+  readApplicationDoc().then((data: any) => {
+    expect(data, 'application document').to.not.equal(null)
+    metaBeforeEdit = data.meta
+  })
+}
+
+function assertApplicationDoc(input: ApplicationInput) {
+  readApplicationDoc().then((data: any) => {
+    expect(data, 'application document').to.not.equal(null)
+    expect(
+      prepareDocForCompare(data, { sortArraysAt: APPLICATION_ARRAY_FIELDS }),
+    ).to.deep.equal(
+      prepareDocForCompare(expectedApplicationDoc(input, metaBeforeEdit), {
+        sortArraysAt: APPLICATION_ARRAY_FIELDS,
+      }),
+    )
+  })
+}
+
+/**
+ * Opens the fixture applicant's dialog and puts it into edit mode.
+ *
+ * The interview form covers the Edit button, and whether it starts open
+ * depends on the applicant, so this handles either state - the same
+ * defensive check Test Case 11b already makes.
+ */
+function openApplicationForEdit() {
+  // Only search when the term isn't already applied. Re-typing into a search
+  // box that already holds it races the box's own controlled value and lands
+  // as "Maryary", which then matches no rows.
+  cy.url().then((url) => {
+    if (!url.includes(`query=${SEEDED_APPLICANT_SEARCH}`)) {
+      cy.submitSearch(SEEDED_APPLICANT_SEARCH)
+    }
+  })
+  cy.contains('td', SEEDED_APPLICANT_NAME).click({ force: true })
+  cy.get('[role="dialog"]').should('exist')
+  cy.get('body').then(($body) => {
+    if ($body.text().includes('Close Interview Form')) {
+      cy.contains('button', 'Close Interview Form').click({ force: true })
+    }
+  })
+  cy.contains('button', 'Edit').click({ force: true })
+  cy.get('input[name="personal.phoneNumber"]').should('not.be.disabled')
+}
+
+function saveApplication() {
+  cy.contains('button', 'Save changes').click({ force: true })
+  cy.waitForNotification('Changes were saved successfully.')
+}
+
+const APPLICATION_INITIAL: ApplicationInput = {
+  phoneNumber: '555-0110',
+  dateOfBirth: '2007-04-18',
+  gender: 'Female',
+  race: ['White', 'Korean'],
+  school: 'Riverdale Charter',
+  graduationYear: '2029',
+  courses: ['Python 1', 'Scratch 1'],
+  preferences: 'Mornings preferred',
+  timeSlots: 'Tuesday/Thursday afternoons',
+  notAvailable: 'Away the first week of October',
+  inPerson: true,
+  reason: 'School',
+  // False so `essay.teachingScenario` and `essay.why` render at all.
+  taughtBefore: false,
+  academicBackground: 'Two years of AP Computer Science.',
+  teachingScenario: 'I would pair the student with a worked example first.',
+  why: 'I want to make CS less intimidating for younger students.',
+  entireProgram: true,
+  timeCommitment: true,
+  submitting: true,
+}
+
+/** Every field differs, including every boolean. */
+const APPLICATION_MODIFIED: ApplicationInput = {
+  phoneNumber: '555-0999',
+  dateOfBirth: '2006-12-02',
+  gender: 'Prefer not to answer',
+  race: ['Chinese'],
+  school: 'Maple Valley Academy',
+  graduationYear: '2031',
+  courses: ['Engineering 1'],
+  preferences: 'Evenings preferred',
+  timeSlots: 'Monday/Wednesday evenings',
+  notAvailable: 'Away over Thanksgiving',
+  inPerson: false,
+  reason: 'Friend/family',
+  // Stays false: flipping it hides `teachingScenario`/`why`, which Test Case
+  // 11e covers separately.
+  taughtBefore: false,
+  academicBackground: 'Tutored maths for three years.',
+  teachingScenario: 'I would ask the student to explain it back to me.',
+  why: 'Teaching is how I learned the material properly myself.',
+  // The three agreements stay true because EditApplicationForm marks them
+  // `required` - unlike EditRegistrationForm, which does not - so the browser
+  // refuses to submit with any of them unchecked. There is no "modified"
+  // value for them to take; Test Case 11f pins that rule instead.
+  entireProgram: true,
+  timeCommitment: true,
+  submitting: true,
+}
+
+describe('Section D: Application Field Coverage', () => {
+  beforeEach(() => {
+    Cypress.on('uncaught:exception', (err) => {
+      if (
+        err.message.includes('Connection failed') ||
+        err.message.includes('Firebase')
+      ) {
+        return false
+      }
+      return true
+    })
+    cy.signedInSession('admin', { initialPage: '/applications' })
+  })
+
+  it('Test Case 11c: Application - Every Field Reaches Firestore', () => {
+    captureApplicationMeta()
+    openApplicationForEdit()
+    fillApplicationForm(APPLICATION_INITIAL)
+    saveApplication()
+    assertApplicationDoc(APPLICATION_INITIAL)
+  })
+
+  it('Test Case 11d: Application - Every Field Can Be Modified', () => {
+    captureApplicationMeta()
+    openApplicationForEdit()
+    fillApplicationForm(APPLICATION_INITIAL)
+    saveApplication()
+    assertApplicationDoc(APPLICATION_INITIAL)
+
+    // Re-open so the stored document is read back through
+    // `toApplicationFormValues`, which is where a field missing from that
+    // mapper comes back empty and is then written over the stored value.
+    cy.contains('button', /^Close$/).click({ force: true })
+    cy.get('[role="dialog"]').should('not.exist')
+    openApplicationForEdit()
+    cy.get('input[name="academic.school"]').should(
+      'have.value',
+      APPLICATION_INITIAL.school,
+    )
+
+    fillApplicationForm(APPLICATION_MODIFIED)
+    saveApplication()
+    assertApplicationDoc(APPLICATION_MODIFIED)
+  })
+
+  it('Test Case 11f: Application - A Required Agreement Blocks The Save', () => {
+    // The Save button calls `formEl.requestSubmit()`, so an unchecked
+    // `required` checkbox stops the submit in the browser before superforms or
+    // Firestore ever see it - silently, with only a native bubble. Worth
+    // pinning: nothing in the component says these three differ from the
+    // registration form's agreements, which are freely uncheckable.
+    captureApplicationMeta()
+    openApplicationForEdit()
+    fillApplicationForm(APPLICATION_INITIAL)
+    saveApplication()
+    assertApplicationDoc(APPLICATION_INITIAL)
+
+    cy.contains('button', /^Close$/).click({ force: true })
+    cy.get('[role="dialog"]').should('not.exist')
+    openApplicationForEdit()
+
+    cy.get('input[name="agreements.timeCommitment"]').uncheck({ force: true })
+    cy.contains('button', 'Save changes').click({ force: true })
+
+    // Scoped to the form that owns the checkbox: the page has more than one
+    // form element, and a bare `cy.get('form')` yields the first one.
+    cy.get('input[name="agreements.timeCommitment"]')
+      .closest('form')
+      .should(($form) => {
+        expect(
+          ($form[0] as HTMLFormElement).checkValidity(),
+          'form validity with a required agreement unchecked',
+        ).to.equal(false)
+      })
+    // Nothing reached Firestore: the unchecked agreement is itself the edit
+    // that was blocked, so the stored document still has it true.
+    assertApplicationDoc(APPLICATION_INITIAL)
+  })
+
+  it('Test Case 11e: Application - Hidden Essay Fields Keep Their Values', () => {
+    // `essay.teachingScenario`/`essay.why` stop rendering once the applicant
+    // says they have taught before, but they stay in the form data and so stay
+    // in the write. If they were blanked instead, un-ticking the box would show
+    // them empty.
+    captureApplicationMeta()
+    openApplicationForEdit()
+    fillApplicationForm(APPLICATION_INITIAL)
+    saveApplication()
+
+    openApplicationForEdit()
+    cy.get('input[name="essay.taughtBefore"]').check({ force: true })
+    cy.get('textarea[name="essay.teachingScenario"]').should('not.exist')
+    saveApplication()
+
+    assertApplicationDoc({ ...APPLICATION_INITIAL, taughtBefore: true })
   })
 })

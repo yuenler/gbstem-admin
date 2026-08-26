@@ -7,6 +7,10 @@
   import { superForm, defaults } from 'sveltekit-superforms'
   import { zod } from 'sveltekit-superforms/adapters'
   import { classSchema } from './schemas'
+  import {
+    classEditedFields,
+    toClassFormValues as toFormValues,
+  } from '$lib/helpers/editClassForm'
   import FormInput from '../FormInput.svelte'
   import FormNativeSelect from '../FormNativeSelect.svelte'
   import FormCheckbox from '../FormCheckbox.svelte'
@@ -27,20 +31,6 @@
 
   const schema = classSchema
 
-  function toFormValues(v: ClassData) {
-    return {
-      course: v.course || '',
-      gradeRecommendation: v.gradeRecommendation || '',
-      classCap: v.classCap || 0,
-      meetingLink: v.meetingLink || '',
-      classDay1: v.classDay1 || '',
-      classTime1: v.classTime1 || '',
-      classDay2: v.classDay2 || '',
-      classTime2: v.classTime2 || '',
-      online: v.online !== undefined ? v.online : true,
-    }
-  }
-
   const formResult = superForm(
     defaults(toFormValues(values), zod(schema as any) as any) as any,
     {
@@ -51,10 +41,7 @@
       async onUpdate({ form: formVal }) {
         if (!formVal.valid) return
         if (id !== undefined) {
-          const updatedValues = {
-            ...values,
-            ...formVal.data,
-          }
+          const updatedValues = classEditedFields(values, formVal.data)
           try {
             await classService.saveClassDetails(id, updatedValues)
             values = updatedValues
