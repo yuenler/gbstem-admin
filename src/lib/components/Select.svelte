@@ -82,6 +82,34 @@
   let previousValue = value
   filterOptionsBy(value)
 
+  // TODO: `value` does double duty here - it is both the committed selection
+  // and the text currently in the box - and that is the root of a race this
+  // component still has. Consumers feed `value` from a $derived source (the
+  // URL, in StatusFilter/CourseFilter/CollectionFilter/PerPageControl), so any
+  // navigation rewrites the prop while the user is mid-interaction: the
+  // $effect below re-runs `filterOptionsBy` with the new value and the open
+  // dropdown collapses to just that one option, so whatever the user was
+  // reaching for is unmounted out from under the pointer. The same coupling
+  // means a partially typed value that matches nothing is blanked on close
+  // (see the `open` $effect), leaving an empty box beside a still-active
+  // filter.
+  //
+  // Not committing typed text (below) closes the window that made this
+  // reproducible - a Cypress flake in registrations.cy.ts Test Case 15, whose
+  // `Expected to find content: 'all' within the element: <button.bg-gray-100>`
+  // was the dropdown re-filtering down to one option mid-click - but it does
+  // not close it entirely: an unrelated navigation on the same page can still
+  // do it. The real fix is to split the two roles - keep a local `inputText`
+  // $state for what is typed, filter on that, leave `value` as the committed
+  // selection only, and on close reset `inputText` to `value` rather than
+  // blanking `value`. If this class of bug resurfaces, start here.
+  //
+  // Typing filters the option list; it does not commit a selection. `onchange`
+  // fires only from the commit paths - option click, Enter, and Tab - so
+  // consumers never see a half-typed value. Before this, every keystroke in a
+  // URL-backed filter pushed a history entry and refetched the table with a
+  // junk param ("i", "in", "inc"), and clearing the box committed the empty
+  // string as a real selection.
   function handleInput(
     e: Event & { currentTarget: EventTarget & HTMLInputElement },
   ) {
@@ -90,7 +118,6 @@
     }
     selectedOptionIndex = 0
     value = (e.target as HTMLInputElement).value
-    onchange?.(value)
   }
   function handleKeyDown(e: KeyboardEvent) {
     switch (e.code) {

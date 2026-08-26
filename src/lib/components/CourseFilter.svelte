@@ -14,9 +14,11 @@
 
   function handleChange(newValue: string) {
     if (newValue === value) return
+    // See StatusFilter: an empty box is mid-edit, not a selection of 'all'.
+    if (!newValue) return
 
     const base = new URLSearchParams(page.url.searchParams)
-    if (newValue === 'all' || !newValue) {
+    if (newValue === 'all') {
       base.delete(paramName)
     } else {
       base.set(paramName, newValue)

@@ -15,9 +15,14 @@
 
   function handleChange(newValue: string) {
     if (newValue === value) return
+    // An empty box is a field being edited, not a choice of the default
+    // filter. Committing it navigates mid-interaction, which resets this
+    // component's value out from under the dropdown the user (or Cypress) is
+    // still picking from. PerPageControl has guarded this from the start.
+    if (!newValue) return
 
     const base = new URLSearchParams(page.url.searchParams)
-    if (newValue === defaultFilter || !newValue) {
+    if (newValue === defaultFilter) {
       base.delete('filter')
     } else {
       base.set('filter', newValue)

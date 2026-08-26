@@ -24,6 +24,11 @@
   )
 
   function handleChange(newDisplayName: string) {
+    // See StatusFilter: an empty box is mid-edit, not a selection. Without
+    // this it falls through to `?? currentSemester` below and navigates away
+    // from whichever past semester is being browsed.
+    if (!newDisplayName) return
+
     const urlSemester = resolveSemester(page.url.searchParams.get('semester'))
     const targetId = nameToId[newDisplayName] ?? currentSemester
     if (targetId === urlSemester) return
