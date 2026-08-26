@@ -639,4 +639,22 @@ describe('Section G: Pre-Registration Field Coverage', () => {
       inPerson: false,
     })
   })
+
+  it('Test Case 15f: Registration - Delete Changes Discards Edits', () => {
+    // Reseeding the form is driven by an explicit signal from the dialog
+    // rather than by `values` changing, so that a slow load can't overwrite
+    // what is being typed. "Delete changes" is the other sender of that
+    // signal, and it had no coverage - a reseed that stopped firing here
+    // would leave the discarded edits sitting in the form.
+    openRegistrationForEdit()
+    cy.get('input[name="academic.school"]')
+      .invoke('val')
+      .then((stored) => {
+        cy.setFieldValue('input[name="academic.school"]', 'Discarded Academy')
+        cy.contains('button', 'Delete changes').click()
+        cy.get('input[name="academic.school"]').should('have.value', stored)
+        // ...and the form goes back to read-only.
+        cy.get('input[name="academic.school"]').should('be.disabled')
+      })
+  })
 })

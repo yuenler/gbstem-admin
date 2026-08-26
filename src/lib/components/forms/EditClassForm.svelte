@@ -20,6 +20,9 @@
     values: ClassData
     disabled?: boolean
     formEl?: HTMLFormElement | undefined
+    seedVersion?: number
+    /** False while the parent is still fetching - see `loaded` below. */
+    loaded?: boolean
   }
 
   let {
@@ -27,6 +30,12 @@
     values = $bindable(),
     disabled = $bindable(true),
     formEl = $bindable(undefined),
+    seedVersion = 0,
+    // Defaults to true so a parent that doesn't track loading is unaffected.
+    // The parents that do pass it keep the form uneditable until the fetch
+    // lands, because the seed that arrives with it replaces the whole store -
+    // anything typed before then would be silently discarded.
+    loaded = true,
   }: Props = $props()
 
   const schema = classSchema
@@ -59,14 +68,24 @@
 
   const { form, enhance, submitting } = formResult
 
-  // React to parent values changing (e.g. initial load or cancel changes)
+  // Seeding the form is an event, not a derivation - the parent bumps
+  // `seedVersion` when the class finishes loading and when "Delete changes"
+  // is pressed. Reacting to `values` itself let the parent's async load land
+  // mid-edit and replace the whole store, silently discarding what had been
+  // typed. See the fuller note in EditRegistrationForm.svelte.
+  let lastSeed = -1
   $effect(() => {
+    if (seedVersion === lastSeed) return
+    lastSeed = seedVersion
     form.set(toFormValues(values))
   })
 </script>
 
 <form bind:this={formEl} use:enhance class="w-full max-w-4xl">
-  <fieldset class="mt-4 space-y-4" disabled={disabled || $submitting}>
+  <fieldset
+    class="mt-4 space-y-4"
+    disabled={disabled || $submitting || !loaded}
+  >
     <div class="grid gap-1 sm:grid-cols-3 sm:gap-3">
       <div class="flex flex-col gap-1">
         <FormNativeSelect

@@ -23,6 +23,13 @@
 
   let disabled = $state(true)
   let dbValues: Data.Registration<'client'> | undefined = $state()
+  // Gates the Edit button: this dialog keeps the previous registration's
+  // `values` when it reopens, so without this an admin could start editing
+  // stale data and have the fetch below overwrite the edits when it lands.
+  let loaded = $state(false)
+  // Bumped only when the form should be reseeded from `values` - see the note
+  // on the $effect in EditRegistrationForm.svelte.
+  let seedVersion = $state(0)
 
   let values: Data.Registration<'client'> = $state(
     createDefaultRegistrationValues(),
@@ -35,6 +42,7 @@
     let cancelled = false
     ;(async () => {
       disabled = true
+      loaded = false
       try {
         const data = await registrationService.fetchRegistration(
           collection,
@@ -44,6 +52,8 @@
         if (data) {
           values = cloneDeep(data)
           dbValues = cloneDeep(data)
+          seedVersion++
+          loaded = true
         } else {
           alert.trigger('error', 'Registration not found.')
         }
@@ -69,6 +79,7 @@
     disabled = true
     // Reset to loaded database values
     if (dbValues) values = cloneDeep(dbValues)
+    seedVersion++
   }
 </script>
 
@@ -92,7 +103,7 @@
           </div>
         {/if}
         <div class="flex flex-wrap gap-2">
-          <Button onclick={handleEdit}>Edit</Button>
+          <Button onclick={handleEdit} disabled={!loaded}>Edit</Button>
           <Button onclick={() => (open = false)}>Close</Button>
         </div>
       </Card>
@@ -104,6 +115,8 @@
           bind:dbValues
           {id}
           {collection}
+          {seedVersion}
+          {loaded}
         />
       </div>
     </div>
