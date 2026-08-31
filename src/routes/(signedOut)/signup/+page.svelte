@@ -87,6 +87,13 @@
         }
         default: {
           disabled = false
+          // Re-arm the error dialog. `showErrorDialog` is only ever flipped
+          // false by its own Close button, and nothing else resets it - so
+          // without this, a second failed submit on the same page render (the
+          // common case: fix a typo, submit again) renders the dialog with
+          // open=false and the user sees nothing but the password fields
+          // blanking below. That was a real production report.
+          showErrorDialog = true
           values = {
             ...values,
             password: '',

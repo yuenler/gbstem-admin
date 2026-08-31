@@ -264,4 +264,114 @@ describe('Section A: Authentication and Navigation', () => {
       cy.contains('a', 'Sub Requests Log').should('be.visible')
     })
   })
+
+  // Both sites share one Firebase Auth instance, so an email that already has an
+  // account anywhere - same role, other role, or the portal site - can never be
+  // signed up again here. `adminAuth.createUser` rejects with
+  // `auth/email-already-exists` and the server action returns `fail(400)`, whose
+  // only user-visible feedback is the error dialog below. That dialog is the
+  // whole point of these cases: a production report of "the password field just
+  // clears and nothing happens" is exactly what this suite looks like when the
+  // dialog regresses, since the failure branch of `use:enhance` blanks both
+  // password fields on its way out.
+  ;[
+    {
+      label: 'Same Role (Existing Reviewer)',
+      email: 'reviewer@gbstem.org',
+      token: 'demo-reviewer-token',
+    },
+    {
+      label: 'Different Role, Same Site (Existing Admin)',
+      email: 'demo@gbstem.org',
+      token: 'demo-reviewer-token',
+    },
+    {
+      label: 'Different Role, Portal Site (Existing Instructor)',
+      email: 'instructor@gbstem.org',
+      token: 'demo-reviewer-token',
+    },
+    // Same cross-site case as above, but through the admin token, so a
+    // divergence between the two token paths can't hide here.
+    {
+      label: 'Different Role, Portal Site (Existing Student)',
+      email: 'student@gbstem.org',
+      token: 'demo-admin-token',
+    },
+  ].forEach(({ label, email, token }) => {
+    it(`Test Case 6: Sign Up Rejected for Existing Account - ${label}`, () => {
+      cy.visit(`/signup?token=${token}`)
+      cy.get('h1').should('contain', 'Sign up')
+      cy.get('input[name="first-name"]').should('be.visible')
+      cy.waitForFormHydration()
+
+      cy.fillInput('input[name="first-name"]', 'Duplicate')
+      cy.fillInput('input[name="last-name"]', generateDateHash('Account'))
+      cy.fillInput('input[name="email"]', email)
+      cy.fillInput('input[name="password"]', 'penguin')
+      cy.fillInput('input[name="confirm-password"]', 'penguin')
+      cy.get('button[type="submit"]').click()
+
+      // The failure has to be visible, not just implied by a cleared form.
+      cy.get('[role="dialog"]', { timeout: 15000 }).should('be.visible')
+      cy.get('[role="dialog"]').should('contain', 'Error')
+      cy.get('[role="dialog"]').should(
+        'contain',
+        'The email address is already in use by another account.',
+      )
+
+      // Still on the signup form, and not signed in as anyone - least of all as
+      // the pre-existing account whose email was just typed in.
+      cy.url().should('include', '/signup')
+      cy.get('[role="dialog"]')
+        .find('button')
+        .contains('Close')
+        .click({ force: true })
+      cy.get('[role="dialog"]').should('not.exist')
+      cy.get('h1').should('contain', 'Sign up')
+
+      cy.visit('/dashboard')
+      cy.url().should('include', '/signin')
+    })
+  })
+
+  it('Test Case 6b: Repeated Failed Sign Up Still Shows the Error', () => {
+    // The regression behind the production report. `showErrorDialog` is only
+    // flipped false by the dialog's own Close button, so before the fix a
+    // second failed submit on the same page render re-rendered the dialog with
+    // open=false: the user saw the password fields blank out and nothing else.
+    // Retrying without a reload is what a real user does after a typo, so it
+    // has to be exercised here rather than assumed from the first attempt.
+    const submitDuplicate = () => {
+      cy.fillInput('input[name="first-name"]', 'Duplicate')
+      cy.fillInput('input[name="last-name"]', generateDateHash('Retry'))
+      cy.fillInput('input[name="email"]', 'reviewer@gbstem.org')
+      cy.fillInput('input[name="password"]', 'penguin')
+      cy.fillInput('input[name="confirm-password"]', 'penguin')
+      cy.get('button[type="submit"]').click()
+    }
+
+    cy.visit('/signup?token=demo-reviewer-token')
+    cy.get('input[name="first-name"]').should('be.visible')
+    cy.waitForFormHydration()
+
+    submitDuplicate()
+    cy.get('[role="dialog"]', { timeout: 15000 }).should('be.visible')
+    cy.get('[role="dialog"]').should(
+      'contain',
+      'The email address is already in use by another account.',
+    )
+    cy.get('[role="dialog"]')
+      .find('button')
+      .contains('Close')
+      .click({ force: true })
+    cy.get('[role="dialog"]').should('not.exist')
+
+    // Same page render, no reload - the dialog has to come back.
+    submitDuplicate()
+    cy.get('[role="dialog"]', { timeout: 15000 }).should('be.visible')
+    cy.get('[role="dialog"]').should(
+      'contain',
+      'The email address is already in use by another account.',
+    )
+  })
 })
