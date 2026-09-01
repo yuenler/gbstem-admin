@@ -161,7 +161,7 @@ Most collections are scoped under a semester document: `semesters/{semesterId}/{
 
 A handful of collections are **not** semester-scoped and live at the top level: `subRequests`, `interviewTimeRequests`, `instructorClasses`, `confirmations`, `checkIns`, `users`, `tokens`, `mail`, `announcements`.
 
-The current semester's key dates (`classesStart`, `registrationsDue`, etc.) aren't in Firestore at all — every read site only ever needs the _current_ semester's dates, never a past one, so they're static data in [`semesterDates.json`](src/lib/data/semesterDates.json), re-exported as `semesterDates` from `collections.ts`. `__tests__/collections.test.ts` validates every field is a well-formed `MM/DD/YY` date whose year matches `currentSemester`.
+The current semester's key dates (`classesStart`, `registrationsDue`, etc.) aren't in Firestore at all — every read site only ever needs the _current_ semester's dates, never a past one, so they're static data in [`semesterDates.json`](src/lib/data/semesterDates.json), re-exported as `semesterDates` from `collections.ts`. `__tests__/collections.test.ts` validates every field is a well-formed `MM/DD/YY` date whose year matches `currentSemester`. The portal and website repos each keep a verbatim copy of this same file (see [Adding a New Semester](#adding-a-new-semester) for the paths and the copy step) — it is the one piece of semester configuration shared across all three repos.
 
 Every semesterized document also carries a `semester` field (e.g. `"Spring26"`), stamped on write via the `withSemester(...)` helper in `collections.ts`. This lets the shared, cross-semester Algolia index for each collection type (one index total, covering every semester) filter results down to a single semester.
 
@@ -176,13 +176,29 @@ Admins can browse a past semester's data via the `?semester=<id>` URL param on t
 
 Transitioning gbSTEM to a new semester (e.g., from `Spring26` to `Fall26`) is a small, code-only change: no Firestore console work at all, no index creation, and no Algolia or security rules changes, since those are keyed by collection type rather than per-semester (see [Firestore Schema](#firestore-schema) above).
 
-1. In **both the admin and portal repos**, update the `suffix` constant at the top of `src/lib/data/collections.ts` (e.g., `const suffix = 'Fall26'`).
+**Three repos are involved**, because this repo's [`semesterDates.json`](src/lib/data/semesterDates.json) is the single source of truth for the semester's key dates: **admin** (where you edit it), **portal**, and **website** (the public marketing site, which reads it to decide whether registration and instructor applications are open, and to print the dates on the home page and FAQ). The portal and website each hold a _verbatim copy_ of the file — same JSON, same `MM/DD/YY` string format, just a different path in each repo — so the three sites can never advertise different dates. Copy, don't retype:
+
+| Repo    | Path to `semesterDates.json`                                 |
+| ------- | ------------------------------------------------------------ |
+| admin   | `src/lib/data/semesterDates.json` (the original — edit here) |
+| portal  | `src/lib/data/semesterDates.json`                            |
+| website | `lib/semesterDates.json`                                     |
+
+1. In **both the admin and portal repos**, update the `suffix` constant at the top of `src/lib/data/collections.ts` (e.g., `const suffix = 'Fall26'`). The website repo has no `suffix` — it has no Firestore access at all, and only ever needs the dates.
 2. In the **admin repo**:
    - Add `{ "id": "Fall26", "name": "Fall 2026" }` to the **top** of [`collectionsList.json`](src/lib/data/collectionsList.json), so it's selected by default and appears first in the past-semester dropdown.
-   - Review and update course catalog data in [`springCourses.json`](src/lib/data/springCourses.json) or [`fallCourses.json`](src/lib/data/fallCourses.json), then copy the updated file to the portal repository's `src/lib/data/` directory.
-   - Update every field in [`semesterDates.json`](src/lib/data/semesterDates.json) to the new semester's actual dates (`MM/DD/YY`, matching the new suffix's year), then copy the updated file to the portal repository's `src/lib/data/` directory.
-3. Run `yarn lint && yarn test` in both repos to verify the changes (this will fail loudly for errors like a malformed date, incorrect year in `semesterDates.json`, or other format issues).
-4. Create a PR for both repos and merge it to `main` for the Vercel auto-deployment to update the live apps.
+   - Review and update course catalog data in [`springCourses.json`](src/lib/data/springCourses.json) or [`fallCourses.json`](src/lib/data/fallCourses.json), then copy the updated file to the portal repository's `src/lib/data/` directory. (The website doesn't need this one.)
+   - Update every field in [`semesterDates.json`](src/lib/data/semesterDates.json) to the new semester's actual dates (`MM/DD/YY`, matching the new suffix's year), then copy the updated file to **both** the portal repository's `src/lib/data/` directory **and** the website repository's `lib/` directory, per the table above:
+
+     ```bash
+     cp src/lib/data/semesterDates.json ../portal/src/lib/data/semesterDates.json
+     cp src/lib/data/semesterDates.json ../website/lib/semesterDates.json
+     ```
+
+     Never hand-edit the portal or website copy: the next rollover overwrites it, and a copy that has drifted is exactly the bug this shared file exists to prevent.
+3. Run `yarn lint && yarn test` in **all three repos** to verify the changes (this will fail loudly for errors like a malformed date, incorrect year in `semesterDates.json`, or other format issues — the website's `__tests__/constants.test.ts` re-checks the copied file's shape the same way this repo's `__tests__/collections.test.ts` does).
+4. Create a PR for all three repos and merge each to `main` for the Vercel auto-deployment to update the live apps.
+5. Load the deployed public site's [home page](https://www.gbstem.org/) and [FAQ](https://www.gbstem.org/faq) and confirm the registration/application copy, links, and dates match the new semester. Those sections switch between "open" and "closed" wording purely from the dates in the JSON, so a wrong date there is visible to families and prospective instructors immediately.
 
 That's it — the new semester's subcollections (`semesters/Fall26/applications`, etc.) spring into existence automatically on first write.
 
