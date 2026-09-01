@@ -23,12 +23,34 @@
 //                                                     set in the environment - not loaded from
 //                                                     any .env file by this script)
 //
+// Every document it touches is listed with the email address(es) associated with it - the
+// signed-in account's address from Firebase Auth, plus personal.email/secondaryEmail from
+// the document itself when they differ - followed by a de-duplicated address list for the
+// whole run. Since the portal write path is fixed, anything still showing up here is worth
+// chasing: either a write path that fix missed, or a specific person whose long-lived
+// browser session is still running the old code and needs a reload.
+//
+// TODO(known hole, as of 2026-08-31): portal's RegistrationForm bootstrap
+// (RegistrationForm.svelte, the `bootstrapRegistration(childUid, values)` call) writes a
+// brand-new registration straight from createEmptyRegistration(), whose timestamps.created
+// is null - it never goes through registrationOwnedFields(), so the PR #61 self-heal
+// doesn't apply to it. Every new registration draft therefore lands here until its parent
+// saves once more. ApplyForm's equivalent path does go through applicationOwnedFields and
+// is fine. Fix that before tightening firestore.rules to reject created-clearing writes,
+// or parents won't be able to start a registration at all.
+//
 // Idempotent: only writes documents whose timestamps.created is still missing/null, so
 // re-running after a partial failure or to catch newly-discovered legacy documents is safe.
 import admin from 'firebase-admin'
 import collectionsList from '../src/lib/data/collectionsList.json'
 import { semesterCollectionPath } from '../src/lib/data/collections'
-import { timestampsNeedBackfill } from './lib/backfillTimestampTransforms'
+import {
+  contactableEmails,
+  formatIdentityEmails,
+  identityFromDoc,
+  timestampsNeedBackfill,
+  type BackfillIdentity,
+} from './lib/backfillTimestampTransforms'
 
 const args = process.argv.slice(2)
 const isDryRun = args.includes('--dry-run')
@@ -73,17 +95,23 @@ if (isProduction) {
 } else {
   process.env.FIRESTORE_EMULATOR_HOST =
     process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8080'
+  // The email listing looks accounts up through admin.auth(), which would otherwise try
+  // to reach production Auth (and fail for want of credentials) even on an emulator run.
+  process.env.FIREBASE_AUTH_EMULATOR_HOST =
+    process.env.FIREBASE_AUTH_EMULATOR_HOST || '127.0.0.1:9099'
   process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || 'demo-gbstem'
   console.log('Connecting to Firebase emulators at:')
   console.log(`- Firestore: ${process.env.FIRESTORE_EMULATOR_HOST}`)
+  console.log(`- Auth: ${process.env.FIREBASE_AUTH_EMULATOR_HOST}`)
   console.log(`- Project ID: ${process.env.GCLOUD_PROJECT}\n`)
   admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT })
 }
 
 const db = admin.firestore()
+const auth = admin.auth()
 
-const SAMPLE_SIZE = 5 // docs shown in --dry-run output
 const BATCH_LIMIT = 500 // Firestore batched-write limit
+const AUTH_LOOKUP_LIMIT = 100 // auth.getUsers() identifiers-per-call limit
 
 function chunk<T>(items: T[], size: number): T[][] {
   const chunks: T[][] = []
@@ -91,6 +119,30 @@ function chunk<T>(items: T[], size: number): T[][] {
     chunks.push(items.slice(i, i + size))
   }
   return chunks
+}
+
+// Looks up the signed-in account email for each uid. `getUsers` reports uids it doesn't
+// know in `notFound` rather than throwing, so a since-deleted account just yields no
+// email. It does throw on a malformed uid, though, which would take down the whole run
+// over one bad document id - hence the per-uid fallback.
+async function resolveAuthEmails(uids: string[]): Promise<Map<string, string>> {
+  const resolved = new Map<string, string>()
+  for (const batch of chunk([...new Set(uids)], AUTH_LOOKUP_LIMIT)) {
+    let users: admin.auth.UserRecord[]
+    try {
+      users = (await auth.getUsers(batch.map((uid) => ({ uid })))).users
+    } catch {
+      users = (
+        await Promise.all(
+          batch.map((uid) => auth.getUser(uid).catch(() => null)),
+        )
+      ).filter((user): user is admin.auth.UserRecord => user !== null)
+    }
+    for (const user of users) {
+      if (user.email) resolved.set(user.uid, user.email)
+    }
+  }
+  return resolved
 }
 
 async function backfillCollection(path: string, label: string) {
@@ -101,22 +153,32 @@ async function backfillCollection(path: string, label: string) {
 
   if (toUpdate.length === 0) {
     console.log(`  ${path}: ${snapshot.size} ${label}, none need backfilling.`)
-    return { path, count: 0 }
+    return { path, count: 0, identities: [] as BackfillIdentity[] }
   }
 
   console.log(
     `  ${path}: ${toUpdate.length}/${snapshot.size} ${label} missing timestamps.created.`,
   )
 
+  const identities = toUpdate.map((doc) => identityFromDoc(doc.id, doc.data()))
+  const authEmails = await resolveAuthEmails(identities.map((i) => i.authUid))
+  for (const identity of identities) {
+    identity.authEmail = authEmails.get(identity.authUid) ?? null
+  }
+
+  // Every affected document is listed, not a sample, and in real runs as well as dry
+  // runs: the portal write path is supposed to be fixed, so anything still turning up
+  // here is either a hole that fix missed or a specific person on a stale browser
+  // session, and both need the owner's address to chase down.
+  identities.forEach((identity, i) => {
+    console.log(
+      `    ${identity.docId}: ${formatIdentityEmails(identity)}` +
+        ` (timestamps.created -> ${toUpdate[i].createTime.toDate().toISOString()})`,
+    )
+  })
+
   if (isDryRun) {
-    for (const doc of toUpdate.slice(0, SAMPLE_SIZE)) {
-      console.log(
-        `    [dry-run sample] ${doc.id}: timestamps.created -> ${doc.createTime
-          .toDate()
-          .toISOString()} (doc's own Firestore createTime)`,
-      )
-    }
-    return { path, count: toUpdate.length }
+    return { path, count: toUpdate.length, identities }
   }
 
   let committed = 0
@@ -130,7 +192,7 @@ async function backfillCollection(path: string, label: string) {
     console.log(`    committed ${committed}/${toUpdate.length}`)
   }
 
-  return { path, count: toUpdate.length }
+  return { path, count: toUpdate.length, identities }
 }
 
 async function main() {
@@ -143,26 +205,46 @@ async function main() {
   )
 
   let totalDocs = 0
+  const allIdentities: BackfillIdentity[] = []
   for (const semesterId of semesters) {
     console.log(`\nSemester ${semesterId}:`)
-    totalDocs += (
-      await backfillCollection(
-        semesterCollectionPath(semesterId, 'applications'),
-        'applications',
+    for (const name of ['applications', 'registrations'] as const) {
+      const result = await backfillCollection(
+        semesterCollectionPath(semesterId, name),
+        name,
       )
-    ).count
-    totalDocs += (
-      await backfillCollection(
-        semesterCollectionPath(semesterId, 'registrations'),
-        'registrations',
-      )
-    ).count
+      totalDocs += result.count
+      allIdentities.push(...result.identities)
+    }
   }
 
   console.log(
     `\n${isDryRun ? '[DRY RUN] Would backfill' : 'Backfilled'} ${totalDocs} total document(s) ` +
       `across ${semesters.length} semester(s).`,
   )
+
+  // One de-duplicated address list for the whole run. A person who shows up here after
+  // the portal write path was fixed is the one to ask to reload their browser - or the
+  // lead on whichever write path is still clearing the field.
+  if (allIdentities.length > 0) {
+    const emails = [...new Set(allIdentities.flatMap(contactableEmails))].sort()
+    console.log(
+      `\nAssociated email address(es), ${emails.length} distinct across ` +
+        `${allIdentities.length} document(s):`,
+    )
+    for (const email of emails) {
+      console.log(`  ${email}`)
+    }
+    const noEmail = allIdentities.filter(
+      (identity) => contactableEmails(identity).length === 0,
+    )
+    if (noEmail.length > 0) {
+      console.log(
+        `  (${noEmail.length} document(s) had no email on the document or account: ` +
+          `${noEmail.map((identity) => identity.docId).join(', ')})`,
+      )
+    }
+  }
 }
 
 main().catch((err) => {
