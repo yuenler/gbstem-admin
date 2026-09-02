@@ -197,13 +197,19 @@ because the label says so.
 
 ### 4.6 Interview duration
 
-There is currently **no interview duration recorded anywhere** — not in the data
-model, not in the schema, not in any of the interview email templates. It exists
-only as shared understanding among interviewers.
+**Interviews are 15 minutes.** Until now that number was recorded nowhere in the
+system — not in the data model, not in the schema, not in any of the interview
+email templates — and existed only as shared understanding among interviewers.
 
 The grid needs it, because it defines the row height and therefore how a painted
-block becomes a count of slots. We propose a single shared constant, displayed
-in both interfaces so candidates know how long to set aside.
+block becomes a count of slots. We propose a single shared constant, surfaced in
+three places: the interviewer's view, the candidate's view, and the confirmation
+email sent when an interview is booked.
+
+To candidates we propose phrasing it as **"usually 15 minutes"** rather than as a
+commitment. A candidate who reads a firm 15 and then has a 25-minute
+conversation has been misled, and interviewers should not feel clock-bound by
+our wording.
 
 It is also what makes "is this interviewer double-booked?" a question a computer
 can answer. Nothing today prevents an interviewer having a booked 4:00 slot and
@@ -211,7 +217,9 @@ an open 4:15 slot — two candidates, one interviewer, overlapping calls. That i
 currently prevented only by interviewers spacing their own slots by hand, which
 is exactly the discipline bulk generation removes.
 
-**The value itself is an open question (§7).**
+Both confirmation emails (a candidate booking a slot, and an interviewer
+assigning one) are sent to the candidate with the interviewer copied, so a
+single sentence reaches both audiences.
 
 ### 4.7 Volume
 
@@ -316,16 +324,14 @@ the semester boundary, rather than rushing.
 
 ## 7. Open questions
 
-1. **How long is an interview?** Not recorded anywhere in the system today. We
-   need the real number.
-2. **Should candidates see interviewer names in the grid, or only on
+1. **Should candidates see interviewer names in the grid, or only on
    confirmation?** §2 proposes the latter for legibility; the current system
    shows names.
-3. **Should candidates be able to reschedule or cancel themselves?** There is no
+2. **Should candidates be able to reschedule or cancel themselves?** There is no
    such path today — rescheduling means emailing someone. A calendar interface
    will make people expect self-service, so it is worth deciding deliberately
    rather than by omission.
-4. **Should "request a different time" survive the grid?** We propose yes, as an
+3. **Should "request a different time" survive the grid?** We propose yes, as an
    escape hatch rather than a workaround.
 
 ---
