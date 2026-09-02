@@ -96,14 +96,6 @@ declare global {
       email: string
     }
 
-    type TimeRange = {
-      start: number
-      end: number
-      timegap: number
-      date: Date
-      link: string
-    }
-
     type Registration<T extends 'client' | 'server' | 'pojo'> = {
       personal: {
         email: string
