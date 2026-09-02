@@ -22,6 +22,8 @@
     "migrate:verify": "npx tsx scripts/migrate-semesters.ts --verify",
     "backfill:decided": "npx tsx scripts/backfill-decided.ts",
     "backfill:decided:dry": "npx tsx scripts/backfill-decided.ts --dry-run",
+    "verify-email": "npx tsx scripts/force-verify-email.ts",
+    "verify-email:dry": "npx tsx scripts/force-verify-email.ts --dry-run",
     "emulators": "firebase emulators:start --log-verbosity=quiet",
     "prepare": "husky || true"
   },
