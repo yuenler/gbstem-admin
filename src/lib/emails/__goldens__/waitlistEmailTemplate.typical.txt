@@ -1,0 +1,14 @@
+title: 
+heading: gbSTEM Instructor Decision
+text: gbSTEM Instructor Decision
+text: Hello Ada,
+text: Thank you for applying to be a gbSTEM instructor. You have been waitlisted for this semester. We may offer you a position if one becomes open in the future, so be sure to periodically check for emails from us.
+text: We assure you that this decision was not made easily, as this was our most competitive application round ever. We continue to appreciate your interest and strongly encourage you to apply again next semester!
+text: If you have any questions or concerns, visit our FAQs, or you can reach us at contact@gbstem.org.
+text: Best wishes,The gbSTEM Team
+text: Main | Portal
+text: gbSTEM © 2026
+link: contact@gbstem.org -> mailto:contact@gbstem.org
+link: Main -> https://gbstem.org
+link: Portal -> https://portal.gbstem.org
+image: https://firebasestorage.googleapis.com/v0/b/gbstem-public/o/logoNOBACKGROUND.png?alt=media&token=ccf22ae8-323e-44a6-981c-a314b9563c45 (alt= width=550)

@@ -1,0 +1,13 @@
+title: 
+heading: Welcome to gbSTEM!
+text: Welcome to gbSTEM!
+text: Hello ,
+text: We are happy to announce that you have been accepted as an instructor for the upcoming semester. This was our most selective semester yet, so congratulations on your acceptance! As a next step, please mark your calendar to attend our MANDATORY virtual instructor orientation for the semester on . Please email and let us know IMMEDIATELY if this time does not work for you so we can schedule a makeup session. The link to join is here: . Thank you for your dedication to our program!
+text: If you have any questions or concerns, visit our FAQs, or you can reach us at contact@gbstem.org.
+text: Best wishes,The gbSTEM Team
+text: Main |
+text: gbSTEM © 2026
+link: contact@gbstem.org -> mailto:contact@gbstem.org
+link: Main -> https://gbstem.org
+link:  -> 
+image: https://firebasestorage.googleapis.com/v0/b/gbstem-public/o/logoNOBACKGROUND.png?alt=media&token=ccf22ae8-323e-44a6-981c-a314b9563c45 (alt= width=550)

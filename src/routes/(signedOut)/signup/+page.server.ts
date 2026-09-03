@@ -1,7 +1,6 @@
-import { actionEmailTemplate } from '$lib/data/emailTemplates/actionEmailTemplate'
 import { sendEmail } from '$lib/server/email'
 import { adminAuth, adminDb, verifyToken } from '$lib/server/firebase'
-import { addDataToHtmlTemplate } from '$lib/utils'
+import { renderEmail } from '$lib/emails/render'
 import { error, fail, redirect } from '@sveltejs/kit'
 import type { FirebaseError } from 'firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
@@ -121,7 +120,7 @@ export const actions = {
           },
         }
 
-        const htmlBody = addDataToHtmlTemplate(actionEmailTemplate, template)
+        const htmlBody = renderEmail('actionEmailTemplate', template.data)
 
         await sendEmail({
           to: values.email,

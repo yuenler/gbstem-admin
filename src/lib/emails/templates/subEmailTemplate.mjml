@@ -1,0 +1,66 @@
+<mjml>
+  <mj-head>
+    <mj-include path="../layout/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f8f8f8">
+    <mj-include path="../layout/header.mjml" />
+    <mj-section
+      background-color="#ffffff"
+      padding="20px 0px 20px 0px"
+      padding-top="20px"
+      padding-bottom="50px"
+    >
+      <mj-column>
+        <mj-text color="#797e82" padding="0px 25px 5px 25px">
+          <h1
+            style="
+              text-align: center;
+              color: #000000;
+              font-weight: 700;
+              font-size: 34px;
+            "
+          >
+            gbSTEM Instructor Decision
+          </h1>
+        </mj-text>
+        <mj-text
+          font-size="16px"
+          line-height="22px"
+          padding="10px 25px"
+          padding-top="0px"
+        >
+          <p style="margin: 20px 0">Hello {{ app.firstName }},</p>
+          <p style="margin: 20px 0">
+            Thank you for applying to be a gbSTEM instructor. You have been
+            selected as a substitute instructor for this semester. This was our
+            most selective semester yet, so we were not able to accept you as a
+            full instructor, but we were impressed with your application and
+            would still like to invite you to get a chance to teach as a reserve
+            substitute! Success and active participation in this role will
+            significantly help boost your application in future semesters. As a
+            next step, please mark your calendar to attend our
+            <strong>MANDATORY</strong> virtual instructor orientation for the
+            semester on <strong>{{ app.orientation }}</strong
+            >. Please email and let us know <strong>IMMEDIATELY</strong> if this
+            time does not work for you so we can schedule a makeup session. The
+            link to join is here: {{ app.orientationLink }}. Thank you for your
+            dedication to our program!
+          </p>
+          <p style="margin: 30px 0">
+            If you have any questions or concerns, visit our FAQs, or you can
+            reach us at
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              style="color: darkblue"
+              href="mailto:contact@gbstem.org"
+              >contact@gbstem.org</a
+            >.
+          </p>
+          <p>Best wishes,<br />The gbSTEM Team</p>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../layout/footer.mjml" />
+  </mj-body>
+</mjml>

@@ -1,0 +1,11 @@
+title: 
+heading: 
+text: Hello </p><script>alert('xss')</script><p x=",
+text: This is a reminder that you are scheduled to hold a </p><script>alert('xss')</script><p x=" class on </p><script>alert('xss')</script><p x=". If you are unable to hold class, please be sure to send out an email to your class and update your class schedule on the gbSTEM portal!
+text: Best wishes,The gbSTEM Team
+text: Main | </p><script>alert('xss')</script><p x="
+text: gbSTEM © 2026
+link: the gbSTEM portal -> portal.gbstem.org
+link: Main -> https://gbstem.org
+link: </p><script>alert('xss')</script><p x=" -> 
+image: https://firebasestorage.googleapis.com/v0/b/gbstem-public/o/logoNOBACKGROUND.png?alt=media&token=ccf22ae8-323e-44a6-981c-a314b9563c45 (alt= width=550)

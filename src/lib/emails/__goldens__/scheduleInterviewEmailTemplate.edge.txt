@@ -1,0 +1,15 @@
+title: 
+heading: Schedule your gbSTEM interview
+text: Schedule your gbSTEM interview
+text: Hello Zoë Ñuñez 田中 🎓 <3 & "quoted" Bartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery III,
+text: Thank you for applying to be a gbSTEM instructor! We would like to learn some more about you. Please schedule an interview with us through the applicant portal. Be sure to have scheduled an interview by Zoë Ñuñez 田中 🎓 <3 & "quoted" Bartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery III.
+text: If you have any questions or concerns, visit our FAQs, or you can reach us at contact@gbstem.org.
+text: With love 🤍,The gbSTEM Team
+text: Schedule Interview
+text: Main | Zoë Ñuñez 田中 🎓 <3 & "quoted" Bartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery III
+text: gbSTEM © 2026
+link: contact@gbstem.org -> mailto:contact@gbstem.org
+link: Schedule Interview -> https://portal.gbstem.org/dashboard
+link: Main -> https://gbstem.org
+link: Zoë Ñuñez 田中 🎓 <3 & "quoted" Bartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery III -> https://portal.gbstem.org/dashboard?tab=classes&id=7#top
+image: https://firebasestorage.googleapis.com/v0/b/gbstem-public/o/logoNOBACKGROUND.png?alt=media&token=ccf22ae8-323e-44a6-981c-a314b9563c45 (alt= width=550)
