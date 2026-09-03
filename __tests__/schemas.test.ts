@@ -572,9 +572,11 @@ describe('Zod Validation Schemas', () => {
       const defaults = getInterviewSlotDefaults(
         'Interviewer Name',
         'interviewer@example.com',
+        'interviewer-uid',
       )
       expect(defaults.interviewerName).toBe('Interviewer Name')
       expect(defaults.interviewerEmail).toBe('interviewer@example.com')
+      expect(defaults.interviewerUid).toBe('interviewer-uid')
       expect(defaults.interviewSlotStatus).toBe('available')
     })
 

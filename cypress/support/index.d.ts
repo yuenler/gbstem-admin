@@ -39,6 +39,16 @@ declare namespace Cypress {
       colorClass?: string,
       timeoutMs?: number,
     ): Chainable<any>
+    setInterviewSlot(slot: {
+      collectionPath: string
+      id: string
+      date: string
+      interviewerName: string
+      interviewerEmail: string
+      interviewerUid?: string
+      meetingLink: string
+      semester?: string
+    }): Chainable<any>
     createTestToken(
       id: string,
       options?: {

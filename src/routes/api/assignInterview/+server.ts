@@ -1,6 +1,7 @@
 import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
 import { renderEmail } from '$lib/emails/render'
+import { resolveCurrentInterviewerEmail } from '$lib/server/interviewerIdentity'
 import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 
@@ -8,6 +9,10 @@ import { z } from 'zod'
 
 const assignInterviewSchema = z.object({
   email: z.string().email('Invalid interviewer email address'),
+  // Optional: absent for a slot written before `interviewerUid` existed, in
+  // which case `email` (the stored, possibly stale, interviewerEmail) is
+  // used as-is. See interviewerIdentity.ts.
+  interviewerUid: z.string().optional(),
   date: z.string().min(1, 'Date is required'),
   link: z.string().min(1, 'Meeting link is required'),
   interviewer: z.string().min(1, 'Interviewer name is required'),
@@ -22,7 +27,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     verifyAdmin(locals)
     const body = assignInterviewSchema.parse(await request.json())
 
-    const interviewerEmail = body.email
+    const interviewerEmail = await resolveCurrentInterviewerEmail(
+      body.interviewerUid,
+      body.email,
+    )
     const interviewDate = body.date
     const interviewLink = body.link
     const interviewerName = body.interviewer

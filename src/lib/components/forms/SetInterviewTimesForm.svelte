@@ -3,6 +3,7 @@
   import CheckboxInput from '$lib/components/CheckboxInput.svelte'
   import {
     canUserModifySlot,
+    isOwnInterviewSlot,
     resetInterviewSlotToAdd,
     toInterviewSlotFormValues,
   } from '$lib/helpers/setInterviewTimes'
@@ -180,6 +181,7 @@
             ...current,
             interviewerName: currentUser?.object.displayName ?? '',
             interviewerEmail: currentUser?.object.email ?? '',
+            interviewerUid: currentUser?.object.uid ?? '',
           }))
           loadError = null
         } catch (err: any) {
@@ -191,6 +193,14 @@
       }
     })
   })
+
+  function isMyInterview(interview: Data.InterviewSlot): boolean {
+    return isOwnInterviewSlot(
+      interview,
+      currentUser?.object?.email,
+      currentUser?.object?.uid,
+    )
+  }
 
   const addTime = async (formData: any) => {
     if (formData.intervieweeId != '') {
@@ -224,6 +234,7 @@
     interviewSlotToAdd = resetInterviewSlotToAdd(
       currentUser?.object?.displayName ?? '',
       currentUser?.object?.email ?? '',
+      currentUser?.object?.uid ?? '',
     )
     addFormData.set(toInterviewSlotFormValues(interviewSlotToAdd))
     interviewee = ''
@@ -238,6 +249,7 @@
         resetInterviewSlotToAdd(
           current.interviewerName,
           current.interviewerEmail,
+          current.interviewerUid,
         ),
       ),
       // The date and link the interviewer already typed are theirs to keep -
@@ -251,8 +263,9 @@
   async function updateTime(interview: Data.InterviewSlot) {
     if (
       !canUserModifySlot(
-        interview.interviewerEmail,
+        interview,
         currentUser?.object?.email,
+        currentUser?.object?.uid,
         currentUser?.profile?.role,
       )
     ) {
@@ -275,8 +288,9 @@
   const deleteTime = async (interview: Data.InterviewSlot) => {
     if (
       !canUserModifySlot(
-        interview.interviewerEmail,
+        interview,
         currentUser?.object?.email,
+        currentUser?.object?.uid,
         currentUser?.profile?.role,
       )
     ) {
@@ -423,7 +437,7 @@
 
       {#each allInterviewSlots as interview (interview.id)}
         {#if editSlot === interview.id}
-          {#if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser?.object?.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
+          {#if ((onlyIncludeMyInterviews && isMyInterview(interview)) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
             <Card>
               <form
                 use:editEnhance
@@ -476,7 +490,7 @@
               </form>
             </Card>
           {/if}
-        {:else if ((onlyIncludeMyInterviews && interview.interviewerEmail === currentUser?.object?.email) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
+        {:else if ((onlyIncludeMyInterviews && isMyInterview(interview)) || !onlyIncludeMyInterviews) && ((onlyShowFutureSlots && new Date(interview.date) > new Date()) || !onlyShowFutureSlots)}
           <Card>
             <div class="my-1">
               <b>Interviewer:</b>
@@ -506,7 +520,7 @@
               </div>
             {/if}
 
-            {#if (interview.interviewSlotStatus === 'available' || interview.interviewSlotStatus === 'pending') && (interview.interviewerEmail === currentUser?.object?.email || currentUser?.profile?.role === 'admin')}
+            {#if (interview.interviewSlotStatus === 'available' || interview.interviewSlotStatus === 'pending') && (isMyInterview(interview) || currentUser?.profile?.role === 'admin')}
               <div>
                 <Button
                   color="blue"

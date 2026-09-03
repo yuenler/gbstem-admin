@@ -95,6 +95,45 @@ export default defineConfig({
             return null
           }
         },
+        // Writes an interview slot doc directly, bypassing the app's own
+        // create flow, so a spec can seed a slot with an arbitrary
+        // interviewerEmail/interviewerUid combination - e.g. one belonging to
+        // a different interviewer, or one simulating a slot created before
+        // its owner changed their account's email.
+        async setInterviewSlot(slot: {
+          collectionPath: string
+          id: string
+          date: string
+          interviewerName: string
+          interviewerEmail: string
+          interviewerUid?: string
+          meetingLink: string
+          semester?: string
+        }) {
+          if (getApps().length === 0) {
+            initializeApp({
+              projectId: process.env.FIREBASE_PROJECT_ID || 'demo-gbstem',
+            })
+          }
+          await getFirestore()
+            .collection(slot.collectionPath)
+            .doc(slot.id)
+            .set({
+              id: slot.id,
+              date: Timestamp.fromDate(new Date(slot.date)),
+              interviewerName: slot.interviewerName,
+              interviewerEmail: slot.interviewerEmail,
+              interviewerUid: slot.interviewerUid ?? '',
+              intervieweeFirstName: '',
+              intervieweeLastName: '',
+              intervieweeEmail: '',
+              intervieweeId: '',
+              interviewSlotStatus: 'available',
+              meetingLink: slot.meetingLink,
+              semester: slot.semester ?? '',
+            })
+          return null
+        },
         // Writes a `tokens` doc directly, bypassing the app's own token
         // creation flow, so a spec can set up an already-expired or
         // already-consumed token without waiting real time or driving a

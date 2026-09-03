@@ -349,6 +349,26 @@ Cypress.Commands.add(
   },
 )
 
+// Writes an interview slot doc directly via a Firestore Admin SDK task, so a
+// spec can seed a slot owned by a different interviewer, or one whose
+// interviewerEmail is stale relative to interviewerUid (simulating a slot
+// created before its owner changed their account's email).
+Cypress.Commands.add(
+  'setInterviewSlot',
+  (slot: {
+    collectionPath: string
+    id: string
+    date: string
+    interviewerName: string
+    interviewerEmail: string
+    interviewerUid?: string
+    meetingLink: string
+    semester?: string
+  }) => {
+    return cy.task('setInterviewSlot', slot)
+  },
+)
+
 const getFirebaseAuthBaseUrl = () =>
   `http://${Cypress.expose('FIREBASE_AUTH_EMULATOR_HOST') || '127.0.0.1:9099'}`
 const getFirestoreBaseUrl = () =>

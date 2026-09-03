@@ -426,6 +426,7 @@ describe.each([
       'meetingLink',
       'interviewerName',
       'interviewerEmail',
+      'interviewerUid',
       'intervieweeFirstName',
       'intervieweeLastName',
       'intervieweeEmail',

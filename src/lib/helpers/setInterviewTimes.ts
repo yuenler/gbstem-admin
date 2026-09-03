@@ -100,6 +100,7 @@ export function buildAssignInterviewApiPayload(
     firstName: slot.intervieweeFirstName || '',
     interviewer: slot.interviewerName || '',
     email: slot.interviewerEmail || '',
+    interviewerUid: slot.interviewerUid || undefined,
     link: slot.meetingLink || '',
     date: formatDateLocal(slot.date),
   }
@@ -111,19 +112,47 @@ export function buildAssignInterviewApiPayload(
 export function resetInterviewSlotToAdd(
   interviewerName: string = '',
   interviewerEmail: string = '',
+  interviewerUid: string = '',
 ): Data.InterviewSlot {
-  return getInterviewSlotDefaults(interviewerName, interviewerEmail)
+  return getInterviewSlotDefaults(
+    interviewerName,
+    interviewerEmail,
+    interviewerUid,
+  )
+}
+
+/**
+ * True when `slot` belongs to the signed-in user: matched by uid when the
+ * slot carries one, falling back to email for slots written before
+ * `interviewerUid` existed.
+ *
+ * uid-first matters because `interviewerEmail` is a snapshot taken when the
+ * slot was created and never updated - if the owner later changes their
+ * account's email (via the profile page), every slot they created earlier
+ * keeps the old address forever, and an email-only comparison would then
+ * treat their own slots as someone else's.
+ */
+export function isOwnInterviewSlot(
+  slot: Pick<Data.InterviewSlot, 'interviewerEmail' | 'interviewerUid'>,
+  userEmail?: string | null,
+  userUid?: string | null,
+): boolean {
+  if (slot.interviewerUid) {
+    return slot.interviewerUid === userUid
+  }
+  return slot.interviewerEmail === userEmail
 }
 
 /**
  * Checks whether a user has permissions to modify a given interview slot.
  */
 export function canUserModifySlot(
-  slotInterviewerEmail: string,
+  slot: Pick<Data.InterviewSlot, 'interviewerEmail' | 'interviewerUid'>,
   userEmail?: string | null,
+  userUid?: string | null,
   userRole?: string | null,
 ): boolean {
-  return slotInterviewerEmail === userEmail || userRole === 'admin'
+  return isOwnInterviewSlot(slot, userEmail, userUid) || userRole === 'admin'
 }
 
 /**
@@ -143,6 +172,7 @@ export function toInterviewSlotFormValues(slot: Data.InterviewSlot) {
     meetingLink: slot.meetingLink || '',
     interviewerName: slot.interviewerName || '',
     interviewerEmail: slot.interviewerEmail || '',
+    interviewerUid: slot.interviewerUid || '',
     intervieweeFirstName: slot.intervieweeFirstName || '',
     intervieweeLastName: slot.intervieweeLastName || '',
     intervieweeEmail: slot.intervieweeEmail || '',
