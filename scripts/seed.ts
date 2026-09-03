@@ -784,9 +784,10 @@ async function seed() {
   })
 
   console.log(`Seeding instructor-to-class mapping...`)
+  // Keyed by uid, not email - see classService.ts's fetchInstructorClasses.
   await db
     .collection('instructorClasses')
-    .doc('instructor@gbstem.org')
+    .doc('instructor-demo-uid')
     .set({
       classIds: ['class-python1'],
     })
