@@ -215,8 +215,13 @@ service cloud.firestore {
          request.auth.token.email in resource.data.otherInstructorEmails.replace('[\\s,;]+', ',').split(','))
       );
     }
-    function isInstructorOwnerOrAdmin(userId) {
-      return (isInstructor() && hasUserId(userId)) || isAdmin();
+    // classId is `${instructorUid}-${n}` (see portal's generateNewClassId),
+    // never the bare uid, so this needs the same prefix match isOwnerOrAdmin
+    // uses below for registrations - hasUserId's exact match never fires for
+    // a real class create, which silently locked every instructor out of
+    // "+ Create New Class" (only isAdmin() ever let a create through).
+    function isInstructorOwnerOrAdmin(classId) {
+      return (isInstructor() && belongsToSameUser(classId)) || isAdmin();
     }
     function isOwnerOrAdmin(userId) {
       return (isSignedIn() && belongsToSameUser(userId)) || isAdmin();
