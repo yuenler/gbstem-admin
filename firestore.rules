@@ -199,9 +199,17 @@ service cloud.firestore {
     function isInstructor() {
       return isSignedIn() && hasRole('instructor');
     }
+    // uid-preferred, email as a fallback: instructorEmail/otherInstructorEmails
+    // are written once and can go stale if the instructor later changes their
+    // account's email. instructorUid/otherInstructorUids can't go stale the
+    // same way, so those checks stay unconditional rather than gated behind
+    // "only if a uid is missing" - they're purely additive.
     function isInstructorOfClass() {
       return isInstructor() && (
+        (resource.data.instructorUid != null && request.auth.uid == resource.data.instructorUid) ||
         request.auth.token.email == resource.data.instructorEmail ||
+        (resource.data.otherInstructorUids != null &&
+         request.auth.uid in resource.data.otherInstructorUids) ||
         (resource.data.otherInstructorEmails != null &&
          resource.data.otherInstructorEmails is string &&
          request.auth.token.email in resource.data.otherInstructorEmails.replace('[\\s,;]+', ',').split(','))

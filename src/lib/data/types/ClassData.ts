@@ -13,7 +13,12 @@ type ClassData = {
   instructorFirstName: string
   instructorLastName: string
   instructorEmail: string
+  // Absent on classes written before this field existed - callers must fall
+  // back to instructorEmail/otherInstructorEmails rather than treat '' as
+  // "no owner". See firestore.rules's isInstructorOfClass().
+  instructorUid: string
   otherInstructorEmails: string
+  otherInstructorUids: string[]
   classCap: number
   students: string[]
   online: boolean
