@@ -265,6 +265,43 @@ describe('Section A: Authentication and Navigation', () => {
     })
   })
 
+  // Production report: a user visiting a stale registration link (expired, or
+  // already used to create an account) saw no usable feedback. `load` in
+  // +page.server.ts runs on that GET before the signup form ever renders, so
+  // whatever it does on a bad token is the entire user-facing behavior here -
+  // there's no form/dialog to fall back on like the POST-time failures below.
+  ;[
+    {
+      label: 'Expired Token',
+      id: 'expired-test-token',
+      setup: () =>
+        cy.createTestToken('expired-test-token', {
+          expiresAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+        }),
+      message: 'Token has expired. If you need a new token, contact an admin.',
+    },
+    {
+      label: 'Already-Used Token',
+      id: 'consumed-test-token',
+      setup: () =>
+        cy.createTestToken('consumed-test-token', {
+          consumable: true,
+          consumers: ['some-previous-signup-uid'],
+        }),
+      message:
+        'Token already consumed. If this token was meant specifically for your account, immediately contact an admin with this message.',
+    },
+  ].forEach(({ label, id, setup, message }) => {
+    it(`Test Case 6z: Visiting Sign Up with a ${label} Reports the Error`, () => {
+      setup()
+      cy.visit(`/signup?token=${id}`)
+
+      // The failure has to reach the user as a notification, the same as
+      // every other auth failure in this suite - not a blank/crashed page.
+      cy.waitForNotification(message, 'bg-red-200')
+    })
+  })
+
   // Both sites share one Firebase Auth instance, so an email that already has an
   // account anywhere - same role, other role, or the portal site - can never be
   // signed up again here. `adminAuth.createUser` rejects with

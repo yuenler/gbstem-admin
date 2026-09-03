@@ -1,43 +1,51 @@
 import { sendEmail } from '$lib/server/email'
 import { adminAuth, adminDb, verifyToken } from '$lib/server/firebase'
 import { renderEmail } from '$lib/emails/render'
-import { error, fail, redirect } from '@sveltejs/kit'
+import { fail, redirect } from '@sveltejs/kit'
 import type { FirebaseError } from 'firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
 import type { Actions, PageServerLoad } from './$types'
 
+// Shared with the `default` action below: same states, same copy, whether the
+// token fails on the initial GET (a stale link someone clicked) or on submit.
+export function _tokenErrorMessage(
+  state: 'consumed' | 'expired' | 'unknown',
+): string {
+  switch (state) {
+    case 'consumed':
+      return 'Token already consumed. If this token was meant specifically for your account, immediately contact an admin with this message.'
+    case 'expired':
+      return 'Token has expired. If you need a new token, contact an admin.'
+    case 'unknown':
+      return 'Something went wrong. Please try again.'
+  }
+}
+
 export const load = (async ({ url }) => {
   const token = url.searchParams.get('token')
   if (token) {
-    let state
     try {
       await verifyToken(token)
       return {
         token,
+        tokenError: null,
       }
     } catch (err) {
-      state = err as 'consumed' | 'expired' | 'fake' | 'unknown'
-    }
-    switch (state) {
-      case 'consumed': {
-        throw error(403, {
-          message:
-            'Token already consumed. If this token was meant specifically for your account, immediately contact an admin with this message.',
-        })
-      }
-      case 'expired': {
-        throw error(403, {
-          message:
-            'Token has expired. If you need a new token, contact an admin.',
-        })
-      }
-      case 'fake': {
+      const state = err as 'consumed' | 'expired' | 'fake' | 'unknown'
+      // A garbage/tampered token isn't something a real user with a stale
+      // link produces, so it keeps the old silent bounce to signin. The other
+      // three states are what a real user sees on an expired or already-used
+      // registration link, so the page has to render *something* they can
+      // read - throwing a SvelteKit `error()` here would skip the page (and
+      // the notification banner in the root layout) entirely in favor of the
+      // generic error boundary, which is exactly the "broken error
+      // reporting" from the production report this fixes.
+      if (state === 'fake') {
         throw redirect(301, '/signin')
       }
-      case 'unknown': {
-        throw error(400, {
-          message: 'Something went wrong. Please try again.',
-        })
+      return {
+        token: null,
+        tokenError: _tokenErrorMessage(state),
       }
     }
   }
@@ -134,26 +142,9 @@ export const actions = {
       return { success: true }
     } catch (err) {
       const state = err as 'consumed' | 'expired' | 'fake' | 'unknown'
-      switch (state) {
-        case 'consumed': {
-          return fail(400, {
-            error:
-              'Token already consumed. If this token was meant specifically for your account, immediately contact an admin with this message.',
-          })
-        }
-        case 'expired': {
-          return fail(400, {
-            error:
-              'Token has expired. If you need a new token, contact an admin.',
-          })
-        }
-        case 'fake':
-        case 'unknown': {
-          return fail(400, {
-            error: 'Something went wrong. Please try again.',
-          })
-        }
-      }
+      return fail(400, {
+        error: _tokenErrorMessage(state === 'fake' ? 'unknown' : state),
+      })
     }
   },
 } satisfies Actions

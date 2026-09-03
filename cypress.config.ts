@@ -2,6 +2,7 @@ import { defineConfig } from 'cypress'
 import installLogsPrinter from 'cypress-terminal-report/src/installLogsPrinter'
 import { getApps, initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
+import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -93,6 +94,33 @@ export default defineConfig({
             console.error('Error in getFirestoreUserId task:', error)
             return null
           }
+        },
+        // Writes a `tokens` doc directly, bypassing the app's own token
+        // creation flow, so a spec can set up an already-expired or
+        // already-consumed token without waiting real time or driving a
+        // full signup first.
+        async setToken(token: {
+          id: string
+          role: string
+          consumable: boolean
+          consumers: string[]
+          expiresAt: string
+        }) {
+          if (getApps().length === 0) {
+            initializeApp({
+              projectId: process.env.FIREBASE_PROJECT_ID || 'demo-gbstem',
+            })
+          }
+          await getFirestore()
+            .collection('tokens')
+            .doc(token.id)
+            .set({
+              role: token.role,
+              consumable: token.consumable,
+              consumers: token.consumers,
+              expires: Timestamp.fromDate(new Date(token.expiresAt)),
+            })
+          return null
         },
       })
       return config

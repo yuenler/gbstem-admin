@@ -39,6 +39,15 @@ declare namespace Cypress {
       colorClass?: string,
       timeoutMs?: number,
     ): Chainable<any>
+    createTestToken(
+      id: string,
+      options?: {
+        role?: string
+        consumable?: boolean
+        consumers?: string[]
+        expiresAt?: string
+      },
+    ): Chainable<any>
     getFirebaseAuthToken(): Chainable<string>
     getFirestoreUserId(authToken: string, email: string): Chainable<string>
     getFirestoreDoc(
