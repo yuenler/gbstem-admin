@@ -742,23 +742,31 @@ describe('signup load and actions', () => {
   it('signup load returns token if token is valid', async () => {
     const url = new URL('http://localhost/?token=token123')
     const res = await signupLoad({ url } as any)
-    expect(res).toEqual({ token: 'token123' })
+    expect(res).toEqual({ token: 'token123', tokenError: null })
   })
 
-  it('signup load returns 403 for a consumed token', async () => {
+  // A stale registration link (expired, or already used) has to render the
+  // signup page with a user-visible notification, not the generic error
+  // boundary a thrown SvelteKit `error()` would produce - see the comment on
+  // `load` in +page.server.ts for the production report this covers.
+  it('signup load returns a tokenError for a consumed token', async () => {
     ;(verifyToken as jest.Mock).mockRejectedValueOnce('consumed')
     const url = new URL('http://localhost/?token=usedToken')
-    await expect(signupLoad({ url } as any)).rejects.toEqual(
-      expect.objectContaining({ status: 403, __isSvelteKitError: true }),
-    )
+    const res = await signupLoad({ url } as any)
+    expect(res).toEqual({
+      token: null,
+      tokenError: expect.stringContaining('already consumed'),
+    })
   })
 
-  it('signup load returns 403 for an expired token', async () => {
+  it('signup load returns a tokenError for an expired token', async () => {
     ;(verifyToken as jest.Mock).mockRejectedValueOnce('expired')
     const url = new URL('http://localhost/?token=oldToken')
-    await expect(signupLoad({ url } as any)).rejects.toEqual(
-      expect.objectContaining({ status: 403, __isSvelteKitError: true }),
-    )
+    const res = await signupLoad({ url } as any)
+    expect(res).toEqual({
+      token: null,
+      tokenError: expect.stringContaining('expired'),
+    })
   })
 
   it('signup load redirects to signin for a fake token', async () => {
@@ -769,12 +777,14 @@ describe('signup load and actions', () => {
     )
   })
 
-  it('signup load returns 400 for an unrecognized verification failure', async () => {
+  it('signup load returns a tokenError for an unrecognized verification failure', async () => {
     ;(verifyToken as jest.Mock).mockRejectedValueOnce('unknown')
     const url = new URL('http://localhost/?token=weirdToken')
-    await expect(signupLoad({ url } as any)).rejects.toEqual(
-      expect.objectContaining({ status: 400, __isSvelteKitError: true }),
-    )
+    const res = await signupLoad({ url } as any)
+    expect(res).toEqual({
+      token: null,
+      tokenError: 'Something went wrong. Please try again.',
+    })
   })
 
   function mockSignupRequest() {

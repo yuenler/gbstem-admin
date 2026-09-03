@@ -323,6 +323,32 @@ Cypress.Commands.add(
   },
 )
 
+// Writes a `tokens` doc directly via a Firestore Admin SDK task, so a spec
+// can exercise an already-expired or already-consumed signup token without
+// waiting real time or driving a full signup first to consume one.
+Cypress.Commands.add(
+  'createTestToken',
+  (
+    id: string,
+    options: {
+      role?: string
+      consumable?: boolean
+      consumers?: string[]
+      expiresAt?: string
+    } = {},
+  ) => {
+    return cy.task('setToken', {
+      id,
+      role: options.role ?? 'admin',
+      consumable: options.consumable ?? false,
+      consumers: options.consumers ?? [],
+      expiresAt:
+        options.expiresAt ??
+        new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+    })
+  },
+)
+
 const getFirebaseAuthBaseUrl = () =>
   `http://${Cypress.expose('FIREBASE_AUTH_EMULATOR_HOST') || '127.0.0.1:9099'}`
 const getFirestoreBaseUrl = () =>
