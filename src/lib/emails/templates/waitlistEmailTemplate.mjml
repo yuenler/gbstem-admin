@@ -1,0 +1,62 @@
+<mjml>
+  <mj-head>
+    <mj-include path="../layout/head.mjml" />
+  </mj-head>
+  <mj-body background-color="#f8f8f8">
+    <mj-include path="../layout/header.mjml" />
+    <mj-section
+      background-color="#ffffff"
+      padding="20px 0px 20px 0px"
+      padding-top="20px"
+      padding-bottom="50px"
+    >
+      <mj-column>
+        <mj-text color="#797e82" padding="0px 25px 5px 25px">
+          <h1
+            style="
+              text-align: center;
+              color: #000000;
+              font-weight: 700;
+              font-size: 34px;
+            "
+          >
+            gbSTEM Instructor Decision
+          </h1>
+        </mj-text>
+        <mj-text
+          font-size="16px"
+          line-height="22px"
+          padding="10px 25px"
+          padding-top="0px"
+        >
+          <p style="margin: 20px 0">Hello {{ app.firstName }},</p>
+          <p style="margin: 20px 0">
+            Thank you for applying to be a gbSTEM instructor. You have been
+            waitlisted for this semester. We may offer you a position if one
+            becomes open in the future, so be sure to periodically check for
+            emails from us.
+          </p>
+          <p style="margin: 20px 0">
+            We assure you that this decision was not made easily, as this was
+            our most competitive application round ever. We continue to
+            appreciate your interest and strongly encourage you to apply again
+            next semester!
+          </p>
+          <p style="margin: 30px 0">
+            If you have any questions or concerns, visit our FAQs, or you can
+            reach us at
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              style="color: darkblue"
+              href="mailto:contact@gbstem.org"
+              >contact@gbstem.org</a
+            >.
+          </p>
+          <p>Best wishes,<br />The gbSTEM Team</p>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-include path="../layout/footer.mjml" />
+  </mj-body>
+</mjml>

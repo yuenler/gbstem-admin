@@ -1,8 +1,7 @@
 import { otherInstructorEmailsSchema } from '$lib/components/forms/schemas'
-import { teachingReminderEmailTemplate } from '$lib/data/emailTemplates/teachingReminderEmailTemplate'
 import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
-import { addDataToHtmlTemplate } from '$lib/utils'
+import { renderEmail } from '$lib/emails/render'
 import { json } from '@sveltejs/kit'
 import { z } from 'zod'
 import type { RequestHandler } from './$types'
@@ -34,14 +33,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
           name: 'Portal',
           class: body.class,
           classTime: body.classTime,
+          link: 'https://portal.gbstem.org',
         },
       },
     }
 
-    const htmlBody = addDataToHtmlTemplate(
-      teachingReminderEmailTemplate,
-      template,
-    )
+    const htmlBody = renderEmail('teachingReminderEmailTemplate', template.data)
 
     try {
       await sendEmail({

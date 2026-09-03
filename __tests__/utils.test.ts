@@ -9,7 +9,6 @@ jest.mock('$lib/stores', () => ({
 
 import { alert } from '$lib/stores'
 import {
-  addDataToHtmlTemplate,
   classHeldToday,
   cleanEnvVar,
   clickOutside,
@@ -169,42 +168,6 @@ describe('utils', () => {
 
       expect(document.activeElement).toBe(button2)
       action.destroy()
-    })
-  })
-
-  describe('addDataToHtmlTemplate', () => {
-    it('substitutes basic values', () => {
-      const html = 'Hello {{name}}!'
-      const template = { data: { name: 'World' } }
-      expect(addDataToHtmlTemplate(html, template)).toBe('Hello World!')
-    })
-
-    it('substitutes nested values', () => {
-      const html = 'Hello {{user.name}}!'
-      const template = { data: { user: { name: 'Alice' } } }
-      expect(addDataToHtmlTemplate(html, template)).toBe('Hello Alice!')
-    })
-
-    it('handles spacing in placeholders', () => {
-      const html = 'Hello {{   user.name   }}!'
-      const template = { data: { user: { name: 'Bob' } } }
-      expect(addDataToHtmlTemplate(html, template)).toBe('Hello Bob!')
-    })
-
-    it('replaces missing values with empty string', () => {
-      const html = 'Hello {{user.age}}!'
-      const template = { data: { user: {} } }
-      expect(addDataToHtmlTemplate(html, template)).toBe('Hello !')
-    })
-
-    it('escapes HTML special characters to prevent injection', () => {
-      const html = 'Hello {{name}}!'
-      const template = {
-        data: { name: '<img src=x onerror=alert(1)>&"\'' },
-      }
-      expect(addDataToHtmlTemplate(html, template)).toBe(
-        'Hello &lt;img src=x onerror=alert(1)&gt;&amp;&quot;&#39;!',
-      )
     })
   })
 

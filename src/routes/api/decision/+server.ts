@@ -1,10 +1,6 @@
-import { acceptEmailTemplate } from '$lib/data/emailTemplates/acceptEmailTemplate'
-import { rejectionEmailTemplate } from '$lib/data/emailTemplates/rejectionEmailTemplate'
-import { subEmailTemplate } from '$lib/data/emailTemplates/subEmailTemplate'
-import { waitlistEmailTemplate } from '$lib/data/emailTemplates/waitlistEmailTemplate'
 import { handleApiError, verifyAdminOrReviewer } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
-import { addDataToHtmlTemplate } from '$lib/utils'
+import { renderEmail } from '$lib/emails/render'
 import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 
@@ -43,19 +39,19 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     let htmlBody
     switch (decision) {
       case 'rejected':
-        htmlBody = addDataToHtmlTemplate(rejectionEmailTemplate, template)
+        htmlBody = renderEmail('rejectionEmailTemplate', template.data)
         break
       case 'waitlisted':
-        htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template)
+        htmlBody = renderEmail('waitlistEmailTemplate', template.data)
         break
       case 'substitute':
-        htmlBody = addDataToHtmlTemplate(subEmailTemplate, template)
+        htmlBody = renderEmail('subEmailTemplate', template.data)
         break
       case 'accepted':
-        htmlBody = addDataToHtmlTemplate(acceptEmailTemplate, template)
+        htmlBody = renderEmail('acceptEmailTemplate', template.data)
         break
       default:
-        htmlBody = addDataToHtmlTemplate(waitlistEmailTemplate, template)
+        htmlBody = renderEmail('waitlistEmailTemplate', template.data)
     }
 
     try {

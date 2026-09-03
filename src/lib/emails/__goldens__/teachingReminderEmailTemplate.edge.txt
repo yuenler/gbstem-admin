@@ -1,0 +1,11 @@
+title: 
+heading: 
+text: Hello Zoë Ñuñez 田中 🎓 <3 & "quoted" Bartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery III,
+text: This is a reminder that you are scheduled to hold a Zoë Ñuñez 田中 🎓 <3 & "quoted" Bartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery III class on Zoë Ñuñez 田中 🎓 <3 & "quoted" Bartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery III. If you are unable to hold class, please be sure to send out an email to your class and update your class schedule on the gbSTEM portal!
+text: Best wishes,The gbSTEM Team
+text: Main | Zoë Ñuñez 田中 🎓 <3 & "quoted" Bartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery III
+text: gbSTEM © 2026
+link: the gbSTEM portal -> portal.gbstem.org
+link: Main -> https://gbstem.org
+link: Zoë Ñuñez 田中 🎓 <3 & "quoted" Bartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery IIIBartholomew-Wentworth Fitzgerald-Montgomery III -> https://portal.gbstem.org/dashboard?tab=classes&id=7#top
+image: https://firebasestorage.googleapis.com/v0/b/gbstem-public/o/logoNOBACKGROUND.png?alt=media&token=ccf22ae8-323e-44a6-981c-a314b9563c45 (alt= width=550)

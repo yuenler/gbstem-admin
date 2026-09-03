@@ -1,7 +1,6 @@
-import { scheduleInterviewEmailTemplate } from '$lib/data/emailTemplates/scheduleInterviewEmailTemplate'
 import { handleApiError, verifyAdminOrReviewer } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
-import { addDataToHtmlTemplate } from '$lib/utils'
+import { renderEmail } from '$lib/emails/render'
 import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 
@@ -37,9 +36,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       },
     }
 
-    const htmlBody = addDataToHtmlTemplate(
-      scheduleInterviewEmailTemplate,
-      template,
+    const htmlBody = renderEmail(
+      'scheduleInterviewEmailTemplate',
+      template.data,
     )
 
     try {
