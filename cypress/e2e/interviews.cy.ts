@@ -124,13 +124,18 @@ const SLOT_LINK = 'https://zoom.us/j/1231231234'
 /** `date` is a Firestore timestamp, which `getFirestoreDoc` returns as a raw wrapper. */
 const SLOT_TIMESTAMP_FIELDS = ['date']
 
-function addSlotDocId(): Cypress.Chainable<string> {
+function getDemoAdminUid(): Cypress.Chainable<string> {
   return cy
     .getFirebaseAuthToken()
     .then((authToken: string) =>
       cy.getFirestoreUserId(authToken, 'demo@gbstem.org'),
     )
-    .then((uid: string) => `${new Date(SLOT_DATE_LOCAL).getTime()}${uid}`)
+}
+
+function addSlotDocId(): Cypress.Chainable<string> {
+  return getDemoAdminUid().then(
+    (uid: string) => `${new Date(SLOT_DATE_LOCAL).getTime()}${uid}`,
+  )
 }
 
 function readSlotDoc(docId: string): Cypress.Chainable<any> {
@@ -175,24 +180,30 @@ describe('Section F: Interview Slot Field Coverage', () => {
     // `createOrAssignInterviewSlot` writes with `setDoc` and no
     // `{ merge: true }`, so this really is the whole document - a field the
     // form stops carrying is deleted rather than left alone.
-    addSlotDocId().then((docId: string) => {
-      readSlotDoc(docId).then((data: any) => {
-        expect(data, 'interview slot document').to.not.equal(null)
-        expect(
-          prepareDocForCompare(data, { omit: SLOT_TIMESTAMP_FIELDS }),
-        ).to.deep.equal({
-          semester: currentSemester,
-          id: docId,
-          meetingLink: SLOT_LINK,
-          interviewerName: 'Demo Admin',
-          interviewerEmail: 'demo@gbstem.org',
-          intervieweeFirstName: '',
-          intervieweeLastName: '',
-          intervieweeEmail: '',
-          intervieweeId: '',
-          interviewSlotStatus: 'available',
+    getDemoAdminUid().then((uid: string) => {
+      addSlotDocId().then((docId: string) => {
+        readSlotDoc(docId).then((data: any) => {
+          expect(data, 'interview slot document').to.not.equal(null)
+          expect(
+            prepareDocForCompare(data, { omit: SLOT_TIMESTAMP_FIELDS }),
+          ).to.deep.equal({
+            semester: currentSemester,
+            id: docId,
+            meetingLink: SLOT_LINK,
+            interviewerName: 'Demo Admin',
+            interviewerEmail: 'demo@gbstem.org',
+            // Stamped from the signed-in user's Firebase Auth uid on
+            // creation, so "Only include my interviews" keeps matching this
+            // slot even if the interviewer later changes their email.
+            interviewerUid: uid,
+            intervieweeFirstName: '',
+            intervieweeLastName: '',
+            intervieweeEmail: '',
+            intervieweeId: '',
+            interviewSlotStatus: 'available',
+          })
+          expect(data.date, 'slot date').to.not.equal(null)
         })
-        expect(data.date, 'slot date').to.not.equal(null)
       })
     })
   })
@@ -240,23 +251,111 @@ describe('Section F: Interview Slot Field Coverage', () => {
     cy.contains('button', 'Save').click({ force: true })
     cy.waitForNotification('Timeslot updated successfully.')
 
-    readSlotDoc('slot-1').then((data: any) => {
-      expect(data, 'seeded slot document').to.not.equal(null)
-      expect(
-        prepareDocForCompare(data, { omit: SLOT_TIMESTAMP_FIELDS }),
-      ).to.deep.equal({
-        semester: currentSemester,
-        id: 'slot-1',
-        meetingLink: editedLink,
-        interviewerName: 'Demo Admin',
-        interviewerEmail: 'demo@gbstem.org',
-        // Never rendered by the edit card - these are the fields at risk.
-        intervieweeFirstName: 'David',
-        intervieweeLastName: 'Miller',
-        intervieweeEmail: 'applicant1@gmail.com',
-        intervieweeId: 'user_app1',
-        interviewSlotStatus: 'available',
+    getDemoAdminUid().then((uid: string) => {
+      readSlotDoc('slot-1').then((data: any) => {
+        expect(data, 'seeded slot document').to.not.equal(null)
+        expect(
+          prepareDocForCompare(data, { omit: SLOT_TIMESTAMP_FIELDS }),
+        ).to.deep.equal({
+          semester: currentSemester,
+          id: 'slot-1',
+          meetingLink: editedLink,
+          interviewerName: 'Demo Admin',
+          interviewerEmail: 'demo@gbstem.org',
+          // scripts/seed.ts stamps this - never rendered by the edit card, so
+          // this pins that the edit path doesn't drop it, same as the
+          // interviewee fields below.
+          interviewerUid: uid,
+          // Never rendered by the edit card - these are the fields at risk.
+          intervieweeFirstName: 'David',
+          intervieweeLastName: 'Miller',
+          intervieweeEmail: 'applicant1@gmail.com',
+          intervieweeId: 'user_app1',
+          interviewSlotStatus: 'available',
+        })
       })
     })
+  })
+})
+
+describe('Section H: Interview Slot Ownership Filtering', () => {
+  beforeEach(() => {
+    Cypress.on('uncaught:exception', (err) => {
+      if (
+        err.message.includes('Connection failed') ||
+        err.message.includes('Firebase')
+      ) {
+        return false
+      }
+      return true
+    })
+  })
+
+  it('Test Case 16e: "Only include my interviews" actually hides another interviewer\'s slot', () => {
+    // Prior to this test, nothing in this file ever toggled the checkbox or
+    // seeded a slot belonging to someone other than the signed-in user, so
+    // the filter's actual job -- excluding other people's slots -- was never
+    // exercised.
+    const otherLink = 'https://zoom.us/j/2222222222'
+    cy.setInterviewSlot({
+      collectionPath: interviewTimesCollection,
+      id: 'other-interviewer-slot-16e',
+      date: '2028-04-01T09:00',
+      interviewerName: 'Other Interviewer',
+      interviewerEmail: 'other-interviewer@gbstem.org',
+      interviewerUid: 'other-interviewer-uid',
+      meetingLink: otherLink,
+      semester: currentSemester,
+    })
+
+    cy.signedInSession('admin', { initialPage: '/interviews' })
+
+    // Checked by default: someone else's slot must not appear.
+    cy.contains('a', otherLink).should('not.exist')
+
+    cy.get('input[name="only-include-my-interviews"]').click({ force: true })
+    cy.contains('a', otherLink).should('exist')
+
+    cy.get('input[name="only-include-my-interviews"]').click({ force: true })
+    cy.contains('a', otherLink).should('not.exist')
+  })
+
+  it('Test Case 16f: a slot stays "mine" after the interviewer changes their account email', () => {
+    // Reproduces the reported production bug: the admin's screencast showed
+    // /interviews empty with "Only include my interviews" checked, and her
+    // own slot ("Interviewer" showing her name) appeared only once she
+    // unchecked it. That matches a slot created before she changed her
+    // account's email -- its stored interviewerEmail is stale, so the old
+    // pure-email comparison no longer matched her current Firebase Auth
+    // email. Only interviewerUid, stamped once at creation, still does.
+    const staleEmailLink = 'https://zoom.us/j/3333333333'
+
+    getDemoAdminUid().then((uid: string) => {
+      cy.setInterviewSlot({
+        collectionPath: interviewTimesCollection,
+        id: 'stale-email-own-slot-16f',
+        date: '2028-04-02T09:00',
+        interviewerName: 'Demo Admin',
+        interviewerEmail: 'old-demo@gbstem.org',
+        interviewerUid: uid,
+        meetingLink: staleEmailLink,
+        semester: currentSemester,
+      })
+    })
+
+    cy.signedInSession('admin', { initialPage: '/interviews' })
+
+    // "Only include my interviews" is checked by default -- the slot must
+    // show without unchecking it.
+    cy.contains('a', staleEmailLink).should('exist')
+
+    // And it must be editable, not just visible -- `canUserModifySlot` has
+    // the same stale-email hazard `isMyInterview` does.
+    cy.contains('a', staleEmailLink)
+      .parent()
+      .parent()
+      .within(() => {
+        cy.contains('button', 'Edit').should('exist')
+      })
   })
 })

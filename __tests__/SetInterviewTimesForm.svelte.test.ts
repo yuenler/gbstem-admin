@@ -61,12 +61,27 @@ const futureSlot: Data.InterviewSlot = {
   date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
   interviewerName: 'Jane Interviewer',
   interviewerEmail: 'interviewer@example.com',
+  // Written before `interviewerUid` existed, like every slot seeded pre-fix -
+  // ownership for these still has to resolve via email.
+  interviewerUid: '',
   intervieweeFirstName: '',
   intervieweeLastName: '',
   intervieweeEmail: '',
   intervieweeId: '',
   interviewSlotStatus: 'available',
   meetingLink: 'https://meet.example.com/slot-1',
+}
+
+// Mirrors the production bug: `authUser` created this slot, then changed
+// their account's email. The slot's `interviewerEmail` is still the old
+// address, but `interviewerUid` - stamped at creation and never touched
+// again - still points at them.
+const staleEmailOwnSlot: Data.InterviewSlot = {
+  ...futureSlot,
+  id: 'slot-2',
+  interviewerEmail: 'old-interviewer@example.com',
+  interviewerUid: authUser.object.uid,
+  meetingLink: 'https://meet.example.com/slot-2',
 }
 
 describe('SetInterviewTimesForm Component', () => {
@@ -228,6 +243,28 @@ describe('SetInterviewTimesForm Component', () => {
       ).toBeInTheDocument()
     })
     expect(within(container).queryByText('Edit')).toBeNull()
+
+    unmount(app)
+  })
+
+  it('still shows an owned slot, with Edit available, after the owner changes email', async () => {
+    // Regression test for a production bug: an admin whose account email had
+    // changed found her own slot missing under "Only include my interviews"
+    // until she unchecked it. `staleEmailOwnSlot`'s `interviewerEmail` no
+    // longer matches `authUser`, but its `interviewerUid` does.
+    ;(interviewService.fetchInterviewSlots as jest.Mock).mockResolvedValue([
+      staleEmailOwnSlot,
+    ])
+    const app = await mountAuthenticated(authUser)
+
+    // "Only include my interviews" is checked by default - the slot must
+    // still surface without unchecking it.
+    await waitFor(() => {
+      expect(
+        within(container).getByText(staleEmailOwnSlot.meetingLink),
+      ).toBeInTheDocument()
+    })
+    expect(within(container).getByText('Edit')).toBeInTheDocument()
 
     unmount(app)
   })

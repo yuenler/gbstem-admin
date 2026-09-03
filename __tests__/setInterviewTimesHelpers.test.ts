@@ -107,14 +107,44 @@ describe('SetInterviewTimes Helpers', () => {
 
   describe('canUserModifySlot', () => {
     test('allows modification if user is slot owner or admin', () => {
+      const slot = { interviewerEmail: 'owner@example.com', interviewerUid: '' }
       expect(
-        canUserModifySlot('owner@example.com', 'owner@example.com', 'reviewer'),
+        canUserModifySlot(slot, 'owner@example.com', 'uid-owner', 'reviewer'),
       ).toBe(true)
       expect(
-        canUserModifySlot('owner@example.com', 'other@example.com', 'admin'),
+        canUserModifySlot(slot, 'other@example.com', 'uid-other', 'admin'),
       ).toBe(true)
       expect(
-        canUserModifySlot('owner@example.com', 'other@example.com', 'reviewer'),
+        canUserModifySlot(slot, 'other@example.com', 'uid-other', 'reviewer'),
+      ).toBe(false)
+    })
+
+    test('matches by uid, not stale email, once the slot has a uid on file', () => {
+      // The scenario from the production bug this guards against: the owner
+      // changed their account's email after the slot was created, so
+      // `interviewerEmail` is stale, but `interviewerUid` - a stable Firebase
+      // Auth id - still identifies them.
+      const slot = {
+        interviewerEmail: 'old-owner@example.com',
+        interviewerUid: 'uid-owner',
+      }
+      expect(
+        canUserModifySlot(
+          slot,
+          'new-owner@example.com',
+          'uid-owner',
+          'reviewer',
+        ),
+      ).toBe(true)
+      // A uid on the slot is authoritative - a different person's uid isn't
+      // let in just because their email happens to match the stale one.
+      expect(
+        canUserModifySlot(
+          slot,
+          'old-owner@example.com',
+          'uid-imposter',
+          'reviewer',
+        ),
       ).toBe(false)
     })
   })

@@ -1039,6 +1039,12 @@ async function seed() {
       intervieweeEmail: 'applicant1@gmail.com',
       intervieweeId: 'user_app1',
       interviewerEmail: 'demo@gbstem.org',
+      // Seeded data lives in the uid-preferred world going forward - the
+      // email-only fallback path exists for slots that predate this field,
+      // which this seed script should stop producing. See
+      // interviews.cy.ts's "Section H" tests for coverage of that fallback,
+      // seeded directly via cy.setInterviewSlot rather than through here.
+      interviewerUid: adminUser.uid,
       interviewSlotStatus: 'available',
       meetingLink: 'https://zoom.us/j/555555555',
     })
