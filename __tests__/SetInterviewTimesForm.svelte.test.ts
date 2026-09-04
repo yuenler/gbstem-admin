@@ -61,8 +61,7 @@ const futureSlot: Data.InterviewSlot = {
   date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
   interviewerName: 'Jane Interviewer',
   interviewerEmail: 'interviewer@example.com',
-  // Written before `interviewerUid` existed, like every slot seeded pre-fix -
-  // ownership for these still has to resolve via email.
+  // Fallback to email when uid is missing (e.g. if an account is deleted).
   interviewerUid: '',
   intervieweeFirstName: '',
   intervieweeLastName: '',
