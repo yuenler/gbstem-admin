@@ -20,8 +20,6 @@
     "cypress": "cypress run",
     "deploy": "yarn build && firebase deploy",
     "seed": "npx tsx scripts/seed.ts",
-    "backfill:decided": "npx tsx scripts/backfill-decided.ts",
-    "backfill:decided:dry": "npx tsx scripts/backfill-decided.ts --dry-run",
     "backfill:instructoruids": "npx tsx scripts/backfill-class-instructor-uids.ts",
     "backfill:instructoruids:dry": "npx tsx scripts/backfill-class-instructor-uids.ts --dry-run",
     "backfill:instructoruids:drop": "npx tsx scripts/backfill-class-instructor-uids.ts --drop-legacy-field",
