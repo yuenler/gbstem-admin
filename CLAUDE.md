@@ -8,6 +8,8 @@ This supplements [README.md](README.md) (architecture, setup, Firestore semester
 
 Admin and portal share the **same Firestore database and Firebase project**, the same `firestore.rules` (merged by hand for production deploys — see README), and each keeps its own copy of `src/lib/data/collections.ts`, `semesterDates.json`, and the course-catalog JSON (`springCourses.json`/`fallCourses.json`) that must be updated **in both repos together** during a semester rollover (see README's "Adding a New Semester"). If you change a collection path, a security rule, or the `Data` type namespace here, check whether `../portal` needs the identical change.
 
+**Ship a cross-repo change as two PRs on a branch of the same name in both repos.** Portal's e2e job seeds the shared emulator from _this_ repo — from an admin branch with the same name when one exists, and from admin's default branch otherwise (see portal's `.github/workflows/ci.yml`). So a change to `scripts/seed.ts` here is what portal's Cypress suite runs against, and matching the branch name is what lets a portal PR that depends on a new fixture go green before this one merges.
+
 ## Route groups are auth gates, not just folders
 
 - `(signedIn)/+layout.server.ts` redirects to `/signin` if `locals.user === null`.
