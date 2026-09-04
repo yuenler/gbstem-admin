@@ -9,9 +9,9 @@ import { z } from 'zod'
 
 const assignInterviewSchema = z.object({
   email: z.string().email('Invalid interviewer email address'),
-  // Optional: absent for a slot written before `interviewerUid` existed, in
-  // which case `email` (the stored, possibly stale, interviewerEmail) is
-  // used as-is. See interviewerIdentity.ts.
+  // Optional: resolved via uid first. Stored email is unreliable because the
+  // interviewer could change it later, so code should avoid using it; it is
+  // retained as a permanent record if an account is deleted, though fallback is rare.
   interviewerUid: z.string().optional(),
   date: z.string().min(1, 'Date is required'),
   link: z.string().min(1, 'Meeting link is required'),

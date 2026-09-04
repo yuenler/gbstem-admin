@@ -1,6 +1,6 @@
 import type { Timestamp as ServerTimestamp } from 'firebase-admin/firestore'
-import type { Timestamp as ClientTimestamp } from 'firebase/firestore'
 import type { User as ClientUser } from 'firebase/auth'
+import type { Timestamp as ClientTimestamp } from 'firebase/firestore'
 
 declare global {
   declare namespace Data {
@@ -83,8 +83,9 @@ declare global {
       intervieweeEmail: string
       intervieweeId: string
       interviewerEmail: string
-      // Absent on slots written before this field existed - callers must
-      // fall back to `interviewerEmail` rather than treat '' as "no owner".
+      // Keyed primarily by uid. Stored email is unreliable because the interviewer
+      // could change their email later, so code should avoid using it; it is retained
+      // as a permanent record if their account is deleted, though fallback is rare.
       interviewerUid: string
       interviewSlotStatus: string
       meetingLink: string

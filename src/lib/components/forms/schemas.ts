@@ -171,11 +171,10 @@ export const interviewSlotSchema = z.object({
   meetingLink: z.string().min(1, 'Meeting link is required'),
   interviewerName: z.string().min(1, 'Interviewer name is required'),
   interviewerEmail: z.string().email('Invalid interviewer email address'),
-  // Stamped from the signed-in user's Firebase Auth uid at creation time, so
-  // ownership survives that person later changing their account's email -
-  // `interviewerEmail` alone can't, since it's frozen at whatever was current
-  // when the slot was written. Optional/defaulted so slots written before
-  // this field existed still parse; callers fall back to interviewerEmail.
+  // Stamped from Auth uid at creation so ownership survives email changes.
+  // Stored email is unreliable because the interviewer could change it later,
+  // so code should avoid using it; it is retained as a permanent record of
+  // the interviewer if an account is deleted, though fallback is rare.
   interviewerUid: z.string().optional().default(''),
   intervieweeFirstName: z.string().optional().default(''),
   intervieweeLastName: z.string().optional().default(''),

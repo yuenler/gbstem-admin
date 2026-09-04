@@ -27,12 +27,9 @@ service cloud.firestore {
     }
 
     //
-    // SEMESTER-SCOPED COLLECTIONS (current schema)
+    // SEMESTER-SCOPED COLLECTIONS
     //
     // semesters/{semesterId}/applications/{userId}, .../registrations/{userId}, etc.
-    // Permission logic below is copied verbatim from the legacy per-semester
-    // regex blocks further down, which are kept as a read/rollback path for
-    // the archived *{Semester} collections until cleanup.
     //
     match /semesters/{semesterId} {
       allow read: if isSignedIn(); // parent docs, if we ever materialize them
@@ -75,61 +72,15 @@ service cloud.firestore {
     }
 
     //
-    // LEGACY PER-SEMESTER COLLECTIONS (archive / rollback path)
+    // INSTRUCTOR TO CLASS MAPPING
     //
-    // Kept readable/writable during the transition so old *{Semester}
-    // collections remain a valid rollback target; delete this whole section
-    // once cleanup happens (see admin/README.md § Adding a New Semester).
-    //
-
-    //
-    // APPLICATIONS
-    //
-    match /{colId}/{userId} {
-      allow read, write: if colId.matches('applications(Spring|Fall)\\d+') && (isUser(userId) || isAdminOrReviewer());
-      match /meta/scheduled {
-        allow read, write: if colId.matches('applications(Spring|Fall)\\d+') && (isUser(userId) || isAdminOrReviewer());
-      }
-    }
-
-    //
-    // REGISTRATIONS
-    //
-    match /{colId}/{userId} {
-      allow read: if colId.matches('registrations(Spring|Fall)\\d+') && (isSignedIn() && belongsToSameUser(userId) || isStaff());
-      allow write: if colId.matches('registrations(Spring|Fall)\\d+') && isOwnerOrAdmin(userId);
-    }
-
-    //
-    // DECISIONS
-    //
-    match /{colId}/{userId} {
-      allow read: if colId.matches('decisions(Spring|Fall)\\d+') && isUser(userId);
-      allow read, write: if colId.matches('decisions(Spring|Fall)\\d+') && isAdminOrReviewer();
-    }
-
-    //
-    // CLASSES
-    //
-    match /{colId}/{classId} {
-      allow read: if colId.matches('classes(Spring|Fall)\\d+') && isSignedIn();
-      allow create: if colId.matches('classes(Spring|Fall)\\d+') && isInstructorOwnerOrAdmin(classId);
-      allow update: if colId.matches('classes(Spring|Fall)\\d+') && (isAdminOrReviewer() || isInstructorOfClass());
-      allow delete: if colId.matches('classes(Spring|Fall)\\d+') && isAdminOrReviewer();
-    }
-
     match /instructorClasses/{classId} {
       allow read, write: if isInstructor() || isAdmin();
     }
 
     //
-    // INTERVIEW TIMES / REQUESTS
+    // INTERVIEW TIME REQUESTS
     //
-    match /{colId}/{interviewId} {
-      allow read, update: if colId.matches('instructorInterviewTimes((Spring|Fall)\\d+)?') && isStaff();
-      allow create, delete: if colId.matches('instructorInterviewTimes((Spring|Fall)\\d+)?') && isAdminOrReviewer();
-    }
-
     match /interviewTimeRequests/{time} {
       allow read, create: if isStaff();
       allow update, delete: if isAdminOrReviewer();
@@ -141,14 +92,6 @@ service cloud.firestore {
     match /subRequests/{subRequest} {
       allow read, create: if isStaff();
       allow update, delete: if isInstructor() || isAdmin();
-    }
-
-    //
-    // SEMESTER DATES
-    //
-    match /semesterDates/{semesterDate} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
     }
 
     //
@@ -165,14 +108,6 @@ service cloud.firestore {
     match /checkIns/{userId} {
       allow read: if isSignedIn() && belongsToSameUser(userId) || isAdminOrReviewer();
       allow write: if isSignedIn() && belongsToSameUser(userId) || isAdminOrReviewer();
-    }
-
-    //
-    // FEEDBACK
-    //
-    match /{colId}/{feedbackId} {
-      allow create: if colId.matches('(class|instructor)Feedback(Spring|Fall)?\\d+') && isSignedIn();
-      allow read: if colId.matches('(class|instructor)Feedback(Spring|Fall)?\\d+') && isAdmin();
     }
 
     //

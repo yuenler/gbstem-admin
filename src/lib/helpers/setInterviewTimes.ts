@@ -122,15 +122,10 @@ export function resetInterviewSlotToAdd(
 }
 
 /**
- * True when `slot` belongs to the signed-in user: matched by uid when the
- * slot carries one, falling back to email for slots written before
- * `interviewerUid` existed.
- *
- * uid-first matters because `interviewerEmail` is a snapshot taken when the
- * slot was created and never updated - if the owner later changes their
- * account's email (via the profile page), every slot they created earlier
- * keeps the old address forever, and an email-only comparison would then
- * treat their own slots as someone else's.
+ * True when `slot` belongs to the signed-in user: matched by uid, falling
+ * back to email if uid is missing. Stored email is unreliable because the
+ * interviewer could change their email later, so code should avoid using it;
+ * it is retained as a permanent record if an account is deleted, though fallback is rare.
  */
 export function isOwnInterviewSlot(
   slot: Pick<Data.InterviewSlot, 'interviewerEmail' | 'interviewerUid'>,

@@ -265,7 +265,7 @@ Below is an alphabetical list of the top-level directories and significant confi
 - **`__tests__/`**: Contains all of our Jest unit tests (such as utility tests and form validation schema scenario tests).
 - **`cypress/`**: Contains the Cypress e2e test suite, test configurations, fixtures, and page object/support configurations.
 - **`node_modules/`**: Contains the project's dependencies.
-- **`scripts/`**: Contains development and setup script utilities: the database seeding script (`seed.ts`), a legacy-schema seeding script for migration rehearsal (`seedLegacy.ts`), and the one-time semester-schema migration script (`migrate-semesters.ts`, see [Firestore Schema](#firestore-schema)).
+- **`scripts/`**: Contains development and setup script utilities: the database seeding script (`seed.ts`), backfill utilities, and email build tools.
 - **`src/`**: The core SvelteKit application source code.
 - **`src/lib/`**: Reusable libraries, utility modules, and components:
   - **`src/lib/client/`**: Client-side specific integrations, such as clients for Firestore.
