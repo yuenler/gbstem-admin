@@ -97,6 +97,7 @@ export function buildAssignInterviewApiPayload(
 ): AssignInterviewRequestBody {
   return {
     intervieweeEmail: slot.intervieweeEmail || '',
+    intervieweeUid: slot.intervieweeId || undefined,
     firstName: slot.intervieweeFirstName || '',
     interviewer: slot.interviewerName || '',
     email: slot.interviewerEmail || '',

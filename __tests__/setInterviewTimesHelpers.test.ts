@@ -93,15 +93,23 @@ describe('SetInterviewTimes Helpers', () => {
 
   describe('buildAssignInterviewApiPayload & resetInterviewSlotToAdd', () => {
     test('builds API request payload correctly', () => {
-      const slot = resetInterviewSlotToAdd('Jane Doe', 'jane@example.com')
+      const slot = resetInterviewSlotToAdd(
+        'Jane Doe',
+        'jane@example.com',
+        'interviewer-uid-1',
+      )
       slot.intervieweeFirstName = 'Alice'
       slot.intervieweeEmail = 'alice@example.com'
+      slot.intervieweeId = 'interviewee-uid-1'
       slot.date = '2026-05-28T10:00'
 
       const payload = buildAssignInterviewApiPayload(slot)
       expect(payload.firstName).toBe('Alice')
       expect(payload.interviewer).toBe('Jane Doe')
       expect(payload.email).toBe('jane@example.com')
+      expect(payload.interviewerUid).toBe('interviewer-uid-1')
+      expect(payload.intervieweeUid).toBe('interviewee-uid-1')
+      expect(payload.intervieweeEmail).toBe('alice@example.com')
     })
   })
 
