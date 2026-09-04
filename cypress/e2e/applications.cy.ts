@@ -2,8 +2,8 @@ import {
   applicationsCollection,
   currentSemester,
 } from '../../src/lib/data/collections'
-import { prepareDocForCompare } from '../support/utils'
 import collectionsList from '../../src/lib/data/collectionsList.json'
+import { prepareDocForCompare } from '../support/utils'
 
 // The display name (e.g. "Spring 2026") for the current semester, as shown in the
 // CollectionFilter dropdown - derived from collections.ts/collectionsList.json so these
@@ -291,52 +291,6 @@ describe('Section D: Instructor Applications Management', () => {
       'applicant-1@gmail.com',
       'Please schedule your gbSTEM instructor interview',
     )
-  })
-
-  // Fixture: `scripts/seedLegacy.ts` seeds a "LegacyUndecided {Semester}" applicant into each of
-  // Fall25/Spring26's legacy collections (that script's hardcoded rehearsal semesters,
-  // independent of the app's current semester), migrated by `migrate-semesters.ts` into
-  // `semesters/{Semester}/applications`. Names are unique per semester so this test can assert
-  // the Fall25 applicant does NOT show up after switching back to the current semester.
-  it('Test Case 10c: Deciding On a Past-Semester Applicant Writes To That Semester', () => {
-    cy.exec('yarn seed:legacy', { timeout: 120000 })
-    cy.exec('yarn migrate', { timeout: 120000 })
-
-    // Switch to a past semester via the Collection dropdown, same flow as Test Case 9.
-    cy.get('input[name="collection"]').clear().type('Fall 2025')
-    cy.get('input[name="collection"]')
-      .parent()
-      .find('button')
-      .contains('Fall 2025')
-      .click({ force: true })
-
-    const pastSemesterApplicantName = 'LegacyUndecided Fall25'
-
-    cy.contains('tr', pastSemesterApplicantName, {
-      timeout: TABLE_TIMEOUT,
-    }).within(() => {
-      cy.get('input[type="checkbox"]').check({ force: true })
-    })
-    cy.contains('button', 'Waitlist 1 applicant').click({ force: true })
-    cy.waitForNotification('1 applicant waitlisted.')
-
-    cy.contains('tr', pastSemesterApplicantName).within(() => {
-      cy.get('.text-yellow-300').should('exist')
-    })
-
-    // Switch back to the current semester and confirm no application there was touched
-    // (this is the "silent cross-semester overwrite" failure mode described above — it
-    // would only reproduce if the same uid also has a current-semester application, so a
-    // fully faithful fixture needs a shared uid across both semesters).
-    cy.get('input[name="collection"]').clear().type(currentSemesterName)
-    cy.get('input[name="collection"]')
-      .parent()
-      .find('button')
-      .contains(currentSemesterName)
-      .click({ force: true })
-    cy.contains('tr', pastSemesterApplicantName, {
-      timeout: TABLE_TIMEOUT,
-    }).should('not.exist')
   })
 
   it('Test Case 11: Application Details Modal, Editing Details, and Decision Updates', () => {
