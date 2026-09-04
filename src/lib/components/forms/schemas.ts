@@ -302,6 +302,8 @@ export function getClassDataDefaults() {
     instructorFirstName: '',
     instructorLastName: '',
     instructorEmail: '',
+    instructorUid: '',
+    otherInstructorUids: [] as string[],
     classDay1: '',
     classTime1: '',
     classDay2: '',

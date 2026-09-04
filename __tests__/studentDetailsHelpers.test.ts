@@ -80,6 +80,7 @@ describe('StudentDetails Helpers', () => {
       const classSelected: Partial<ClassData> = {
         instructorFirstName: 'Jane',
         instructorLastName: 'Doe',
+        instructorUid: 'inst-123',
         instructorEmail: 'jane@example.com',
         classTime1: '4:00 PM',
         classTime2: '4:00 PM',
@@ -96,6 +97,7 @@ describe('StudentDetails Helpers', () => {
         email: 'bobby@example.com',
         firstName: 'Sarah',
         instructor: 'Jane Doe',
+        instructorUid: 'inst-123',
         instructorEmail: 'jane@example.com',
         classTimes: ['4:00 PM', '4:00 PM'],
         classDays: ['Monday', 'Wednesday'],

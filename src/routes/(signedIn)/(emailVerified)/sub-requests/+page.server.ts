@@ -11,6 +11,7 @@ interface DBSubRequest {
   course: string
   dateOfClass: import('firebase-admin').firestore.Timestamp
   originalInstructorEmail: string
+  originalInstructorUid?: string
   subInstructorId: string
   subInstructorFirstName: string
   subInstructorEmail: string
@@ -56,6 +57,7 @@ export const load = (async ({ url, depends }) => {
                 : new Date(data.dateOfClass as any)
               : null,
             originalInstructorEmail: data.originalInstructorEmail,
+            originalInstructorUid: data.originalInstructorUid ?? '',
             subInstructorId: data.subInstructorId,
             subInstructorFirstName: data.subInstructorFirstName,
             subInstructorEmail: data.subInstructorEmail,
@@ -96,6 +98,7 @@ export const load = (async ({ url, depends }) => {
             course: hit.course,
             dateOfClass: dateVal,
             originalInstructorEmail: hit.originalInstructorEmail,
+            originalInstructorUid: (hit as any).originalInstructorUid ?? '',
             subInstructorId: hit.subInstructorId,
             subInstructorFirstName: hit.subInstructorFirstName,
             subInstructorEmail: hit.subInstructorEmail,
