@@ -50,6 +50,7 @@ export function buildEnrollApiPayload(
     email: studentData.email,
     firstName: parentFirstName,
     instructor: `${classSelected.instructorFirstName} ${classSelected.instructorLastName}`,
+    instructorUid: classSelected.instructorUid || undefined,
     instructorEmail: classSelected.instructorEmail,
     classTimes: [classSelected.classTime1, classSelected.classTime2],
     classDays: [classSelected.classDay1, classSelected.classDay2],

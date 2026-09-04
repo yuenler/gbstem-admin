@@ -278,6 +278,7 @@ declare global {
       course: string
       dateOfClass: Date
       originalInstructorEmail: string
+      originalInstructorUid?: string
       subInstructorId: string
       subInstructorFirstName: string
       subInstructorEmail: string

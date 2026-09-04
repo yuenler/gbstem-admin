@@ -583,6 +583,8 @@ describe('Zod Validation Schemas', () => {
     it('returns valid initial defaults for ClassData', () => {
       const defaults = getClassDataDefaults()
       expect(defaults.course).toBe('')
+      expect(defaults.instructorUid).toBe('')
+      expect(defaults.otherInstructorUids).toEqual([])
       expect(defaults.students).toEqual([])
       expect(defaults.online).toBe(true)
     })

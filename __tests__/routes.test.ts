@@ -1006,7 +1006,7 @@ describe('API routes POST endpoints', () => {
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
   })
 
-  it('assignInterviewPOST successfully', async () => {
+  it('assignInterviewPOST successfully with legacy payload (intervieweeEmail without intervieweeUid)', async () => {
     mockRequest.json.mockResolvedValue({
       email: 'interviewer@test.com',
       date: '2026-06-01',
@@ -1020,6 +1020,44 @@ describe('API routes POST endpoints', () => {
       locals: { user: { email: 'admin@test.com', role: 'admin' } },
     } as any)
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
+    expect(MailService.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: ['interviewee@test.com'],
+      }),
+    )
+  })
+
+  it('assignInterviewPOST resolves interviewee email via intervieweeUid', async () => {
+    mockAdminAuth.getUser.mockImplementation(async (uid: string) => {
+      if (uid === 'interviewer-uid-1') {
+        return { uid, email: 'interviewer@test.com' }
+      }
+      if (uid === 'interviewee-uid-1') {
+        return { uid, email: 'updated-interviewee@test.com' }
+      }
+      return { uid }
+    })
+    mockRequest.json.mockResolvedValue({
+      email: 'fallback-interviewer@test.com',
+      interviewerUid: 'interviewer-uid-1',
+      date: '2026-06-01',
+      link: 'http://zoom',
+      interviewer: 'Interviewer',
+      firstName: 'Interviewee',
+      intervieweeUid: 'interviewee-uid-1',
+      intervieweeEmail: 'stale@test.com',
+    })
+    const res = await assignInterviewPOST({
+      request: mockRequest as any,
+      locals: { user: { email: 'admin@test.com', role: 'admin' } },
+    } as any)
+    expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
+    expect(mockAdminAuth.getUser).toHaveBeenCalledWith('interviewee-uid-1')
+    expect(MailService.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: ['updated-interviewee@test.com'],
+      }),
+    )
   })
 
   it('decisionPOST successfully', async () => {
@@ -1057,6 +1095,33 @@ describe('API routes POST endpoints', () => {
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
   })
 
+  it('enrollPOST successfully resolves instructor email via instructorUid', async () => {
+    mockAdminAuth.getUser.mockResolvedValueOnce({
+      uid: 'inst-uid-1',
+      email: 'inst-from-uid@test.com',
+    })
+    mockRequest.json.mockResolvedValue({
+      email: 'student@test.com',
+      firstName: 'StudentFirst',
+      instructor: 'InstructorName',
+      instructorUid: 'inst-uid-1',
+      classTimes: ['14:00', '16:00'],
+      classDays: ['Monday', 'Wednesday'],
+      course: 'Math',
+      studentName: 'StudentFull',
+      online: true,
+    })
+    const res = await enrollPOST({
+      request: mockRequest as any,
+      locals: { user: { email: 'admin@test.com', role: 'admin' } },
+    } as any)
+    expect(mockAdminAuth.getUser).toHaveBeenCalledWith('inst-uid-1')
+    expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
+    expect(MailService.send).toHaveBeenCalledWith(
+      expect.objectContaining({ cc: ['inst-from-uid@test.com'] }),
+    )
+  })
+
   it('remindInstructorPOST successfully', async () => {
     mockRequest.json.mockResolvedValue({
       name: 'Instructor',
@@ -1070,6 +1135,29 @@ describe('API routes POST endpoints', () => {
       locals: { user: { email: 'admin@test.com', role: 'admin' } },
     } as any)
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
+  })
+
+  it('remindInstructorPOST resolves primary instructor email via instructorUid', async () => {
+    mockAdminAuth.getUser.mockResolvedValueOnce({
+      uid: 'inst-uid-1',
+      email: 'resolved-inst@test.com',
+    })
+    mockRequest.json.mockResolvedValue({
+      name: 'Instructor',
+      instructorUid: 'inst-uid-1',
+      class: 'Math',
+      classTime: 'Monday at 2:00 PM',
+      otherInstructorUids: [],
+    })
+    const res = await remindInstructorPOST({
+      request: mockRequest as any,
+      locals: { user: { email: 'admin@test.com', role: 'admin' } },
+    } as any)
+    expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
+    expect(mockAdminAuth.getUser).toHaveBeenCalledWith('inst-uid-1')
+    expect(MailService.send).toHaveBeenCalledWith(
+      expect.objectContaining({ to: ['resolved-inst@test.com'] }),
+    )
   })
 
   it('remindStudentsPOST successfully', async () => {

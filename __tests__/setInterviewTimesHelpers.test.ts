@@ -34,7 +34,7 @@ describe('SetInterviewTimes Helpers', () => {
   })
 
   describe('parseSlotRequestDoc & sortSlotRequestsByDate', () => {
-    test('parses raw request doc and extracts uid from ID', () => {
+    test('parses raw request doc and extracts uid from ID when data.uid missing', () => {
       const raw = {
         date: { seconds: 1779900600 },
         firstName: 'Alice',
@@ -46,6 +46,20 @@ describe('SetInterviewTimes Helpers', () => {
       expect(req?.id).toBe('uid123-2026-05-28')
       expect(req?.uid).toBe('uid123')
       expect(req?.firstName).toBe('Alice')
+    })
+
+    test('uses explicit data.uid when present in raw doc', () => {
+      const raw = {
+        uid: 'explicit-uid-456',
+        date: { seconds: 1779900600 },
+        firstName: 'Bob',
+        lastName: 'Jones',
+        email: 'bob@example.com',
+      }
+
+      const req = parseSlotRequestDoc('fallback-id-2026-05-28', raw)
+      expect(req?.uid).toBe('explicit-uid-456')
+      expect(req?.firstName).toBe('Bob')
     })
 
     test('sorts requests chronologically by date', () => {
@@ -93,15 +107,23 @@ describe('SetInterviewTimes Helpers', () => {
 
   describe('buildAssignInterviewApiPayload & resetInterviewSlotToAdd', () => {
     test('builds API request payload correctly', () => {
-      const slot = resetInterviewSlotToAdd('Jane Doe', 'jane@example.com')
+      const slot = resetInterviewSlotToAdd(
+        'Jane Doe',
+        'jane@example.com',
+        'interviewer-uid-1',
+      )
       slot.intervieweeFirstName = 'Alice'
       slot.intervieweeEmail = 'alice@example.com'
+      slot.intervieweeId = 'interviewee-uid-1'
       slot.date = '2026-05-28T10:00'
 
       const payload = buildAssignInterviewApiPayload(slot)
       expect(payload.firstName).toBe('Alice')
       expect(payload.interviewer).toBe('Jane Doe')
       expect(payload.email).toBe('jane@example.com')
+      expect(payload.interviewerUid).toBe('interviewer-uid-1')
+      expect(payload.intervieweeUid).toBe('interviewee-uid-1')
+      expect(payload.intervieweeEmail).toBe('alice@example.com')
     })
   })
 

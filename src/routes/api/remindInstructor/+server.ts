@@ -2,12 +2,14 @@ import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
 import { resolveCoInstructorEmails } from '$lib/server/instructorDirectory'
 import { renderEmail } from '$lib/emails/render'
+import { adminAuth } from '$lib/server/firebase'
 import { json } from '@sveltejs/kit'
 import { z } from 'zod'
 import type { RequestHandler } from './$types'
 
 const remindInstructorSchema = z.object({
-  email: z.string().email('Invalid instructor email address'),
+  email: z.string().email('Invalid instructor email address').optional(),
+  instructorUid: z.string().optional(),
   // Resolved to current addresses server-side (see instructorDirectory.ts)
   // rather than sent by the client, so a cc always reaches the account's
   // current address and a client can't dictate the recipient list.
@@ -24,7 +26,28 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     verifyAdmin(locals)
     const body = remindInstructorSchema.parse(await request.json())
 
-    const email = body.email
+    let email = body.email
+    if (body.instructorUid) {
+      try {
+        const instructor = await adminAuth.getUser(body.instructorUid)
+        if (instructor.email) {
+          email = instructor.email
+        }
+      } catch (err) {
+        console.error(
+          'Failed to resolve instructor email by uid, falling back to passed email:',
+          err,
+        )
+      }
+    }
+
+    if (!email) {
+      return json(
+        { error: 'Instructor email could not be resolved.' },
+        { status: 400 },
+      )
+    }
+
     const otherEmails = await resolveCoInstructorEmails(
       body.otherInstructorUids,
     )

@@ -2,6 +2,7 @@ import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
 import { renderEmail } from '$lib/emails/render'
 import { formatTime24to12 } from '$lib/utils'
+import { adminAuth } from '$lib/server/firebase'
 import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 
@@ -11,7 +12,11 @@ const enrollSchema = z.object({
   email: z.string().email('Invalid email address'),
   firstName: z.string().min(1, 'First name is required'),
   instructor: z.string().min(1, 'Instructor name is required'),
-  instructorEmail: z.string().email('Invalid instructor email address'),
+  instructorUid: z.string().optional(),
+  instructorEmail: z
+    .string()
+    .email('Invalid instructor email address')
+    .optional(),
   classTimes: z.array(z.string()).min(1, 'At least one class time is required'),
   classDays: z.array(z.string()).min(1, 'At least one class day is required'),
   course: z.string().min(1, 'Course is required'),
@@ -26,6 +31,28 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   try {
     verifyAdmin(locals)
     const body = enrollSchema.parse(await request.json())
+
+    let instructorEmail = body.instructorEmail
+    if (body.instructorUid) {
+      try {
+        const instructor = await adminAuth.getUser(body.instructorUid)
+        if (instructor.email) {
+          instructorEmail = instructor.email
+        }
+      } catch (err) {
+        console.error(
+          'Failed to resolve instructor email by uid, falling back to passed email:',
+          err,
+        )
+      }
+    }
+
+    if (!instructorEmail) {
+      return json(
+        { error: 'Instructor email could not be resolved.' },
+        { status: 400 },
+      )
+    }
 
     const classes = body.classDays.map(
       (day: string, index: number) =>
@@ -47,7 +74,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
           class2Time,
           meetingLink: body.meetingLink,
           course: body.course,
-          instructorEmail: body.instructorEmail,
+          instructorEmail,
           online: body.online,
           studentName: body.studentName,
         },
@@ -64,7 +91,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     try {
       await sendEmail({
         to: body.email,
-        cc: body.instructorEmail,
+        cc: instructorEmail,
         subject: String(template.data.subject),
         html: htmlBody,
       })

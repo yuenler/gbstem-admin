@@ -35,7 +35,9 @@ export function parseSlotRequestDoc(
   return {
     date: new Date(timestampSeconds * 1000),
     id,
-    uid: id.replace(/-\d{4}-\d{2}-\d{2}.*$/, ''),
+    // New slot requests will have a UID, but legacy ones may not, and in that case
+    // we parse it out of the ${intervieweeUid}-${dateToAdd} format document ID.
+    uid: data.uid || id.replace(/-\d{4}-\d{2}-\d{2}.*$/, ''),
     firstName: data.firstName ?? '',
     lastName: data.lastName ?? '',
     email: data.email ?? '',
@@ -97,6 +99,7 @@ export function buildAssignInterviewApiPayload(
 ): AssignInterviewRequestBody {
   return {
     intervieweeEmail: slot.intervieweeEmail || '',
+    intervieweeUid: slot.intervieweeId || undefined,
     firstName: slot.intervieweeFirstName || '',
     interviewer: slot.interviewerName || '',
     email: slot.interviewerEmail || '',

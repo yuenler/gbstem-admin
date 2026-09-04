@@ -19,7 +19,8 @@ function sendClassReminder(opts: {
   studentName?: string
   studentEmail?: string
   instructorName: string
-  instructorEmail: string
+  instructorEmail?: string
+  instructorUid?: string
   otherInstructorUids: string[]
   className: string
   nextMeetingTime: string
@@ -31,6 +32,7 @@ function sendClassReminder(opts: {
     studentEmail,
     instructorName,
     instructorEmail,
+    instructorUid,
     otherInstructorUids,
     className,
     nextMeetingTime,
@@ -49,6 +51,7 @@ function sendClassReminder(opts: {
       const payload: RemindInstructorRequestBody = {
         name: normalizeCapitals(instructorName),
         email: instructorEmail,
+        instructorUid: instructorUid || undefined,
         otherInstructorUids: otherInstructorUids,
         class: className,
         classTime: nextMeetingTime,
