@@ -1,6 +1,6 @@
-import { otherInstructorEmailsSchema } from '$lib/components/forms/schemas'
 import { handleApiError, verifyAdmin } from '$lib/server/apiHelpers'
 import { sendEmail } from '$lib/server/email'
+import { resolveCoInstructorEmails } from '$lib/server/instructorDirectory'
 import { renderEmail } from '$lib/emails/render'
 import { json } from '@sveltejs/kit'
 import { z } from 'zod'
@@ -8,7 +8,10 @@ import type { RequestHandler } from './$types'
 
 const remindStudentsSchema = z.object({
   email: z.string().email('Invalid email address'),
-  otherInstructorEmails: otherInstructorEmailsSchema,
+  // Resolved to current addresses server-side (see instructorDirectory.ts)
+  // rather than sent by the client, so a cc always reaches the account's
+  // current address and a client can't dictate the recipient list.
+  otherInstructorUids: z.array(z.string()).default([]),
   name: z.string().min(1, 'Name is required'),
   class: z.string().min(1, 'Class is required'),
   classTime: z.string().min(1, 'Class time is required'),
@@ -23,7 +26,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     const body = remindStudentsSchema.parse(await request.json())
 
     const email = body.email
-    const otherEmails = body.otherInstructorEmails
+    const otherEmails = await resolveCoInstructorEmails(
+      body.otherInstructorUids,
+    )
 
     const template = {
       name: 'classReminder',

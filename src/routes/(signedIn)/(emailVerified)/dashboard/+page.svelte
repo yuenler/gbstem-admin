@@ -232,8 +232,8 @@
                         sendClassReminder({
                           instructorName: classToday.class.instructorFirstName,
                           instructorEmail: classToday.class.instructorEmail,
-                          otherInstructorEmails:
-                            classToday.class.otherInstructorEmails,
+                          otherInstructorUids:
+                            classToday.class.otherInstructorUids ?? [],
                           className: classToday.class.course,
                           nextMeetingTime: formatDate(
                             timestampToDate(

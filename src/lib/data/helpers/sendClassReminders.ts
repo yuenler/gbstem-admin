@@ -10,7 +10,7 @@ import type Student from '../types/Student'
  * @param studentEmail The email of the student to send the email to
  * @param instructorName The name of the instructor
  * @param instructorEmail The email of the instructor
- * @param otherInstructorEmails The emails of other instructors as a comma-separated string
+ * @param otherInstructorUids The uids of other instructors, resolved to current emails server-side
  * @param className The name of the class
  * @param nextMeetingTime The time of the next class
  */
@@ -20,7 +20,7 @@ function sendClassReminder(opts: {
   studentEmail?: string
   instructorName: string
   instructorEmail: string
-  otherInstructorEmails: string
+  otherInstructorUids: string[]
   className: string
   nextMeetingTime: string
 }) {
@@ -31,7 +31,7 @@ function sendClassReminder(opts: {
     studentEmail,
     instructorName,
     instructorEmail,
-    otherInstructorEmails,
+    otherInstructorUids,
     className,
     nextMeetingTime,
   } = opts
@@ -49,7 +49,7 @@ function sendClassReminder(opts: {
       const payload: RemindInstructorRequestBody = {
         name: normalizeCapitals(instructorName),
         email: instructorEmail,
-        otherInstructorEmails: otherInstructorEmails,
+        otherInstructorUids: otherInstructorUids,
         class: className,
         classTime: nextMeetingTime,
       }
@@ -80,7 +80,7 @@ function sendClassReminder(opts: {
           const payload: RemindStudentsRequestBody = {
             name: normalizeCapitals(student.name),
             email: student.email,
-            otherInstructorEmails: otherInstructorEmails,
+            otherInstructorUids: otherInstructorUids,
             class: className,
             classTime: nextMeetingTime,
             instructorName: normalizeCapitals(instructorName),
@@ -113,7 +113,7 @@ function sendClassReminder(opts: {
         const payload: RemindStudentsRequestBody = {
           name: studentName || '',
           email: studentEmail || '',
-          otherInstructorEmails: otherInstructorEmails,
+          otherInstructorUids: otherInstructorUids,
           class: className,
           classTime: nextMeetingTime,
           instructorName: normalizeCapitals(instructorName),

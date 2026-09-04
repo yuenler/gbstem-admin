@@ -218,6 +218,13 @@ async function seed() {
     'instructor',
   )
   await createOrUpdateUser(
+    'instructor-cohost-uid',
+    'cohost@gbstem.org',
+    'penguin',
+    'Cohost Instructor',
+    'instructor',
+  )
+  await createOrUpdateUser(
     'student-demo-uid',
     'student@gbstem.org',
     'penguin',
@@ -248,6 +255,12 @@ async function seed() {
   await db.collection('users').doc('instructor-interview-uid').set({
     role: 'instructor',
     firstName: 'Interview',
+    lastName: 'Instructor',
+  })
+
+  await db.collection('users').doc('instructor-cohost-uid').set({
+    role: 'instructor',
+    firstName: 'Cohost',
     lastName: 'Instructor',
   })
 
@@ -301,7 +314,6 @@ async function seed() {
     classTime2: '16:00',
     course: 'Python 1',
     instructorEmail: 'instructor@gbstem.org',
-    otherInstructorEmails: '',
     instructorFirstName: 'Demo',
     instructorLastName: 'Instructor',
     meetingLink: 'https://zoom.us/j/123456789',
@@ -331,7 +343,7 @@ async function seed() {
     classTime2: '17:00',
     course: 'Scratch 1',
     instructorEmail: 'instructor2@gbstem.org',
-    otherInstructorEmails: 'assistant@gbstem.org',
+    otherInstructorUids: ['instructor-cohost-uid'],
     instructorFirstName: 'Bob',
     instructorLastName: 'Jones',
     meetingLink: 'https://zoom.us/j/987654321',
@@ -848,6 +860,40 @@ async function seed() {
     notes: 'Please schedule your interview.',
   })
 
+  // Interviewed and accepted, but not assigned to own a class - the positive
+  // fixture for co-instructor uid resolution (portal's e2e tests cc this
+  // account onto a class it doesn't own; see instructorDirectory.ts).
+  console.log(`Seeding mock application for instructor-cohost-uid...`)
+  const appInstructorCohost = {
+    ...appInstructorDemo,
+    personal: {
+      ...appInstructorDemo.personal,
+      email: 'cohost@gbstem.org',
+      firstName: 'Cohost',
+      lastName: 'Instructor',
+    },
+    meta: {
+      uid: 'instructor-cohost-uid',
+      interview: true,
+      submitted: true,
+      decided: true,
+    },
+  }
+  validateApplication(appInstructorCohost, 'instructor-cohost-uid')
+  await db
+    .collection(applicationsCollection)
+    .doc('instructor-cohost-uid')
+    .set(appInstructorCohost)
+
+  console.log(`Seeding mock decision for instructor-cohost-uid...`)
+  await db.collection(decisionsCollection).doc('instructor-cohost-uid').set({
+    type: 'accepted',
+    likelyDecision: 'likely yes',
+    course: 'Python 1',
+    time: 'Monday/Wednesday 16:00',
+    notes: 'Welcome to the team!',
+  })
+
   // Seeding 30 applications
   console.log('Seeding 30 additional mock applications...')
   for (let i = 0; i < 30; i++) {
@@ -965,7 +1011,6 @@ async function seed() {
       classTime2: '16:00',
       course: course,
       instructorEmail: `instructor-fake-${i}@gbstem.org`,
-      otherInstructorEmails: '',
       instructorFirstName: firstNames[i % firstNames.length],
       instructorLastName: lastNames[i % lastNames.length],
       meetingLink: 'https://zoom.us/j/123456789',

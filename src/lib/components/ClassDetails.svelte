@@ -34,7 +34,6 @@
     instructorLastName: '',
     instructorEmail: '',
     instructorUid: '',
-    otherInstructorEmails: '',
     otherInstructorUids: [],
     classDay1: '',
     classTime1: '',
@@ -188,7 +187,7 @@
                 studentList: studentList,
                 instructorName: values.instructorFirstName,
                 instructorEmail: values.instructorEmail,
-                otherInstructorEmails: values.otherInstructorEmails,
+                otherInstructorUids: values.otherInstructorUids ?? [],
                 className: values.course,
                 nextMeetingTime: getNearestFutureClass(values.meetingTimes),
               })}>Send Reminder To All Students</Button
@@ -199,7 +198,7 @@
               sendClassReminder({
                 instructorName: values.instructorFirstName,
                 instructorEmail: values.instructorEmail,
-                otherInstructorEmails: values.otherInstructorEmails,
+                otherInstructorUids: values.otherInstructorUids ?? [],
                 className: values.course,
                 nextMeetingTime: getNearestFutureClass(values.meetingTimes),
               })}>Send Instructor Reminder</Button
