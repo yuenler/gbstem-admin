@@ -11,7 +11,7 @@
 // This script walks all interview slot documents across all semesters in Firestore
 // (`semesters/{semesterId}/instructorInterviewTimes`), looks up the interviewer's
 // UID via Firebase Auth using `interviewerEmail`, and stamps `interviewerUid` onto
-// each slot. We retain email as a permanent record of the primary instructor if
+// each slot. We retain email as a permanent record of the interviewer if
 // an account is deleted, though that fallback is rare. Stored email is unreliable
 // because an interviewer could change their email later, so code should avoid using it.
 //
@@ -29,8 +29,8 @@
 // Idempotent: only updates documents that still need an interviewerUid, so re-running
 // after a partial failure is safe.
 import admin from 'firebase-admin'
-import collectionsList from '../src/lib/data/collectionsList.json'
 import { semesterCollectionPath } from '../src/lib/data/collections'
+import collectionsList from '../src/lib/data/collectionsList.json'
 import {
   extractInterviewerEmail,
   interviewSlotNeedsUidBackfill,

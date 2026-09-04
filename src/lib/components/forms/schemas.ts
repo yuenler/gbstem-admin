@@ -174,7 +174,7 @@ export const interviewSlotSchema = z.object({
   // Stamped from Auth uid at creation so ownership survives email changes.
   // Stored email is unreliable because the interviewer could change it later,
   // so code should avoid using it; it is retained as a permanent record of
-  // the primary instructor if an account is deleted, though fallback is rare.
+  // the interviewer if an account is deleted, though fallback is rare.
   interviewerUid: z.string().optional().default(''),
   intervieweeFirstName: z.string().optional().default(''),
   intervieweeLastName: z.string().optional().default(''),
