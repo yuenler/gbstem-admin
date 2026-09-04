@@ -1,5 +1,5 @@
-// Pure, Firestore-connection-free transform logic for the co-instructor uid
-// backfill (scripts/backfill-other-instructor-uids.ts). Kept in its own module,
+// Pure, Firestore-connection-free transform logic for the class instructor uid
+// backfill (scripts/backfill-class-instructor-uids.ts). Kept in its own module,
 // with no import-time side effects, so it can be unit tested without an
 // emulator/production connection.
 //
@@ -12,6 +12,13 @@
 // that nobody teaches a class they weren't assigned and accepted for, so
 // co-instructors are now stored as `otherInstructorUids` only, and a uid gets
 // there only after the server confirms the account is an accepted instructor.
+//
+// The same "identify people by uid, not email" problem applies to the class's
+// *primary* instructor: `instructorUid` was added later than `instructorEmail`,
+// so classes written before it exists carry only the address, and
+// firestore.rules still has to fall back to matching on it. That fallback goes
+// stale the moment an instructor changes their account's email - the bug the
+// uid migration exists to fix - so this backfills `instructorUid` too.
 //
 // This module decides what a pre-existing class document should end up with;
 // the script itself does the Auth and decision lookups that can't be pure.
@@ -53,6 +60,46 @@ export function classNeedsCoInstructorBackfill(
   const hasLegacyField = typeof data.otherInstructorEmails === 'string'
   if (options.dropLegacyField && hasLegacyField) return true
   return parseLegacyOtherInstructorEmails(data.otherInstructorEmails).length > 0
+}
+
+/**
+ * Recovers the owning instructor's uid from a class document's ID.
+ *
+ * The portal names a new class `${uid}-${n}` (see generateNewClassId), and
+ * firestore.rules's isInstructorOwnerOrAdmin() only lets an instructor create
+ * a class under their own uid - so for any class the portal created, the ID
+ * *is* a record of who owns it, and unlike the stored email it can't go stale
+ * when that person changes their address or deletes their account.
+ *
+ * This only strips a trailing `-<number>`; it does not try to judge whether
+ * what remains looks like a uid. Firebase-generated uids are 28 alphanumeric
+ * characters, but a uid set explicitly may contain anything - the seed's
+ * `instructor-demo-uid` does - so a shape test would quietly fail on exactly
+ * the accounts it was meant to recognise. The caller decides by asking Auth
+ * whether the candidate is a real account, which is the only reliable test
+ * and one it has to make anyway.
+ *
+ * Returns null when there is no trailing number to strip (`class-python1`),
+ * since then nothing in the ID is a candidate.
+ */
+export function instructorUidFromClassId(classId: string): string | null {
+  const match = classId.match(/^(.+)-(\d+)$/)
+  return match ? match[1] : null
+}
+
+/**
+ * Whether a class document is still missing its primary `instructorUid`.
+ *
+ * An empty string counts as missing: Data.Class documents written before the
+ * field existed omit it entirely, but a few paths default it to '', and
+ * neither is a usable owner (see the field's comment in ClassData.ts).
+ */
+export function classNeedsInstructorUidBackfill(
+  data: Record<string, unknown>,
+): boolean {
+  return (
+    typeof data.instructorUid !== 'string' || data.instructorUid.length === 0
+  )
 }
 
 /**

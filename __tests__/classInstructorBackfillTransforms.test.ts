@@ -1,8 +1,10 @@
 import {
   classNeedsCoInstructorBackfill,
+  classNeedsInstructorUidBackfill,
+  instructorUidFromClassId,
   mergeCoInstructorUids,
   parseLegacyOtherInstructorEmails,
-} from '../scripts/lib/coInstructorBackfillTransforms'
+} from '../scripts/lib/classInstructorBackfillTransforms'
 
 describe('parseLegacyOtherInstructorEmails', () => {
   // The field was free text, so real documents hold whatever the class owner
@@ -106,5 +108,57 @@ describe('mergeCoInstructorUids', () => {
   test('handles a document with no uids array yet', () => {
     expect(mergeCoInstructorUids(undefined, ['uid-ada'])).toEqual(['uid-ada'])
     expect(mergeCoInstructorUids(undefined, [])).toEqual([])
+  })
+})
+
+describe('instructorUidFromClassId', () => {
+  // The portal names a class `${uid}-${n}`, and firestore.rules only lets an
+  // instructor create one under their own uid - so the ID is a record of who
+  // owns the class that, unlike the stored email, can't go stale.
+  test('strips the trailing class number to expose the owning uid', () => {
+    expect(instructorUidFromClassId('abc123XYZ-1')).toBe('abc123XYZ')
+    expect(instructorUidFromClassId('abc123XYZ-42')).toBe('abc123XYZ')
+  })
+
+  // Firebase-generated uids are 28 alphanumeric characters, but an explicitly
+  // set uid may contain anything - every uid in scripts/seed.ts is hyphenated.
+  // Rejecting those on shape would fail on exactly the accounts this is meant
+  // to recognise, so the caller confirms the candidate against Auth instead.
+  test('keeps a hyphenated uid intact', () => {
+    expect(instructorUidFromClassId('instructor-demo-uid-98')).toBe(
+      'instructor-demo-uid',
+    )
+  })
+
+  test('declines an ID with no trailing class number', () => {
+    expect(instructorUidFromClassId('class-python1')).toBe(null)
+    expect(instructorUidFromClassId('abc123')).toBe(null)
+    expect(instructorUidFromClassId('')).toBe(null)
+  })
+
+  // `class-fake-6` yields the candidate "class-fake", which is not an account.
+  // That is fine and deliberate: this function proposes, Auth disposes.
+  test('proposes a candidate it cannot itself validate', () => {
+    expect(instructorUidFromClassId('class-fake-6')).toBe('class-fake')
+  })
+})
+
+describe('classNeedsInstructorUidBackfill', () => {
+  test('is true when the field is absent', () => {
+    expect(
+      classNeedsInstructorUidBackfill({ instructorEmail: 'a@b.com' }),
+    ).toBe(true)
+  })
+
+  // Documents written before the field existed omit it, but a few paths
+  // default it to '' - neither is a usable owner.
+  test('is true when the field is an empty string', () => {
+    expect(classNeedsInstructorUidBackfill({ instructorUid: '' })).toBe(true)
+  })
+
+  test('is false once a uid is stamped', () => {
+    expect(classNeedsInstructorUidBackfill({ instructorUid: 'uid-ada' })).toBe(
+      false,
+    )
   })
 })

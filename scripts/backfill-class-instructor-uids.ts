@@ -1,5 +1,6 @@
-// backfill-other-instructor-uids.ts - One-time backfill for the co-instructor
-// uid migration.
+// backfill-class-instructor-uids.ts - One-time backfill for the class
+// instructor uid migration, covering both the co-instructor list and the
+// class's primary instructor.
 //
 // Class documents used to record co-instructors as `otherInstructorEmails`, a
 // free-text comma-separated string the class owner typed by hand, which
@@ -11,10 +12,18 @@
 // converts what is already in Firestore, dropping (and logging) every address
 // that doesn't meet that bar so leadership can follow up on it.
 //
+// It also stamps the class's primary `instructorUid`, which was added after
+// `instructorEmail` and is absent on older documents - leaving firestore.rules
+// to fall back to matching the stored address, which goes stale the moment
+// that instructor changes their account email. Unlike the co-instructor half,
+// this must not change *who* can reach a class, so it prefers whichever source
+// preserves today's access; see resolvePrimaryInstructorUid below.
+//
 // Usage:
-//   npx tsx scripts/backfill-other-instructor-uids.ts
-//       Phase 1: stamp otherInstructorUids, KEEP otherInstructorEmails.
-//   npx tsx scripts/backfill-other-instructor-uids.ts --drop-legacy-field
+//   npx tsx scripts/backfill-class-instructor-uids.ts
+//       Phase 1: stamp instructorUid + otherInstructorUids, KEEP
+//       otherInstructorEmails.
+//   npx tsx scripts/backfill-class-instructor-uids.ts --drop-legacy-field
 //       Phase 2: also delete the otherInstructorEmails field.
 //   ... --dry-run       Preview counts + a sample, no writes
 //   ... --production    Target production instead of the emulator
@@ -38,6 +47,11 @@
 // address never resolved to a uid; doing step 4 before step 3 lets an old
 // build write `otherInstructorUids: []` back over what step 2 stamped.
 //
+// `instructorEmail` is deliberately NOT removed by any phase. It is still read
+// for display and for reminder emails, and it self-heals on every save; only
+// the *rules* fallback on it is eventually retirable, and that is its own
+// migration to be done once no class is missing an instructorUid.
+//
 // Idempotent: only writes documents that still need changing, so re-running
 // after a partial failure is safe.
 import admin from 'firebase-admin'
@@ -45,9 +59,11 @@ import collectionsList from '../src/lib/data/collectionsList.json'
 import { semesterCollectionPath } from '../src/lib/data/collections'
 import {
   classNeedsCoInstructorBackfill,
+  classNeedsInstructorUidBackfill,
+  instructorUidFromClassId,
   mergeCoInstructorUids,
   parseLegacyOtherInstructorEmails,
-} from './lib/coInstructorBackfillTransforms'
+} from './lib/classInstructorBackfillTransforms'
 
 const args = process.argv.slice(2)
 const isDryRun = args.includes('--dry-run')
@@ -170,31 +186,122 @@ async function resolveUncached(
   return { uid: user.uid }
 }
 
+/** Whether an account with this uid still exists in Firebase Auth. */
+async function uidExists(uid: string): Promise<boolean> {
+  const cached = uidExistsCache.get(uid)
+  if (cached !== undefined) return cached
+  let exists: boolean
+  try {
+    await auth.getUser(uid)
+    exists = true
+  } catch {
+    exists = false
+  }
+  uidExistsCache.set(uid, exists)
+  return exists
+}
+const uidExistsCache = new Map<string, boolean>()
+
+type PrimaryResolution =
+  | { uid: string; source: 'email' | 'class id'; note?: string }
+  | { reason: string }
+
+/**
+ * Decides what to stamp as a class's primary `instructorUid`.
+ *
+ * The governing constraint is that this must not change *who* can reach the
+ * class. Today access runs through firestore.rules matching the signed-in
+ * address against `instructorEmail`, so whoever currently owns that address is
+ * who has access - which is why a resolvable email wins even when the class ID
+ * says someone else. Stamping the ID's uid there would hand access to a second
+ * person, and a backfill is the wrong place to do that.
+ *
+ * The class ID is the fallback rather than the primary source, but it is the
+ * more *durable* record: the portal names a class `${uid}-${n}` and the rules
+ * only allow an instructor to create one under their own uid, so the ID
+ * survives the email going stale. That is exactly the case this migration
+ * exists for - an instructor changed their account email, and the stored
+ * address now resolves to nobody - so recovering the owner from the ID
+ * restores access that has already been silently lost.
+ *
+ * Note the two sources legitimately disagree in a case that isn't corruption:
+ * any instructor who saves a class overwrites `instructorEmail` with their
+ * own, so a class created by A and last saved by co-instructor B records B.
+ * That is pre-existing app behaviour; this only reports it.
+ */
+async function resolvePrimaryInstructorUid(
+  classId: string,
+  instructorEmail: unknown,
+): Promise<PrimaryResolution> {
+  const email =
+    typeof instructorEmail === 'string'
+      ? instructorEmail.trim().toLowerCase()
+      : ''
+  const idUid = instructorUidFromClassId(classId)
+
+  if (email) {
+    try {
+      const user = await auth.getUserByEmail(email)
+      return {
+        uid: user.uid,
+        source: 'email',
+        note:
+          idUid && idUid !== user.uid
+            ? `class ID says ${idUid}; keeping the address owner so access is unchanged`
+            : undefined,
+      }
+    } catch {
+      // Falls through to the class ID: no account owns that address any more.
+    }
+  }
+
+  if (idUid && (await uidExists(idUid))) {
+    return {
+      uid: idUid,
+      source: 'class id',
+      note: email
+        ? `${email} resolves to nobody; recovered the owner from the class ID`
+        : 'no instructorEmail on the document',
+    }
+  }
+
+  if (idUid) return { reason: `class ID uid ${idUid} has no account either` }
+  return {
+    reason: email
+      ? `no account for ${email}, and the class ID has no uid prefix`
+      : 'no instructorEmail and no uid prefix in the class ID',
+  }
+}
+
 type PlannedWrite = {
   id: string
   ref: FirebaseFirestore.DocumentReference
   uids: string[]
-  changed: boolean
+  instructorUid?: string
 }
 
 async function backfillClasses(semesterId: string) {
   const path = semesterCollectionPath(semesterId, 'classes')
   const snapshot = await db.collection(path).get()
-  const toUpdate = snapshot.docs.filter((doc) =>
-    classNeedsCoInstructorBackfill(doc.data(), { dropLegacyField }),
+  const toUpdate = snapshot.docs.filter(
+    (doc) =>
+      classNeedsCoInstructorBackfill(doc.data(), { dropLegacyField }) ||
+      classNeedsInstructorUidBackfill(doc.data()),
   )
 
   if (toUpdate.length === 0) {
     console.log(`  ${path}: ${snapshot.size} docs, none need backfilling.`)
-    return { path, count: 0, dropped: 0 }
+    return { path, count: 0, dropped: 0, ownerless: 0 }
   }
 
   console.log(
-    `  ${path}: ${toUpdate.length}/${snapshot.size} docs need backfilling.`,
+    `  ${path}: ${toUpdate.length}/${snapshot.size} docs still carry legacy ` +
+      `co-instructor or instructor-uid state.`,
   )
 
   const planned: PlannedWrite[] = []
   let dropped = 0
+  let ownerless = 0
 
   for (const doc of toUpdate) {
     const data = doc.data()
@@ -216,16 +323,51 @@ async function backfillClasses(semesterId: string) {
       }
     }
 
+    let instructorUid: string | undefined
+    if (classNeedsInstructorUidBackfill(data)) {
+      const primary = await resolvePrimaryInstructorUid(
+        doc.id,
+        data.instructorEmail,
+      )
+      if ('uid' in primary) {
+        instructorUid = primary.uid
+        if (primary.note) {
+          console.log(
+            `    OWNER ${semesterId}/${doc.id}: ${primary.uid} via ${primary.source} - ${primary.note}`,
+          )
+        }
+      } else {
+        // Not fatal - the class keeps working off instructorEmail, exactly as
+        // it does today - but it can never lose that fallback, so the rules
+        // clause can't retire until these are dealt with by hand.
+        ownerless += 1
+        console.log(`    NO OWNER ${semesterId}/${doc.id}: ${primary.reason}`)
+      }
+    }
+
     const existing = Array.isArray(data.otherInstructorUids)
       ? (data.otherInstructorUids as string[])
       : []
     const uids = mergeCoInstructorUids(existing, resolvedUids)
-    planned.push({
-      id: doc.id,
-      ref: doc.ref,
-      uids,
-      changed: uids.length !== existing.length,
-    })
+
+    // A class whose addresses resolve to nothing has already been reported
+    // above and has nothing left to write. Skipping it keeps re-runs from
+    // issuing a no-op update per document, and keeps the count at the end
+    // honest about how much this run actually accomplished - which matters
+    // when the count is what tells you whether the migration is finished.
+    const changesUids =
+      uids.length !== existing.length ||
+      uids.some((uid, i) => uid !== existing[i])
+    const removesLegacyField =
+      dropLegacyField && typeof data.otherInstructorEmails === 'string'
+    if (!changesUids && !instructorUid && !removesLegacyField) continue
+
+    planned.push({ id: doc.id, ref: doc.ref, uids, instructorUid })
+  }
+
+  if (planned.length === 0) {
+    console.log(`    nothing writable here; see any lines above.`)
+    return { path, count: 0, dropped, ownerless }
   }
 
   if (isDryRun) {
@@ -233,10 +375,13 @@ async function backfillClasses(semesterId: string) {
       console.log(
         `    [dry-run sample] ${write.id}: otherInstructorUids -> ` +
           `[${write.uids.join(', ')}]` +
+          (write.instructorUid
+            ? `, instructorUid -> ${write.instructorUid}`
+            : '') +
           (dropLegacyField ? ', removing otherInstructorEmails' : ''),
       )
     }
-    return { path, count: planned.length, dropped }
+    return { path, count: planned.length, dropped, ownerless }
   }
 
   let committed = 0
@@ -245,6 +390,9 @@ async function backfillClasses(semesterId: string) {
     for (const write of batchDocs) {
       const update: Record<string, unknown> = {
         otherInstructorUids: write.uids,
+      }
+      if (write.instructorUid) {
+        update.instructorUid = write.instructorUid
       }
       if (dropLegacyField) {
         update.otherInstructorEmails = admin.firestore.FieldValue.delete()
@@ -256,7 +404,7 @@ async function backfillClasses(semesterId: string) {
     console.log(`    committed ${committed}/${planned.length}`)
   }
 
-  return { path, count: planned.length, dropped }
+  return { path, count: planned.length, dropped, ownerless }
 }
 
 async function main() {
@@ -264,7 +412,7 @@ async function main() {
     (s) => s.id,
   )
   console.log(
-    `${isDryRun ? '[DRY RUN] ' : ''}Backfilling co-instructor uids across ` +
+    `${isDryRun ? '[DRY RUN] ' : ''}Backfilling class instructor uids across ` +
       `${semesters.length} semester(s): ${semesters.join(', ')}`,
   )
   console.log(
@@ -276,11 +424,13 @@ async function main() {
 
   let totalDocs = 0
   let totalDropped = 0
+  let totalOwnerless = 0
   for (const semesterId of semesters) {
     console.log(`\nSemester ${semesterId}:`)
     const result = await backfillClasses(semesterId)
     totalDocs += result.count
     totalDropped += result.dropped
+    totalOwnerless += result.ownerless
   }
 
   console.log(
@@ -292,6 +442,13 @@ async function main() {
       `${totalDropped} co-instructor address(es) were dropped - see the DROPPED lines above. ` +
         `Each is somebody who was listed on a class but is not an accepted instructor for ` +
         `that semester; check with gbSTEM leadership before treating this as done.`,
+    )
+  }
+  if (totalOwnerless > 0) {
+    console.log(
+      `${totalOwnerless} class(es) could not be given an instructorUid - see the NO OWNER ` +
+        `lines above. They keep working off instructorEmail exactly as they do today, but ` +
+        `firestore.rules cannot drop its email fallback until each one is resolved by hand.`,
     )
   }
 }
