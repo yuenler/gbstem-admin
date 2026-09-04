@@ -255,7 +255,11 @@ declare global {
       classTime2: string
       course: string
       instructorEmail: string
-      otherInstructorEmails: string
+      // Absent on classes written before this field existed - callers must
+      // fall back to instructorEmail rather than treat '' as "no owner". See
+      // firestore.rules's isInstructorOfClass().
+      instructorUid: string
+      otherInstructorUids: string[]
       instructorFirstName: string
       instructorLastName: string
       meetingLink: string

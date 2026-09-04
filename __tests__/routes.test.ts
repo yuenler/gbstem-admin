@@ -79,6 +79,7 @@ const mockAdminAuth = {
   createSessionCookie: jest.fn(),
   verifySessionCookie: jest.fn(),
   getUser: jest.fn(),
+  getUsers: jest.fn().mockResolvedValue({ users: [] }),
   createUser: jest.fn(),
   setCustomUserClaims: jest.fn(),
   deleteUser: jest.fn(),
@@ -261,6 +262,7 @@ import { POST as enrollPOST } from '../src/routes/api/enroll/+server'
 import { POST as remindInstructorPOST } from '../src/routes/api/remindInstructor/+server'
 import { POST as remindStudentsPOST } from '../src/routes/api/remindStudents/+server'
 import { POST as scheduleInterviewPOST } from '../src/routes/api/scheduleInterview/+server'
+import MailService from '@sendgrid/mail'
 
 describe('routes load tests', () => {
   beforeEach(() => {
@@ -1061,7 +1063,7 @@ describe('API routes POST endpoints', () => {
       email: 'inst@test.com',
       class: 'Math',
       classTime: 'Monday at 2:00 PM',
-      otherInstructorEmails: '',
+      otherInstructorUids: [],
     })
     const res = await remindInstructorPOST({
       request: mockRequest as any,
@@ -1076,7 +1078,7 @@ describe('API routes POST endpoints', () => {
       email: 'student@test.com',
       instructorName: 'Instructor',
       instructorEmail: 'inst@test.com',
-      otherInstructorEmails: '',
+      otherInstructorUids: [],
       class: 'Math',
       classTime: 'Monday at 2:00 PM',
     })
@@ -1085,6 +1087,31 @@ describe('API routes POST endpoints', () => {
       locals: { user: { email: 'admin@test.com', role: 'admin' } },
     } as any)
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
+  })
+
+  it('remindInstructorPOST resolves otherInstructorUids to current emails, dropping a uid with no account', async () => {
+    mockAdminAuth.getUsers.mockResolvedValueOnce({
+      users: [{ uid: 'cohost-uid', email: 'cohost@test.com' }],
+    })
+    mockRequest.json.mockResolvedValue({
+      name: 'Instructor',
+      email: 'inst@test.com',
+      class: 'Math',
+      classTime: 'Monday at 2:00 PM',
+      otherInstructorUids: ['cohost-uid', 'deleted-uid'],
+    })
+    const res = await remindInstructorPOST({
+      request: mockRequest as any,
+      locals: { user: { email: 'admin@test.com', role: 'admin' } },
+    } as any)
+    expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
+    expect(mockAdminAuth.getUsers).toHaveBeenCalledWith([
+      { uid: 'cohost-uid' },
+      { uid: 'deleted-uid' },
+    ])
+    expect(MailService.send).toHaveBeenCalledWith(
+      expect.objectContaining({ cc: ['cohost@test.com'] }),
+    )
   })
 
   it('scheduleInterviewPOST successfully', async () => {

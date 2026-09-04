@@ -148,21 +148,6 @@ export const registrationSchema = z.object({
   }),
 })
 
-export const otherInstructorEmailsSchema = z
-  .string()
-  .optional()
-  .default('')
-  .refine(
-    (val) => {
-      if (!val) return true
-      const parts = val.split(/[ ,]+/).filter((p) => p.length > 0)
-      return parts.every((p) => z.string().email().safeParse(p).success)
-    },
-    {
-      message: 'Please enter valid, comma-separated email addresses',
-    },
-  )
-
 export const PASSWORD_MIN_LENGTH = 6
 export const PASSWORD_MAX_LENGTH = 64
 
@@ -318,7 +303,6 @@ export function getClassDataDefaults() {
     instructorFirstName: '',
     instructorLastName: '',
     instructorEmail: '',
-    otherInstructorEmails: '',
     classDay1: '',
     classTime1: '',
     classDay2: '',

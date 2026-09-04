@@ -205,7 +205,7 @@
                     studentEmail: studentData.email,
                     instructorName: value.instructorFirstName,
                     instructorEmail: value.instructorEmail,
-                    otherInstructorEmails: value.otherInstructorEmails,
+                    otherInstructorUids: value.otherInstructorUids ?? [],
                     className: value.course,
                     nextMeetingTime: getNearestFutureClass(value.meetingTimes),
                   })}

@@ -95,7 +95,6 @@ async function seedSemester(semesterId: string) {
     classTime2: '16:00',
     course: 'Python 1',
     instructorEmail: `legacy-instructor-${semesterId}@gbstem.org`,
-    otherInstructorEmails: '',
     instructorFirstName: 'Legacy',
     instructorLastName: semesterId,
     meetingLink: 'https://zoom.us/j/000000000',

@@ -348,7 +348,7 @@ function expectedClassDoc(input: ClassInput) {
     instructorEmail: 'instructor2@gbstem.org',
     instructorFirstName: 'Bob',
     instructorLastName: 'Jones',
-    otherInstructorEmails: 'assistant@gbstem.org',
+    otherInstructorUids: ['instructor-cohost-uid'],
     students: ['student3'],
     classStatuses: ['FeedbackIncomplete', 'ClassInFuture'],
     feedbackCompleted: [false, false],

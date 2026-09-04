@@ -199,20 +199,20 @@ service cloud.firestore {
     function isInstructor() {
       return isSignedIn() && hasRole('instructor');
     }
-    // uid-preferred, email as a fallback: instructorEmail/otherInstructorEmails
-    // are written once and can go stale if the instructor later changes their
-    // account's email. instructorUid/otherInstructorUids can't go stale the
-    // same way, so those checks stay unconditional rather than gated behind
-    // "only if a uid is missing" - they're purely additive.
+    // Co-instructors are uid-only now: a free-text otherInstructorEmails list
+    // let a class owner grant write access to any address at all, with no
+    // check that the address belonged to an interviewed, accepted instructor.
+    // otherInstructorUids is populated only through the accepted-instructor
+    // flow, so this checks it unconditionally. instructorEmail stays as a
+    // fallback for the *main* instructor - a separate migration - since it's
+    // written once and can go stale if that instructor later changes their
+    // account's email; instructorUid can't go stale the same way.
     function isInstructorOfClass() {
       return isInstructor() && (
         (resource.data.instructorUid != null && request.auth.uid == resource.data.instructorUid) ||
         request.auth.token.email == resource.data.instructorEmail ||
         (resource.data.otherInstructorUids != null &&
-         request.auth.uid in resource.data.otherInstructorUids) ||
-        (resource.data.otherInstructorEmails != null &&
-         resource.data.otherInstructorEmails is string &&
-         request.auth.token.email in resource.data.otherInstructorEmails.replace('[\\s,;]+', ',').split(','))
+         request.auth.uid in resource.data.otherInstructorUids)
       );
     }
     // classId is `${instructorUid}-${n}` (see portal's generateNewClassId),
