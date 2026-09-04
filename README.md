@@ -27,6 +27,7 @@ This project relies on several key modern web technologies:
 - **[Zod](https://zod.dev/)**: A schema declaration and validation library, used to declare form schemas and validate client/server payloads.
 - **[Formsnap](https://formsnap.dev/)**: Accessible, accessible-first form builder library for Svelte, integrating SvelteKit-Superforms validation with shadcn/bits-ui components.
 - **[Bits UI](https://bits-ui.com/)**: A headless component library for Svelte providing accessible, unstyled components that serve as the foundation for Formsnap and shadcn components.
+- **[MJML](https://github.com/mjmlio/mjml)**: Email templating language and engine used to generate responsive HTML emails.
 
 ## Getting Started with Development
 
@@ -164,6 +165,8 @@ A handful of collections are **not** semester-scoped and live at the top level: 
 The current semester's key dates (`classesStart`, `registrationsDue`, etc.) aren't in Firestore at all — every read site only ever needs the _current_ semester's dates, never a past one, so they're static data in [`semesterDates.json`](src/lib/data/semesterDates.json), re-exported as `semesterDates` from `collections.ts`. `__tests__/collections.test.ts` validates every field is a well-formed `MM/DD/YY` date whose year matches `currentSemester`. The portal and website repos each keep a verbatim copy of this same file (see [Adding a New Semester](#adding-a-new-semester) for the paths and the copy step) — it is the one piece of semester configuration shared across all three repos.
 
 Every semesterized document also carries a `semester` field (e.g. `"Spring26"`), stamped on write via the `withSemester(...)` helper in `collections.ts`. This lets the shared, cross-semester Algolia index for each collection type (one index total, covering every semester) filter results down to a single semester.
+
+Within Firestore, all user identifiers should be `uid`s, not email addresses. Users can change their email address, but their `uid` is a stable identifier. This is also important for security and privacy reasons: it makes it harder for users to impersonate other users, harder to probe our backends to identify our users, and prevents users from being identified by client-side loaded data or re-identified after account deletion (except through secured audit logs).
 
 [Composite indexes](firestore.indexes.json) and [security rules](firestore.rules) are keyed by **collection ID**, not by full path, so they automatically cover `semesters/{any semesterId}/{type}` — a new semester needs neither of these touched.
 
