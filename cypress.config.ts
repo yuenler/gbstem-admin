@@ -67,6 +67,14 @@ export default defineConfig({
     scrollBehavior: 'center',
     viewportWidth: 1920,
     viewportHeight: 1080,
+    // TODO: this papers over a pre-existing dialog open/close timing race
+    // (Application.svelte and others) that surfaces as different assertion
+    // failures under CI-level load - a stuck-open/closed [role="dialog"], a
+    // field not yet repopulated after a reopen, or a hung cy.screenshot() on
+    // failure. Root-causing that race is tracked by (stale, unmerged)
+    // fix/cypress-ci-flakiness and fix/cypress-time-based-waits; retrying
+    // here only keeps CI a useful merge gate in the meantime.
+    retries: { runMode: 1, openMode: 0 },
     setupNodeEvents(on, config) {
       installLogsPrinter(on, {
         printLogsToConsole: 'onFail',

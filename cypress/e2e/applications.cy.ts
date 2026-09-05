@@ -453,14 +453,17 @@ describe('Section D: Instructor Applications Management', () => {
       }
     })
 
-    // Verify fields populated
+    // Verify fields populated. The reopen re-fetches both the application and
+    // decision docs (loadApplicationDetails), so this first assertion needs
+    // the same CI round-trip headroom as TABLE_TIMEOUT above - the dialog
+    // renders immediately with the default empty interview values and only
+    // fills in once that fetch resolves.
     cy.contains('h2', 'Interview Guide & Evaluation Form')
       .closest('div')
       .within(() => {
-        cy.get('input[type="datetime-local"]').should(
-          'have.value',
-          '2026-06-15T15:00',
-        )
+        cy.get('input[type="datetime-local"]', {
+          timeout: TABLE_TIMEOUT,
+        }).should('have.value', '2026-06-15T15:00')
         cy.get('input[name="interviewer"]').should('have.value', 'Jane Doe')
         cy.get('input[name="attendance"]').should('have.value', 'On Time')
         cy.get('input[type="number"]').eq(0).should('have.value', '4')
