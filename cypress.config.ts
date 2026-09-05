@@ -6,6 +6,7 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { seedEmulator } from './scripts/seedLib'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -79,6 +80,12 @@ export default defineConfig({
       on('task', {
         log(message) {
           console.log(message) // Print to the terminal
+          return null
+        },
+        // Restores the emulator to the seed state in-process, rather than
+        // shelling out to `yarn seed` - cy.exec() was removed in Cypress 16.
+        async seed() {
+          await seedEmulator()
           return null
         },
         async getFirestoreUserId(email: string) {
