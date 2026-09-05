@@ -178,6 +178,7 @@ export const applicationService = {
 
       if (newDecision === 'interview') {
         const payload = buildScheduleInterviewPayload(
+          appId,
           email,
           firstName,
           interviewDeadline,
@@ -194,7 +195,12 @@ export const applicationService = {
           )
         }
       } else {
-        const payload = buildDecisionApiPayload(newDecision, email, firstName)
+        const payload = buildDecisionApiPayload(
+          newDecision,
+          appId,
+          email,
+          firstName,
+        )
         const res = await fetch('/api/decision', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -272,6 +278,7 @@ export const applicationService = {
             if (applicantEmail && applicantFirstName) {
               if (decision === 'interview') {
                 const payload = buildScheduleInterviewPayload(
+                  id,
                   applicantEmail,
                   applicantFirstName,
                   interviewDeadline,
@@ -284,6 +291,7 @@ export const applicationService = {
               } else {
                 const payload = buildDecisionApiPayload(
                   decision,
+                  id,
                   applicantEmail,
                   applicantFirstName,
                 )

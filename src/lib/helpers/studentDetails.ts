@@ -50,8 +50,13 @@ export function buildEnrollApiPayload(
     email: studentData.email,
     firstName: parentFirstName,
     instructor: `${classSelected.instructorFirstName} ${classSelected.instructorLastName}`,
+    // Uid only: the server resolves the instructor's current address from Auth.
+    // Falls back to the stored email only for a class that predates
+    // instructorUid, which the server logs as `[legacy-email-fallback]`.
     instructorUid: classSelected.instructorUid || undefined,
-    instructorEmail: classSelected.instructorEmail,
+    ...(classSelected.instructorUid
+      ? {}
+      : { instructorEmail: classSelected.instructorEmail }),
     classTimes: [classSelected.classTime1, classSelected.classTime2],
     classDays: [classSelected.classDay1, classSelected.classDay2],
     course: classSelected.course,

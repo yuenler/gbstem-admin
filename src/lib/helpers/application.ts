@@ -270,14 +270,22 @@ export function calculateInterviewDeadline(
 
 /**
  * Constructs request payload for /api/scheduleInterview endpoint.
+ *
+ * `applicantUid` is the application document's id. The server resolves the
+ * applicant's current address from Auth with it, so a `personal.email` that has
+ * gone stale since they filed the application can't misdirect the mail. The
+ * typed address is still sent when no uid is available, which the server logs
+ * as `[legacy-email-fallback]`.
  */
 export function buildScheduleInterviewPayload(
+  applicantUid: string | undefined,
   email: string,
   firstName: string,
   deadline: string,
 ): ScheduleInterviewRequestBody {
   return {
-    email,
+    applicantUid: applicantUid || undefined,
+    ...(applicantUid ? {} : { email }),
     name: firstName,
     deadline,
   }
@@ -285,16 +293,20 @@ export function buildScheduleInterviewPayload(
 
 /**
  * Constructs request payload for /api/decision endpoint.
+ *
+ * See buildScheduleInterviewPayload for why this prefers `applicantUid`.
  */
 export function buildDecisionApiPayload(
   newDecision: Data.Decision,
+  applicantUid: string | undefined,
   email: string,
   firstName: string,
 ): DecisionRequestBody {
   return {
     decision: newDecision as
       'rejected' | 'waitlisted' | 'substitute' | 'accepted',
-    email,
+    applicantUid: applicantUid || undefined,
+    ...(applicantUid ? {} : { email }),
     name: firstName,
   }
 }

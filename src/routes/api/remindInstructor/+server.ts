@@ -39,6 +39,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
           err,
         )
       }
+    } else if (body.email) {
+      console.warn(
+        '[legacy-email-fallback] /api/remindInstructor: no instructorUid in ' +
+          'payload, using the client-supplied instructor email',
+      )
     }
 
     if (!email) {

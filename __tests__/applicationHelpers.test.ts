@@ -151,27 +151,63 @@ describe('Application Helper Functions', () => {
       expect(deadlineClose).toContain('Sep 3')
     })
 
-    test('buildScheduleInterviewPayload creates proper API request body', () => {
+    test('buildScheduleInterviewPayload sends the applicant uid, not their address', () => {
       const payload = buildScheduleInterviewPayload(
+        'applicant-uid-1',
+        'student@example.com',
+        'John',
+        'Sep 8',
+      )
+      // The uid is the application document's id, so the server can resolve the
+      // applicant's *current* address rather than the one they typed on the form.
+      expect(payload).toEqual({
+        applicantUid: 'applicant-uid-1',
+        name: 'John',
+        deadline: 'Sep 8',
+      })
+      expect(payload).not.toHaveProperty('email')
+    })
+
+    test('buildScheduleInterviewPayload falls back to the address with no uid', () => {
+      const payload = buildScheduleInterviewPayload(
+        '',
         'student@example.com',
         'John',
         'Sep 8',
       )
       expect(payload).toEqual({
+        applicantUid: undefined,
         email: 'student@example.com',
         name: 'John',
         deadline: 'Sep 8',
       })
     })
 
-    test('buildDecisionApiPayload creates proper API request body', () => {
+    test('buildDecisionApiPayload sends the applicant uid, not their address', () => {
       const payload = buildDecisionApiPayload(
         'accepted',
+        'applicant-uid-1',
         'student@example.com',
         'John',
       )
       expect(payload).toEqual({
         decision: 'accepted',
+        applicantUid: 'applicant-uid-1',
+        name: 'John',
+      })
+      expect(payload).not.toHaveProperty('email')
+    })
+
+    test('buildDecisionApiPayload falls back to the address with no uid', () => {
+      const payload = buildDecisionApiPayload(
+        'accepted',
+        '',
+        'student@example.com',
+        'John',
+      )
+      expect(payload).toEqual({
+        decision: 'accepted',
+        applicantUid: undefined,
         email: 'student@example.com',
         name: 'John',
       })

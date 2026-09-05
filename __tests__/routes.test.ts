@@ -1060,6 +1060,51 @@ describe('API routes POST endpoints', () => {
     )
   })
 
+  it('assignInterviewPOST accepts a uid-only payload with no email fields', async () => {
+    // The shape the current client sends after the uid migration.
+    mockAdminAuth.getUser.mockImplementation(async (uid: string) => {
+      if (uid === 'interviewer-uid-1') {
+        return { uid, email: 'interviewer@test.com' }
+      }
+      return { uid, email: 'interviewee@test.com' }
+    })
+    mockRequest.json.mockResolvedValue({
+      interviewerUid: 'interviewer-uid-1',
+      intervieweeUid: 'interviewee-uid-1',
+      date: '2026-06-01',
+      link: 'http://zoom',
+      interviewer: 'Interviewer',
+      firstName: 'Interviewee',
+    })
+    const res = await assignInterviewPOST({
+      request: mockRequest as any,
+      locals: { user: { email: 'admin@test.com', role: 'admin' } },
+    } as any)
+    expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
+    expect(MailService.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: ['interviewee@test.com'],
+        cc: ['interviewer@test.com'],
+      }),
+    )
+  })
+
+  it('assignInterviewPOST rejects a payload with neither interviewerUid nor email', async () => {
+    mockRequest.json.mockResolvedValue({
+      intervieweeUid: 'interviewee-uid-1',
+      date: '2026-06-01',
+      link: 'http://zoom',
+      interviewer: 'Interviewer',
+      firstName: 'Interviewee',
+    })
+    await expect(
+      assignInterviewPOST({
+        request: mockRequest as any,
+        locals: { user: { email: 'admin@test.com', role: 'admin' } },
+      } as any),
+    ).rejects.toMatchObject({ status: 400 })
+  })
+
   it('decisionPOST successfully', async () => {
     mockRequest.json.mockResolvedValue({
       applicationId: 'app123',
@@ -1074,6 +1119,71 @@ describe('API routes POST endpoints', () => {
       locals: { user: { email: 'admin@test.com', role: 'admin' } },
     } as any)
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
+  })
+
+  it('decisionPOST resolves the recipient from applicantUid, ignoring any stale address', async () => {
+    mockAdminAuth.getUser.mockResolvedValueOnce({
+      uid: 'applicant-uid-1',
+      email: 'current@test.com',
+    })
+    mockRequest.json.mockResolvedValue({
+      applicantUid: 'applicant-uid-1',
+      decision: 'accepted',
+      name: 'Applicant',
+    })
+    const res = await decisionPOST({
+      request: mockRequest as any,
+      locals: { user: { email: 'admin@test.com', role: 'admin' } },
+    } as any)
+    expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
+    expect(mockAdminAuth.getUser).toHaveBeenCalledWith('applicant-uid-1')
+    expect(MailService.send).toHaveBeenCalledWith(
+      expect.objectContaining({ to: ['current@test.com'] }),
+    )
+  })
+
+  it('decisionPOST rejects a payload with neither applicantUid nor email', async () => {
+    mockRequest.json.mockResolvedValue({
+      decision: 'accepted',
+      name: 'Applicant',
+    })
+    await expect(
+      decisionPOST({
+        request: mockRequest as any,
+        locals: { user: { email: 'admin@test.com', role: 'admin' } },
+      } as any),
+    ).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('scheduleInterviewPOST resolves the recipient from applicantUid', async () => {
+    mockAdminAuth.getUser.mockResolvedValueOnce({
+      uid: 'applicant-uid-2',
+      email: 'current-applicant@test.com',
+    })
+    mockRequest.json.mockResolvedValue({
+      applicantUid: 'applicant-uid-2',
+      name: 'Applicant',
+      deadline: 'Sep 8',
+    })
+    const res = await scheduleInterviewPOST({
+      request: mockRequest as any,
+      locals: { user: { email: 'admin@test.com', role: 'admin' } },
+    } as any)
+    expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
+    expect(mockAdminAuth.getUser).toHaveBeenCalledWith('applicant-uid-2')
+    expect(MailService.send).toHaveBeenCalledWith(
+      expect.objectContaining({ to: ['current-applicant@test.com'] }),
+    )
+  })
+
+  it('scheduleInterviewPOST rejects a payload with neither applicantUid nor email', async () => {
+    mockRequest.json.mockResolvedValue({ name: 'Applicant', deadline: 'Sep 8' })
+    await expect(
+      scheduleInterviewPOST({
+        request: mockRequest as any,
+        locals: { user: { email: 'admin@test.com', role: 'admin' } },
+      } as any),
+    ).rejects.toMatchObject({ status: 400 })
   })
 
   it('enrollPOST successfully', async () => {
