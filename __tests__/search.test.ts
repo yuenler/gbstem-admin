@@ -14,24 +14,27 @@ jest.mock('$env/static/private', () => ({
 }))
 
 // Mock firebase adminDb
-const mockGet = jest.fn<any>().mockResolvedValue({
-  docs: [
-    {
-      id: 'doc1',
-      data: () => ({
-        name: 'Alice Smith',
-        email: 'alice@example.com',
-      }),
-    },
-    {
-      id: 'doc2',
-      data: () => ({
-        name: 'Bob Jones',
-        email: 'bob@example.com',
-      }),
-    },
-  ],
-})
+type FirestoreDoc = { id: string; data: () => { name: string; email: string } }
+const mockGet = jest
+  .fn<() => Promise<{ docs: FirestoreDoc[] }>>()
+  .mockResolvedValue({
+    docs: [
+      {
+        id: 'doc1',
+        data: () => ({
+          name: 'Alice Smith',
+          email: 'alice@example.com',
+        }),
+      },
+      {
+        id: 'doc2',
+        data: () => ({
+          name: 'Bob Jones',
+          email: 'bob@example.com',
+        }),
+      },
+    ],
+  })
 
 const mockCollection = {
   get: mockGet,
@@ -44,7 +47,8 @@ jest.mock('$lib/server/firebase', () => ({
 }))
 
 // Mock algoliasearch
-const mockSearchSingleIndex = jest.fn<any>()
+type AlgoliaHit = { objectID: string; name: string }
+const mockSearchSingleIndex = jest.fn<() => Promise<{ hits: AlgoliaHit[] }>>()
 jest.mock('algoliasearch', () => {
   return {
     algoliasearch: jest.fn().mockReturnValue({
