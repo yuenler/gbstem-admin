@@ -97,13 +97,21 @@ export function generateInterviewSlotId(dateISO: string, uid?: string): string {
 export function buildAssignInterviewApiPayload(
   slot: Data.InterviewSlot,
 ): AssignInterviewRequestBody {
+  // Send both the uid and the stored address. The server prefers the uid and
+  // resolves the current address from Auth, so a stored email that has gone
+  // stale can't misdirect the mail - but only the server can tell whether a uid
+  // actually resolves, so the client is in no position to decide the address is
+  // unnecessary. A slot can carry an intervieweeId that names no Auth account
+  // at all, and withholding the address there turns a working email into a 400.
+  // The server logs every fallback as `[legacy-email-fallback]`; once that
+  // reads zero, Phase 4 drops the addresses and makes both uids required.
   return {
-    intervieweeEmail: slot.intervieweeEmail || '',
     intervieweeUid: slot.intervieweeId || undefined,
+    intervieweeEmail: slot.intervieweeEmail || '',
     firstName: slot.intervieweeFirstName || '',
     interviewer: slot.interviewerName || '',
-    email: slot.interviewerEmail || '',
     interviewerUid: slot.interviewerUid || undefined,
+    email: slot.interviewerEmail || '',
     link: slot.meetingLink || '',
     date: formatDateLocal(slot.date),
   }

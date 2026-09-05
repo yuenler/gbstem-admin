@@ -50,7 +50,11 @@
 // `instructorEmail` is deliberately NOT removed by any phase. It is still read
 // for display and for reminder emails, and it self-heals on every save; only
 // the *rules* fallback on it is eventually retirable, and that is its own
-// migration to be done once no class is missing an instructorUid.
+// migration - see notes/EMAIL_TO_UID_AUDIT.md. That migration does NOT have to
+// wait for every class to carry an instructorUid, which is what an earlier
+// version of this comment claimed: the classes that can't get one are exactly
+// the ones whose instructorEmail is missing or owned by no account, so the
+// fallback grants nobody access to them anyway (audit section 9).
 //
 // Idempotent: only writes documents that still need changing, so re-running
 // after a partial failure is safe.
@@ -337,9 +341,10 @@ async function backfillClasses(semesterId: string) {
           )
         }
       } else {
-        // Not fatal - the class keeps working off instructorEmail, exactly as
-        // it does today - but it can never lose that fallback, so the rules
-        // clause can't retire until these are dealt with by hand.
+        // Not fatal, and not a blocker for retiring the rules clause either:
+        // a class only reaches this branch when its instructorEmail is absent
+        // or owned by no account, so the clause already grants nobody access
+        // to it. See notes/EMAIL_TO_UID_AUDIT.md section 9.
         ownerless += 1
         console.log(`    NO OWNER ${semesterId}/${doc.id}: ${primary.reason}`)
       }
@@ -447,8 +452,10 @@ async function main() {
   if (totalOwnerless > 0) {
     console.log(
       `${totalOwnerless} class(es) could not be given an instructorUid - see the NO OWNER ` +
-        `lines above. They keep working off instructorEmail exactly as they do today, but ` +
-        `firestore.rules cannot drop its email fallback until each one is resolved by hand.`,
+        `lines above. They keep working off instructorEmail exactly as they do today. This ` +
+        `does NOT block retiring the rules email fallback: a class lands here only when its ` +
+        `instructorEmail is missing or owned by no account, so the fallback already grants ` +
+        `nobody access to it. See notes/EMAIL_TO_UID_AUDIT.md section 9.`,
     )
   }
 }

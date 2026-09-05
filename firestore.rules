@@ -134,18 +134,25 @@ service cloud.firestore {
     function isInstructor() {
       return isSignedIn() && hasRole('instructor');
     }
-    // Co-instructors are uid-only now: a free-text otherInstructorEmails list
-    // let a class owner grant write access to any address at all, with no
-    // check that the address belonged to an interviewed, accepted instructor.
-    // otherInstructorUids is populated only through the accepted-instructor
-    // flow, so this checks it unconditionally. instructorEmail stays as a
-    // fallback for the *main* instructor - a separate migration - since it's
-    // written once and can go stale if that instructor later changes their
-    // account's email; instructorUid can't go stale the same way.
+    // Class access is uid-only, on both halves.
+    //
+    // Co-instructors: a free-text otherInstructorEmails list let a class owner
+    // grant write access to any address at all, with no check that the address
+    // belonged to an interviewed, accepted instructor. otherInstructorUids is
+    // populated only through the accepted-instructor flow.
+    //
+    // Primary instructor: this used to fall back to matching the signed-in
+    // address against the stored instructorEmail, which went stale the moment
+    // that instructor changed their account email. The backfill leaves 44 old
+    // classes (42 in Spring24, 2 in Fall24) without an instructorUid, but none
+    // of them was reachable through that clause anyway - the Spring24 ones have
+    // no instructorEmail at all, and the two Fall24 addresses belong to no Auth
+    // account. Keeping it was the riskier option: both are recycled school
+    // addresses, so whoever next holds one and signs up as an instructor would
+    // have inherited write access. See notes/EMAIL_TO_UID_AUDIT.md section 9.
     function isInstructorOfClass() {
       return isInstructor() && (
         (resource.data.instructorUid != null && request.auth.uid == resource.data.instructorUid) ||
-        request.auth.token.email == resource.data.instructorEmail ||
         (resource.data.otherInstructorUids != null &&
          request.auth.uid in resource.data.otherInstructorUids)
       );

@@ -186,11 +186,19 @@ describe('admin applicationService (Data Access Layer)', () => {
         '2026-09-01',
       )
 
+      // The re-fetched address is still what the server falls back to, so the
+      // stale one passed by the caller must not win. The uid the server
+      // prefers is the application id.
       expect(global.fetch).toHaveBeenCalledWith(
         '/api/scheduleInterview',
         expect.objectContaining({
           method: 'POST',
-          body: expect.stringContaining('david-h@example.com'),
+          body: JSON.stringify({
+            applicantUid: 'app-10',
+            email: 'david-h@example.com',
+            name: 'David',
+            deadline: 'Mon, Aug 31',
+          }),
         }),
       )
     })
@@ -345,6 +353,7 @@ describe('admin applicationService (Data Access Layer)', () => {
           method: 'POST',
           body: JSON.stringify({
             decision: 'accepted',
+            applicantUid: 'app-1',
             email: 'alice@example.com',
             name: 'Alice',
           }),

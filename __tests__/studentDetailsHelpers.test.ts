@@ -93,6 +93,10 @@ describe('StudentDetails Helpers', () => {
 
       const payload = buildEnrollApiPayload(student, classSelected as ClassData)
 
+      // The student's own address stays because students are children
+      // registered under a parent account, with no Auth uid to resolve from.
+      // The instructor's rides along as the server's fallback; the server
+      // prefers instructorUid.
       expect(payload).toEqual({
         email: 'bobby@example.com',
         firstName: 'Sarah',
@@ -106,6 +110,36 @@ describe('StudentDetails Helpers', () => {
         online: true,
         studentName: 'Bobby Tables',
       })
+    })
+
+    test('still sends the stored instructor address for a class with no uid', () => {
+      const student: Student = {
+        name: 'Bobby Tables',
+        email: 'bobby@example.com',
+        secondaryEmail: '',
+        phone: '555-1234',
+        grade: 6,
+        school: 'Lincoln Middle',
+        parentName: 'Sarah Tables',
+      }
+
+      const classSelected: Partial<ClassData> = {
+        instructorFirstName: 'Jane',
+        instructorLastName: 'Doe',
+        instructorUid: '',
+        instructorEmail: 'jane@example.com',
+        classTime1: '4:00 PM',
+        classTime2: '4:00 PM',
+        classDay1: 'Monday',
+        classDay2: 'Wednesday',
+        course: 'Python 1',
+        meetingLink: '',
+        online: true,
+      }
+
+      const payload = buildEnrollApiPayload(student, classSelected as ClassData)
+      expect(payload.instructorUid).toBeUndefined()
+      expect(payload.instructorEmail).toBe('jane@example.com')
     })
   })
 

@@ -106,7 +106,7 @@ describe('SetInterviewTimes Helpers', () => {
   })
 
   describe('buildAssignInterviewApiPayload & resetInterviewSlotToAdd', () => {
-    test('builds API request payload correctly', () => {
+    test('sends uids alongside the stored addresses', () => {
       const slot = resetInterviewSlotToAdd(
         'Jane Doe',
         'jane@example.com',
@@ -120,9 +120,26 @@ describe('SetInterviewTimes Helpers', () => {
       const payload = buildAssignInterviewApiPayload(slot)
       expect(payload.firstName).toBe('Alice')
       expect(payload.interviewer).toBe('Jane Doe')
-      expect(payload.email).toBe('jane@example.com')
       expect(payload.interviewerUid).toBe('interviewer-uid-1')
       expect(payload.intervieweeUid).toBe('interviewee-uid-1')
+      // The addresses ride along so the server has something to fall back to
+      // when a uid names no Auth account - which only the server can detect.
+      // It prefers the uid, so a stale stored address cannot misdirect mail.
+      expect(payload.email).toBe('jane@example.com')
+      expect(payload.intervieweeEmail).toBe('alice@example.com')
+    })
+
+    test('still sends the addresses for a slot carrying no uids at all', () => {
+      const slot = resetInterviewSlotToAdd('Jane Doe', 'jane@example.com', '')
+      slot.intervieweeFirstName = 'Alice'
+      slot.intervieweeEmail = 'alice@example.com'
+      slot.intervieweeId = ''
+      slot.date = '2026-05-28T10:00'
+
+      const payload = buildAssignInterviewApiPayload(slot)
+      expect(payload.interviewerUid).toBeUndefined()
+      expect(payload.email).toBe('jane@example.com')
+      expect(payload.intervieweeUid).toBeUndefined()
       expect(payload.intervieweeEmail).toBe('alice@example.com')
     })
   })

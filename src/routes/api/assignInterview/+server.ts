@@ -8,24 +8,28 @@ import type { RequestHandler } from './$types'
 
 import { z } from 'zod'
 
+// Both email fields are legacy: the current client sends uids only, and these
+// exist solely so a browser session loaded before the uid migration keeps
+// working until it ages out. Every use is logged as `[legacy-email-fallback]`;
+// once that counter has read zero for several days, make both uids required and
+// delete the emails - see notes/EMAIL_TO_UID_AUDIT.md section 7, Phase 4.
 const assignInterviewSchema = z
   .object({
-    email: z.string().email('Invalid interviewer email address'),
-    // Optional: resolved via uid first. Stored email is unreliable because the
-    // interviewer could change it later, so code should avoid using it; it is
-    // retained as a permanent record if an account is deleted, though fallback is rare.
-    // TODO: make interviewerUid required and remove email in ~3 weeks.
+    email: z.string().email('Invalid interviewer email address').optional(),
     interviewerUid: z.string().optional(),
     date: z.string().min(1, 'Date is required'),
     link: z.string().min(1, 'Meeting link is required'),
     interviewer: z.string().min(1, 'Interviewer name is required'),
     firstName: z.string().min(1, 'Interviewee first name is required'),
-    // TODO: make intervieweeUid required and remove intervieweeEmail in ~3 weeks.
     intervieweeUid: z.string().optional(),
     intervieweeEmail: z
       .string()
       .email('Invalid interviewee email address')
       .optional(),
+  })
+  .refine((data) => Boolean(data.interviewerUid || data.email), {
+    message: 'Either interviewerUid or email is required',
+    path: ['interviewerUid'],
   })
   .refine((data) => Boolean(data.intervieweeUid || data.intervieweeEmail), {
     message: 'Either intervieweeUid or intervieweeEmail is required',
@@ -42,7 +46,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     const interviewerEmail = await resolveCurrentInterviewerEmail(
       body.interviewerUid,
       body.email,
+      '/api/assignInterview',
     )
+    if (!interviewerEmail) {
+      return json(
+        { error: 'Interviewer email could not be resolved' },
+        { status: 400 },
+      )
+    }
     const interviewDate = body.date
     const interviewLink = body.link
     const interviewerName = body.interviewer
@@ -61,6 +72,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
           err,
         )
       }
+    } else if (body.intervieweeEmail) {
+      console.warn(
+        '[legacy-email-fallback] /api/assignInterview: no intervieweeUid in ' +
+          'payload, using the client-supplied interviewee email',
+      )
     }
 
     if (!intervieweeEmail) {

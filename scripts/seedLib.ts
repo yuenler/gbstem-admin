@@ -311,6 +311,13 @@ export async function seedEmulator(): Promise<void> {
     classTime2: '16:00',
     course: 'Python 1',
     instructorEmail: 'instructor@gbstem.org',
+    // Every production class carries an instructorUid - the backfill stamped
+    // the historical ones and new class ids are `${instructorUid}-${n}` - and
+    // firestore.rules now grants class writes on uid alone, having dropped its
+    // instructorEmail fallback. A seeded class without one is therefore not a
+    // shape production has any more, and would leave its own instructor unable
+    // to edit it in the emulator.
+    instructorUid: 'instructor-demo-uid',
     instructorFirstName: 'Demo',
     instructorLastName: 'Instructor',
     meetingLink: 'https://zoom.us/j/123456789',
@@ -1008,6 +1015,10 @@ export async function seedEmulator(): Promise<void> {
       classTime2: '16:00',
       course: course,
       instructorEmail: `instructor-fake-${i}@gbstem.org`,
+      // No Auth account backs these, so the server's uid lookup falls back to
+      // the address above - which is the point: it exercises the
+      // `[legacy-email-fallback]` path the Phase 4 gate watches.
+      instructorUid: `instructor-fake-${i}`,
       instructorFirstName: firstNames[i % firstNames.length],
       instructorLastName: lastNames[i % lastNames.length],
       meetingLink: 'https://zoom.us/j/123456789',
