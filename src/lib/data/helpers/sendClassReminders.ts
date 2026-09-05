@@ -48,13 +48,14 @@ function sendClassReminder(opts: {
         alert.trigger('error', 'No upcoming classes found!')
         return
       }
-      // Uid only: the server resolves the instructor's current address from
-      // Auth. Falls back to the stored email only for a class that predates
-      // instructorUid, which the server logs as `[legacy-email-fallback]`.
+      // Uid plus the stored address: the server prefers the uid and resolves
+      // the instructor's current address from Auth, falling back to this one
+      // when the uid is missing or names no Auth account. Only the server can
+      // tell which, so the client sends both and the server logs any fallback.
       const payload: RemindInstructorRequestBody = {
         name: normalizeCapitals(instructorName),
         instructorUid: instructorUid || undefined,
-        ...(instructorUid ? {} : { email: instructorEmail }),
+        email: instructorEmail,
         otherInstructorUids: otherInstructorUids,
         class: className,
         classTime: nextMeetingTime,

@@ -106,7 +106,7 @@ describe('SetInterviewTimes Helpers', () => {
   })
 
   describe('buildAssignInterviewApiPayload & resetInterviewSlotToAdd', () => {
-    test('sends uids only, with no email fields, when the slot has both', () => {
+    test('sends uids alongside the stored addresses', () => {
       const slot = resetInterviewSlotToAdd(
         'Jane Doe',
         'jane@example.com',
@@ -122,17 +122,14 @@ describe('SetInterviewTimes Helpers', () => {
       expect(payload.interviewer).toBe('Jane Doe')
       expect(payload.interviewerUid).toBe('interviewer-uid-1')
       expect(payload.intervieweeUid).toBe('interviewee-uid-1')
-      // The server resolves both addresses from Auth; a stored email that has
-      // gone stale must not be able to misdirect the mail.
-      expect(payload).not.toHaveProperty('email')
-      expect(payload).not.toHaveProperty('intervieweeEmail')
+      // The addresses ride along so the server has something to fall back to
+      // when a uid names no Auth account - which only the server can detect.
+      // It prefers the uid, so a stale stored address cannot misdirect mail.
+      expect(payload.email).toBe('jane@example.com')
+      expect(payload.intervieweeEmail).toBe('alice@example.com')
     })
 
-    test('falls back to the stored address only for a slot missing that uid', () => {
-      // Pre-migration slots exist that never recorded an intervieweeId, and one
-      // Fall25 slot never resolved an interviewerUid. Dropping the address
-      // outright would turn a working email into a 400, so it is still sent -
-      // and the server logs each one as `[legacy-email-fallback]`.
+    test('still sends the addresses for a slot carrying no uids at all', () => {
       const slot = resetInterviewSlotToAdd('Jane Doe', 'jane@example.com', '')
       slot.intervieweeFirstName = 'Alice'
       slot.intervieweeEmail = 'alice@example.com'

@@ -33,12 +33,13 @@ export async function resolveApplicantEmail(
     if (user.email) return user.email
     console.warn(
       `[legacy-email-fallback] ${route}: applicantUid ${applicantUid} has no ` +
-        `email on its Auth account`,
+        `email on its Auth account; using the address on the application`,
     )
     return fallbackEmail
   } catch (err) {
-    console.error(
-      'Failed to resolve applicant email by uid, falling back to the application address:',
+    console.warn(
+      `[legacy-email-fallback] ${route}: applicantUid ${applicantUid} resolved ` +
+        `to no Auth account; using the address on the application`,
       err,
     )
     return fallbackEmail

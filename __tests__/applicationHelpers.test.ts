@@ -151,24 +151,26 @@ describe('Application Helper Functions', () => {
       expect(deadlineClose).toContain('Sep 3')
     })
 
-    test('buildScheduleInterviewPayload sends the applicant uid, not their address', () => {
+    test('buildScheduleInterviewPayload sends the applicant uid and address', () => {
       const payload = buildScheduleInterviewPayload(
         'applicant-uid-1',
         'student@example.com',
         'John',
         'Sep 8',
       )
-      // The uid is the application document's id, so the server can resolve the
-      // applicant's *current* address rather than the one they typed on the form.
+      // The uid is the application document's id, so the server resolves the
+      // applicant's *current* address rather than the one they typed on the
+      // form. The typed address rides along for the case the server cannot
+      // detect from the client: an applicant whose account has been deleted.
       expect(payload).toEqual({
         applicantUid: 'applicant-uid-1',
+        email: 'student@example.com',
         name: 'John',
         deadline: 'Sep 8',
       })
-      expect(payload).not.toHaveProperty('email')
     })
 
-    test('buildScheduleInterviewPayload falls back to the address with no uid', () => {
+    test('buildScheduleInterviewPayload still sends the address with no uid', () => {
       const payload = buildScheduleInterviewPayload(
         '',
         'student@example.com',
@@ -183,7 +185,7 @@ describe('Application Helper Functions', () => {
       })
     })
 
-    test('buildDecisionApiPayload sends the applicant uid, not their address', () => {
+    test('buildDecisionApiPayload sends the applicant uid and address', () => {
       const payload = buildDecisionApiPayload(
         'accepted',
         'applicant-uid-1',
@@ -193,12 +195,12 @@ describe('Application Helper Functions', () => {
       expect(payload).toEqual({
         decision: 'accepted',
         applicantUid: 'applicant-uid-1',
+        email: 'student@example.com',
         name: 'John',
       })
-      expect(payload).not.toHaveProperty('email')
     })
 
-    test('buildDecisionApiPayload falls back to the address with no uid', () => {
+    test('buildDecisionApiPayload still sends the address with no uid', () => {
       const payload = buildDecisionApiPayload(
         'accepted',
         '',

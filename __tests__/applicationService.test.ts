@@ -186,22 +186,21 @@ describe('admin applicationService (Data Access Layer)', () => {
         '2026-09-01',
       )
 
-      // The re-fetch still matters for the display name, but the address no
-      // longer travels at all: the server resolves it from the application id,
-      // which is the applicant's Auth uid.
+      // The re-fetched address is still what the server falls back to, so the
+      // stale one passed by the caller must not win. The uid the server
+      // prefers is the application id.
       expect(global.fetch).toHaveBeenCalledWith(
         '/api/scheduleInterview',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({
             applicantUid: 'app-10',
+            email: 'david-h@example.com',
             name: 'David',
             deadline: 'Mon, Aug 31',
           }),
         }),
       )
-      const [, init] = (global.fetch as jest.Mock).mock.calls[0]
-      expect(init.body).not.toContain('@')
     })
 
     it('warns but does not throw if the interview scheduling email API responds not-ok', async () => {
@@ -355,6 +354,7 @@ describe('admin applicationService (Data Access Layer)', () => {
           body: JSON.stringify({
             decision: 'accepted',
             applicantUid: 'app-1',
+            email: 'alice@example.com',
             name: 'Alice',
           }),
         }),
