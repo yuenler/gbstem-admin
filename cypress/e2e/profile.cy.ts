@@ -132,6 +132,27 @@ describe('Section L: Profile and Account Customization', () => {
     // reauthenticate-and-mutate flow.
     cy.wait(1000)
 
+    // Changing the password bumps Firebase's tokensValidAfterTime for this
+    // account, which revokes the __session cookie minted at the original
+    // sign-in - hooks.server.ts's verifySessionCookie(..., true) correctly
+    // rejects it on the next server-rendered request, redirecting here to
+    // /signin. Sign back in with the new password before testing the second
+    // change below.
+    cy.url().should('include', '/signin')
+    cy.waitForFormHydration()
+    cy.fillInput('input[type="email"]', 'demo@gbstem.org')
+    cy.fillInput('input[type="password"]', 'penguin123')
+    cy.get('button[type="submit"]').click()
+    cy.wait(1000)
+    cy.visit('/profile')
+    cy.title().should('contain', 'Profile')
+    cy.get('h1').should('contain', 'Profile')
+    // A fresh full-page visit, unlike the rest of this test's SPA
+    // navigation - the Change Password form's use:enhance handler needs a
+    // moment to attach, or the click below native-GETs instead of triggering
+    // the reauthenticate dialog (see waitForFormHydration's doc comment).
+    cy.waitForFormHydration()
+
     // Change password to penguin!, which allows us to test that the previous
     // password change worked during the reauthenticate step.
     cy.contains('span', 'Change password')
