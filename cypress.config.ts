@@ -6,6 +6,7 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { seedEmulator } from './scripts/seedLib'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -66,6 +67,14 @@ export default defineConfig({
     scrollBehavior: 'center',
     viewportWidth: 1920,
     viewportHeight: 1080,
+    // TODO: this papers over a residual dialog open/close timing race
+    // (Application.svelte and others) that surfaces as different assertion
+    // failures under CI-level load - a stuck-open/closed [role="dialog"], a
+    // field not yet repopulated after a reopen, or a hung cy.screenshot() on
+    // failure. This is on top of (not instead of) the existing waits/flake
+    // fixes from PRs #49 and #54 - retrying here only keeps CI a useful merge
+    // gate for whatever's left; it isn't a substitute for root-causing it.
+    retries: { runMode: 1, openMode: 0 },
     setupNodeEvents(on, config) {
       installLogsPrinter(on, {
         printLogsToConsole: 'onFail',
@@ -79,6 +88,12 @@ export default defineConfig({
       on('task', {
         log(message) {
           console.log(message) // Print to the terminal
+          return null
+        },
+        // Restores the emulator to the seed state in-process, rather than
+        // shelling out to `yarn seed` - cy.exec() was removed in Cypress 16.
+        async seed() {
+          await seedEmulator()
           return null
         },
         async getFirestoreUserId(email: string) {
