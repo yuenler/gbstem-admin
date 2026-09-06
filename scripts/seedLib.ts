@@ -222,6 +222,13 @@ export async function seedEmulator(): Promise<void> {
     'instructor',
   )
   await createOrUpdateUser(
+    'instructor-substitute-uid',
+    'substitute@gbstem.org',
+    'penguin',
+    'Substitute Instructor',
+    'instructor',
+  )
+  await createOrUpdateUser(
     'student-demo-uid',
     'student@gbstem.org',
     'penguin',
@@ -258,6 +265,12 @@ export async function seedEmulator(): Promise<void> {
   await db.collection('users').doc('instructor-cohost-uid').set({
     role: 'instructor',
     firstName: 'Cohost',
+    lastName: 'Instructor',
+  })
+
+  await db.collection('users').doc('instructor-substitute-uid').set({
+    role: 'instructor',
+    firstName: 'Substitute',
     lastName: 'Instructor',
   })
 
@@ -897,6 +910,46 @@ export async function seedEmulator(): Promise<void> {
     time: 'Monday/Wednesday 16:00',
     notes: 'Welcome to the team!',
   })
+
+  // Interviewed, and accepted as a *substitute* rather than to teach a class
+  // of their own. That decision gives a different dashboard - the "Substitute
+  // Classes" card, with no class schedule and no sub requests of their own -
+  // which nothing could exercise while every seeded instructor was either
+  // accepted, rejected or still awaiting an interview. See portal's
+  // substitute.cy.ts.
+  console.log(`Seeding mock application for instructor-substitute-uid...`)
+  const appInstructorSubstitute = {
+    ...appInstructorDemo,
+    personal: {
+      ...appInstructorDemo.personal,
+      email: 'substitute@gbstem.org',
+      firstName: 'Substitute',
+      lastName: 'Instructor',
+    },
+    meta: {
+      uid: 'instructor-substitute-uid',
+      interview: true,
+      submitted: true,
+      decided: true,
+    },
+  }
+  validateApplication(appInstructorSubstitute, 'instructor-substitute-uid')
+  await db
+    .collection(applicationsCollection)
+    .doc('instructor-substitute-uid')
+    .set(appInstructorSubstitute)
+
+  console.log(`Seeding mock decision for instructor-substitute-uid...`)
+  await db
+    .collection(decisionsCollection)
+    .doc('instructor-substitute-uid')
+    .set({
+      type: 'substitute',
+      likelyDecision: 'likely yes',
+      course: 'Python 1',
+      time: 'Flexible',
+      notes: 'Welcome! We will send substitute openings your way.',
+    })
 
   // Seeding 30 applications
   console.log('Seeding 30 additional mock applications...')
