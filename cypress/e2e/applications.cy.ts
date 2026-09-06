@@ -280,6 +280,22 @@ describe('Section D: Instructor Applications Management', () => {
     // markup well before its checkbox's onclick listener is wired up, so a
     // retrying assertion on the row itself doesn't catch this.
     cy.wait(1000)
+    // Search for this one rather than expecting to find her row on the first
+    // page. Selecting by name already made the test independent of row
+    // *ordering*, but not of the 25-row page: the default view lists submitted
+    // applications newest-updated first, this applicant is the oldest of them,
+    // and the seed had grown to exactly 25 - so the next application added to
+    // it (any application, anywhere) tipped her onto page two. Searching pins
+    // the row on screen however large the seed gets.
+    //
+    // Only this half searches: the decision below is the last thing the test
+    // does, whereas the Mark Lewis half asserts on his row *after* deciding,
+    // and a decided applicant drops out of the search results.
+    //
+    // A first name rather than a full one: without Algolia configured the
+    // search falls back to matching the term against individual field values,
+    // and no field holds "Mary Johnson".
+    cy.submitSearch('Mary')
     cy.contains('tr', 'Mary Johnson').within(() => {
       cy.get('input[type="checkbox"]').check({ force: true })
     })
