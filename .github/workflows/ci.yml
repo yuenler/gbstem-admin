@@ -95,6 +95,15 @@ jobs:
       - name: Set up env file
         run: cp .env.example .env.local
 
+      # This job is the only one with an emulator, and firestore.rules can only
+      # be evaluated by one - `yarn test` mocks Firestore entirely, so a rule
+      # that grants too much passes it silently. Its own emulators:exec rather
+      # than being folded into the Cypress command below: `&` binds looser than
+      # `&&` in the shell, so chaining them would background the whole thing and
+      # surface a rules failure as a wait-on timeout instead of itself.
+      - name: Run security rules tests against Firebase emulators
+        run: firebase emulators:exec --project demo-gbstem 'yarn test:rules'
+
       - name: Start dev server + run Cypress against Firebase emulators
         run: |
           firebase emulators:exec --project demo-gbstem \

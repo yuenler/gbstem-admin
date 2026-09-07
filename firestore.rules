@@ -9,14 +9,35 @@ service cloud.firestore {
     // admin.gbstem.org and portal.gbstem.org data
     //
 
+    // `role` is authorization, so it is not the client's to write. A signed-in
+    // user could once `setDoc` their own document with role: 'instructor' and
+    // immediately satisfy isInstructor() below - which is read access to every
+    // student registration for the semester, among other things. The field is
+    // now written only by the Admin SDK (portal's /api/signup, admin's signup
+    // action), which bypasses these rules entirely.
+    //
+    // create stays open *without* a role because admin's userService uses
+    // setDoc(merge) to let accounts predating the users collection rename
+    // themselves; delete stays open for DeleteAccountForm and for portal's
+    // rollbackNewUser. Neither carries a role.
     match /users/{userId} {
-      allow read, write: if isUser(userId);
-      allow read, write: if isAdmin();
+      allow read: if isUser(userId) || isAdmin();
+      allow create: if (isUser(userId) || isAdmin())
+                    && !('role' in request.resource.data);
+      allow update: if (isUser(userId) || isAdmin())
+                    && request.resource.data.get('role', null)
+                       == resource.data.get('role', null);
+      allow delete: if isUser(userId) || isAdmin();
     }
 
-    // Used to queue outgoing emails before they are sent, with no read access.
+    // The Firestore "Trigger Email" extension's queue. Nothing in the admin or
+    // portal codebases reads or writes this collection - all mail goes through
+    // SendGrid in $lib/server/email.ts - so an open create was a way for any
+    // signed-in account to send mail from a gbSTEM address to any recipient.
+    // The Admin SDK bypasses rules, so a server-side sender would still work
+    // if one is ever added.
     match /mail/{mailId} {
-      allow create: if isSignedIn();
+      allow read, write: if false;
     }
 
     //
@@ -38,8 +59,15 @@ service cloud.firestore {
         allow read, write: if isUser(userId) || isAdminOrReviewer();
       }
 
+      // A registration is a minor's date of birth, race, phone number, school
+      // and family income indicator, so read access is not something the
+      // `instructor` role should confer on its own - that role is held from
+      // signup onward by everyone who has merely *applied* to teach. Gate it
+      // on the decision instead, which only an admin or reviewer can write.
       match /registrations/{userId} {
-        allow read: if isSignedIn() && belongsToSameUser(userId) || isStaff();
+        allow read: if isSignedIn() && belongsToSameUser(userId)
+                    || isAdminOrReviewer()
+                    || isTeachingInstructor(semesterId);
         allow write: if isOwnerOrAdmin(userId);
       }
 
@@ -48,10 +76,17 @@ service cloud.firestore {
         allow read, write: if isAdminOrReviewer();
       }
 
+      // Teaching a class requires having been accepted to teach one. Note
+      // `isAcceptedInstructor` rather than `isTeachingInstructor`: a
+      // substitute covers individual sessions through the subRequests flow
+      // and is never on a class's uid lists, so their writes go through
+      // portal's /api/substituteSession and /api/substituteFeedback with the
+      // Admin SDK - see instructorDirectory.ts's isAcceptedInstructor.
       match /classes/{classId} {
         allow read: if isSignedIn();
-        allow create: if isInstructorOwnerOrAdmin(classId);
-        allow update: if isAdminOrReviewer() || isInstructorOfClass();
+        allow create: if isInstructorOwnerOrAdmin(classId, semesterId);
+        allow update: if isAdminOrReviewer()
+                      || (isInstructorOfClass() && isAcceptedInstructor(semesterId));
         allow delete: if isAdminOrReviewer();
       }
 
@@ -74,6 +109,13 @@ service cloud.firestore {
     //
     // INSTRUCTOR TO CLASS MAPPING
     //
+    // TODO(phase-2): still gated on the bare role, so someone who signed up as
+    // an instructor and was never accepted can read and write these. Unlike
+    // registrations and classes above, these three collections are top-level
+    // and have no semesterId in scope, so a decision lookup here would need the
+    // current semester hardcoded in this file - which every rollover would then
+    // have to remember to change. The instructor-role split (applicant vs
+    // accepted vs substitute) is what lets these be gated without that.
     match /instructorClasses/{classId} {
       allow read, write: if isInstructor() || isAdmin();
     }
@@ -81,6 +123,10 @@ service cloud.firestore {
     //
     // INTERVIEW TIME REQUESTS
     //
+    // Applicants legitimately need these to book an interview, so isStaff()
+    // covering the whole instructor role is correct today. See the phase-2
+    // TODO above: once `instructor-applicant` exists this should name it
+    // explicitly rather than admitting every instructor-role account.
     match /interviewTimeRequests/{time} {
       allow read, create: if isStaff();
       allow update, delete: if isAdminOrReviewer();
@@ -89,6 +135,8 @@ service cloud.firestore {
     //
     // SUBSTITUTE INSTRUCTORS REQUESTS
     //
+    // TODO(phase-2): see the instructorClasses note - an instructor-role
+    // account that was never accepted can read and write every sub request.
     match /subRequests/{subRequest} {
       allow read, create: if isStaff();
       allow update, delete: if isInstructor() || isAdmin();
@@ -116,11 +164,49 @@ service cloud.firestore {
     function belongsToSameUser(userId){
       return userId.matches(request.auth.uid + '.*');
     }
-    function hasRole(role) {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == role;
-    }
+    // Roles come from the Auth custom claim, never from a document.
+    //
+    // There used to be a second helper, hasRole(), that read
+    // users/$(uid).data.role - and isInstructor() used it. Since a user could
+    // write their own users document, anyone signed in could grant themselves
+    // the instructor role and everything it opened. Claims are set only by the
+    // Admin SDK and arrive inside the verified ID token, so they cannot be
+    // written by a client at all; they also cost no document read here, where
+    // hasRole() cost an exists() plus a get() on every evaluation.
+    //
+    // Do not reintroduce a document-reading role helper. If a rule needs to
+    // know something about a user beyond their role, read the document that
+    // actually records it - the way the decision helpers below do - and make
+    // sure that document is not client-writable.
+    //
+    // The one propagation caveat: a claim reaches request.auth.token only when
+    // the ID token refreshes (within the hour). Code that changes a role should
+    // force a refresh - see portal's SignUpForm - or revoke refresh tokens.
     function hasRRole(role) {
       return 'role' in request.auth.token && request.auth.token.role == role;
+    }
+    // Whether the signed-in user's decision for this semester is one of `types`.
+    //
+    // `decisions` is written only by an admin or reviewer (see the rule above),
+    // which is what makes it safe to authorize against. `semesterId` is a
+    // parameter rather than a constant so this stays correct for every semester
+    // without the rules needing an edit at a rollover - the collections are
+    // matched by id, not by path, for the same reason.
+    function hasDecisionType(semesterId, types) {
+      return exists(/databases/$(database)/documents/semesters/$(semesterId)/decisions/$(request.auth.uid))
+        && get(/databases/$(database)/documents/semesters/$(semesterId)/decisions/$(request.auth.uid)).data.get('type', '') in types;
+    }
+    // Interviewed and accepted to teach a class of their own this semester.
+    // Mirrors portal's server-side isAcceptedInstructor() so the two layers
+    // agree on what "an instructor" means.
+    function isAcceptedInstructor(semesterId) {
+      return isInstructor() && hasDecisionType(semesterId, ['accepted']);
+    }
+    // Accepted, or accepted as a substitute: the people who legitimately need
+    // a class roster this semester. Substitutes cover individual sessions, so
+    // they need to see the students in a class without owning one.
+    function isTeachingInstructor(semesterId) {
+      return isInstructor() && hasDecisionType(semesterId, ['accepted', 'substitute']);
     }
     function hasUserId(userId) {
       return request.auth.uid == userId;
@@ -131,8 +217,11 @@ service cloud.firestore {
     function isAdminOrReviewer() {
       return isSignedIn() && (hasRRole('admin') || hasRRole('reviewer'));
     }
+    // The role means "has applied to teach", not "teaches" - it is held from
+    // signup onward, long before any interview. Callers that mean the latter
+    // must pair it with isAcceptedInstructor/isTeachingInstructor.
     function isInstructor() {
-      return isSignedIn() && hasRole('instructor');
+      return isSignedIn() && hasRRole('instructor');
     }
     // Class access is uid-only, on both halves.
     //
@@ -162,8 +251,8 @@ service cloud.firestore {
     // uses below for registrations - hasUserId's exact match never fires for
     // a real class create, which silently locked every instructor out of
     // "+ Create New Class" (only isAdmin() ever let a create through).
-    function isInstructorOwnerOrAdmin(classId) {
-      return (isInstructor() && belongsToSameUser(classId)) || isAdmin();
+    function isInstructorOwnerOrAdmin(classId, semesterId) {
+      return (isAcceptedInstructor(semesterId) && belongsToSameUser(classId)) || isAdmin();
     }
     function isOwnerOrAdmin(userId) {
       return (isSignedIn() && belongsToSameUser(userId)) || isAdmin();
@@ -171,6 +260,10 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
+    // Note this admits *applicants*, since isInstructor() is the role and the
+    // role is held from signup. Only use it where that is intended (booking an
+    // interview); anything that assumes acceptance wants isAcceptedInstructor
+    // or isTeachingInstructor.
     function isStaff() {
       return isAdminOrReviewer() || isInstructor();
     }

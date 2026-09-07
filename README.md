@@ -183,6 +183,53 @@ Admins can browse a past semester's data via the `?semester=<id>` URL param on t
 > [!NOTE]
 > Before this schema, each collection type was duplicated per semester by name (e.g. `applicationsSpring26`, `registrationsFall25`). Those collections still exist in Firestore as a read-only historical backup — nothing reads or writes them anymore — and should eventually be deleted after a comfortable soak period.
 
+## Roles and Authorization
+
+Almost everything either site will let a person do comes down to one value: their **role** — `admin`, `reviewer`, `instructor` or `student`. Two things are worth knowing before you touch anything that reads it.
+
+**A role lives in the Auth custom claim. The `users/{uid}.role` field is a copy, for display.**
+
+The claim is set only by the Admin SDK — portal's `/api/signup` at signup, this repo's `signup` action for a token-issued `admin`/`reviewer` — and arrives inside the verified ID token, so a browser cannot write one. `firestore.rules` reads it through `hasRRole()`, `hooks.server.ts` reads it off the Auth record on every request, and every `verifyAdmin`/`verifyInstructor` gate reads it from `locals.user`. `firestore.rules` refuses any client write that changes the document copy, so the two cannot drift apart.
+
+It has not always worked that way, and the history is the reason for the rule. `firestore.rules` used to have a second helper, `hasRole()`, that read the role out of `users/{uid}` — and `isInstructor()` used it, while `allow write: if isUser(userId)` let anyone write their own document. Signing up as a parent and then writing `role: 'instructor'` to your own document was enough to read **every student registration for the semester**: dates of birth, races, phone numbers, schools and family income indicators, for children. Portal's `/api/auth` then made it worse by minting a real custom claim from that same document whenever one was missing.
+
+So: **never authorize against a document the subject of the authorization can write.** If a rule needs to know something about a user beyond their role, read the document that actually records it, and check who is allowed to write _that_.
+
+**The `instructor` role means "applied to teach", not "teaches".**
+
+It is granted at signup, before any interview — so it says nothing about whether someone was accepted. What says that is `semesters/{id}/decisions/{uid}.type`, which only an admin or reviewer can write. Anything that assumes acceptance must check it:
+
+- in `firestore.rules`, `isAcceptedInstructor(semesterId)` (accepted) or `isTeachingInstructor(semesterId)` (accepted **or** substitute, for the roster a substitute needs to cover a session)
+- on the server, `isAcceptedInstructor(uid)` in portal's [`instructorDirectory.ts`](https://github.com/gbstem/portal/blob/main/src/lib/server/instructorDirectory.ts)
+
+`isStaff()` deliberately does _not_ check it, because applicants need it to book an interview. Read it as "anyone with a reason to be in the instructor UI", not as "staff".
+
+Three top-level collections — `instructorClasses`, `subRequests` and `interviewTimeRequests` — are still gated on the bare role, because they have no `semesterId` in scope and a decision lookup there would need the current semester hardcoded in the rules file, which every rollover would then have to remember to change. They carry `TODO(phase-2)` comments; the planned instructor-role split (`instructor-applicant` / `instructor` / `instructor-substitute`) is what lets them be gated without that.
+
+### Changing what a role can do
+
+`firestore.rules` is the only thing between a browser and the database, and it is not exercised by `yarn test` — those suites mock Firestore entirely. It has its own suite instead, which loads the real rules into the emulator and evaluates them:
+
+```bash
+yarn emulators      # in one terminal
+yarn test:rules     # in another
+```
+
+Add a case to [`__tests__/rules/firestore.rules.test.ts`](__tests__/rules/firestore.rules.test.ts) for both halves of any rule you change — the access it grants _and_ the access it must still refuse. A rule that is too permissive fails no build and shows no error; the test is the only thing that catches it.
+
+### Repairing roles across every account
+
+[`scripts/backfill-user-role-claims.ts`](scripts/backfill-user-role-claims.ts) reconciles the claim and the document for every account:
+
+```bash
+yarn backfill:roleclaims:dry     # audit only
+yarn backfill:roleclaims         # set claims that are missing
+```
+
+It sets a claim wherever one is missing and the document names a role, and — more usefully — it **reports accounts whose claim and document disagree** without touching them. Since the role is written once at signup and nowhere else, a mismatch means the document was edited afterwards, which is the fingerprint of the escalation above. It exits non-zero when it finds any, so a scripted run cannot skip past the audit.
+
+Run it before deploying a rules change that moves something onto claims, and leave **at least an hour** between the run and the deploy: a claim only reaches `request.auth.token` when the ID token refreshes, and tokens live an hour. Waiting lets every signed-in client pick it up on its own. The alternative, `revokeRefreshTokens()`, also invalidates session cookies — `hooks.server.ts` verifies with `checkRevoked` — and would sign people out mid-application.
+
 ## API Routes (`+server.ts`)
 
 Everything under `src/routes/api/` is a SvelteKit [server route](https://svelte.dev/docs/kit/routing#server): a `+server.ts` file exporting a `POST` handler. These run with the **Firebase Admin SDK**, which bypasses `firestore.rules` completely — the rules protect the client SDK, and nothing protects these but the code inside them. Most of them send email, so a mistake here doesn't just read the wrong document, it mails real families and instructors.
@@ -302,7 +349,7 @@ Below is an alphabetical list of the top-level directories and significant confi
 - **`.github/`**: Contains GitHub configuration for GitHub, including our Dependabot configuration for automating minor and patch package updates, and our Continuous Integration (CI) test workflows.
 - **`.husky/`**: Configuration for Husky, managing Git hooks like pre-commit formatting and linting.
 - **`.svelte-kit/`**: Automatically generated directory containing SvelteKit configuration, generated routes, and typings.
-- **`__tests__/`**: Contains all of our Jest unit tests (such as utility tests and form validation schema scenario tests).
+- **`__tests__/`**: Contains all of our Jest unit tests (such as utility tests and form validation schema scenario tests). The one exception is **`__tests__/rules/`**, which evaluates `firestore.rules` against a running Firestore emulator rather than mocking it — run those with `yarn test:rules`, not `yarn test`. See [Roles and Authorization](#roles-and-authorization).
 - **`cypress/`**: Contains the Cypress e2e test suite, test configurations, fixtures, and page object/support configurations.
 - **`node_modules/`**: Contains the project's dependencies.
 - **`scripts/`**: Contains development and setup script utilities: the database seeding script (`seed.ts`), backfill utilities, and email build tools.
@@ -328,8 +375,9 @@ Below is an alphabetical list of the top-level directories and significant confi
 - **`eslint.config.js`**: ESLint configuration mapping coding rules and checks (replacing the legacy `.eslintrc.cjs`).
 - **`firebase.json`**: Defines local configurations for Firebase emulator environments and project builds.
 - **`firestore.indexes.json`**: Declarative composite index definitions for Cloud Firestore, deployed via `firebase deploy --only firestore:indexes`. Indexes are keyed by collection ID, so they cover every semester's subcollections automatically.
-- **`firestore.rules`**: Firebase security rules defining read/write permissions for the Cloud Firestore database. This is applied by the Firebase emulators for local testing, but needs to be manually pushed to production because it has to be merged with the `curriculum` repo version of this file in production (simple copy-and-paste).
+- **`firestore.rules`**: Firebase security rules defining read/write permissions for the Cloud Firestore database. This is applied by the Firebase emulators for local testing, but needs to be manually pushed to production because it has to be merged with the `curriculum` repo version of this file in production (simple copy-and-paste). Covered by `yarn test:rules` — see [Roles and Authorization](#roles-and-authorization) before changing anything in it.
 - **`jest.config.ts`**: The configuration file for our Jest testing environment, specifically tailored to work alongside TypeScript and Svelte.
+- **`jest.rules.config.ts`**: A second Jest configuration for the security-rules suite (`yarn test:rules`). Separate because those tests need the Firestore emulator running, where every other suite mocks Firestore and needs nothing installed.
 - **`jest.setup.ts`**: Initial setup code that runs before our Jest tests, importing tools like `@testing-library/jest-dom` for custom DOM matchers.
 - **`package.json`**: Defines the project's details, scripts, and dependencies (the npm packages we rely on).
 - **`postcss.config.js`**: Configuration for PostCSS, typically used for transforming CSS with plugins.
