@@ -1,0 +1,21 @@
+{
+  // Deliberately standalone: it does NOT extend ../tsconfig.json, because that
+  // chain reaches .svelte-kit/tsconfig.json, which only exists after
+  // `svelte-kit sync` has run. The rules suite has no SvelteKit in it - it
+  // talks to the Firestore emulator and imports one plain TS module - and CI
+  // runs it in the emulator job, which does no SvelteKit build, so inheriting
+  // that dependency failed with "Cannot read file '.svelte-kit/tsconfig.json'".
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["ES2022"],
+    "types": ["jest", "node"],
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "isolatedModules": false
+  },
+  "include": ["**/*.ts", "../../src/lib/data/collections.ts"]
+}

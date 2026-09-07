@@ -51,6 +51,16 @@ Schemas live in `src/lib/components/forms/schemas.ts` (also reused by `scripts/s
 - `src/lib/server/firebase.ts` → Admin SDK, used only in `hooks.server.ts` and `src/routes/api/*/+server.ts`.
 - API routes: guard with `verifyAdmin(locals)` / `verifyAuthenticated(locals)` and wrap the body in `try { ... } catch (err) { throw handleApiError(err) }` (both from `src/lib/server/apiHelpers.ts`).
 
+## Roles come from the Auth claim, never from a document
+
+A user's role is the Firebase Auth **custom claim**. `users/{uid}.role` is a display copy, and `firestore.rules` refuses any client write that changes it. Rules read the claim via `hasRRole()`; server code reads `locals.user.role`, which `hooks.server.ts` took off the Auth record. **Never authorize against a document the subject of that authorization can write** — `firestore.rules` used to read the instructor role out of `users/{uid}`, which any signed-in user could rewrite to grant themselves read access to every student registration.
+
+`instructor` means "applied to teach", not "teaches": it is granted at signup, before any interview. Whether someone was accepted lives in `semesters/{id}/decisions/{uid}.type`, which only an admin or reviewer can write. Rules check it with `isAcceptedInstructor(semesterId)` / `isTeachingInstructor(semesterId)` (the latter also admits substitutes, who need a roster to cover a session); portal's server code uses `isAcceptedInstructor(uid)` from `instructorDirectory.ts`. `isStaff()` deliberately admits applicants, because they need to book an interview — don't reach for it when you mean "accepted".
+
+Changing a role means changing the claim (Admin SDK) **and** the document together, server-side. `scripts/backfill-user-role-claims.ts` reconciles the two across every account and reports any that disagree. See README's [Roles and Authorization](README.md#roles-and-authorization).
+
+`firestore.rules` has its own test suite — `yarn test:rules`, needs the emulator — because `yarn test` mocks Firestore and so cannot see rules at all. Any rule you change wants a case for what it grants _and_ what it must still refuse.
+
 ## Types
 
 Domain types live in `src/lib/data/types/` plus a global ambient `Data` namespace in `src/data.d.ts` (e.g. `Data.User.Peek`, `Data.Role`) — usable unimported anywhere. `tsconfig.json` sets `strict: true` and `verbatimModuleSyntax: true`, so type-only imports must use `import type`.
@@ -61,4 +71,4 @@ Client-side: the `alert` store (`src/lib/stores.ts`) drives toast UI — `alert.
 
 ## Testing
 
-Jest, one `<module>.test.ts` per `src/lib` module under `__tests__/`. `firebase-admin`/Firestore calls are mocked with hand-rolled `DocumentReference`/`Query`/`CollectionReference` classes (see `firebase.test.ts`) — no emulator needed for unit tests. `collections.test.ts` asserts against `currentSemester` via a `^(Spring|Fall)\d\d$` regex rather than a hardcoded string, so it survives semester rollovers unedited; keep that pattern for new semester-aware tests.
+Jest, one `<module>.test.ts` per `src/lib` module under `__tests__/`. `firebase-admin`/Firestore calls are mocked with hand-rolled `DocumentReference`/`Query`/`CollectionReference` classes (see `firebase.test.ts`) — no emulator needed for unit tests (the sole exception is `__tests__/rules/`, which evaluates `firestore.rules` for real and runs under `yarn test:rules`). `collections.test.ts` asserts against `currentSemester` via a `^(Spring|Fall)\d\d$` regex rather than a hardcoded string, so it survives semester rollovers unedited; keep that pattern for new semester-aware tests.

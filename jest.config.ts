@@ -58,7 +58,11 @@ const config: Config = {
     '^sveltekit-superforms/adapters$':
       '<rootDir>/node_modules/sveltekit-superforms/dist/adapters/zod.js',
   },
-  testPathIgnorePatterns: ['/node_modules/'],
+  // __tests__/rules evaluates firestore.rules against a running Firestore
+  // emulator, where every other suite here mocks Firestore and needs nothing
+  // installed. Keeping it out means `yarn test` still runs anywhere; those
+  // tests have their own config and run via `yarn test:rules`.
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/__tests__/rules/'],
   collectCoverage: false,
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx,svelte}',
