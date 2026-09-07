@@ -170,7 +170,7 @@ So two files are copied by hand across repos at a rollover, and both are copied 
 
 Every semesterized document also carries a `semester` field (e.g. `"Spring26"`), stamped on write via the `withSemester(...)` helper in `collections.ts`. This lets the shared, cross-semester Algolia index for each collection type (one index total, covering every semester) filter results down to a single semester.
 
-Within Firestore, all user identifiers should be `uid`s, not email addresses. Users can change their email address, but their `uid` is a stable identifier. This is also important for security and privacy reasons: it makes it harder for users to impersonate other users, harder to probe our backends to identify our users, and prevents users from being identified by client-side loaded data or re-identified after account deletion (except through secured audit logs).
+Within Firestore, all user identifiers should be `uid`s, not email addresses. Users can change their email address, but their `uid` is a stable identifier. This is also important for security and privacy reasons: it makes it harder for users to impersonate other users, harder to probe our backends to identify our users, and prevents users from being identified by client-side loaded data or re-identified after account deletion (except through secured audit logs). As of August 2026, we're in the process of migrating all our storage to this best practice.
 
 A class's co-instructors follow that rule strictly: they are stored as `otherInstructorUids`, and there is no email equivalent. The `otherInstructorEmails` string this replaced was free text a class owner typed by hand, and `firestore.rules`'s `isInstructorOfClass()` granted write access on it directly — so any address at all could be given control of a class, with no check that the person had ever been interviewed. A uid now only reaches that field through the portal's `/api/lookupCoInstructor`, which resolves an address to a uid only when the account holds the `instructor` role **and** has an `accepted` decision for that semester (gbSTEM leadership's rule: nobody teaches a class they weren't assigned and accepted for). Everything that needs a co-instructor's email address — currently only the reminder emails — resolves it server-side at send time through `src/lib/server/instructorDirectory.ts`, which also drops uids whose account has since been deleted. Existing documents were converted by [`scripts/backfill-class-instructor-uids.ts`](scripts/backfill-class-instructor-uids.ts); its header documents the five-step deploy order, which matters because the security rule and the data have to change in the right sequence.
 
@@ -182,6 +182,33 @@ Admins can browse a past semester's data via the `?semester=<id>` URL param on t
 
 > [!NOTE]
 > Before this schema, each collection type was duplicated per semester by name (e.g. `applicationsSpring26`, `registrationsFall25`). Those collections still exist in Firestore as a read-only historical backup — nothing reads or writes them anymore — and should eventually be deleted after a comfortable soak period.
+
+## API Routes (`+server.ts`)
+
+Everything under `src/routes/api/` is a SvelteKit [server route](https://svelte.dev/docs/kit/routing#server): a `+server.ts` file exporting a `POST` handler. These run with the **Firebase Admin SDK**, which bypasses `firestore.rules` completely — the rules protect the client SDK, and nothing protects these but the code inside them. Most of them send email, so a mistake here doesn't just read the wrong document, it mails real families and instructors.
+
+Five rules, in the order they apply. `src/routes/api/decision/+server.ts` is a good example of all of them.
+
+**1. Gate, validate, then act.** First line of the handler is a gate from [`src/lib/server/apiHelpers.ts`](src/lib/server/apiHelpers.ts) — `verifyAdmin`, `verifyAdminOrReviewer`, or `verifyAuthenticated` (portal also has `verifyInstructor`); then `schema.parse(await request.json())` with a Zod schema to validate the request body; then the work, wrapped in `try { … } catch (err) { throw handleApiError('/api/yourRoute', err) }`. Choose the **narrowest** gate that works: `verifyAuthenticated` means "anyone who signed up thirty seconds ago", which is rarely who you meant. And parse — never `as SomeRequestBody`, which is a type-level fiction the compiler erases and that checks nothing at runtime.
+
+**2. Never accept someone else's email address from the client.** Take their Auth `uid` instead and resolve the live address on the server with `adminAuth.getUser(uid)` — see [`applicantIdentity.ts`](src/lib/server/applicantIdentity.ts) and [`instructorDirectory.ts`](src/lib/server/instructorDirectory.ts) for the pattern. This fixes three separate problems at once: addresses stored in Firestore go stale the moment that person changes their account email, so reminders silently misdeliver; an address in a request body is chosen by whoever sent the request, so anyone could make gbSTEM's server send official-looking mail to any address on the internet; and a `uid` is meaningless to an attacker where an address is not.
+
+**3. On an endpoint any signed-in user can reach, take a document ID, not a `uid`.** A `uid` parameter still lets the caller pick the recipient, and uids aren't secret — every signed-in user can read `classes` documents and the `instructorUid` inside them. If the resolved address then shows up in a `cc:` header or in the email body, the caller has learned that account's real address. Instead, load the document with the Admin SDK, confirm the caller is a party to it, and read the uid off the document:
+
+```ts
+const snap = await adminDb.doc(`${classesCollection}/${body.classId}`).get()
+if (!snap.exists) throw error(404, 'Class not found.')
+const instructorUid = snap.data()!.instructorUid // a fact, not a client's claim
+```
+
+Admin-gated routes may keep a `uid` parameter — there, the role gate is the authorization.
+
+**4. The caller's own address comes from the session.** Use `locals.user.email`, which `src/hooks.server.ts` derived from a verified session cookie, and never a `to:` field from the body. A route that mails the caller has no reason to be told where.
+
+**5. Fail closed, and stay quiet.** If nothing resolves, return a 400 — don't fall back to a client-supplied address. Keep addresses out of documents that clients can read broadly (store the uid and resolve at send time). And when a route looks an account up, return the same error whether or not it exists, so it can't be used to test which addresses have gbSTEM accounts — [`portal/api/lookupCoInstructor`](https://github.com/gbstem/portal/blob/main/src/routes/api/lookupCoInstructor/%2Bserver.ts) does this.
+
+> [!NOTE]
+> As of August 2026 we're migrating the existing routes to these rules. Several still accept an `email` alongside the `uid` and fall back to it, logging `[legacy-email-fallback]` when they do; those parameters come out once that log reads zero. New routes should be written to the rules above rather than copying the transitional shape.
 
 ## Adding a New Semester
 
