@@ -43,10 +43,37 @@ export type Verdict =
   /** No claim yet, but the document names a role we recognise: set the claim. */
   | { kind: 'backfill'; role: KnownRole }
   /**
-   * Claim and document name *different* roles. Never repaired automatically:
-   * with the role written once at signup and nowhere else, a divergence means
-   * the document was edited afterwards - which is exactly the escalation this
-   * migration closes. Someone should look at these before they are touched.
+   * The known-bad pair: an `instructor` document under a `student` claim.
+   *
+   * This was originally treated as a tamper signal, on the reasoning that the
+   * role is written once at signup so a mismatch meant the document was edited
+   * afterwards. The first production run disproved that - 521 of 522
+   * divergences were this exact pair, including directors and a sitting
+   * co-president. A self-promoting attacker population would be small and
+   * varied; 521 identical rows is a bug, from the era of claim handling that
+   * predates portal's current /api/auth.
+   *
+   * These accounts are *already broken*, not merely inconsistent. Portal's UI
+   * reads the role from the document (so they see instructor pages) while
+   * `verifyInstructor` reads the claim (so every instructor API route answers
+   * "Only instructors can do that"). Repairing the claim fixes that, and is
+   * also what stops the new rules - which read only the claim - from taking
+   * instructor access away from 521 real instructors on deploy day.
+   *
+   * Safe to repair automatically only because teaching access is now gated on
+   * the decision document rather than the role: an `instructor` claim with no
+   * accepted decision grants applicant-level access and nothing more, which is
+   * what anyone gets by signing up as an instructor anyway. Were the role
+   * still the gate, this would be handing out 521 sets of student PII.
+   */
+  | { kind: 'reconcile'; from: KnownRole; to: KnownRole }
+  /**
+   * Any other disagreement between claim and document. Never repaired
+   * automatically - notably a document naming `admin` or `reviewer` under a
+   * lesser claim, where writing the document's value would *grant* privilege
+   * rather than restore it. Those roles have only ever come from a signup
+   * token, so a document claiming one is not evidence the account should have
+   * it.
    */
   | { kind: 'divergent'; claimRole: string; docRole: string }
   /**
@@ -80,30 +107,39 @@ export function classifyAccount(account: AccountRoles): Verdict {
   }
 
   if (hasClaim && hasDoc) {
-    return claimRole === docRole
-      ? { kind: 'ok', role: claimRole as KnownRole }
-      : {
-          kind: 'divergent',
-          claimRole: String(claimRole),
-          docRole: String(docRole),
-        }
+    if (claimRole === docRole) {
+      return { kind: 'ok', role: claimRole as KnownRole }
+    }
+    // Deliberately the one narrow pair, in one direction, rather than a
+    // general "the document wins" rule: it is the only mismatch with a known
+    // cause, and the only one where writing the document's value restores
+    // access the account already has rather than granting it something new.
+    if (claimRole === 'student' && docRole === 'instructor') {
+      return { kind: 'reconcile', from: 'student', to: 'instructor' }
+    }
+    return {
+      kind: 'divergent',
+      claimRole: String(claimRole),
+      docRole: String(docRole),
+    }
   }
   if (hasClaim) return { kind: 'claim-only', role: claimRole as KnownRole }
   if (hasDoc) return { kind: 'backfill', role: docRole as KnownRole }
   return { kind: 'orphan' }
 }
 
-/** Whether a verdict warrants a write. Only `backfill` ever does. */
-export function needsWrite(verdict: Verdict): verdict is {
-  kind: 'backfill'
-  role: KnownRole
-} {
-  return verdict.kind === 'backfill'
+/** The role a verdict says to write, or null when it calls for no write. */
+export function roleToWrite(verdict: Verdict): KnownRole | null {
+  if (verdict.kind === 'backfill') return verdict.role
+  if (verdict.kind === 'reconcile') return verdict.to
+  return null
 }
 
 /**
- * Whether a verdict is something a human should look at. `ok` is silent;
- * everything else is either a change or an anomaly.
+ * Whether a verdict is something a human has to decide about. `reconcile` is
+ * deliberately excluded - it has a known cause and a known repair, and after
+ * the first production run it is the overwhelming majority of mismatches, so
+ * treating it as an anomaly would bury the handful that are.
  */
 export function needsAttention(verdict: Verdict): boolean {
   return verdict.kind === 'divergent' || verdict.kind === 'unknown-role'

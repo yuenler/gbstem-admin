@@ -14,12 +14,21 @@
 // they would silently lose access. This script finds them and sets the claim
 // from the document.
 //
-// It is also the audit. Because the role is written once at signup and never
-// again, an account whose claim and document *disagree* is one whose document
-// was edited afterwards - the fingerprint of the escalation above. Those are
-// reported and deliberately left alone: the right response is to look at the
-// account, not to have a script pick a winner. Run the dry pass first and read
-// that section before running for real.
+// It also repairs a second, larger population. 521 accounts carry an
+// `instructor` document under a `student` claim - a bug from an earlier era of
+// claim handling, not tampering (the first production run found 521 of 522
+// mismatches were this identical pair, including directors and a sitting
+// co-president; a self-promoting attacker population would be small and
+// varied). Those accounts are already broken today: portal's UI reads the role
+// from the document, so they see instructor pages, while `verifyInstructor`
+// reads the claim, so every instructor API route refuses them. Repairing the
+// claim fixes that, and is what stops the new rules from taking instructor
+// access away from 521 real instructors on deploy day.
+//
+// Every *other* disagreement is reported and deliberately left alone - notably
+// a document naming `admin` or `reviewer` under a lesser claim, where writing
+// the document's value would grant privilege rather than restore it. Run the
+// dry pass first and read that section before running for real.
 //
 // Usage:
 //   npx tsx scripts/backfill-user-role-claims.ts --dry-run
@@ -42,7 +51,7 @@ import admin from 'firebase-admin'
 import {
   classifyAccount,
   needsAttention,
-  needsWrite,
+  roleToWrite,
   type Verdict,
 } from './lib/userRoleClaimTransforms'
 
@@ -158,10 +167,11 @@ async function main() {
   const divergent = byKind('divergent')
   if (divergent.length) {
     console.log(
-      `!! ${divergent.length} account(s) whose claim and users document disagree.\n` +
-        '   The role is written once at signup, so a mismatch means the document was\n' +
-        '   edited afterwards. Investigate these before trusting either value; this\n' +
-        '   script will not change them.\n',
+      `!! ${divergent.length} account(s) whose claim and users document disagree in a\n` +
+        '   way this script will not repair. A document naming a role the claim does\n' +
+        '   not is not evidence the account should have it - admin and reviewer have\n' +
+        '   only ever come from a signup token, so writing the document value would\n' +
+        '   grant privilege rather than restore it. Decide these by hand.\n',
     )
     for (const row of divergent) {
       const v = row.verdict as Extract<Verdict, { kind: 'divergent' }>
@@ -200,27 +210,50 @@ async function main() {
   }
   console.log(`   ${byKind('ok').length} account(s) already consistent.\n`)
 
-  // The backfill half.
-  const pending = rows.filter((row) => needsWrite(row.verdict))
+  // The write half: claims that are missing, plus the instructor/student pair
+  // that has a known cause and a known repair. Counted separately because they
+  // mean different things - one is filling a gap, the other is overwriting a
+  // wrong value - and because the second is the one worth eyeballing in a dry
+  // run before it goes out.
+  const backfills = byKind('backfill')
+  const reconciles = byKind('reconcile')
+  const pending = [...backfills, ...reconciles]
+
+  if (reconciles.length) {
+    console.log(
+      `   ${reconciles.length} account(s) hold an instructor document under a student\n` +
+        '   claim. Portal shows them instructor pages while every instructor API route\n' +
+        '   refuses them, so these are already broken; the claim is repaired below.\n',
+    )
+  }
+
   if (!pending.length) {
     console.log('No claims need setting.')
   } else if (isDryRun) {
-    console.log(`Would set the role claim on ${pending.length} account(s):\n`)
+    console.log(
+      `Would set the role claim on ${pending.length} account(s) ` +
+        `(${backfills.length} missing, ${reconciles.length} student -> instructor):\n`,
+    )
     for (const row of pending) {
-      const v = row.verdict as Extract<Verdict, { kind: 'backfill' }>
-      console.log(`   ${row.uid}  ${row.email}  -> ${v.role}`)
+      const role = roleToWrite(row.verdict)
+      const note = row.verdict.kind === 'reconcile' ? '  (was student)' : ''
+      console.log(`   ${row.uid}  ${row.email}  -> ${role}${note}`)
     }
   } else {
-    console.log(`Setting the role claim on ${pending.length} account(s)...`)
+    console.log(
+      `Setting the role claim on ${pending.length} account(s) ` +
+        `(${backfills.length} missing, ${reconciles.length} student -> instructor)...`,
+    )
     let written = 0
     let failed = 0
     for (const row of pending) {
-      const v = row.verdict as Extract<Verdict, { kind: 'backfill' }>
+      const role = roleToWrite(row.verdict)
+      if (!role) continue
       try {
         // Merged onto whatever claims the account already carries rather than
         // replacing them, so an unrelated claim added later is not dropped.
         const existing = (await auth.getUser(row.uid)).customClaims ?? {}
-        await auth.setCustomUserClaims(row.uid, { ...existing, role: v.role })
+        await auth.setCustomUserClaims(row.uid, { ...existing, role })
         written += 1
       } catch (err) {
         failed += 1

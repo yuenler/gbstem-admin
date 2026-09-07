@@ -19,9 +19,14 @@ const config: Config = {
     '^\\$lib/(.*)$': '<rootDir>/src/lib/$1',
   },
   transform: {
+    // __tests__/rules has its own tsconfig, which does not extend the root
+    // one: that chain reaches .svelte-kit/tsconfig.json, a generated file that
+    // only exists after `svelte-kit sync`. These tests contain no SvelteKit,
+    // and CI runs them in the emulator job, which does no build - inheriting
+    // that dependency failed there with TS5083.
     '^.+\\.tsx?$': [
       'ts-jest',
-      { tsconfig: '<rootDir>/__tests__/tsconfig.json' },
+      { tsconfig: '<rootDir>/__tests__/rules/tsconfig.json' },
     ],
   },
   // Rules evaluation goes over the wire to the emulator; the default 5s is
