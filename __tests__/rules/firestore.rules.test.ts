@@ -30,6 +30,7 @@ const PROJECT_ID = 'gbstem-rules-test'
 const decisions = semesterCollectionPath(currentSemester, 'decisions')
 const registrations = semesterCollectionPath(currentSemester, 'registrations')
 const classes = semesterCollectionPath(currentSemester, 'classes')
+const applications = semesterCollectionPath(currentSemester, 'applications')
 
 const UIDS = {
   student: 'uid-student',
@@ -90,6 +91,10 @@ beforeEach(async () => {
       course: 'Python 1',
       instructorUid: UIDS.accepted,
       otherInstructorUids: [],
+    })
+    await setDoc(doc(db, applications, UIDS.student), {
+      personal: { firstName: 'Ada', email: 'ada@example.com' },
+      meta: { uid: UIDS.student, submitted: true, decided: true },
     })
   })
 })
@@ -186,6 +191,80 @@ describe("users/{uid} - the role field is not the client's to write", () => {
     const db = as(UIDS.admin, 'admin')
     await assertFails(
       updateDoc(doc(db, `users/${UIDS.student}`), { role: 'instructor' }),
+    )
+  })
+})
+
+describe("applications/{uid} - meta.decided is not the applicant's to write", () => {
+  it('lets an applicant read their own application', async () => {
+    const db = as(UIDS.student, 'student')
+    await assertSucceeds(getDoc(doc(db, applications, UIDS.student)))
+  })
+
+  it("refuses reading another applicant's application", async () => {
+    const db = as(UIDS.otherStudent, 'student')
+    await assertFails(getDoc(doc(db, applications, UIDS.student)))
+  })
+
+  it('lets an applicant edit an unrelated field', async () => {
+    const db = as(UIDS.student, 'student')
+    await assertSucceeds(
+      updateDoc(doc(db, applications, UIDS.student), {
+        personal: { firstName: 'Augusta', email: 'ada@example.com' },
+      }),
+    )
+  })
+
+  it('refuses an applicant hiding their own decided interview notes', async () => {
+    // The fixture seeds meta.decided: true - this is the exploit
+    // applicationService.loadApplicationDetails documents: setting it back
+    // to false stops the admin UI from loading the decision doc at all.
+    const db = as(UIDS.student, 'student')
+    await assertFails(
+      updateDoc(doc(db, applications, UIDS.student), {
+        meta: { uid: UIDS.student, submitted: true, decided: false },
+      }),
+    )
+  })
+
+  it('refuses meta.decided smuggled in alongside a legitimate field change', async () => {
+    const db = as(UIDS.student, 'student')
+    await assertFails(
+      updateDoc(doc(db, applications, UIDS.student), {
+        personal: { firstName: 'Augusta', email: 'ada@example.com' },
+        meta: { uid: UIDS.student, submitted: true, decided: false },
+      }),
+    )
+  })
+
+  it('lets an admin set meta.decided', async () => {
+    // applicationService.saveNotes/submitOfficialDecision write this through
+    // the client SDK, not the Admin SDK - unlike role, this one has to stay
+    // writable by rules for admin/reviewer.
+    const db = as(UIDS.admin, 'admin')
+    await assertSucceeds(
+      updateDoc(doc(db, applications, UIDS.student), {
+        meta: { uid: UIDS.student, submitted: true, decided: false },
+      }),
+    )
+  })
+
+  it('lets a reviewer set meta.decided', async () => {
+    const db = as(UIDS.reviewer, 'reviewer')
+    await assertSucceeds(
+      updateDoc(doc(db, applications, UIDS.student), {
+        meta: { uid: UIDS.student, submitted: true, decided: false },
+      }),
+    )
+  })
+
+  it('lets an applicant create their own application', async () => {
+    const db = as(UIDS.undecided, 'student')
+    await assertSucceeds(
+      setDoc(doc(db, applications, UIDS.undecided), {
+        personal: { firstName: 'Grace', email: 'grace@example.com' },
+        meta: { uid: UIDS.undecided, submitted: false, decided: false },
+      }),
     )
   })
 })

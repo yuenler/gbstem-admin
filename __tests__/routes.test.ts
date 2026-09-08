@@ -1004,6 +1004,28 @@ describe('API routes POST endpoints', () => {
       locals: { user: null },
     } as any)
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
+    expect(mockAdminAuth.generatePasswordResetLink).toHaveBeenCalledWith(
+      'test@test.com',
+    )
+  })
+
+  it('actionPOST resetPassword ignores a signed-in caller-supplied email and uses their own', async () => {
+    // A signed-in caller can only reset their own password - otherwise a
+    // logged-in attacker could target any other account by supplying its
+    // email here, the same hole changeEmail/verifyEmail don't have because
+    // they read the email off the session rather than the request body.
+    mockRequest.json.mockResolvedValue({
+      type: 'resetPassword',
+      email: 'victim@test.com',
+    })
+    const res = await actionPOST({
+      request: mockRequest as any,
+      locals: { user: { email: 'attacker@test.com', role: 'student' } },
+    } as any)
+    expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
+    expect(mockAdminAuth.generatePasswordResetLink).toHaveBeenCalledWith(
+      'attacker@test.com',
+    )
   })
 
   it('assignInterviewPOST successfully with legacy payload (intervieweeEmail without intervieweeUid)', async () => {
@@ -1423,7 +1445,15 @@ describe('api/auth', () => {
     expect(mockCookies.set).toHaveBeenCalledWith(
       '__session',
       'sessionCookieVal',
-      expect.any(Object),
+      // cookies.set()'s option is maxAge in *seconds*, not expiresIn in ms -
+      // passing expiresIn silently did nothing, so the cookie was never
+      // persisted for the intended 7 days.
+      {
+        maxAge: 60 * 60 * 24 * 7,
+        httpOnly: true,
+        secure: true,
+        path: '/',
+      },
     )
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
   })

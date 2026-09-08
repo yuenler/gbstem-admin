@@ -55,8 +55,21 @@ service cloud.firestore {
     match /semesters/{semesterId} {
       allow read: if isSignedIn(); // parent docs, if we ever materialize them
 
+      // `meta.decided` gates whether admin's applicationService loads the
+      // decision doc at all (loadApplicationDetails), so an applicant who
+      // could write it themselves could set it back to false and hide their
+      // own interview notes from the admin UI. Frozen the same way
+      // users/{uid}'s `role` is above: an applicant's own write must leave it
+      // unchanged, but admin/reviewer - who set it through this same client
+      // SDK path, not the Admin SDK - can still change it.
       match /applications/{userId} {
-        allow read, write: if isUser(userId) || isAdminOrReviewer();
+        allow read: if isUser(userId) || isAdminOrReviewer();
+        allow create: if isUser(userId) || isAdminOrReviewer();
+        allow update: if isAdminOrReviewer()
+                      || (isUser(userId)
+                          && request.resource.data.meta.get('decided', false)
+                             == resource.data.meta.get('decided', false));
+        allow delete: if isUser(userId) || isAdminOrReviewer();
       }
 
       // A registration is a minor's date of birth, race, phone number, school
