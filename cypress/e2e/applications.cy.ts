@@ -411,11 +411,26 @@ describe('Section D: Instructor Applications Management', () => {
       }
     })
 
-    // Fill out the evaluation guide form
+    // Fill out the evaluation guide form. The fieldset stays disabled until
+    // the modal's own application/decision fetch resolves (Application.svelte
+    // wraps it in <fieldset disabled={loading}>, matching the decision
+    // buttons above it) - waiting for that here, not just for the dialog to
+    // exist, is what keeps this test from racing that fetch: filling a field
+    // before it resolves gets silently overwritten when `interview` is
+    // replaced wholesale with the fetched value, not merged into it.
+    cy.get('input[type="datetime-local"]', { timeout: TABLE_TIMEOUT }).should(
+      'be.enabled',
+    )
+
     cy.contains('h2', 'Interview Guide & Evaluation Form')
       .closest('div')
       .within(() => {
-        cy.get('input[type="datetime-local"]').type('2026-06-15T15:00')
+        // cy.setFieldValue, not .type(): Cypress types into a datetime-local
+        // widget one keystroke per sub-field (month/day/year/hour/minute),
+        // which is slower and less reliable than a single assignment. See
+        // interviews.cy.ts's "Add A Time Slot" case for the same fix on the
+        // same input type.
+        cy.setFieldValue('input[type="datetime-local"]', '2026-06-15T15:00')
         cy.get('input[name="interviewer"]').type('Jane Doe')
         cy.selectOption('input[name="attendance"]', 'On Time')
 
