@@ -453,7 +453,13 @@
         {#if showInterviewForm}
           <Card class="w-full min-w-75 flex-1 md:min-w-112.5">
             <Form class="w-full">
-              <div>
+              <!-- Disabled until the fetch in the id/open $effect above settles:
+                   interview starts this component's lifetime as
+                   cloneDeep(defaultInterview) and is replaced wholesale by
+                   the fetched value when that promise resolves, so typing
+                   into these fields before then is silently overwritten
+                   rather than merged - see saveNotes/buildNotesPayload. -->
+              <fieldset disabled={loading}>
                 <h2 class="my-4 text-2xl font-bold">
                   Interview Guide & Evaluation Form
                 </h2>
@@ -740,7 +746,7 @@
                     >Close Interview Form</Button
                   >
                 </div>
-              </div>
+              </fieldset>
             </Form>
           </Card>
         {/if}
