@@ -1445,7 +1445,15 @@ describe('api/auth', () => {
     expect(mockCookies.set).toHaveBeenCalledWith(
       '__session',
       'sessionCookieVal',
-      expect.any(Object),
+      // cookies.set()'s option is maxAge in *seconds*, not expiresIn in ms -
+      // passing expiresIn silently did nothing, so the cookie was never
+      // persisted for the intended 7 days.
+      {
+        maxAge: 60 * 60 * 24 * 7,
+        httpOnly: true,
+        secure: true,
+        path: '/',
+      },
     )
     expect(res).toEqual(expect.objectContaining({ __isSvelteKitJson: true }))
   })
