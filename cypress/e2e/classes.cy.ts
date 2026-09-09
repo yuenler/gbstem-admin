@@ -188,7 +188,11 @@ describe('Section E: Classes Directory', () => {
       expect(stub.called).to.equal(true)
       const text = stub.lastCall.args[0]
       cy.parseCopiedEmails(text).then((emails) => {
-        expect(emails).to.deep.equal(['student@gbstem.org'])
+        expect(emails).to.deep.equal([
+          'student1@gbstem.org',
+          'student2@gbstem.org',
+          'student@gbstem.org',
+        ])
       })
     })
     cy.waitForNotification('copied to clipboard')

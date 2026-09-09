@@ -269,7 +269,7 @@ describe("applications/{uid} - meta.decided is not the applicant's to write", ()
   })
 })
 
-describe('registrations - gated on the decision, not the role', () => {
+describe('registrations - instructors never read directly; client access restricted to owner, admin, or reviewer', () => {
   it('lets a student read their own registration', async () => {
     const db = as(UIDS.student, 'student')
     await assertSucceeds(getDoc(doc(db, registrations, UIDS.student)))
@@ -280,15 +280,15 @@ describe('registrations - gated on the decision, not the role', () => {
     await assertFails(getDoc(doc(db, registrations, UIDS.student)))
   })
 
-  it('lets an accepted instructor read a registration', async () => {
+  it('refuses an accepted instructor reading a registration directly', async () => {
+    // Instructors access student data strictly via server-side class roster APIs (/api/classRoster)
     const db = as(UIDS.accepted, 'instructor')
-    await assertSucceeds(getDoc(doc(db, registrations, UIDS.student)))
+    await assertFails(getDoc(doc(db, registrations, UIDS.student)))
   })
 
-  it('lets a substitute read a registration', async () => {
-    // Substitutes cover individual sessions and need the roster for them.
+  it('refuses a substitute reading a registration directly', async () => {
     const db = as(UIDS.substitute, 'instructor')
-    await assertSucceeds(getDoc(doc(db, registrations, UIDS.student)))
+    await assertFails(getDoc(doc(db, registrations, UIDS.student)))
   })
 
   it('refuses an instructor still awaiting an interview', async () => {
