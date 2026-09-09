@@ -570,6 +570,165 @@ export async function seedEmulator(): Promise<void> {
     .doc('student-demo-uid-1')
     .set(regStudentDemo)
 
+  console.log(
+    'Seeding mock registrations for student1, student2, and student3...',
+  )
+  const regStudent1 = {
+    personal: {
+      email: 'student1@gbstem.org',
+      studentFirstName: 'Student',
+      studentLastName: 'One',
+      parentFirstName: 'Parent',
+      parentLastName: 'One',
+      secondaryEmail: '',
+      dateOfBirth: '2016-02-01',
+      gender: 'Male',
+      race: ['Asian'],
+      phoneNumber: '555-1112',
+      frlp: 'No',
+      parentEducation: "Bachelor's degree",
+    },
+    academic: {
+      school: 'Pinecrest Elementary',
+      grade: '4',
+    },
+    program: {
+      csCourse: 'Python 1',
+      mathCourse: 'None',
+      engineeringCourse: 'None',
+      scienceCourse: 'None',
+      reason: 'Excited to learn python.',
+      inPerson: false,
+    },
+    inPerson: {
+      allergies: 'None',
+      parentPickup: 'Parent One',
+    },
+    agreements: {
+      entireProgram: true,
+      timeCommitment: true,
+      submitting: true,
+      mediaRelease: true,
+      bypassAgeLimits: false,
+    },
+    meta: {
+      uid: 'student1',
+      submitted: true,
+    },
+    enrolled: true,
+    classes: ['class-python1'],
+    timestamps: {
+      created: admin.firestore.FieldValue.serverTimestamp(),
+      updated: admin.firestore.FieldValue.serverTimestamp(),
+    },
+  }
+  validateRegistration(regStudent1, 'student1')
+  await db.collection(registrationsCollection).doc('student1').set(regStudent1)
+
+  const regStudent2 = {
+    personal: {
+      email: 'student2@gbstem.org',
+      studentFirstName: 'Student',
+      studentLastName: 'Two',
+      parentFirstName: 'Parent',
+      parentLastName: 'Two',
+      secondaryEmail: '',
+      dateOfBirth: '2016-03-01',
+      gender: 'Female',
+      race: ['White'],
+      phoneNumber: '555-1113',
+      frlp: 'No',
+      parentEducation: "Bachelor's degree",
+    },
+    academic: {
+      school: 'Pinecrest Elementary',
+      grade: '5',
+    },
+    program: {
+      csCourse: 'Python 1',
+      mathCourse: 'None',
+      engineeringCourse: 'None',
+      scienceCourse: 'None',
+      reason: 'Excited to learn python.',
+      inPerson: false,
+    },
+    inPerson: {
+      allergies: 'None',
+      parentPickup: 'Parent Two',
+    },
+    agreements: {
+      entireProgram: true,
+      timeCommitment: true,
+      submitting: true,
+      mediaRelease: true,
+      bypassAgeLimits: false,
+    },
+    meta: {
+      uid: 'student2',
+      submitted: true,
+    },
+    enrolled: true,
+    classes: ['class-python1'],
+    timestamps: {
+      created: admin.firestore.FieldValue.serverTimestamp(),
+      updated: admin.firestore.FieldValue.serverTimestamp(),
+    },
+  }
+  validateRegistration(regStudent2, 'student2')
+  await db.collection(registrationsCollection).doc('student2').set(regStudent2)
+
+  const regStudent3 = {
+    personal: {
+      email: 'student3@gbstem.org',
+      studentFirstName: 'Student',
+      studentLastName: 'Three',
+      parentFirstName: 'Parent',
+      parentLastName: 'Three',
+      secondaryEmail: '',
+      dateOfBirth: '2016-04-01',
+      gender: 'Male',
+      race: ['White'],
+      phoneNumber: '555-1114',
+      frlp: 'No',
+      parentEducation: "Bachelor's degree",
+    },
+    academic: {
+      school: 'Pinecrest Elementary',
+      grade: '3',
+    },
+    program: {
+      csCourse: 'Scratch 1',
+      mathCourse: 'None',
+      engineeringCourse: 'None',
+      scienceCourse: 'None',
+      reason: 'Excited to learn scratch.',
+      inPerson: false,
+    },
+    inPerson: {
+      allergies: 'None',
+      parentPickup: 'Parent Three',
+    },
+    agreements: {
+      entireProgram: true,
+      timeCommitment: true,
+      submitting: true,
+      mediaRelease: true,
+      bypassAgeLimits: false,
+    },
+    meta: {
+      uid: 'student3',
+      submitted: true,
+    },
+    enrolled: true,
+    classes: ['class-scratch'],
+    timestamps: {
+      created: admin.firestore.FieldValue.serverTimestamp(),
+      updated: admin.firestore.FieldValue.serverTimestamp(),
+    },
+  }
+  validateRegistration(regStudent3, 'student3')
+  await db.collection(registrationsCollection).doc('student3').set(regStudent3)
+
   console.log('Seeding mock confirmation form for student-demo-uid...')
   await db.collection('confirmations').doc('student-demo-uid').set({
     submitted: true,

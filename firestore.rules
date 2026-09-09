@@ -73,14 +73,13 @@ service cloud.firestore {
       }
 
       // A registration is a minor's date of birth, race, phone number, school
-      // and family income indicator, so read access is not something the
-      // `instructor` role should confer on its own - that role is held from
-      // signup onward by everyone who has merely *applied* to teach. Gate it
-      // on the decision instead, which only an admin or reviewer can write.
+      // and family income indicator (FRLP). Instructors never read this collection
+      // directly through the client SDK; all instructor access is brokered by
+      // server-side API routes (/api/classRoster, /api/remindStudents) that strictly
+      // enforce class ownership and return only the minimal necessary fields.
       match /registrations/{userId} {
         allow read: if isSignedIn() && belongsToSameUser(userId)
-                    || isAdminOrReviewer()
-                    || isTeachingInstructor(semesterId);
+                    || isAdminOrReviewer();
         allow write: if isOwnerOrAdmin(userId);
       }
 
@@ -215,12 +214,6 @@ service cloud.firestore {
     function isAcceptedInstructor(semesterId) {
       return isInstructor() && hasDecisionType(semesterId, ['accepted']);
     }
-    // Accepted, or accepted as a substitute: the people who legitimately need
-    // a class roster this semester. Substitutes cover individual sessions, so
-    // they need to see the students in a class without owning one.
-    function isTeachingInstructor(semesterId) {
-      return isInstructor() && hasDecisionType(semesterId, ['accepted', 'substitute']);
-    }
     function hasUserId(userId) {
       return request.auth.uid == userId;
     }
@@ -232,7 +225,7 @@ service cloud.firestore {
     }
     // The role means "has applied to teach", not "teaches" - it is held from
     // signup onward, long before any interview. Callers that mean the latter
-    // must pair it with isAcceptedInstructor/isTeachingInstructor.
+    // must pair it with isAcceptedInstructor.
     function isInstructor() {
       return isSignedIn() && hasRRole('instructor');
     }
@@ -275,8 +268,7 @@ service cloud.firestore {
     }
     // Note this admits *applicants*, since isInstructor() is the role and the
     // role is held from signup. Only use it where that is intended (booking an
-    // interview); anything that assumes acceptance wants isAcceptedInstructor
-    // or isTeachingInstructor.
+    // interview); anything that assumes acceptance wants isAcceptedInstructor.
     function isStaff() {
       return isAdminOrReviewer() || isInstructor();
     }
